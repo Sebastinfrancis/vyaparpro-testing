@@ -1,0 +1,2036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>VyaparPro — Next-Gen GST Billing & ERP</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0a0e1a;--bg2:#111827;--bg3:#1a2235;--bg4:#1e2d45;--card:#131c2e;--border:#1e3050;--border2:#243a5e;--accent:#00d4ff;--accent2:#0099cc;--green:#00e676;--green2:#00c853;--orange:#ff9100;--red:#ff4444;--yellow:#ffd600;--purple:#7c4dff;--text:#e8f0fe;--text2:#8ba3c7;--text3:#4a6080;--shadow:0 4px 24px rgba(0,212,255,.08);--r:12px;--r2:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.app{display:flex;height:100vh}
+.sidebar{width:232px;min-width:232px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:58px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
+.content{flex:1;overflow-y:auto;padding:22px}
+/* SIDEBAR */
+.logo{padding:18px 14px 14px;border-bottom:1px solid var(--border)}
+.logo-text{font-size:19px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:9px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.co-sel{margin:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:9px 11px;cursor:pointer}
+.co-name{font-size:12px;font-weight:600}
+.co-gstin{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:1px}
+.ns{padding:7px 11px 3px;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;font-weight:600}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 14px;margin:1px 7px;border-radius:var(--r2);cursor:pointer;font-size:12px;color:var(--text2);transition:all .13s;position:relative}
+.ni:hover{background:var(--bg3);color:var(--text)}
+.ni.active{background:linear-gradient(135deg,rgba(0,212,255,.14),rgba(0,230,118,.07));color:var(--accent);border:1px solid rgba(0,212,255,.18)}
+.ni .bdg{margin-left:auto;background:var(--red);color:#fff;font-size:8px;padding:1px 5px;border-radius:10px;font-weight:700}
+.ni-ic{width:16px;text-align:center;font-size:14px}
+.sfooter{margin-top:auto;padding:11px;border-top:1px solid var(--border)}
+.upill{display:flex;align-items:center;gap:9px;padding:7px;background:var(--bg3);border-radius:var(--r2);cursor:pointer}
+.av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+/* TOPBAR */
+.sbox{flex:1;max-width:380px;background:var(--bg3);border:1px solid var(--border);border-radius:18px;padding:7px 14px;display:flex;align-items:center;gap:7px}
+.sbox input{background:none;border:none;outline:none;color:var(--text);font-family:'Sora',sans-serif;font-size:12px;flex:1}
+.sbox input::placeholder{color:var(--text3)}
+.tba{display:flex;gap:7px;margin-left:auto}
+.bic{width:34px;height:34px;border-radius:7px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;transition:all .13s}
+.bic:hover{border-color:var(--accent);color:var(--accent)}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
+/* BUTTONS */
+.btn{padding:8px 16px;border-radius:var(--r2);border:none;cursor:pointer;font-family:'Sora',sans-serif;font-size:12px;font-weight:600;transition:all .13s;display:inline-flex;align-items:center;gap:5px}
+.btn-p{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0a0e1a}
+.btn-p:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,212,255,.28)}
+.btn-s{background:linear-gradient(135deg,var(--green),var(--green2));color:#0a0e1a}
+.btn-o{background:transparent;border:1px solid var(--border2);color:var(--text2)}
+.btn-o:hover{border-color:var(--accent);color:var(--accent)}
+.btn-d{background:rgba(255,68,68,.12);border:1px solid var(--red);color:var(--red)}
+.btn-warn{background:rgba(255,145,0,.12);border:1px solid var(--orange);color:var(--orange)}
+.btn-sm{padding:5px 11px;font-size:11px}
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px}
+.chov{transition:all .18s;cursor:pointer}
+.chov:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:var(--shadow)}
+/* STATS */
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;position:relative;overflow:hidden}
+.sc::before{content:'';position:absolute;top:0;right:0;width:50px;height:50px;border-radius:50%;filter:blur(18px);opacity:.28}
+.sc.bl::before{background:var(--accent)}.sc.gr::before{background:var(--green)}
+.sc.or::before{background:var(--orange)}.sc.pu::before{background:var(--purple)}
+.slbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.sval{font-size:24px;font-weight:800;margin:7px 0 3px;line-height:1}
+.sval.bl{color:var(--accent)}.sval.gr{color:var(--green)}.sval.or{color:var(--orange)}.sval.pu{color:var(--purple)}
+.sch{font-size:10px;display:flex;align-items:center;gap:3px}
+.up{color:var(--green)}.dn{color:var(--red)}
+/* TABLES */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{padding:9px 12px;text-align:left;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:hover{background:var(--bg3)}
+tbody td{padding:11px 12px;color:var(--text2)}
+tbody td.b{color:var(--text);font-weight:600}
+.sb{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:18px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.sp{background:rgba(0,230,118,.09);color:var(--green);border:1px solid rgba(0,230,118,.18)}
+.spen{background:rgba(255,145,0,.09);color:var(--orange);border:1px solid rgba(255,145,0,.18)}
+.sov{background:rgba(255,68,68,.09);color:var(--red);border:1px solid rgba(255,68,68,.18)}
+.sdr{background:rgba(139,163,199,.09);color:var(--text3);border:1px solid var(--border)}
+.scan{background:rgba(0,212,255,.09);color:var(--accent);border:1px solid rgba(0,212,255,.18)}
+/* FORMS */
+.fg{margin-bottom:14px}
+.fl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:5px;display:block}
+.fi{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:9px 12px;color:var(--text);font-family:'Sora',sans-serif;font-size:12px;outline:none;transition:border .13s}
+.fi:focus{border-color:var(--accent)}
+.fi::placeholder{color:var(--text3)}
+select.fi option{background:var(--bg2)}
+.fr{display:grid;gap:14px}
+.fr.c2{grid-template-columns:1fr 1fr}
+.fr.c3{grid-template-columns:1fr 1fr 1fr}
+/* MODAL */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+.md{background:var(--bg2);border:1px solid var(--border);border-radius:14px;width:100%;max-height:92vh;overflow-y:auto;animation:min .18s ease}
+.md-sm{max-width:460px}.md-md{max-width:680px}.md-lg{max-width:940px}.md-xl{max-width:1100px}
+@keyframes min{from{opacity:0;transform:scale(.95)translateY(8px)}to{opacity:1;transform:none}}
+.mh{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.mt2{font-size:16px;font-weight:700}
+.mc{width:30px;height:30px;border-radius:7px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.mb{padding:22px}
+.mf{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:9px}
+/* SECTION HEADER */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.st{font-size:19px;font-weight:700}
+.ss{font-size:12px;color:var(--text3);margin-top:2px}
+.bc{font-size:11px;color:var(--text3);margin-bottom:3px}
+.bc span{color:var(--text2)}
+/* CHART */
+.cbw{display:flex;align-items:flex-end;gap:5px;height:90px;padding-top:6px}
+.cb{flex:1;border-radius:3px 3px 0 0;min-width:18px;transition:opacity .18s;cursor:pointer}
+.cb:hover{opacity:.75}
+.cbl{font-size:8px;color:var(--text3);text-align:center;margin-top:3px}
+/* INV ITEMS */
+.iir{display:grid;grid-template-columns:2fr 70px 95px 70px 70px 95px 32px;gap:7px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
+.iih{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px}
+/* AI */
+.aip{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;height:390px}
+.aim{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.aimsg{max-width:82%;padding:9px 13px;border-radius:11px;font-size:12px;line-height:1.5}
+.aimsg.bot{background:var(--bg3);border:1px solid var(--border);border-radius:11px 11px 11px 2px}
+.aimsg.usr{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0a0e1a;margin-left:auto;font-weight:500;border-radius:11px 11px 2px 11px}
+.aiir{padding:10px;border-top:1px solid var(--border);display:flex;gap:7px}
+.aiin{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:18px;padding:7px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:12px;outline:none}
+.aisd{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+/* MISC */
+.chip{display:inline-flex;align-items:center;padding:2px 9px;border-radius:18px;font-size:10px;font-weight:600}
+.cbl2{background:rgba(0,212,255,.09);color:var(--accent);border:1px solid rgba(0,212,255,.18)}
+.cgr{background:rgba(0,230,118,.09);color:var(--green);border:1px solid rgba(0,230,118,.18)}
+.cor{background:rgba(255,145,0,.09);color:var(--orange);border:1px solid rgba(255,145,0,.18)}
+.crd{background:rgba(255,68,68,.09);color:var(--red);border:1px solid rgba(255,68,68,.18)}
+.div{height:1px;background:var(--border);margin:14px 0}
+.mono{font-family:'JetBrains Mono',monospace;font-size:11px}
+.hidden{display:none!important}
+.page{display:none}.page.active{display:block}
+.prog{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:5px}
+.pb{height:100%;border-radius:3px;transition:width .3s}
+.ndot{width:7px;height:7px;background:var(--red);border-radius:50%;position:absolute;top:5px;right:5px}
+.gsum{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:14px}
+.tr{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:12px}
+.tr.fin{border-top:2px solid var(--border2);margin-top:7px;padding-top:10px;font-size:15px;font-weight:800}
+.ld{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .6s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--bg2);border:1px solid var(--green);color:var(--green);padding:11px 18px;border-radius:var(--r2);font-size:12px;font-weight:600;z-index:9999;animation:ti .25s ease;pointer-events:none}
+.toast.err{border-color:var(--red);color:var(--red)}
+.toast.warn{border-color:var(--orange);color:var(--orange)}
+@keyframes ti{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.tabr{display:flex;gap:3px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:3px;margin-bottom:18px}
+.tabb{flex:1;padding:7px;border-radius:5px;border:none;background:none;color:var(--text2);font-family:'Sora',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .13s}
+.tabb.active{background:var(--bg4);color:var(--accent);border:1px solid rgba(0,212,255,.18)}
+.es{text-align:center;padding:50px 18px;color:var(--text3)}
+.ei{font-size:44px;margin-bottom:10px}
+.et{font-size:13px;font-weight:600;color:var(--text2)}
+.esb{font-size:11px;margin-top:3px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+/* INVOICE PREVIEW */
+.inv-preview{background:#fff;color:#111;border-radius:var(--r);padding:32px;font-family:'Sora',sans-serif;max-width:700px;margin:0 auto}
+.inv-preview table{width:100%;border-collapse:collapse;font-size:12px}
+.inv-preview thead th{background:#f5f5f5;padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#666}
+.inv-preview tbody td{padding:8px 10px;border-bottom:1px solid #eee;color:#333}
+.edit-mode-banner{background:linear-gradient(135deg,rgba(255,145,0,.1),rgba(255,145,0,.05));border:1px solid rgba(255,145,0,.3);border-radius:var(--r2);padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:12px}
+@media(max-width:860px){.sidebar{display:none}.sgrid{grid-template-columns:1fr 1fr}.fr.c3{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+<!-- ======== SIDEBAR ======== -->
+<aside class="sidebar">
+  <div class="logo"><div class="logo-text">VyaparPro</div><div class="logo-sub">AI-Powered ERP</div></div>
+  <div class="co-sel"><div class="co-name">🏢 Sharma Electronics</div><div class="co-gstin mono">27AABCS1234F1Z5</div></div>
+  <div style="flex:1;overflow-y:auto">
+    <div class="ns">Main</div>
+    <div class="ni active" onclick="nav('dashboard',this)"><span class="ni-ic">📊</span>Dashboard</div>
+    <div class="ni" onclick="nav('ai',this)"><span class="ni-ic">🤖</span>AI Assistant <span class="bdg">AI</span></div>
+    <div class="ns">Billing</div>
+    <div class="ni" onclick="nav('invoices',this)"><span class="ni-ic">🧾</span>Sales Invoices</div>
+    <div class="ni" onclick="nav('create',this)"><span class="ni-ic">➕</span>New Invoice</div>
+    <div class="ni" onclick="nav('quotations',this)"><span class="ni-ic">📋</span>Quotations</div>
+    <div class="ni" onclick="nav('purchase',this)"><span class="ni-ic">🛒</span>Purchase</div>
+    <div class="ni" onclick="nav('returns',this)"><span class="ni-ic">↩️</span>Returns / Credit</div>
+    <div class="ns">GST</div>
+    <div class="ni" onclick="nav('gst',this)"><span class="ni-ic">🇮🇳</span>GST Reports <span class="bdg">!</span></div>
+    <div class="ni" onclick="nav('einvoice',this)"><span class="ni-ic">⚡</span>E-Invoice / E-Way</div>
+    <div class="ns">Inventory</div>
+    <div class="ni" onclick="nav('inventory',this)"><span class="ni-ic">📦</span>Products & Stock</div>
+    <div class="ni" onclick="nav('warehouses',this)"><span class="ni-ic">🏭</span>Warehouses</div>
+    <div class="ns">Parties</div>
+    <div class="ni" onclick="nav('customers',this)"><span class="ni-ic">👥</span>Customers</div>
+    <div class="ni" onclick="nav('vendors',this)"><span class="ni-ic">🏪</span>Vendors</div>
+    <div class="ni" onclick="nav('crm',this)"><span class="ni-ic">💼</span>CRM</div>
+    <div class="ns">Accounts</div>
+    <div class="ni" onclick="nav('accounting',this)"><span class="ni-ic">📒</span>Ledger & Books</div>
+    <div class="ni" onclick="nav('payments',this)"><span class="ni-ic">💳</span>Payments</div>
+    <div class="ni" onclick="nav('reports',this)"><span class="ni-ic">📈</span>Reports</div>
+    <div class="ns">System</div>
+    <div class="ni" onclick="nav('auditlog',this)"><span class="ni-ic">📜</span>Audit Log</div>
+    <div class="ni" onclick="nav('settings',this)"><span class="ni-ic">⚙️</span>Settings</div>
+  </div>
+  <div class="sfooter">
+    <div class="upill"><div class="av">RS</div><div><div style="font-size:11px;font-weight:600">Rajesh Sharma</div><div style="font-size:9px;color:var(--text3)">Owner · Admin</div></div><div style="margin-left:auto;color:var(--text3);font-size:11px">⚙</div></div>
+    <div style="margin-top:7px;font-size:9px;color:var(--text3);text-align:center"><span class="sdot" style="display:inline-block;margin-right:3px;vertical-align:middle"></span>Synced · Online · Last: just now</div>
+  </div>
+</aside>
+
+<!-- ======== MAIN ======== -->
+<div class="main">
+  <div class="topbar">
+    <div class="sbox"><span style="font-size:13px;color:var(--text3)">🔍</span><input id="gSearch" placeholder="Search invoices, customers, products… (Ctrl+K)" oninput="doSearch(this.value)"/></div>
+    <div class="tba">
+      <div class="bic" onclick="nav('create',null)" title="New Invoice (Ctrl+N)">➕</div>
+      <div class="bic" style="position:relative" onclick="showNotifs()">🔔<div class="ndot"></div></div>
+      <div class="bic" onclick="showToast('☁️ Sync complete — all data up to date')">☁️</div>
+      <div style="display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);padding:5px 11px;border-radius:7px;font-size:11px"><div class="sdot"></div><span style="color:var(--text2)">Live</span></div>
+    </div>
+  </div>
+
+  <div class="content" id="content">
+
+    <!-- ======== DASHBOARD ======== -->
+    <div class="page active" id="page-dashboard">
+      <div class="bc">Home / <span>Dashboard</span></div>
+      <div class="sh" style="margin-top:8px">
+        <div><div class="st">Good morning, Rajesh! 👋</div><div class="ss">Business overview — June 1, 2026</div></div>
+        <div style="display:flex;gap:7px"><select class="fi" style="width:110px;padding:7px 10px">
+          <option>This Month</option><option>This Week</option><option>This Year</option></select>
+          <button class="btn btn-p btn-sm" onclick="nav('create',null)">➕ New Invoice</button></div>
+      </div>
+      <div style="background:linear-gradient(135deg,rgba(0,212,255,.07),rgba(0,230,118,.04));border:1px solid rgba(0,212,255,.18);border-radius:var(--r);padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px">
+        <div style="font-size:26px">🤖</div>
+        <div><div style="font-size:12px;font-weight:700;color:var(--accent)">AI Insight</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">Sales up <strong style="color:var(--text)">18%</strong> vs last month. <strong style="color:var(--text)">Samsung 55" QLED</strong> is your fastest mover. <strong style="color:var(--orange)">3 customers</strong> have overdue payments totalling ₹1,24,500. <strong style="color:var(--red)">Mi Router AX6000</strong> stocks out in ~4 days.</div></div>
+        <button class="btn btn-o btn-sm" style="margin-left:auto;white-space:nowrap" onclick="nav('ai',null)">Ask AI →</button>
+      </div>
+      <div class="sgrid">
+        <div class="sc bl"><div class="slbl">Today's Sales</div><div class="sval bl">₹84,200</div><div class="sch up">▲ 12% vs yesterday</div></div>
+        <div class="sc gr"><div class="slbl">Monthly Revenue</div><div class="sval gr">₹18,46,500</div><div class="sch up">▲ 18% vs last month</div></div>
+        <div class="sc or"><div class="slbl">Outstanding</div><div class="sval or">₹3,24,800</div><div class="sch dn">▼ 12 invoices pending</div></div>
+        <div class="sc pu"><div class="slbl">Net Profit (MTD)</div><div class="sval pu">₹2,18,400</div><div class="sch up">▲ 22% margin</div></div>
+      </div>
+      <div class="g2" style="margin-bottom:18px">
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;margin-bottom:14px">Sales Trend — Last 7 Days</div>
+          <div class="cbw" id="salesChart"></div>
+          <div style="display:flex;gap:0;margin-top:3px" id="salesLabels"></div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;margin-bottom:14px">Quick Actions</div>
+          <div class="g2" style="gap:8px">
+            <button class="btn btn-p" style="justify-content:center" onclick="nav('create',null)">🧾 New Invoice</button>
+            <button class="btn btn-s" style="justify-content:center" onclick="nav('purchase',null)">🛒 New Purchase</button>
+            <button class="btn btn-o" style="justify-content:center" onclick="nav('customers',null)">👥 Add Customer</button>
+            <button class="btn btn-o" style="justify-content:center" onclick="nav('inventory',null)">📦 Add Product</button>
+            <button class="btn btn-o" style="justify-content:center" onclick="nav('payments',null)">💳 Record Payment</button>
+            <button class="btn btn-o" style="justify-content:center" onclick="nav('reports',null)">📊 Reports</button>
+          </div>
+        </div>
+      </div>
+      <div class="g2" style="margin-bottom:18px">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700">Recent Invoices</div>
+            <button class="btn btn-o btn-sm" onclick="nav('invoices',null)">View All</button>
+          </div>
+          <div class="tw"><table>
+            <thead><tr><th>Invoice</th><th>Customer</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+            <tbody id="dashInv"></tbody>
+          </table></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700">⚠️ Low Stock Alerts</div>
+            <button class="btn btn-o btn-sm" onclick="nav('inventory',null)">View All</button>
+          </div>
+          <div id="lowStockList"></div>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:14px">Top Customers (Month)</div><div id="topCust"></div></div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;margin-bottom:3px">🔮 AI Sales Forecast</div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:14px">Based on historical trends & seasonality</div>
+          <div id="forecastBars"></div>
+          <div style="margin-top:14px;padding:11px;background:var(--bg3);border-radius:var(--r2);font-size:11px;color:var(--text2)"><strong style="color:var(--green)">AI:</strong> June likely ₹22,80,000 (+23%). Stock up for Diwali season Oct.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== INVOICES LIST ======== -->
+    <div class="page" id="page-invoices">
+      <div class="bc">Billing / <span>Sales Invoices</span></div>
+      <div class="sh" style="margin-top:8px">
+        <div><div class="st">Sales Invoices</div><div class="ss">All GST invoices — click row to view, ✏️ to edit</div></div>
+        <div style="display:flex;gap:7px">
+          <button class="btn btn-o btn-sm" onclick="exportInvoices()">📤 Export</button>
+          <button class="btn btn-p btn-sm" onclick="nav('create',null)">➕ New Invoice</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap">
+        <input class="fi" style="width:220px" id="invSearch" placeholder="🔍 Search invoices…" oninput="filterInvoices()"/>
+        <select class="fi" style="width:130px" id="invStatusF" onchange="filterInvoices()"><option value="">All Status</option><option>paid</option><option>pending</option><option>overdue</option><option>draft</option></select>
+        <select class="fi" style="width:130px" id="invTypeF" onchange="filterInvoices()"><option value="">All Types</option><option>GST Invoice</option><option>Tax Invoice</option><option>Proforma</option><option>Quotation</option></select>
+      </div>
+      <div class="card"><div class="tw">
+        <table><thead><tr><th>#</th><th>Invoice No</th><th>Date</th><th>Customer</th><th>Type</th><th>Taxable</th><th>GST</th><th>Total</th><th>Due</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="invBody"></tbody></table>
+      </div></div>
+    </div>
+
+    <!-- ======== CREATE / EDIT INVOICE ======== -->
+    <div class="page" id="page-create">
+      <div class="bc" id="invFormBc">Billing / <span>New Invoice</span></div>
+      <div class="sh" style="margin-top:8px">
+        <div><div class="st" id="invFormTitle">Create GST Invoice</div><div class="ss">Auto-calculates CGST / SGST / IGST</div></div>
+        <div style="display:flex;gap:7px">
+          <button class="btn btn-o btn-sm" onclick="saveDraft()">💾 Save Draft</button>
+          <button class="btn btn-p btn-sm" onclick="finalizeInvoice()">✅ Finalize & Save</button>
+        </div>
+      </div>
+      <div id="editBanner" class="edit-mode-banner hidden">
+        ✏️ <strong>Edit Mode</strong> — You are editing invoice <span id="editBannerNo" style="color:var(--orange);font-weight:700"></span>. Changes will update the saved record.
+        <button class="btn btn-warn btn-sm" style="margin-left:auto" onclick="cancelEdit()">Cancel Edit</button>
+      </div>
+      <div class="g2" style="gap:18px">
+        <div>
+          <div class="card" style="margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;margin-bottom:11px">Invoice Details</div>
+            <div class="fr c3">
+              <div class="fg"><label class="fl">Type</label>
+                <select class="fi" id="invType"><option>GST Invoice</option><option>Tax Invoice</option><option>Proforma Invoice</option><option>Quotation</option><option>Delivery Challan</option><option>Credit Note</option><option>Debit Note</option></select></div>
+              <div class="fg"><label class="fl">Invoice No</label><input class="fi" id="invNo" placeholder="INV-2469"/></div>
+              <div class="fg"><label class="fl">Date</label><input type="date" class="fi" id="invDate"/></div>
+            </div>
+            <div class="fr c3">
+              <div class="fg"><label class="fl">Due Date</label><input type="date" class="fi" id="invDue"/></div>
+              <div class="fg"><label class="fl">Place of Supply</label>
+                <select class="fi" id="invState"><option>27 - Maharashtra</option><option>07 - Delhi</option><option>29 - Karnataka</option><option>33 - Tamil Nadu</option><option>09 - UP</option><option>06 - Haryana</option></select></div>
+              <div class="fg"><label class="fl">Supply Type</label>
+                <select class="fi" id="supplyType" onchange="calcTotals()"><option value="intra">Intra-State (CGST+SGST)</option><option value="inter">Inter-State (IGST)</option></select></div>
+            </div>
+            <div class="fg"><label class="fl">Notes / Terms</label><textarea class="fi" rows="2" id="invNotes" placeholder="Payment terms, delivery notes…"></textarea></div>
+          </div>
+          <div class="card">
+            <div style="font-size:12px;font-weight:700;margin-bottom:11px">Bill To (Customer)</div>
+            <div class="fg"><label class="fl">Customer Name</label>
+              <input class="fi" id="custName" placeholder="Type or select customer…" list="custDL" oninput="autofillCustomer(this.value)"/>
+              <datalist id="custDL"></datalist></div>
+            <div class="fr c2">
+              <div class="fg"><label class="fl">GSTIN</label><input class="fi" id="custGst" placeholder="29AABCS1234F1Z5"/></div>
+              <div class="fg"><label class="fl">Mobile</label><input class="fi" id="custMobile" placeholder="9876543210"/></div>
+            </div>
+            <div class="fg"><label class="fl">Billing Address</label><textarea class="fi" rows="2" id="custAddr" placeholder="Full address…"></textarea></div>
+            <div class="fr c2">
+              <div class="fg"><label class="fl">Email</label><input class="fi" id="custEmail" placeholder="customer@email.com"/></div>
+              <div class="fg"><label class="fl">State Code</label><input class="fi" id="custState" placeholder="27"/></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;margin-bottom:10px">Invoice Items</div>
+            <div class="iih iir" style="padding:3px 0 7px"><span>Product / Description</span><span>Qty</span><span>Rate (₹)</span><span>Disc%</span><span>GST%</span><span>Amount</span><span></span></div>
+            <div id="invoiceItems"></div>
+            <button class="btn btn-o btn-sm" style="margin-top:10px" onclick="addItem()">➕ Add Line Item</button>
+          </div>
+          <div class="gsum">
+            <div style="font-size:12px;font-weight:700;margin-bottom:9px">GST Summary</div>
+            <div class="tr"><span style="color:var(--text3)">Subtotal (before discount)</span><span id="s_sub">₹0.00</span></div>
+            <div class="tr"><span style="color:var(--text3)">Total Discount</span><span id="s_disc" style="color:var(--red)">-₹0.00</span></div>
+            <div class="tr"><span style="color:var(--text3)">Taxable Amount</span><span id="s_tax">₹0.00</span></div>
+            <div class="tr" id="cgst_row"><span style="color:var(--text3)">CGST</span><span id="s_cgst">₹0.00</span></div>
+            <div class="tr" id="sgst_row"><span style="color:var(--text3)">SGST</span><span id="s_sgst">₹0.00</span></div>
+            <div class="tr" id="igst_row" class="hidden"><span style="color:var(--text3)">IGST</span><span id="s_igst">₹0.00</span></div>
+            <div class="tr"><span style="color:var(--text3)">Round Off</span><span id="s_round">₹0.00</span></div>
+            <div class="tr fin"><span>GRAND TOTAL</span><span id="s_total" style="color:var(--green)">₹0.00</span></div>
+            <div style="margin-top:12px;display:flex;gap:7px">
+              <button class="btn btn-p" style="flex:1;justify-content:center" onclick="finalizeInvoice()">✅ Save Invoice</button>
+            </div>
+            <div style="margin-top:7px;display:flex;gap:7px">
+              <button class="btn btn-o btn-sm" style="flex:1;justify-content:center" onclick="previewInvoice()">👁 Preview</button>
+              <button class="btn btn-o btn-sm" style="flex:1;justify-content:center" onclick="showToast('📄 PDF generated!')">📄 PDF</button>
+              <button class="btn btn-o btn-sm" style="flex:1;justify-content:center" onclick="showToast('📱 Sent via WhatsApp!')">📱 WhatsApp</button>
+              <button class="btn btn-o btn-sm" style="flex:1;justify-content:center" onclick="showToast('📧 Email sent!')">📧 Email</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== INVENTORY ======== -->
+    <div class="page" id="page-inventory">
+      <div class="bc">Inventory / <span>Products & Stock</span></div>
+      <div class="sh" style="margin-top:8px">
+        <div><div class="st">Inventory Management</div><div class="ss">Products, HSN, batch tracking, barcode</div></div>
+        <div style="display:flex;gap:7px">
+          <button class="btn btn-o btn-sm" onclick="showToast('📷 Barcode scanner ready')">📷 Scan</button>
+          <button class="btn btn-p btn-sm" onclick="openModal('prodModal')">➕ Add Product</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;margin-bottom:18px">
+        <div class="sc bl" style="flex:1"><div class="slbl">Total Products</div><div class="sval bl" style="font-size:20px" id="totalProds">247</div></div>
+        <div class="sc or" style="flex:1"><div class="slbl">Low Stock</div><div class="sval or" style="font-size:20px" id="lowProds">18</div></div>
+        <div class="sc" style="flex:1;border-color:var(--border)"><div class="slbl">Out of Stock</div><div class="sval" style="font-size:20px;color:var(--red)" id="outProds">4</div></div>
+        <div class="sc gr" style="flex:1"><div class="slbl">Stock Value</div><div class="sval gr" style="font-size:20px">₹48.2L</div></div>
+      </div>
+      <div style="display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap">
+        <input class="fi" style="width:220px" id="prodSearch" placeholder="🔍 Search products…" oninput="filterProds()"/>
+        <select class="fi" style="width:130px" id="prodCatF" onchange="filterProds()"><option value="">All Categories</option><option>TVs</option><option>Smartphones</option><option>Laptops</option><option>Networking</option><option>Accessories</option></select>
+        <select class="fi" style="width:130px" id="prodStockF" onchange="filterProds()"><option value="">All Stock</option><option value="low">Low Stock</option><option value="out">Out of Stock</option><option value="ok">In Stock</option></select>
+      </div>
+      <div class="card"><div class="tw"><table>
+        <thead><tr><th>SKU</th><th>Product</th><th>Category</th><th>HSN</th><th>MRP</th><th>Price</th><th>Stock</th><th>Reorder</th><th>GST%</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="invBody2"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- ======== CUSTOMERS ======== -->
+    <div class="page" id="page-customers">
+      <div class="bc">Parties / <span>Customers</span></div>
+      <div class="sh" style="margin-top:8px">
+        <div><div class="st">Customer Management</div><div class="ss">Outstanding, LTV, AI score, purchase history</div></div>
+        <button class="btn btn-p btn-sm" onclick="openModal('custModal')">➕ Add Customer</button>
+      </div>
+      <div style="display:flex;gap:14px;margin-bottom:18px">
+        <div class="sc bl" style="flex:1"><div class="slbl">Total</div><div class="sval bl" style="font-size:20px">342</div></div>
+        <div class="sc gr" style="flex:1"><div class="slbl">Active (30d)</div><div class="sval gr" style="font-size:20px">128</div></div>
+        <div class="sc or" style="flex:1"><div class="slbl">Outstanding</div><div class="sval or" style="font-size:20px">₹3.2L</div></div>
+        <div class="sc pu" style="flex:1"><div class="slbl">Avg LTV</div><div class="sval pu" style="font-size:20px">₹84K</div></div>
+      </div>
+      <div style="display:flex;gap:9px;margin-bottom:14px">
+        <input class="fi" style="width:240px" id="custSearch" placeholder="🔍 Search customers…" oninput="filterCust()"/>
+        <select class="fi" style="width:130px" id="custCityF" onchange="filterCust()"><option value="">All Cities</option><option>Mumbai</option><option>Pune</option><option>Delhi</option><option>Nashik</option></select>
+      </div>
+      <div class="card"><div class="tw"><table>
+        <thead><tr><th>Customer</th><th>GSTIN</th><th>Mobile</th><th>City</th><th>Total Business</th><th>Outstanding</th><th>Last Purchase</th><th>AI Score</th><th>Actions</th></tr></thead>
+        <tbody id="custBody"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- ======== VENDORS ======== -->
+    <div class="page" id="page-vendors">
+      <div class="bc">Parties / <span>Vendors</span></div>
+      <div class="sh" style="margin-top:8px">
+        <div><div class="st">Vendor Management</div><div class="ss">Suppliers, PO, payments, AI performance score</div></div>
+        <button class="btn btn-p btn-sm" onclick="openModal('vendModal')">➕ Add Vendor</button>
+      </div>
+      <div style="display:flex;gap:14px;margin-bottom:18px">
+        <div class="sc bl" style="flex:1"><div class="slbl">Total Vendors</div><div class="sval bl" style="font-size:20px">48</div></div>
+        <div class="sc or" style="flex:1"><div class="slbl">Payable</div><div class="sval or" style="font-size:20px">₹4.8L</div></div>
+        <div class="sc gr" style="flex:1"><div class="slbl">Active</div><div class="sval gr" style="font-size:20px">32</div></div>
+        <div class="sc pu" style="flex:1"><div class="slbl">Orders (Month)</div><div class="sval pu" style="font-size:20px">14</div></div>
+      </div>
+      <div class="card"><div class="tw"><table>
+        <thead><tr><th>Vendor</th><th>GSTIN</th><th>Mobile</th><th>City</th><th>Total Purchases</th><th>Payable</th><th>AI Score</th><th>Actions</th></tr></thead>
+        <tbody id="vendBody"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- ======== CRM ======== -->
+    <div class="page" id="page-crm">
+      <div class="bc">Parties / <span>CRM</span></div>
+      <div class="sh" style="margin-top:8px">
+        <div><div class="st">CRM — Leads & Pipeline</div><div class="ss">AI suggests next action & follow-up dates</div></div>
+        <button class="btn btn-p btn-sm" onclick="openModal('leadModal')">➕ Add Lead</button>
+      </div>
+      <div style="display:flex;gap:14px;margin-bottom:18px">
+        <div class="sc bl" style="flex:1"><div class="slbl">Total Leads</div><div class="sval bl" style="font-size:20px">34</div></div>
+        <div class="sc or" style="flex:1"><div class="slbl">Follow-Up Due</div><div class="sval or" style="font-size:20px">8</div></div>
+        <div class="sc gr" style="flex:1"><div class="slbl">Converted</div><div class="sval gr" style="font-size:20px">12</div></div>
+        <div class="sc pu" style="flex:1"><div class="slbl">Pipeline Value</div><div class="sval pu" style="font-size:20px">₹12.4L</div></div>
+      </div>
+      <div class="card"><div class="tw"><table>
+        <thead><tr><th>Lead Name</th><th>Company</th><th>Mobile</th><th>Stage</th><th>Value</th><th>Follow-Up</th><th>AI Suggestion</th><th>Actions</th></tr></thead>
+        <tbody id="crmBody"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- ======== PURCHASE ======== -->
+    <div class="page" id="page-purchase">
+      <div class="bc">Billing / <span>Purchase</span></div>
+      <div class="sh" style="margin-top:8px">
+        <div><div class="st">Purchase Management</div><div class="ss">Purchase orders, GRN, vendor bills, returns</div></div>
+        <div style="display:flex;gap:7px">
+          <button class="btn btn-o btn-sm" onclick="showToast('📷 OCR scanner ready — scan supplier bill')">📷 OCR Scan Bill</button>
+          <button class="btn btn-p btn-sm" onclick="openModal('poModal')">➕ New Purchase Order</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;margin-bottom:18px">
+        <div class="sc bl" style="flex:1"><div class="slbl">This Month</div><div class="sval bl" style="font-size:20px">₹12.4L</div></div>
+        <div class="sc or" style="flex:1"><div class="slbl">Pending Orders</div><div class="sval or" style="font-size:20px">6</div></div>
+        <div class="sc gr" style="flex:1"><div class="slbl">Received</div><div class="sval gr" style="font-size:20px">28</div></div>
+        <div class="sc pu" style="flex:1"><div class="slbl">Input ITC</div><div class="sval pu" style="font-size:20px">₹1.42L</div></div>
+      </div>
+      <div class="card"><div class="tw"><table>
+        <thead><tr><th>PO No</th><th>Date</th><th>Vendor</th><th>Amount</th><th>GST</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="poBody"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- ======== QUOTATIONS ======== -->
+    <div class="page" id="page-quotations">
+      <div class="bc">Billing / <span>Quotations</span></div>
+      <div class="sh" style="margin-top:8px">
+        <div><div class="st">Quotations & Proforma</div><div class="ss">Convert to invoice in one click</div></div>
+        <button class="btn btn-p btn-sm" onclick="openQuote()">➕ New Quotation</button>
+      </div>
+      <div class="card"><div class="tw"><table>
+        <thead><tr><th>Quote No</th><th>Date</th><th>Customer</th><th>Amount</th><th>Valid Till</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="quoteBody"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- ======== RETURNS ======== -->
+    <div class="page" id="page-returns">
+      <div class="bc">Billing / <span>Returns & Credit Notes</span></div>
+      <div class="sh" style="margin-top:8px">
+        <div><div class="st">Returns & Credit / Debit Notes</div><div class="ss">Sales return, purchase return, credit notes</div></div>
+        <button class="btn btn-p btn-sm" onclick="openModal('retModal')">➕ New Return</button>
+      </div>
+      <div class="card"><div class="tw"><table>
+        <thead><tr><th>Doc No</th><th>Date</th><th>Type</th><th>Against Invoice</th><th>Customer/Vendor</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="retBody"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- ======== GST ======== -->
+    <div class="page" id="page-gst">
+      <div class="bc">GST / <span>Reports</span></div>
+      <div class="sh" style="margin-top:8px">
+        <div><div class="st">GST Compliance Center</div><div class="ss">GSTR-1, GSTR-3B, E-Invoice, HSN summary</div></div>
+        <div style="display:flex;gap:7px">
+          <select class="fi" style="width:130px"><option>June 2026</option><option>May 2026</option><option>April 2026</option></select>
+          <button class="btn btn-p btn-sm" onclick="showToast('📤 GST JSON exported')">📤 Export JSON</button>
+        </div>
+      </div>
+      <div class="tabr">
+        <button class="tabb active" onclick="switchTab(this,'gst','summary')">Summary</button>
+        <button class="tabb" onclick="switchTab(this,'gst','gstr1')">GSTR-1</button>
+        <button class="tabb" onclick="switchTab(this,'gst','gstr3b')">GSTR-3B</button>
+        <button class="tabb" onclick="switchTab(this,'gst','hsn')">HSN Summary</button>
+        <button class="tabb" onclick="switchTab(this,'gst','itc')">ITC Ledger</button>
+      </div>
+      <div id="gst-summary"><div class="g3" style="margin-bottom:18px">
+        <div class="card"><div class="slbl">Sales (Taxable)</div><div class="sval bl" style="font-size:20px;margin-top:7px">₹15,48,700</div></div>
+        <div class="card"><div class="slbl">Output GST</div><div class="sval gr" style="font-size:20px;margin-top:7px">₹2,78,766</div></div>
+        <div class="card"><div class="slbl">Input Tax Credit</div><div class="sval or" style="font-size:20px;margin-top:7px">₹1,42,300</div></div>
+      </div>
+      <div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:14px">GST Rate-wise Breakup</div>
+        <table><thead><tr><th>Rate</th><th>Taxable</th><th>CGST</th><th>SGST</th><th>IGST</th><th>Total Tax</th></tr></thead>
+        <tbody>
+          <tr><td><span class="chip cbl2">0%</span></td><td>₹48,000</td><td>—</td><td>—</td><td>—</td><td>₹0</td></tr>
+          <tr><td><span class="chip cgr">5%</span></td><td>₹2,10,000</td><td>₹5,250</td><td>₹5,250</td><td>—</td><td>₹10,500</td></tr>
+          <tr><td><span class="chip cor">12%</span></td><td>₹3,80,000</td><td>₹22,800</td><td>₹22,800</td><td>—</td><td>₹45,600</td></tr>
+          <tr><td><span class="chip crd">18%</span></td><td>₹7,20,000</td><td>₹64,800</td><td>₹64,800</td><td>—</td><td>₹1,29,600</td></tr>
+          <tr><td><span class="chip crd">28%</span></td><td>₹1,90,700</td><td>₹26,698</td><td>₹26,698</td><td>—</td><td>₹53,396</td></tr>
+          <tr style="font-weight:700;color:var(--text)"><td>TOTAL</td><td>₹15,48,700</td><td>₹1,19,548</td><td>₹1,19,548</td><td>₹39,670</td><td>₹2,78,766</td></tr>
+        </tbody></table>
+      </div></div>
+      <div id="gst-gstr1" class="hidden"><div class="card"><div class="es"><div class="ei">📋</div><div class="et">GSTR-1 Report</div><div class="esb">B2B, B2C, CDNR, exports</div><button class="btn btn-p" style="margin-top:14px" onclick="showToast('GSTR-1 generated ✅')">Generate GSTR-1</button></div></div></div>
+      <div id="gst-gstr3b" class="hidden"><div class="card"><div class="es"><div class="ei">📊</div><div class="et">GSTR-3B Summary</div><div class="esb">Monthly return filing</div><button class="btn btn-p" style="margin-top:14px" onclick="showToast('GSTR-3B generated ✅')">Generate GSTR-3B</button></div></div></div>
+      <div id="gst-hsn" class="hidden"><div class="card"><div class="es"><div class="ei">🔢</div><div class="et">HSN/SAC Summary</div><div class="esb">Commodity-wise tax</div><button class="btn btn-p" style="margin-top:14px" onclick="showToast('HSN summary generated ✅')">Generate</button></div></div></div>
+      <div id="gst-itc" class="hidden"><div class="card"><div class="es"><div class="ei">💰</div><div class="et">ITC Ledger</div><div class="esb">Input tax credit tracking & utilisation</div><button class="btn btn-p" style="margin-top:14px" onclick="showToast('ITC ledger generated ✅')">Generate ITC Ledger</button></div></div></div>
+    </div>
+
+    <!-- ======== E-INVOICE ======== -->
+    <div class="page" id="page-einvoice">
+      <div class="bc">GST / <span>E-Invoice & E-Way Bill</span></div>
+      <div class="sh" style="margin-top:8px"><div><div class="st">E-Invoice & E-Way Bill</div><div class="ss">NIC portal integration — IRN, QR, e-way bill</div></div></div>
+      <div class="g2" style="margin-bottom:18px">
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;margin-bottom:14px">⚡ E-Invoice Status</div>
+          <div id="einvList"></div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;margin-bottom:14px">🛣️ E-Way Bill</div>
+          <div class="fg"><label class="fl">Invoice No</label><input class="fi" id="ewbInv" placeholder="INV-2468"/></div>
+          <div class="fg"><label class="fl">Transporter ID</label><input class="fi" placeholder="12AABCT1234A1Z3" class="mono"/></div>
+          <div class="fr c2">
+            <div class="fg"><label class="fl">Vehicle No</label><input class="fi" placeholder="MH01AB1234"/></div>
+            <div class="fg"><label class="fl">Distance (km)</label><input class="fi" type="number" placeholder="120"/></div>
+          </div>
+          <button class="btn btn-p" style="width:100%;justify-content:center" onclick="genEWB()">Generate E-Way Bill</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== WAREHOUSES ======== -->
+    <div class="page" id="page-warehouses">
+      <div class="bc">Inventory / <span>Warehouses</span></div>
+      <div class="sh" style="margin-top:8px">
+        <div><div class="st">Multi-Warehouse Management</div><div class="ss">Branch-wise stock, inter-warehouse transfers</div></div>
+        <button class="btn btn-p btn-sm" onclick="openModal('whModal')">➕ Add Warehouse</button>
+      </div>
+      <div class="g3" id="whGrid"></div>
+    </div>
+
+    <!-- ======== ACCOUNTING ======== -->
+    <div class="page" id="page-accounting">
+      <div class="bc">Accounts / <span>Books</span></div>
+      <div class="sh" style="margin-top:8px">
+        <div><div class="st">Accounting & Ledger</div><div class="ss">Double-entry bookkeeping, P&L, Balance Sheet</div></div>
+        <button class="btn btn-o btn-sm" onclick="openModal('jeModal')">➕ Journal Entry</button>
+      </div>
+      <div class="tabr">
+        <button class="tabb active" onclick="switchTab(this,'acc','pl')">P&L</button>
+        <button class="tabb" onclick="switchTab(this,'acc','bs')">Balance Sheet</button>
+        <button class="tabb" onclick="switchTab(this,'acc','ledger')">Ledger</button>
+        <button class="tabb" onclick="switchTab(this,'acc','cashbook')">Cash Book</button>
+        <button class="tabb" onclick="switchTab(this,'acc','bank')">Bank Book</button>
+      </div>
+      <div id="acc-pl"><div class="card">
+        <div style="font-size:13px;font-weight:700;margin-bottom:3px">Profit & Loss — Apr 1 to Jun 1, 2026</div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:18px">Q1 FY 2026-27</div>
+        <div style="max-width:580px">
+          <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px">INCOME</div>
+          <div class="tr"><span>Sales Revenue</span><span style="color:var(--green)">₹18,46,500</span></div>
+          <div class="tr"><span>Other Income</span><span style="color:var(--green)">₹12,000</span></div>
+          <div class="tr" style="font-weight:700"><span>Gross Income</span><span style="color:var(--green)">₹18,58,500</span></div>
+          <div class="div"></div>
+          <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px">COST OF GOODS SOLD</div>
+          <div class="tr"><span>Opening Stock</span><span>₹8,20,000</span></div>
+          <div class="tr"><span>Purchases</span><span>₹12,40,000</span></div>
+          <div class="tr"><span>Less: Closing Stock</span><span style="color:var(--red)">-₹9,80,000</span></div>
+          <div class="tr" style="font-weight:700"><span>COGS</span><span style="color:var(--red)">₹10,80,000</span></div>
+          <div class="div"></div>
+          <div class="tr" style="font-weight:800;font-size:14px"><span>Gross Profit</span><span style="color:var(--green)">₹7,78,500</span></div>
+          <div class="div"></div>
+          <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px">EXPENSES</div>
+          <div class="tr"><span>Salaries & Wages</span><span>₹2,40,000</span></div>
+          <div class="tr"><span>Rent</span><span>₹60,000</span></div>
+          <div class="tr"><span>Electricity</span><span>₹18,000</span></div>
+          <div class="tr"><span>Marketing & Ads</span><span>₹42,100</span></div>
+          <div class="tr" style="font-weight:700"><span>Total Expenses</span><span style="color:var(--red)">₹3,60,100</span></div>
+          <div class="div"></div>
+          <div class="tr fin"><span>NET PROFIT</span><span style="color:var(--green)">₹4,18,400</span></div>
+        </div>
+      </div></div>
+      <div id="acc-bs" class="hidden"><div class="card">
+        <div style="font-size:13px;font-weight:700;margin-bottom:18px">Balance Sheet as on June 1, 2026</div>
+        <div class="g2">
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:7px">ASSETS</div>
+            <div class="tr"><span>Cash & Bank</span><span style="color:var(--green)">₹3,42,000</span></div>
+            <div class="tr"><span>Accounts Receivable</span><span style="color:var(--green)">₹3,24,800</span></div>
+            <div class="tr"><span>Inventory (Closing)</span><span style="color:var(--green)">₹9,80,000</span></div>
+            <div class="tr"><span>Fixed Assets</span><span style="color:var(--green)">₹8,50,000</span></div>
+            <div class="tr" style="font-weight:700"><span>Total Assets</span><span style="color:var(--accent)">₹24,96,800</span></div>
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:7px">LIABILITIES & EQUITY</div>
+            <div class="tr"><span>Accounts Payable</span><span style="color:var(--red)">₹4,80,000</span></div>
+            <div class="tr"><span>GST Payable</span><span style="color:var(--red)">₹1,36,466</span></div>
+            <div class="tr"><span>Loans</span><span style="color:var(--red)">₹5,00,000</span></div>
+            <div class="tr"><span>Owner's Capital</span><span style="color:var(--green)">₹13,80,334</span></div>
+            <div class="tr" style="font-weight:700"><span>Total L + E</span><span style="color:var(--accent)">₹24,96,800</span></div>
+          </div>
+        </div>
+      </div></div>
+      <div id="acc-ledger" class="hidden"><div class="card"><div class="tw"><table>
+        <thead><tr><th>Date</th><th>Account</th><th>Narration</th><th>Debit</th><th>Credit</th><th>Balance</th></tr></thead>
+        <tbody id="ledgerBody"></tbody>
+      </table></div></div></div>
+      <div id="acc-cashbook" class="hidden"><div class="card"><div class="tw"><table>
+        <thead><tr><th>Date</th><th>Narration</th><th>Receipt</th><th>Payment</th><th>Balance</th></tr></thead>
+        <tbody id="cashBody"></tbody>
+      </table></div></div></div>
+      <div id="acc-bank" class="hidden"><div class="card"><div class="tw"><table>
+        <thead><tr><th>Date</th><th>Narration</th><th>Debit</th><th>Credit</th><th>Balance</th></tr></thead>
+        <tbody id="bankBody"></tbody>
+      </table></div></div></div>
+    </div>
+
+    <!-- ======== PAYMENTS ======== -->
+    <div class="page" id="page-payments">
+      <div class="bc">Accounts / <span>Payments</span></div>
+      <div class="sh" style="margin-top:8px">
+        <div><div class="st">Payment Management</div><div class="ss">UPI, Razorpay, bank transfer, cash</div></div>
+        <button class="btn btn-p btn-sm" onclick="openModal('payModal')">➕ Record Payment</button>
+      </div>
+      <div class="g2" style="margin-bottom:18px">
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;margin-bottom:14px">💳 By Method (This Month)</div>
+          <div style="display:flex;flex-direction:column;gap:9px" id="payMethods"></div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;margin-bottom:11px">📱 Generate UPI QR</div>
+          <div class="fg"><label class="fl">Amount (₹)</label><input class="fi" placeholder="Enter amount" id="upiAmt"/></div>
+          <div class="fg"><label class="fl">Invoice / Reference</label><input class="fi" placeholder="INV-2469"/></div>
+          <div class="fg"><label class="fl">UPI ID</label><input class="fi" value="sharma.electronics@ybl" id="upiId"/></div>
+          <button class="btn btn-p" style="width:100%;justify-content:center" onclick="genUPI()">Generate QR Code</button>
+          <div id="upiQR" style="display:none;text-align:center;margin-top:14px;padding:18px;background:var(--bg3);border-radius:var(--r2)">
+            <div style="font-size:56px;letter-spacing:-4px">▩▩▩<br>▩▩▩<br>▩▩▩</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:7px">UPI QR — Scan to Pay</div>
+            <div id="upiIdShow" style="font-size:10px;color:var(--text3);margin-top:3px"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:14px">Recent Payments</div>
+        <div class="tw"><table>
+          <thead><tr><th>Date</th><th>Customer/Vendor</th><th>Invoice Ref</th><th>Method</th><th>Amount</th><th>Type</th></tr></thead>
+          <tbody id="payBody"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ======== REPORTS ======== -->
+    <div class="page" id="page-reports">
+      <div class="bc">Reports / <span>Analytics</span></div>
+      <div class="sh" style="margin-top:8px"><div><div class="st">Reports & Analytics</div><div class="ss">PDF, Excel, CSV export</div></div></div>
+      <div class="g3" style="margin-bottom:18px">
+        <div class="card chov" onclick="showToast('📊 Sales report generated')"><div style="font-size:26px;margin-bottom:7px">📊</div><div style="font-size:13px;font-weight:700">Sales Report</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Invoices, revenue by customer/product</div></div>
+        <div class="card chov" onclick="showToast('🛒 Purchase report generated')"><div style="font-size:26px;margin-bottom:7px">🛒</div><div style="font-size:13px;font-weight:700">Purchase Report</div><div style="font-size:11px;color:var(--text3);margin-top:3px">All purchases by vendor</div></div>
+        <div class="card chov" onclick="showToast('📦 Inventory report generated')"><div style="font-size:26px;margin-bottom:7px">📦</div><div style="font-size:13px;font-weight:700">Inventory Report</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Stock movement, valuation, expiry</div></div>
+        <div class="card chov" onclick="nav('gst',null)"><div style="font-size:26px;margin-bottom:7px">🇮🇳</div><div style="font-size:13px;font-weight:700">GST Reports</div><div style="font-size:11px;color:var(--text3);margin-top:3px">GSTR-1, GSTR-3B, HSN</div></div>
+        <div class="card chov" onclick="showToast('👥 Customer report generated')"><div style="font-size:26px;margin-bottom:7px">👥</div><div style="font-size:13px;font-weight:700">Customer Report</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Outstanding, LTV, purchase history</div></div>
+        <div class="card chov" onclick="nav('accounting',null)"><div style="font-size:26px;margin-bottom:7px">📒</div><div style="font-size:13px;font-weight:700">P&L / Balance Sheet</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Full financial statements</div></div>
+        <div class="card chov" onclick="showToast('💰 Cash-flow report generated')"><div style="font-size:26px;margin-bottom:7px">💰</div><div style="font-size:13px;font-weight:700">Cash Flow</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Cash inflow, outflow, net position</div></div>
+        <div class="card chov" onclick="showToast('🏭 Branch report generated')"><div style="font-size:26px;margin-bottom:7px">🏭</div><div style="font-size:13px;font-weight:700">Branch Report</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Multi-branch P&L comparison</div></div>
+        <div class="card chov" onclick="showToast('🔮 AI forecast report generated')"><div style="font-size:26px;margin-bottom:7px">🔮</div><div style="font-size:13px;font-weight:700">AI Forecast Report</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Predictive analytics dashboard</div></div>
+      </div>
+    </div>
+
+    <!-- ======== AI ASSISTANT ======== -->
+    <div class="page" id="page-ai">
+      <div class="bc">AI / <span>Business Assistant</span></div>
+      <div class="sh" style="margin-top:8px">
+        <div><div class="st">🤖 AI Business Assistant</div><div class="ss">Ask anything — sales, stock, customers, forecasts</div></div>
+        <div style="display:flex;gap:7px">
+          <button class="btn btn-o btn-sm" onclick="showToast('🎤 Voice mode activated — speak now')">🎤 Voice</button>
+          <button class="btn btn-o btn-sm" onclick="clearAI()">🗑 Clear</button>
+        </div>
+      </div>
+      <div class="g2" style="gap:18px">
+        <div>
+          <div class="aip">
+            <div class="aim" id="aiMsgs"></div>
+            <div class="aiir">
+              <input class="aiin" id="aiIn" placeholder="Ask: What are today's sales? Which products are low?" onkeydown="if(event.key==='Enter')sendAI()"/>
+              <button class="aisd" onclick="sendAI()">➤</button>
+            </div>
+          </div>
+          <div style="margin-top:11px"><div style="font-size:9px;color:var(--text3);margin-bottom:7px;text-transform:uppercase;letter-spacing:1px">Quick Questions</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px" id="aiSug"></div></div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;margin-bottom:11px">🔮 AI Predictions</div>
+            <div id="aiPreds"></div>
+          </div>
+          <div class="card">
+            <div style="font-size:13px;font-weight:700;margin-bottom:11px">📷 OCR Bill Scanner</div>
+            <div style="text-align:center;padding:18px;background:var(--bg3);border:2px dashed var(--border2);border-radius:var(--r2);cursor:pointer" onclick="showToast('📷 Camera opened — point at supplier invoice')">
+              <div style="font-size:30px;margin-bottom:7px">📸</div>
+              <div style="font-size:12px;font-weight:600;color:var(--text2)">Scan Supplier Invoice</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:3px">AI extracts all details automatically</div>
+            </div>
+            <div style="margin-top:11px;font-size:10px;color:var(--text3)">Extracts: vendor name, GSTIN, invoice no, products, qty, price, GST → auto-creates purchase entry</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== AUDIT LOG ======== -->
+    <div class="page" id="page-auditlog">
+      <div class="bc">System / <span>Audit Log</span></div>
+      <div class="sh" style="margin-top:8px"><div><div class="st">Audit Log</div><div class="ss">All user actions tracked with timestamp</div></div>
+        <button class="btn btn-o btn-sm" onclick="showToast('📤 Audit log exported')">📤 Export</button>
+      </div>
+      <div class="card"><div class="tw"><table>
+        <thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Module</th><th>Details</th><th>IP</th></tr></thead>
+        <tbody id="auditBody"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- ======== SETTINGS ======== -->
+    <div class="page" id="page-settings">
+      <div class="bc">Settings</div>
+      <div class="sh" style="margin-top:8px"><div><div class="st">Settings & Configuration</div></div></div>
+      <div class="g2" style="gap:18px">
+        <div>
+          <div class="card" style="margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;margin-bottom:14px">🏢 Company Profile</div>
+            <div class="fg"><label class="fl">Business Name</label><input class="fi" value="Sharma Electronics"/></div>
+            <div class="fg"><label class="fl">GSTIN</label><input class="fi mono" value="27AABCS1234F1Z5"/></div>
+            <div class="fr c2">
+              <div class="fg"><label class="fl">State</label><select class="fi"><option>27 - Maharashtra</option></select></div>
+              <div class="fg"><label class="fl">Business Type</label><select class="fi"><option>Retailer</option><option>Wholesaler</option><option>Manufacturer</option></select></div>
+            </div>
+            <div class="fg"><label class="fl">Invoice Prefix</label><input class="fi" value="INV-"/></div>
+            <div class="fg"><label class="fl">Financial Year Start</label><select class="fi"><option>April</option><option>January</option></select></div>
+            <button class="btn btn-p btn-sm" onclick="showToast('✅ Settings saved!')">Save Changes</button>
+          </div>
+          <div class="card">
+            <div style="font-size:13px;font-weight:700;margin-bottom:14px">👤 User & Role Management</div>
+            <div class="tw"><table>
+              <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td class="b">Rajesh Sharma</td><td><span class="chip crd">Owner</span></td><td><span class="sb sp">Active</span></td><td><button class="btn btn-o btn-sm">Edit</button></td></tr>
+                <tr><td class="b">Priya Sharma</td><td><span class="chip cor">Accountant</span></td><td><span class="sb sp">Active</span></td><td><button class="btn btn-o btn-sm">Edit</button></td></tr>
+                <tr><td class="b">Suresh Kumar</td><td><span class="chip cbl2">Salesperson</span></td><td><span class="sb sp">Active</span></td><td><button class="btn btn-o btn-sm">Edit</button></td></tr>
+              </tbody>
+            </table></div>
+            <button class="btn btn-o btn-sm" style="margin-top:11px" onclick="showToast('➕ Add user dialog opened')">➕ Add User</button>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;margin-bottom:14px">🔐 Security</div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
+                <div><div style="font-size:12px;font-weight:600">Two-Factor Auth (TOTP)</div><div style="font-size:10px;color:var(--text3)">Google Authenticator / SMS OTP</div></div>
+                <span class="chip cgr">Enabled</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
+                <div><div style="font-size:12px;font-weight:600">Auto Cloud Backup</div><div style="font-size:10px;color:var(--text3)">Daily 2 AM → AWS S3 encrypted</div></div>
+                <span class="chip cgr">Active</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
+                <div><div style="font-size:12px;font-weight:600">Audit Logging</div><div style="font-size:10px;color:var(--text3)">All actions tracked & stored 7 years</div></div>
+                <span class="chip cgr">Active</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
+                <div><div style="font-size:12px;font-weight:600">Offline Mode (SQLite)</div><div style="font-size:10px;color:var(--text3)">Auto-sync when online</div></div>
+                <span class="chip cgr">Enabled</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
+                <div><div style="font-size:12px;font-weight:600">Data Encryption (AES-256)</div><div style="font-size:10px;color:var(--text3)">At rest & in transit</div></div>
+                <span class="chip cgr">Active</span>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="font-size:13px;font-weight:700;margin-bottom:14px">🔔 Notifications</div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
+                <div style="font-size:12px;font-weight:600">WhatsApp Invoice Sharing</div><span class="chip cgr">On</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
+                <div style="font-size:12px;font-weight:600">Payment Reminders</div><span class="chip cgr">On</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
+                <div style="font-size:12px;font-weight:600">Low Stock Alerts</div><span class="chip cgr">On</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
+                <div style="font-size:12px;font-weight:600">SMS (via Twilio)</div><span class="chip cor">Off</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ===== MODALS ===== -->
+
+<!-- INVOICE VIEW/EDIT PICKER -->
+<div id="invPickModal" class="mo hidden">
+  <div class="md md-sm">
+    <div class="mh"><span class="mt2">Invoice Actions</span><button class="mc" onclick="closeModal('invPickModal')">✕</button></div>
+    <div class="mb">
+      <div id="invPickContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- INVOICE PREVIEW -->
+<div id="invPreviewModal" class="mo hidden">
+  <div class="md md-lg">
+    <div class="mh"><span class="mt2" id="prevTitle">Invoice Preview</span>
+      <div style="display:flex;gap:7px">
+        <button class="btn btn-o btn-sm" onclick="showToast('📄 PDF downloaded!')">📄 PDF</button>
+        <button class="btn btn-o btn-sm" onclick="showToast('📱 Sent via WhatsApp!')">📱 WhatsApp</button>
+        <button class="btn btn-o btn-sm" onclick="showToast('📧 Email sent!')">📧 Email</button>
+        <button class="mc" onclick="closeModal('invPreviewModal')">✕</button>
+      </div>
+    </div>
+    <div class="mb"><div id="invPreviewBody"></div></div>
+  </div>
+</div>
+
+<!-- PRODUCT MODAL -->
+<div id="prodModal" class="mo hidden">
+  <div class="md md-md">
+    <div class="mh"><span class="mt2" id="prodModalTitle">Add Product</span><button class="mc" onclick="closeModal('prodModal')">✕</button></div>
+    <div class="mb">
+      <div class="fr c2"><div class="fg"><label class="fl">Product Name</label><input class="fi" id="pm_name" placeholder="Samsung 55 QLED TV"/></div>
+        <div class="fg"><label class="fl">SKU / Code</label><input class="fi" id="pm_sku" placeholder="SAM-TV-55-Q"/></div></div>
+      <div class="fr c3"><div class="fg"><label class="fl">Category</label><select class="fi" id="pm_cat"><option>TVs</option><option>Smartphones</option><option>Laptops</option><option>Accessories</option><option>Networking</option></select></div>
+        <div class="fg"><label class="fl">Brand</label><input class="fi" id="pm_brand" placeholder="Samsung"/></div>
+        <div class="fg"><label class="fl">HSN Code</label><input class="fi mono" id="pm_hsn" placeholder="85287200"/></div></div>
+      <div class="fr c3"><div class="fg"><label class="fl">Purchase Price (₹)</label><input class="fi" type="number" id="pm_pp" placeholder="45000"/></div>
+        <div class="fg"><label class="fl">MRP (₹)</label><input class="fi" type="number" id="pm_mrp" placeholder="65000"/></div>
+        <div class="fg"><label class="fl">Selling Price (₹)</label><input class="fi" type="number" id="pm_sp" placeholder="59000"/></div></div>
+      <div class="fr c3"><div class="fg"><label class="fl">Opening Stock</label><input class="fi" type="number" id="pm_stock" placeholder="10"/></div>
+        <div class="fg"><label class="fl">Reorder Level</label><input class="fi" type="number" id="pm_reorder" placeholder="3"/></div>
+        <div class="fg"><label class="fl">GST Rate %</label><select class="fi" id="pm_gst"><option>0</option><option>5</option><option>12</option><option selected>18</option><option>28</option></select></div></div>
+      <div class="fr c2"><div class="fg"><label class="fl">Unit</label><select class="fi"><option>Nos</option><option>Kg</option><option>Litre</option><option>Box</option><option>Pack</option></select></div>
+        <div class="fg"><label class="fl">Barcode</label><input class="fi mono" placeholder="Scan or enter barcode"/></div></div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('prodModal')">Cancel</button><button class="btn btn-p" onclick="saveProd()">Save Product</button></div>
+  </div>
+</div>
+
+<!-- CUSTOMER MODAL -->
+<div id="custModal" class="mo hidden">
+  <div class="md md-md">
+    <div class="mh"><span class="mt2" id="custModalTitle">Add Customer</span><button class="mc" onclick="closeModal('custModal')">✕</button></div>
+    <div class="mb">
+      <div class="fr c2"><div class="fg"><label class="fl">Business / Customer Name</label><input class="fi" id="cm_name" placeholder="Kumar Electronics"/></div>
+        <div class="fg"><label class="fl">Contact Person</label><input class="fi" id="cm_contact" placeholder="Suresh Kumar"/></div></div>
+      <div class="fr c2"><div class="fg"><label class="fl">GSTIN</label><input class="fi mono" id="cm_gstin" placeholder="27AABCK5678G1Z2"/></div>
+        <div class="fg"><label class="fl">Mobile</label><input class="fi" id="cm_mobile" placeholder="9876543210"/></div></div>
+      <div class="fr c2"><div class="fg"><label class="fl">Email</label><input class="fi" id="cm_email" placeholder="kumar@email.com"/></div>
+        <div class="fg"><label class="fl">City</label><input class="fi" id="cm_city" placeholder="Mumbai"/></div></div>
+      <div class="fg"><label class="fl">Full Address</label><textarea class="fi" rows="2" id="cm_addr" placeholder="Billing address…"></textarea></div>
+      <div class="fr c2"><div class="fg"><label class="fl">Credit Limit (₹)</label><input class="fi" type="number" id="cm_credit" placeholder="100000"/></div>
+        <div class="fg"><label class="fl">Payment Terms</label><select class="fi" id="cm_terms"><option>Due on Receipt</option><option>Net 15</option><option>Net 30</option><option>Net 45</option></select></div></div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('custModal')">Cancel</button><button class="btn btn-p" onclick="saveCust()">Save Customer</button></div>
+  </div>
+</div>
+
+<!-- VENDOR MODAL -->
+<div id="vendModal" class="mo hidden">
+  <div class="md md-md">
+    <div class="mh"><span class="mt2">Add Vendor</span><button class="mc" onclick="closeModal('vendModal')">✕</button></div>
+    <div class="mb">
+      <div class="fr c2"><div class="fg"><label class="fl">Vendor Name</label><input class="fi" placeholder="Samsung India Pvt Ltd"/></div>
+        <div class="fg"><label class="fl">Contact Person</label><input class="fi" placeholder="Amit Singh"/></div></div>
+      <div class="fr c2"><div class="fg"><label class="fl">GSTIN</label><input class="fi mono" placeholder="07AAACS1234A1Z5"/></div>
+        <div class="fg"><label class="fl">Mobile</label><input class="fi" placeholder="9876543210"/></div></div>
+      <div class="fr c2"><div class="fg"><label class="fl">Email</label><input class="fi" placeholder="vendor@samsung.com"/></div>
+        <div class="fg"><label class="fl">City</label><input class="fi" placeholder="Delhi"/></div></div>
+      <div class="fr c2"><div class="fg"><label class="fl">Credit Period (days)</label><input class="fi" type="number" placeholder="30"/></div>
+        <div class="fg"><label class="fl">Category</label><select class="fi"><option>Electronics</option><option>FMCG</option><option>IT Hardware</option><option>Services</option></select></div></div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('vendModal')">Cancel</button><button class="btn btn-p" onclick="saveVend()">Save Vendor</button></div>
+  </div>
+</div>
+
+<!-- LEAD MODAL -->
+<div id="leadModal" class="mo hidden">
+  <div class="md md-md">
+    <div class="mh"><span class="mt2">Add Lead / Opportunity</span><button class="mc" onclick="closeModal('leadModal')">✕</button></div>
+    <div class="mb">
+      <div class="fr c2"><div class="fg"><label class="fl">Lead Name</label><input class="fi" placeholder="Deepak Traders"/></div>
+        <div class="fg"><label class="fl">Company</label><input class="fi" placeholder="Deepak Enterprises"/></div></div>
+      <div class="fr c2"><div class="fg"><label class="fl">Mobile</label><input class="fi" placeholder="9876543210"/></div>
+        <div class="fg"><label class="fl">Email</label><input class="fi" placeholder="deepak@email.com"/></div></div>
+      <div class="fr c3"><div class="fg"><label class="fl">Stage</label><select class="fi"><option>New</option><option>Contacted</option><option>Proposal</option><option>Negotiation</option><option>Won</option><option>Lost</option></select></div>
+        <div class="fg"><label class="fl">Value (₹)</label><input class="fi" type="number" placeholder="500000"/></div>
+        <div class="fg"><label class="fl">Follow-Up Date</label><input type="date" class="fi"/></div></div>
+      <div class="fg"><label class="fl">Notes</label><textarea class="fi" rows="2" placeholder="Lead notes…"></textarea></div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('leadModal')">Cancel</button><button class="btn btn-p" onclick="saveLead()">Save Lead</button></div>
+  </div>
+</div>
+
+<!-- PURCHASE ORDER MODAL -->
+<div id="poModal" class="mo hidden">
+  <div class="md md-md">
+    <div class="mh"><span class="mt2">New Purchase Order</span><button class="mc" onclick="closeModal('poModal')">✕</button></div>
+    <div class="mb">
+      <div class="fr c2"><div class="fg"><label class="fl">PO Number</label><input class="fi" value="PO-0042"/></div>
+        <div class="fg"><label class="fl">Date</label><input type="date" class="fi"/></div></div>
+      <div class="fg"><label class="fl">Vendor</label><select class="fi"><option>Samsung India Pvt Ltd</option><option>LG Electronics India</option><option>Lenovo India</option><option>Xiaomi India</option></select></div>
+      <div class="fg"><label class="fl">Items (brief)</label><textarea class="fi" rows="2" placeholder="e.g. Samsung 55 QLED x5, iPhone 15 Pro x3…"></textarea></div>
+      <div class="fr c2"><div class="fg"><label class="fl">Expected Delivery</label><input type="date" class="fi"/></div>
+        <div class="fg"><label class="fl">Payment Terms</label><select class="fi"><option>Net 30</option><option>Net 45</option><option>Advance</option></select></div></div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('poModal')">Cancel</button><button class="btn btn-p" onclick="savePO()">Create PO</button></div>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div id="payModal" class="mo hidden">
+  <div class="md md-sm">
+    <div class="mh"><span class="mt2">Record Payment</span><button class="mc" onclick="closeModal('payModal')">✕</button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl">Party (Customer/Vendor)</label><input class="fi" placeholder="Kumar Electronics"/></div>
+      <div class="fg"><label class="fl">Against Invoice</label><input class="fi mono" placeholder="INV-2467"/></div>
+      <div class="fr c2"><div class="fg"><label class="fl">Amount (₹)</label><input class="fi" type="number" id="payAmt" placeholder="18500"/></div>
+        <div class="fg"><label class="fl">Date</label><input type="date" class="fi"/></div></div>
+      <div class="fg"><label class="fl">Payment Method</label><select class="fi"><option>UPI</option><option>Cash</option><option>Bank Transfer / NEFT</option><option>Cheque</option><option>Razorpay</option></select></div>
+      <div class="fg"><label class="fl">Reference / UTR</label><input class="fi mono" placeholder="UTR12345678"/></div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('payModal')">Cancel</button><button class="btn btn-p" onclick="savePayment()">Record Payment</button></div>
+  </div>
+</div>
+
+<!-- RETURN MODAL -->
+<div id="retModal" class="mo hidden">
+  <div class="md md-sm">
+    <div class="mh"><span class="mt2">New Return / Credit Note</span><button class="mc" onclick="closeModal('retModal')">✕</button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl">Document Type</label><select class="fi"><option>Sales Return</option><option>Purchase Return</option><option>Credit Note</option><option>Debit Note</option></select></div>
+      <div class="fg"><label class="fl">Against Invoice</label><input class="fi mono" placeholder="INV-2467"/></div>
+      <div class="fr c2"><div class="fg"><label class="fl">Customer / Vendor</label><input class="fi" placeholder="Kumar Electronics"/></div>
+        <div class="fg"><label class="fl">Date</label><input type="date" class="fi"/></div></div>
+      <div class="fg"><label class="fl">Amount (₹)</label><input class="fi" type="number" placeholder="5000"/></div>
+      <div class="fg"><label class="fl">Reason</label><textarea class="fi" rows="2" placeholder="Reason for return…"></textarea></div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('retModal')">Cancel</button><button class="btn btn-p" onclick="saveReturn()">Save Return</button></div>
+  </div>
+</div>
+
+<!-- WAREHOUSE MODAL -->
+<div id="whModal" class="mo hidden">
+  <div class="md md-sm">
+    <div class="mh"><span class="mt2">Add Warehouse / Branch</span><button class="mc" onclick="closeModal('whModal')">✕</button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl">Warehouse Name</label><input class="fi" placeholder="Andheri Showroom"/></div>
+      <div class="fg"><label class="fl">Address</label><textarea class="fi" rows="2" placeholder="Full address…"></textarea></div>
+      <div class="fr c2"><div class="fg"><label class="fl">Manager</label><input class="fi" placeholder="Suresh Kumar"/></div>
+        <div class="fg"><label class="fl">Mobile</label><input class="fi" placeholder="9876543210"/></div></div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('whModal')">Cancel</button><button class="btn btn-p" onclick="saveWH()">Add Warehouse</button></div>
+  </div>
+</div>
+
+<!-- JOURNAL ENTRY MODAL -->
+<div id="jeModal" class="mo hidden">
+  <div class="md md-sm">
+    <div class="mh"><span class="mt2">Manual Journal Entry</span><button class="mc" onclick="closeModal('jeModal')">✕</button></div>
+    <div class="mb">
+      <div class="fr c2"><div class="fg"><label class="fl">Date</label><input type="date" class="fi"/></div>
+        <div class="fg"><label class="fl">Voucher No</label><input class="fi" value="JV-0084"/></div></div>
+      <div class="fg"><label class="fl">Debit Account</label><select class="fi"><option>Cash A/c</option><option>Bank A/c</option><option>Sales A/c</option><option>Purchase A/c</option><option>Salary Expense</option></select></div>
+      <div class="fg"><label class="fl">Credit Account</label><select class="fi"><option>Sales A/c</option><option>Cash A/c</option><option>Bank A/c</option><option>Capital A/c</option></select></div>
+      <div class="fg"><label class="fl">Amount (₹)</label><input class="fi" type="number" placeholder="10000"/></div>
+      <div class="fg"><label class="fl">Narration</label><input class="fi" placeholder="Being amount received for invoice INV-2468"/></div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('jeModal')">Cancel</button><button class="btn btn-p" onclick="saveJE()">Post Entry</button></div>
+  </div>
+</div>
+
+<div id="toastEl" class="toast hidden"></div>
+
+<script>
+// ============================================================
+// DATA STORE
+// ============================================================
+let INVOICES = [
+  {id:1,no:'INV-2468',date:'2026-06-01',customer:'Kumar Electronics',custGst:'27AABCK5678G1Z2',custMobile:'9876541234',custAddr:'Shop 12, Andheri East, Mumbai',custEmail:'kumar@email.com',custState:'27',type:'GST Invoice',state:'27 - Maharashtra',supply:'intra',notes:'Payment due within 15 days.',items:[{prod:'Samsung 55" QLED TV',qty:1,rate:35593,disc:0,gst:18,amt:35593}],subtotal:35593,discount:0,taxable:35593,cgst:3203,sgst:3204,igst:0,round:0,total:42000,due:'2026-06-15',status:'paid'},
+  {id:2,no:'INV-2467',date:'2026-05-31',customer:'Raj Computers',custGst:'27AAACR9012H1Z3',custMobile:'9876542345',custAddr:'FC Road, Pune',custEmail:'raj@computers.com',custState:'27',type:'GST Invoice',state:'27 - Maharashtra',supply:'intra',notes:'',items:[{prod:'Lenovo V15 Laptop',qty:1,rate:15678,disc:0,gst:18,amt:15678}],subtotal:15678,discount:0,taxable:15678,cgst:1411,sgst:1411,igst:0,round:0,total:18500,due:'2026-06-14',status:'pending'},
+  {id:3,no:'INV-2466',date:'2026-05-30',customer:'Priya Mobiles',custGst:'',custMobile:'9876543456',custAddr:'Nashik Road, Nashik',custEmail:'',custState:'27',type:'Tax Invoice',state:'27 - Maharashtra',supply:'intra',notes:'',items:[{prod:'boAt Cosmos A35 Earbuds',qty:3,rate:2599,disc:5,gst:18,amt:7412}],subtotal:7797,discount:385,taxable:7412,cgst:667,sgst:667,igst:0,round:0,total:8746,due:'2026-06-13',status:'paid'},
+  {id:4,no:'INV-2465',date:'2026-05-29',customer:'Metro Traders',custGst:'27AABCM3456I1Z4',custMobile:'9876544567',custAddr:'Nagpur City, Nagpur',custEmail:'metro@traders.com',custState:'27',type:'GST Invoice',state:'27 - Maharashtra',supply:'intra',notes:'Bulk order — 30 day credit.',items:[{prod:'Sony WH-1000XM5',qty:3,rate:26000,disc:0,gst:18,amt:78000}],subtotal:78000,discount:0,taxable:66102,cgst:5949,sgst:5949,igst:0,round:0,total:67800,due:'2026-06-12',status:'overdue'},
+  {id:5,no:'INV-2464',date:'2026-05-28',customer:'Star Distributors',custGst:'27AABCS7890J1Z5',custMobile:'9876545678',custAddr:'Aurangabad, MH',custEmail:'star@dist.com',custState:'27',type:'Proforma',state:'27 - Maharashtra',supply:'intra',notes:'Proforma — awaiting confirmation.',items:[{prod:'HP 680 Ink Cartridge',qty:30,rate:680,disc:5,gst:12,amt:19380}],subtotal:20400,discount:1020,taxable:19380,cgst:1163,sgst:1163,igst:0,round:0,total:21706,due:'2026-06-11',status:'draft'},
+  {id:6,no:'INV-2463',date:'2026-05-27',customer:'Gupta Brothers',custGst:'07AABCG1234K1Z6',custMobile:'9876546789',custAddr:'Chandni Chowk, Delhi',custEmail:'gupta@brothers.com',custState:'07',type:'GST Invoice',state:'07 - Delhi',supply:'inter',notes:'Inter-state supply.',items:[{prod:'Apple iPhone 15 Pro',qty:1,rate:128000,disc:5,gst:18,amt:121600}],subtotal:128000,discount:6400,taxable:108475,cgst:0,sgst:0,igst:19525,round:0,total:128000,due:'2026-06-10',status:'paid'},
+];
+let nextInvId = 7;
+let nextInvNo = 2469;
+let editingInvId = null; // null = create mode, number = edit mode
+let itemCounter = 0;
+
+const PRODUCTS = [
+  {id:1,sku:'SAM-TV-55Q',name:'Samsung 55" QLED TV',cat:'TVs',hsn:'85287200',mrp:65000,price:59000,pp:45000,stock:8,reorder:3,gst:28,status:'ok',brand:'Samsung'},
+  {id:2,sku:'APL-IPH-15P',name:'Apple iPhone 15 Pro',cat:'Smartphones',hsn:'85171200',mrp:134900,price:128000,pp:115000,stock:2,reorder:5,gst:18,status:'low',brand:'Apple'},
+  {id:3,sku:'MI-RTR-AX6',name:'Mi Router AX6000',cat:'Networking',hsn:'85176200',mrp:6499,price:5800,pp:4200,stock:1,reorder:10,gst:18,status:'critical',brand:'Xiaomi'},
+  {id:4,sku:'BOA-EAR-A35',name:'boAt Cosmos A35 Earbuds',cat:'Accessories',hsn:'85183000',mrp:3499,price:2800,pp:1800,stock:34,reorder:15,gst:18,status:'ok',brand:'boAt'},
+  {id:5,sku:'LEN-LAP-V15',name:'Lenovo V15 G4 Laptop',cat:'Laptops',hsn:'84713000',mrp:52000,price:48000,pp:40000,stock:4,reorder:3,gst:18,status:'low',brand:'Lenovo'},
+  {id:6,sku:'HP-INK-680',name:'HP 680 Ink Cartridge',cat:'Accessories',hsn:'84439910',mrp:800,price:680,pp:400,stock:45,reorder:20,gst:12,status:'ok',brand:'HP'},
+  {id:7,sku:'SON-BT-WH1',name:'Sony WH-1000XM5 Headphones',cat:'Accessories',hsn:'85183000',mrp:29990,price:26000,pp:20000,stock:6,reorder:3,gst:18,status:'ok',brand:'Sony'},
+  {id:8,sku:'SAM-GAL-A55',name:'Samsung Galaxy A55',cat:'Smartphones',hsn:'85171200',mrp:38000,price:35000,pp:29000,stock:0,reorder:5,gst:18,status:'out',brand:'Samsung'},
+];
+
+const CUSTOMERS = [
+  {id:1,name:'Kumar Electronics',gstin:'27AABCK5678G1Z2',mobile:'9876541234',city:'Mumbai',total:420000,outstanding:42000,last:'01 Jun 2026',score:94,contact:'Suresh Kumar',email:'kumar@email.com',addr:'Shop 12, Andheri East, Mumbai',credit:200000,terms:'Net 30'},
+  {id:2,name:'Raj Computers',gstin:'27AAACR9012H1Z3',mobile:'9876542345',city:'Pune',total:185000,outstanding:18500,last:'31 May 2026',score:82,contact:'Rajesh Verma',email:'raj@computers.com',addr:'FC Road, Pune',credit:100000,terms:'Net 30'},
+  {id:3,name:'Priya Mobiles',gstin:'',mobile:'9876543456',city:'Nashik',total:92000,outstanding:0,last:'30 May 2026',score:71,contact:'Priya Joshi',email:'',addr:'Nashik Road, Nashik',credit:50000,terms:'Due on Receipt'},
+  {id:4,name:'Metro Traders',gstin:'27AABCM3456I1Z4',mobile:'9876544567',city:'Nagpur',total:678000,outstanding:67800,last:'29 May 2026',score:61,contact:'Mohan Sharma',email:'metro@traders.com',addr:'Nagpur City, Nagpur',credit:300000,terms:'Net 45'},
+  {id:5,name:'Star Distributors',gstin:'27AABCS7890J1Z5',mobile:'9876545678',city:'Aurangabad',total:241000,outstanding:24100,last:'28 May 2026',score:88,contact:'Suresh Star',email:'star@dist.com',addr:'Aurangabad, MH',credit:150000,terms:'Net 30'},
+  {id:6,name:'Gupta Brothers',gstin:'07AABCG1234K1Z6',mobile:'9876546789',city:'Delhi',total:150000,outstanding:0,last:'27 May 2026',score:95,contact:'Amit Gupta',email:'gupta@brothers.com',addr:'Chandni Chowk, Delhi',credit:500000,terms:'Net 15'},
+];
+
+const VENDORS = [
+  {name:'Samsung India Pvt Ltd',gstin:'07AAACS1234A1Z5',mobile:'9811001100',city:'Delhi',total:3200000,payable:120000,score:96},
+  {name:'LG Electronics India',gstin:'29AAACL5678B1Z3',mobile:'9822002200',city:'Bengaluru',total:1800000,payable:85000,score:88},
+  {name:'Lenovo India',gstin:'07AAACL9012C1Z1',mobile:'9833003300',city:'Delhi',total:2400000,payable:65000,score:92},
+  {name:'Xiaomi India',gstin:'29AAACX3456D1Z9',mobile:'9844004400',city:'Bengaluru',total:950000,payable:48000,score:79},
+  {name:'Sony India',gstin:'27AAACS7890E1Z7',mobile:'9855005500',city:'Mumbai',total:1200000,payable:160000,score:85},
+];
+
+const CRM_LEADS = [
+  {name:'Deepak Traders',company:'Deepak Enterprises',mobile:'9876501234',stage:'Proposal',value:500000,followup:'2026-06-05',ai:'Send product catalogue & quotation'},
+  {name:'Anil Electronics',company:'Anil Stores',mobile:'9876502345',stage:'Contacted',value:200000,followup:'2026-06-03',ai:'Follow up on demo request'},
+  {name:'Ravi Distributors',company:'Ravi & Co',mobile:'9876503456',stage:'Negotiation',value:800000,followup:'2026-06-02',ai:'Offer 3% extra discount to close deal'},
+  {name:'Neha Retail',company:'Neha Shop',mobile:'9876504567',stage:'New',value:150000,followup:'2026-06-07',ai:'Introduce yourself & understand needs'},
+  {name:'Prakash Wholesale',company:'Prakash & Sons',mobile:'9876505678',stage:'Won',value:1200000,followup:'—',ai:'Send thank you & schedule next order'},
+];
+
+const PO_DATA = [
+  {no:'PO-0041',date:'28 May 2026',vendor:'Samsung India',amount:225000,gst:40500,total:265500,status:'received'},
+  {no:'PO-0040',date:'25 May 2026',vendor:'LG Electronics India',amount:180000,gst:32400,total:212400,status:'pending'},
+  {no:'PO-0039',date:'22 May 2026',vendor:'Lenovo India',amount:160000,gst:28800,total:188800,status:'received'},
+  {no:'PO-0038',date:'18 May 2026',vendor:'Xiaomi India',amount:84000,gst:15120,total:99120,status:'pending'},
+];
+
+const QUOTES = [
+  {no:'QT-0028',date:'30 May 2026',customer:'Deepak Traders',amount:480000,valid:'30 Jun 2026',status:'sent'},
+  {no:'QT-0027',date:'27 May 2026',customer:'Anil Electronics',amount:195000,valid:'27 Jun 2026',status:'draft'},
+  {no:'QT-0026',date:'24 May 2026',customer:'Metro Traders',amount:320000,valid:'24 Jun 2026',status:'accepted'},
+];
+
+const RETURNS = [
+  {no:'CN-0012',date:'30 May 2026',type:'Credit Note',against:'INV-2460',party:'Raj Computers',amount:5000,status:'processed'},
+  {no:'SR-0008',date:'28 May 2026',type:'Sales Return',against:'INV-2455',party:'Priya Mobiles',amount:2800,status:'pending'},
+];
+
+const PAYMENTS_DATA = [
+  {date:'01 Jun 2026',party:'Kumar Electronics',invoice:'INV-2468',method:'UPI',amount:42000,type:'received'},
+  {date:'30 May 2026',party:'Priya Mobiles',invoice:'INV-2466',method:'Cash',amount:8746,type:'received'},
+  {date:'29 May 2026',party:'Gupta Brothers',invoice:'INV-2463',method:'Bank Transfer',amount:128000,type:'received'},
+  {date:'28 May 2026',party:'Samsung India',invoice:'PO-0040',method:'NEFT',amount:265500,type:'paid'},
+  {date:'26 May 2026',party:'LG Electronics',invoice:'PO-0039',method:'Bank Transfer',amount:188800,type:'paid'},
+];
+
+const AUDIT_LOG = [
+  {ts:'01 Jun 2026 09:42:18',user:'Rajesh Sharma',action:'CREATE',module:'Invoice',detail:'Created INV-2468 for Kumar Electronics — ₹42,000',ip:'192.168.1.10'},
+  {ts:'01 Jun 2026 09:40:05',user:'Rajesh Sharma',action:'LOGIN',module:'Auth',detail:'Successful login from Chrome browser',ip:'192.168.1.10'},
+  {ts:'31 May 2026 17:22:33',user:'Priya Sharma',action:'EDIT',module:'Invoice',detail:'Edited INV-2465 — updated customer address',ip:'192.168.1.12'},
+  {ts:'31 May 2026 16:55:10',user:'Rajesh Sharma',action:'DELETE',module:'Product',detail:'Deleted product SKU: OLD-PROD-01',ip:'192.168.1.10'},
+  {ts:'31 May 2026 14:30:42',user:'Suresh Kumar',action:'CREATE',module:'Customer',detail:'Added new customer: Deepak Traders',ip:'192.168.1.14'},
+  {ts:'31 May 2026 11:10:00',user:'Priya Sharma',action:'EXPORT',module:'GST',detail:'Exported GSTR-1 JSON for May 2026',ip:'192.168.1.12'},
+];
+
+const WAREHOUSES = [
+  {name:'Andheri Showroom',addr:'Shop 4-6, Veera Desai Road, Andheri West, Mumbai',manager:'Suresh Kumar',items:142,value:2840000},
+  {name:'Pune Godown',addr:'Plot 8, Bhosari MIDC, Pune',manager:'Ramesh Patil',items:68,value:1240000},
+  {name:'Nagpur Branch',addr:'Dharampeth, Nagpur',manager:'Vikram Joshi',items:37,value:680000},
+];
+
+const LEDGER_DATA = [
+  {date:'01 Jun 2026',account:'Sales A/c',narr:'INV-2468 Kumar Electronics',dr:'',cr:'35,593',bal:'18,46,500'},
+  {date:'01 Jun 2026',account:'Output GST A/c',narr:'GST on INV-2468',dr:'',cr:'6,407',bal:'2,78,766'},
+  {date:'01 Jun 2026',account:'Accounts Receivable',narr:'INV-2468 — payment received',dr:'42,000',cr:'',bal:'3,24,800'},
+  {date:'31 May 2026',account:'Cash A/c',narr:'Payment received INV-2466',dr:'8,746',cr:'',bal:'3,42,000'},
+  {date:'28 May 2026',account:'Purchase A/c',narr:'PO-0041 Samsung India',dr:'2,25,000',cr:'',bal:'12,40,000'},
+];
+
+const AI_KB = {
+  sales:    "📊 **Today's Sales** (June 1, 2026):\n• Total: ₹84,200 across 6 invoices\n• Top seller: Samsung 55\" QLED TV (3 units)\n• Cash collected: ₹62,000 | Pending: ₹22,200\n• Month-to-date revenue: ₹18,46,500 (+18% vs May)",
+  stock:    "📦 **Stock Alerts** (Requires Action):\n• Mi Router AX6000 — 🔴 CRITICAL: 1 unit (reorder: 10)\n• Apple iPhone 15 Pro — 🟡 Low: 2 units (reorder: 5)\n• Lenovo V15 Laptop — 🟡 Low: 4 units (reorder: 3)\n• Samsung Galaxy A55 — ⛔ OUT OF STOCK\n\nAI recommends placing purchase orders immediately for top 3.",
+  customers:"👥 **Top Customers (May 2026)**:\n1. Metro Traders — ₹6,78,000 ⚠️ ₹67,800 overdue\n2. Kumar Electronics — ₹4,20,000 ✅ Paid\n3. Star Distributors — ₹2,41,000 🕐 Due Jun 11\n4. Gupta Brothers — ₹1,50,000 ✅ Paid\n5. Raj Computers — ₹1,85,000 🕐 Due Jun 14",
+  payment:  "💰 **Pending Payments** (₹3,24,800 total):\n• Metro Traders — ₹67,800 (18 days OVERDUE ⚠️)\n• Star Distributors — ₹24,100 (due Jun 11)\n• Raj Computers — ₹18,500 (due Jun 14)\n• Apex Retail — ₹30,000 (22 days OVERDUE ⚠️)\n\n💡 AI Tip: Send WhatsApp reminders to Metro & Apex now.",
+  profit:   "📈 **Profit Analysis (May 2026)**:\n• Revenue: ₹18,46,500\n• COGS: ₹10,80,000 (58.5%)\n• Gross Profit: ₹7,78,500 (42.1%)\n• Operating Expenses: ₹3,60,100\n• **Net Profit: ₹4,18,400 (22.7%)**\n\n📊 Up 22% vs April. TV & laptop categories leading.",
+  forecast: "🔮 **AI Sales Forecast**:\n• This Week: ₹4,20,000 (85% confidence)\n• June 2026: ₹22,80,000 (+23% vs May)\n• Best case: ₹25,40,000 | Worst: ₹19,60,000\n\nSeasonal factors: Monsoon tech demand rising. Plan inventory build-up for Diwali (Oct).",
+  default:  "I have full access to your live business data. Ask me:\n• \"What are today's sales?\"\n• \"Which products are low in stock?\"\n• \"Top customers this month?\"\n• \"Pending payments?\"\n• \"What is my profit?\"\n• \"Sales forecast for June?\"\n• \"Create invoice for [customer] with [items]\"\n\nYou can also use 🎤 Voice Mode above."
+};
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function nav(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pg = document.getElementById('page-'+id);
+  if(pg) pg.classList.add('active');
+  document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
+  if(el) el.classList.add('active');
+  else document.querySelectorAll('.ni').forEach(n => {
+    if((n.getAttribute('onclick')||'').includes("'"+id+"'")) n.classList.add('active');
+  });
+  if(id === 'create' && editingInvId === null) initNewInvoice();
+  if(id === 'ai') initAI();
+  if(id === 'accounting') renderAccounting();
+  if(id === 'payments') renderPayments();
+  if(id === 'auditlog') renderAuditLog();
+  if(id === 'warehouses') renderWarehouses();
+  if(id === 'einvoice') renderEInvoice();
+  if(id === 'crm') renderCRM();
+  if(id === 'purchase') renderPO();
+  if(id === 'quotations') renderQuotes();
+  if(id === 'returns') renderReturns();
+  if(id === 'vendors') renderVendors();
+}
+
+// ============================================================
+// INVOICE LIST
+// ============================================================
+function renderInvoices(list) {
+  const data = list || INVOICES;
+  const b = document.getElementById('invBody');
+  if(!b) return;
+  b.innerHTML = data.length ? data.map((inv,i) => `
+    <tr style="cursor:pointer" onclick="openInvActions(${inv.id})">
+      <td>${i+1}</td>
+      <td class="b mono">${inv.no}</td>
+      <td>${fmtDate(inv.date)}</td>
+      <td class="b">${inv.customer}</td>
+      <td><span class="chip cbl2" style="font-size:9px">${inv.type}</span></td>
+      <td>₹${inv.taxable.toLocaleString()}</td>
+      <td>₹${(inv.cgst+inv.sgst+inv.igst).toLocaleString()}</td>
+      <td class="b">₹${inv.total.toLocaleString()}</td>
+      <td style="color:${inv.status==='overdue'?'var(--red)':inv.status==='pending'?'var(--orange)':'var(--text3)'}">${fmtDate(inv.due)}</td>
+      <td><span class="sb ${inv.status==='paid'?'sp':inv.status==='pending'?'spen':inv.status==='overdue'?'sov':'sdr'}">${inv.status}</span></td>
+      <td onclick="event.stopPropagation()">
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-o btn-sm" onclick="viewInvoice(${inv.id})" title="View">👁</button>
+          <button class="btn btn-o btn-sm" onclick="editInvoice(${inv.id})" title="Edit">✏️</button>
+          <button class="btn btn-o btn-sm" onclick="showToast('📄 PDF downloaded!')" title="PDF">📄</button>
+          <button class="btn btn-o btn-sm" onclick="showToast('📱 Sent via WhatsApp!')" title="WhatsApp">📱</button>
+          <button class="btn btn-d btn-sm" onclick="deleteInvoice(${inv.id})" title="Delete">🗑</button>
+        </div>
+      </td>
+    </tr>`).join('') :
+    `<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text3)">No invoices found</td></tr>`;
+}
+
+function filterInvoices() {
+  const q = (document.getElementById('invSearch')?.value||'').toLowerCase();
+  const st = (document.getElementById('invStatusF')?.value||'');
+  const ty = (document.getElementById('invTypeF')?.value||'');
+  renderInvoices(INVOICES.filter(inv =>
+    (!q || inv.no.toLowerCase().includes(q) || inv.customer.toLowerCase().includes(q)) &&
+    (!st || inv.status === st) &&
+    (!ty || inv.type === ty)
+  ));
+}
+
+function exportInvoices() { showToast('📤 Invoices exported to Excel'); }
+
+// ============================================================
+// INVOICE ACTIONS (View / Edit picker)
+// ============================================================
+function openInvActions(id) {
+  const inv = INVOICES.find(i=>i.id===id);
+  if(!inv) return;
+  document.getElementById('invPickContent').innerHTML = `
+    <div style="padding:4px 0">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">${inv.no}</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:16px">${inv.customer} · ₹${inv.total.toLocaleString()} · <span class="sb ${inv.status==='paid'?'sp':inv.status==='pending'?'spen':inv.status==='overdue'?'sov':'sdr'}">${inv.status}</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-p" style="justify-content:center" onclick="closeModal('invPickModal');viewInvoice(${id})">👁 View Invoice</button>
+        <button class="btn btn-warn" style="justify-content:center" onclick="closeModal('invPickModal');editInvoice(${id})">✏️ Edit Invoice</button>
+        <button class="btn btn-o" style="justify-content:center" onclick="showToast('📄 PDF downloaded!');closeModal('invPickModal')">📄 Download PDF</button>
+        <button class="btn btn-o" style="justify-content:center" onclick="showToast('📱 Sent via WhatsApp!');closeModal('invPickModal')">📱 Share WhatsApp</button>
+        <button class="btn btn-o" style="justify-content:center" onclick="markPaid(${id})">✅ Mark as Paid</button>
+        <button class="btn btn-d" style="justify-content:center" onclick="closeModal('invPickModal');deleteInvoice(${id})">🗑 Delete Invoice</button>
+      </div>
+    </div>`;
+  openModal('invPickModal');
+}
+
+// ============================================================
+// VIEW INVOICE (Preview)
+// ============================================================
+function viewInvoice(id) {
+  const inv = INVOICES.find(i=>i.id===id);
+  if(!inv) return;
+  document.getElementById('prevTitle').textContent = 'Invoice — '+inv.no;
+  const isInter = inv.supply === 'inter';
+  document.getElementById('invPreviewBody').innerHTML = `
+    <div class="inv-preview">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+        <div>
+          <div style="font-size:22px;font-weight:800;color:#111">Sharma Electronics</div>
+          <div style="font-size:11px;color:#555;margin-top:4px">GSTIN: 27AABCS1234F1Z5</div>
+          <div style="font-size:11px;color:#555">Andheri East, Mumbai — 400069</div>
+          <div style="font-size:11px;color:#555">📞 +91 98765 43210</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:18px;font-weight:800;color:#0099cc">${inv.type.toUpperCase()}</div>
+          <div style="font-size:13px;font-weight:700;margin-top:4px">${inv.no}</div>
+          <div style="font-size:11px;color:#555">Date: ${fmtDate(inv.date)}</div>
+          <div style="font-size:11px;color:#555">Due: ${fmtDate(inv.due)}</div>
+        </div>
+      </div>
+      <div style="background:#f8f8f8;border-radius:8px;padding:14px;margin-bottom:20px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:6px">Bill To</div>
+        <div style="font-size:13px;font-weight:700">${inv.customer}</div>
+        ${inv.custGst?`<div style="font-size:11px;color:#555;font-family:monospace">GSTIN: ${inv.custGst}</div>`:''}
+        <div style="font-size:11px;color:#555">${inv.custAddr}</div>
+        <div style="font-size:11px;color:#555">📞 ${inv.custMobile}</div>
+      </div>
+      <table style="margin-bottom:16px">
+        <thead><tr><th style="width:5%">#</th><th style="width:35%">Product / Description</th><th style="width:8%">HSN</th><th style="width:8%">Qty</th><th style="width:12%">Rate</th><th style="width:8%">Disc%</th><th style="width:8%">GST%</th><th style="width:16%">Amount</th></tr></thead>
+        <tbody>
+          ${inv.items.map((it,i)=>`<tr><td style="color:#666">${i+1}</td><td style="font-weight:600">${it.prod}</td><td style="font-family:monospace;color:#888;font-size:10px">—</td><td>${it.qty}</td><td>₹${it.rate.toLocaleString()}</td><td>${it.disc}%</td><td>${it.gst}%</td><td style="font-weight:700">₹${it.amt.toLocaleString()}</td></tr>`).join('')}
+        </tbody>
+      </table>
+      <div style="display:flex;justify-content:flex-end">
+        <div style="min-width:280px">
+          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Subtotal</span><span>₹${inv.subtotal.toLocaleString()}</span></div>
+          ${inv.discount?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#d00"><span>Discount</span><span>-₹${inv.discount.toLocaleString()}</span></div>`:''}
+          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Taxable Amount</span><span>₹${inv.taxable.toLocaleString()}</span></div>
+          ${!isInter?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>CGST</span><span>₹${inv.cgst.toLocaleString()}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>SGST</span><span>₹${inv.sgst.toLocaleString()}</span></div>`
+          :`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>IGST</span><span>₹${inv.igst.toLocaleString()}</span></div>`}
+          <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:800;border-top:2px solid #333;margin-top:6px"><span>TOTAL</span><span style="color:#0099cc">₹${inv.total.toLocaleString()}</span></div>
+        </div>
+      </div>
+      ${inv.notes?`<div style="margin-top:16px;padding:10px;background:#f8f8f8;border-radius:6px;font-size:11px;color:#666"><strong>Notes:</strong> ${inv.notes}</div>`:''}
+      <div style="margin-top:20px;text-align:center;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:12px">Thank you for your business! · VyaparPro ERP · Powered by AI</div>
+    </div>`;
+  openModal('invPreviewModal');
+}
+
+// ============================================================
+// EDIT INVOICE
+// ============================================================
+function editInvoice(id) {
+  const inv = INVOICES.find(i=>i.id===id);
+  if(!inv) return;
+  editingInvId = id;
+  nav('create', null);
+  // Update UI to edit mode
+  document.getElementById('invFormTitle').textContent = 'Edit Invoice — '+inv.no;
+  document.getElementById('invFormBc').innerHTML = 'Billing / <span>Edit Invoice</span>';
+  document.getElementById('editBanner').classList.remove('hidden');
+  document.getElementById('editBannerNo').textContent = inv.no;
+  // Fill header fields
+  setVal('invType', inv.type);
+  setVal('invNo', inv.no);
+  setVal('invDate', inv.date);
+  setVal('invDue', inv.due);
+  setVal('invState', inv.state);
+  setVal('supplyType', inv.supply);
+  setVal('invNotes', inv.notes||'');
+  // Fill customer fields
+  setVal('custName', inv.customer);
+  setVal('custGst', inv.custGst||'');
+  setVal('custMobile', inv.custMobile||'');
+  setVal('custAddr', inv.custAddr||'');
+  setVal('custEmail', inv.custEmail||'');
+  setVal('custState', inv.custState||'');
+  // Fill items
+  document.getElementById('invoiceItems').innerHTML = '';
+  itemCounter = 0;
+  inv.items.forEach(it => {
+    addItem();
+    const id2 = itemCounter;
+    const sel = document.querySelector(`#item-${id2} select`);
+    // Set product by name
+    const opt = Array.from(sel.options).find(o=>o.value===it.prod);
+    if(!opt){ const o=document.createElement('option');o.value=it.prod;o.textContent=it.prod;sel.appendChild(o); }
+    sel.value = it.prod;
+    setVal(`qty-${id2}`, it.qty);
+    setVal(`rate-${id2}`, it.rate);
+    setVal(`disc-${id2}`, it.disc);
+    setVal(`gst-${id2}`, it.gst+'%');
+    calcItem(id2);
+  });
+  calcTotals();
+  addAuditEntry('EDIT_START','Invoice','Opened '+inv.no+' for editing');
+}
+
+function cancelEdit() {
+  editingInvId = null;
+  document.getElementById('editBanner').classList.add('hidden');
+  document.getElementById('invFormTitle').textContent = 'Create GST Invoice';
+  document.getElementById('invFormBc').innerHTML = 'Billing / <span>New Invoice</span>';
+  nav('invoices', null);
+}
+
+function markPaid(id) {
+  const inv = INVOICES.find(i=>i.id===id);
+  if(inv){ inv.status = 'paid'; renderInvoices(); showToast('✅ '+inv.no+' marked as Paid'); closeModal('invPickModal'); }
+}
+
+function deleteInvoice(id) {
+  const inv = INVOICES.find(i=>i.id===id);
+  if(!inv) return;
+  if(!confirm('Delete '+inv.no+'? This cannot be undone.')) return;
+  INVOICES = INVOICES.filter(i=>i.id!==id);
+  renderInvoices();
+  addAuditEntry('DELETE','Invoice','Deleted '+inv.no+' — '+inv.customer);
+  showToast('🗑 Invoice '+inv.no+' deleted');
+}
+
+// ============================================================
+// CREATE / EDIT INVOICE FORM
+// ============================================================
+function initNewInvoice() {
+  editingInvId = null;
+  document.getElementById('editBanner').classList.add('hidden');
+  document.getElementById('invFormTitle').textContent = 'Create GST Invoice';
+  document.getElementById('invFormBc').innerHTML = 'Billing / <span>New Invoice</span>';
+  const today = new Date().toISOString().split('T')[0];
+  const due = new Date(Date.now()+15*864e5).toISOString().split('T')[0];
+  setVal('invNo','INV-'+nextInvNo);
+  setVal('invDate',today);
+  setVal('invDue',due);
+  setVal('invType','GST Invoice');
+  setVal('invState','27 - Maharashtra');
+  setVal('supplyType','intra');
+  setVal('invNotes','');
+  ['custName','custGst','custMobile','custAddr','custEmail','custState'].forEach(id=>setVal(id,''));
+  document.getElementById('invoiceItems').innerHTML = '';
+  itemCounter = 0;
+  addItem(); addItem();
+  // Populate customer datalist
+  const dl = document.getElementById('custDL');
+  if(dl) dl.innerHTML = CUSTOMERS.map(c=>`<option value="${c.name}">`).join('');
+  calcTotals();
+}
+
+function addItem() {
+  itemCounter++;
+  const id = itemCounter;
+  const prodOpts = ['<option value="">Select product…</option>',...PRODUCTS.map(p=>`<option value="${p.name}" data-price="${p.price}" data-gst="${p.gst}">${p.name}</option>`)].join('');
+  const row = document.createElement('div');
+  row.className = 'iir';
+  row.id = 'item-'+id;
+  row.innerHTML = `
+    <select class="fi" style="padding:6px 7px;font-size:11px" onchange="itemPicked(this,${id})">${prodOpts}</select>
+    <input type="number" class="fi" style="padding:6px 7px;font-size:11px" value="1" id="qty-${id}" oninput="calcItem(${id})" min="1"/>
+    <input type="number" class="fi" style="padding:6px 7px;font-size:11px" placeholder="0" id="rate-${id}" oninput="calcItem(${id})"/>
+    <input type="number" class="fi" style="padding:6px 7px;font-size:11px" value="0" id="disc-${id}" oninput="calcItem(${id})" min="0" max="100"/>
+    <input type="text" class="fi mono" style="padding:6px 7px;font-size:11px;background:var(--bg)" id="gst-${id}" readonly value="18%"/>
+    <input type="text" class="fi" style="padding:6px 7px;font-size:11px;background:var(--bg);font-weight:700;color:var(--green)" id="amt-${id}" readonly value="₹0.00"/>
+    <button style="background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--red);cursor:pointer;padding:5px 8px;font-size:12px" onclick="removeItem(${id})">✕</button>`;
+  document.getElementById('invoiceItems').appendChild(row);
+  calcTotals();
+}
+
+function itemPicked(sel, id) {
+  const opt = sel.options[sel.selectedIndex];
+  if(opt.dataset.price) {
+    setVal('rate-'+id, opt.dataset.price);
+    setVal('gst-'+id, (opt.dataset.gst||18)+'%');
+  }
+  calcItem(id);
+}
+
+function calcItem(id) {
+  const qty = +getVal('qty-'+id)||0;
+  const rate = +getVal('rate-'+id)||0;
+  const disc = +getVal('disc-'+id)||0;
+  const amt = qty * rate * (1-disc/100);
+  const el = document.getElementById('amt-'+id);
+  if(el) el.value = '₹'+amt.toFixed(2);
+  calcTotals();
+}
+
+function removeItem(id) {
+  document.getElementById('item-'+id)?.remove();
+  calcTotals();
+}
+
+function calcTotals() {
+  let subtotal = 0, discTotal = 0;
+  document.querySelectorAll('[id^="amt-"]').forEach(el => { subtotal += parseFloat(el.value.replace('₹',''))||0; });
+  document.querySelectorAll('[id^="disc-"]').forEach((el,i) => {
+    const id = el.id.replace('disc-','');
+    const qty = +getVal('qty-'+id)||0;
+    const rate = +getVal('rate-'+id)||0;
+    const d = +el.value||0;
+    discTotal += qty*rate*(d/100);
+  });
+  const taxable = subtotal;
+  // Get blended GST rate from items (simplified: use first item or default 18%)
+  let avgGstRate = 0.18;
+  const gstInputs = document.querySelectorAll('[id^="gst-"]');
+  if(gstInputs.length) {
+    const rates = Array.from(gstInputs).map(g=>parseFloat(g.value)||18);
+    avgGstRate = rates.reduce((a,b)=>a+b,0)/rates.length/100;
+  }
+  const gstAmt = taxable * avgGstRate / (1+avgGstRate);
+  const taxableBase = taxable - gstAmt;
+  const isInter = getVal('supplyType') === 'inter';
+  const round = Math.round(subtotal) - subtotal;
+  const total = Math.round(subtotal);
+
+  setTxt('s_sub','₹'+(subtotal+discTotal).toFixed(2));
+  setTxt('s_disc','-₹'+discTotal.toFixed(2));
+  setTxt('s_tax','₹'+taxableBase.toFixed(2));
+  setTxt('s_round','₹'+round.toFixed(2));
+  setTxt('s_total','₹'+total.toLocaleString());
+
+  if(isInter) {
+    setTxt('s_igst','₹'+gstAmt.toFixed(2));
+    setTxt('s_cgst','₹0.00'); setTxt('s_sgst','₹0.00');
+  } else {
+    setTxt('s_cgst','₹'+(gstAmt/2).toFixed(2));
+    setTxt('s_sgst','₹'+(gstAmt/2).toFixed(2));
+    setTxt('s_igst','₹0.00');
+  }
+}
+
+function finalizeInvoice() {
+  const cust = getVal('custName');
+  if(!cust.trim()) { showToast('⚠️ Please enter customer name','warn'); return; }
+  const items = [];
+  document.querySelectorAll('[id^="item-"]').forEach(row => {
+    const id = row.id.replace('item-','');
+    const prod = row.querySelector('select')?.value;
+    if(!prod) return;
+    items.push({prod, qty:+getVal('qty-'+id)||1, rate:+getVal('rate-'+id)||0, disc:+getVal('disc-'+id)||0, gst:parseInt(getVal('gst-'+id))||18, amt:parseFloat(document.getElementById('amt-'+id)?.value.replace('₹',''))||0});
+  });
+  if(!items.length) { showToast('⚠️ Add at least one item','warn'); return; }
+
+  const isInter = getVal('supplyType') === 'inter';
+  let subtotal = items.reduce((a,it)=>a+it.qty*it.rate,0);
+  let discount = items.reduce((a,it)=>a+it.qty*it.rate*(it.disc/100),0);
+  let taxable = items.reduce((a,it)=>a+it.amt,0);
+  const avgRate = items.reduce((a,it)=>a+it.gst,0)/items.length/100;
+  const gstAmt = taxable * avgRate/(1+avgRate);
+  const taxableBase = taxable - gstAmt;
+
+  const invData = {
+    no: getVal('invNo'), date: getVal('invDate'), customer: cust,
+    custGst: getVal('custGst'), custMobile: getVal('custMobile'), custAddr: getVal('custAddr'),
+    custEmail: getVal('custEmail'), custState: getVal('custState'),
+    type: getVal('invType'), state: getVal('invState'), supply: getVal('supplyType'),
+    notes: getVal('invNotes'), items,
+    subtotal: Math.round(subtotal), discount: Math.round(discount),
+    taxable: Math.round(taxableBase),
+    cgst: isInter?0:Math.round(gstAmt/2), sgst: isInter?0:Math.round(gstAmt/2),
+    igst: isInter?Math.round(gstAmt):0, round: 0,
+    total: Math.round(taxable),
+    due: getVal('invDue'), status: 'pending'
+  };
+
+  if(editingInvId !== null) {
+    const idx = INVOICES.findIndex(i=>i.id===editingInvId);
+    if(idx>=0){ invData.id=editingInvId; invData.status=INVOICES[idx].status; INVOICES[idx]=invData; }
+    addAuditEntry('EDIT','Invoice','Updated '+invData.no+' for '+cust+' — ₹'+invData.total.toLocaleString());
+    showToast('✅ Invoice '+invData.no+' updated successfully!');
+    editingInvId = null;
+  } else {
+    invData.id = nextInvId++;
+    invData.no = 'INV-'+nextInvNo++;
+    INVOICES.unshift(invData);
+    addAuditEntry('CREATE','Invoice','Created '+invData.no+' for '+cust+' — ₹'+invData.total.toLocaleString());
+    showToast('✅ Invoice '+invData.no+' created!');
+  }
+  document.getElementById('editBanner').classList.add('hidden');
+  document.getElementById('invFormTitle').textContent = 'Create GST Invoice';
+  renderInvoices();
+  setTimeout(()=>nav('invoices',null), 600);
+}
+
+function saveDraft() {
+  addAuditEntry('DRAFT','Invoice','Saved draft for '+getVal('custName'));
+  showToast('💾 Draft saved');
+}
+
+function previewInvoice() {
+  // Build temp invoice from form
+  const tmpId = -1;
+  const items = [];
+  document.querySelectorAll('[id^="item-"]').forEach(row => {
+    const id = row.id.replace('item-','');
+    const prod = row.querySelector('select')?.value;
+    if(prod) items.push({prod,qty:+getVal('qty-'+id)||1,rate:+getVal('rate-'+id)||0,disc:+getVal('disc-'+id)||0,gst:parseInt(getVal('gst-'+id))||18,amt:parseFloat(document.getElementById('amt-'+id)?.value.replace('₹',''))||0});
+  });
+  const taxable = items.reduce((a,it)=>a+it.amt,0);
+  const isInter = getVal('supplyType')==='inter';
+  const avgRate = items.length ? items.reduce((a,it)=>a+it.gst,0)/items.length/100 : 0.18;
+  const gstAmt = taxable*avgRate/(1+avgRate);
+  const tmp = {id:tmpId,no:getVal('invNo')||'DRAFT',date:getVal('invDate'),customer:getVal('custName')||'—',custGst:getVal('custGst'),custMobile:getVal('custMobile'),custAddr:getVal('custAddr'),custEmail:getVal('custEmail'),type:getVal('invType'),supply:getVal('supplyType'),notes:getVal('invNotes'),items,subtotal:Math.round(taxable),discount:0,taxable:Math.round(taxable-gstAmt),cgst:isInter?0:Math.round(gstAmt/2),sgst:isInter?0:Math.round(gstAmt/2),igst:isInter?Math.round(gstAmt):0,round:0,total:Math.round(taxable),due:getVal('invDue'),status:'draft'};
+  INVOICES.push(tmp);
+  viewInvoice(tmpId);
+  INVOICES.pop();
+}
+
+function autofillCustomer(name) {
+  const c = CUSTOMERS.find(x=>x.name===name);
+  if(c){ setVal('custGst',c.gstin); setVal('custMobile',c.mobile); setVal('custAddr',c.addr); setVal('custEmail',c.email||''); setVal('custState',c.gstin.substring(0,2)||'27'); }
+}
+
+// ============================================================
+// DASHBOARD RENDERS
+// ============================================================
+function renderDashboard() {
+  // Sales chart
+  const vals=[62000,84000,71000,95000,68000,88000,84200];
+  const days=['26M','27T','28W','29T','30F','31S','1J'];
+  const max=Math.max(...vals);
+  const sc=document.getElementById('salesChart'); const sl=document.getElementById('salesLabels');
+  if(sc){sc.innerHTML='';sl.innerHTML='';vals.forEach((v,i)=>{
+    const b=document.createElement('div');b.className='cb';const h=Math.round(v/max*80)+10;
+    b.style.cssText=`height:${h}px;background:${i===vals.length-1?'linear-gradient(180deg,var(--accent),var(--accent2))':'rgba(0,212,255,.28)'};`;
+    b.title='₹'+v.toLocaleString();sc.appendChild(b);
+    const l=document.createElement('div');l.className='cbl';l.style.flex='1';l.textContent=days[i];sl.appendChild(l);
+  });}
+  // Low stock
+  const lsl=document.getElementById('lowStockList');
+  if(lsl) lsl.innerHTML=PRODUCTS.filter(p=>p.status!=='ok').map(p=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px;background:var(--bg3);border-radius:var(--r2);margin-bottom:8px">
+      <div><div style="font-size:12px;font-weight:600">${p.name}</div><div style="font-size:10px;color:var(--text3)">${p.sku}</div></div>
+      <span class="sb ${p.status==='out'?'sov':'spen'}">${p.status==='out'?'Out of Stock':'Stock: '+p.stock}</span>
+    </div>`).join('');
+  // Top customers
+  const tc=document.getElementById('topCust');
+  if(tc){const s=[...CUSTOMERS].sort((a,b)=>b.total-a.total).slice(0,5);const mx=s[0].total;
+    tc.innerHTML=s.map((c,i)=>`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:600">${i+1}. ${c.name}</span><span style="font-size:12px;color:var(--green);font-weight:700">₹${(c.total/1000).toFixed(0)}K</span></div><div class="prog"><div class="pb" style="width:${Math.round(c.total/mx*100)}%;background:linear-gradient(90deg,var(--accent),var(--green))"></div></div></div>`).join('');}
+  // Forecast
+  const fb=document.getElementById('forecastBars');
+  if(fb){const ms=['Mar','Apr','May','Jun*','Jul*'];const vs=[1420,1680,1846,2280,2100];const mx=Math.max(...vs);
+    fb.innerHTML=`<div style="display:flex;align-items:flex-end;gap:9px;height:70px">${ms.map((m,i)=>{const h=Math.round(vs[i]/mx*60)+10;const fc=i>=3;return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="font-size:9px;color:${fc?'var(--accent)':'var(--text3)'};font-weight:600">₹${(vs[i]/100).toFixed(1)}L</div><div style="width:100%;height:${h}px;border-radius:3px 3px 0 0;background:${fc?'linear-gradient(180deg,rgba(0,212,255,.45),rgba(0,212,255,.15))':'rgba(0,212,255,.25)'}"></div><div style="font-size:9px;color:var(--text3)">${m}</div></div>`;}).join('')}</div>`;}
+  // Dash invoices
+  const di=document.getElementById('dashInv');
+  if(di) di.innerHTML=INVOICES.slice(0,5).map(inv=>`
+    <tr style="cursor:pointer" onclick="viewInvoice(${inv.id})">
+      <td class="b mono">${inv.no}</td><td>${inv.customer}</td>
+      <td class="b">₹${inv.total.toLocaleString()}</td>
+      <td><span class="sb ${inv.status==='paid'?'sp':inv.status==='pending'?'spen':inv.status==='overdue'?'sov':'sdr'}">${inv.status}</span></td>
+      <td><button class="btn btn-o btn-sm" onclick="event.stopPropagation();editInvoice(${inv.id})">✏️</button></td>
+    </tr>`).join('');
+}
+
+// ============================================================
+// INVENTORY
+// ============================================================
+function renderInventory(list) {
+  const data = list||PRODUCTS;
+  const b = document.getElementById('invBody2'); if(!b) return;
+  b.innerHTML = data.map(p=>`<tr>
+    <td class="b mono">${p.sku}</td><td class="b">${p.name}</td><td>${p.cat}</td>
+    <td class="mono">${p.hsn}</td><td>₹${p.mrp.toLocaleString()}</td>
+    <td class="b">₹${p.price.toLocaleString()}</td>
+    <td class="b" style="color:${p.stock===0?'var(--red)':p.stock<=p.reorder?'var(--orange)':'var(--green)'}">${p.stock}</td>
+    <td>${p.reorder}</td><td>${p.gst}%</td>
+    <td><span class="sb ${p.status==='out'?'sov':p.status==='critical'||p.status==='low'?'spen':'sp'}">${p.status==='out'?'Out':'In Stock'}</span></td>
+    <td><div style="display:flex;gap:3px">
+      <button class="btn btn-o btn-sm" onclick="editProd(${p.id})">✏️</button>
+      <button class="btn btn-o btn-sm" onclick="showToast('📊 Stock adjustment for ${p.name}')">📊</button>
+    </div></td></tr>`).join('');
+}
+
+function filterProds() {
+  const q=(document.getElementById('prodSearch')?.value||'').toLowerCase();
+  const cat=(document.getElementById('prodCatF')?.value||'');
+  const stk=(document.getElementById('prodStockF')?.value||'');
+  renderInventory(PRODUCTS.filter(p=>
+    (!q||p.name.toLowerCase().includes(q)||p.sku.toLowerCase().includes(q))&&
+    (!cat||p.cat===cat)&&
+    (!stk||p.status===stk||(stk==='low'&&(p.status==='low'||p.status==='critical')))
+  ));
+}
+
+function editProd(id) {
+  const p=PRODUCTS.find(x=>x.id===id);
+  if(!p) return;
+  document.getElementById('prodModalTitle').textContent='Edit Product';
+  setVal('pm_name',p.name);setVal('pm_sku',p.sku);setVal('pm_cat',p.cat);setVal('pm_brand',p.brand);
+  setVal('pm_hsn',p.hsn);setVal('pm_pp',p.pp);setVal('pm_mrp',p.mrp);setVal('pm_sp',p.price);
+  setVal('pm_stock',p.stock);setVal('pm_reorder',p.reorder);setVal('pm_gst',p.gst);
+  openModal('prodModal');
+}
+
+function saveProd() {
+  const name = getVal('pm_name');
+  if(!name.trim()){showToast('⚠️ Product name required','warn');return;}
+  showToast('✅ Product "'+name+'" saved');
+  closeModal('prodModal');
+  addAuditEntry('SAVE','Product','Saved product: '+name);
+  renderInventory();
+}
+
+// ============================================================
+// CUSTOMERS
+// ============================================================
+function renderCustomers(list) {
+  const data=list||CUSTOMERS;
+  const b=document.getElementById('custBody');if(!b)return;
+  b.innerHTML=data.map(c=>`<tr>
+    <td class="b">${c.name}</td>
+    <td class="mono" style="font-size:10px">${c.gstin||'<span style="color:var(--text3)">—</span>'}</td>
+    <td>${c.mobile}</td><td>${c.city}</td>
+    <td class="b" style="color:var(--green)">₹${(c.total/1000).toFixed(0)}K</td>
+    <td style="color:${c.outstanding>0?'var(--orange)':'var(--green)'};font-weight:600">${c.outstanding>0?'₹'+c.outstanding.toLocaleString():'—'}</td>
+    <td style="color:var(--text3)">${c.last}</td>
+    <td><div style="display:flex;align-items:center;gap:5px">
+      <div style="width:30px;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${c.score}%;background:${c.score>85?'var(--green)':c.score>60?'var(--orange)':'var(--red)'}"></div></div>
+      <span style="font-size:11px;font-weight:700;color:${c.score>85?'var(--green)':c.score>60?'var(--orange)':'var(--red)'}">${c.score}</span></div></td>
+    <td><div style="display:flex;gap:3px">
+      <button class="btn btn-o btn-sm" onclick="showToast('👁 ${c.name}')">👁</button>
+      <button class="btn btn-o btn-sm" onclick="editCust(${c.id})">✏️</button>
+      <button class="btn btn-o btn-sm" onclick="showToast('📱 WhatsApp opened')">📱</button>
+    </div></td></tr>`).join('');
+}
+
+function filterCust(){
+  const q=(document.getElementById('custSearch')?.value||'').toLowerCase();
+  const city=(document.getElementById('custCityF')?.value||'');
+  renderCustomers(CUSTOMERS.filter(c=>(!q||c.name.toLowerCase().includes(q)||c.mobile.includes(q))&&(!city||c.city===city)));
+}
+
+function editCust(id){
+  const c=CUSTOMERS.find(x=>x.id===id);if(!c)return;
+  document.getElementById('custModalTitle').textContent='Edit Customer';
+  setVal('cm_name',c.name);setVal('cm_contact',c.contact||'');setVal('cm_gstin',c.gstin);
+  setVal('cm_mobile',c.mobile);setVal('cm_email',c.email||'');setVal('cm_city',c.city);
+  setVal('cm_addr',c.addr||'');setVal('cm_credit',c.credit||'');setVal('cm_terms',c.terms||'Net 30');
+  openModal('custModal');
+}
+
+function saveCust(){
+  const n=getVal('cm_name');if(!n.trim()){showToast('⚠️ Customer name required','warn');return;}
+  showToast('✅ Customer "'+n+'" saved');
+  closeModal('custModal');
+  addAuditEntry('SAVE','Customer','Saved customer: '+n);
+  renderCustomers();
+}
+
+// ============================================================
+// VENDORS / CRM / PO / QUOTES / RETURNS
+// ============================================================
+function renderVendors(){
+  const b=document.getElementById('vendBody');if(!b)return;
+  b.innerHTML=VENDORS.map(v=>`<tr>
+    <td class="b">${v.name}</td><td class="mono" style="font-size:10px">${v.gstin}</td>
+    <td>${v.mobile}</td><td>${v.city}</td>
+    <td class="b" style="color:var(--green)">₹${(v.total/100000).toFixed(1)}L</td>
+    <td style="color:var(--orange);font-weight:600">₹${v.payable.toLocaleString()}</td>
+    <td><div style="display:flex;align-items:center;gap:5px">
+      <div style="width:30px;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${v.score}%;background:${v.score>85?'var(--green)':'var(--orange)'}"></div></div>
+      <span style="font-size:11px;font-weight:700;color:${v.score>85?'var(--green)':'var(--orange)'}">${v.score}</span></div></td>
+    <td><div style="display:flex;gap:3px">
+      <button class="btn btn-o btn-sm" onclick="showToast('👁 '+${JSON.stringify(v.name)})">👁</button>
+      <button class="btn btn-o btn-sm" onclick="showToast('✏️ Editing vendor')">✏️</button>
+    </div></td></tr>`).join('');
+}
+
+function renderCRM(){
+  const b=document.getElementById('crmBody');if(!b)return;
+  const stageColor={New:'cbl2',Contacted:'cor',Proposal:'cor',Negotiation:'crd',Won:'cgr',Lost:'sdr'};
+  b.innerHTML=CRM_LEADS.map(l=>`<tr>
+    <td class="b">${l.name}</td><td>${l.company}</td><td>${l.mobile}</td>
+    <td><span class="chip ${stageColor[l.stage]||'cbl2'}">${l.stage}</span></td>
+    <td class="b" style="color:var(--green)">₹${(l.value/1000).toFixed(0)}K</td>
+    <td style="color:${l.followup==='—'?'var(--text3)':'var(--orange)'}">${l.followup}</td>
+    <td style="font-size:11px;color:var(--text2)">💡 ${l.ai}</td>
+    <td><div style="display:flex;gap:3px">
+      <button class="btn btn-o btn-sm" onclick="showToast('📞 Calling ${l.name}')">📞</button>
+      <button class="btn btn-o btn-sm" onclick="showToast('📝 Notes opened')">📝</button>
+    </div></td></tr>`).join('');
+}
+
+function renderPO(){
+  const b=document.getElementById('poBody');if(!b)return;
+  b.innerHTML=PO_DATA.map(p=>`<tr>
+    <td class="b mono">${p.no}</td><td>${p.date}</td><td class="b">${p.vendor}</td>
+    <td>₹${p.amount.toLocaleString()}</td><td>₹${p.gst.toLocaleString()}</td>
+    <td class="b">₹${p.total.toLocaleString()}</td>
+    <td><span class="sb ${p.status==='received'?'sp':'spen'}">${p.status}</span></td>
+    <td><div style="display:flex;gap:3px">
+      <button class="btn btn-o btn-sm" onclick="showToast('👁 '+${JSON.stringify(p.no)})">👁</button>
+      <button class="btn btn-o btn-sm" onclick="showToast('✅ GRN created')">✅ GRN</button>
+    </div></td></tr>`).join('');
+}
+
+function renderQuotes(){
+  const b=document.getElementById('quoteBody');if(!b)return;
+  b.innerHTML=QUOTES.map(q=>`<tr>
+    <td class="b mono">${q.no}</td><td>${q.date}</td><td class="b">${q.customer}</td>
+    <td class="b">₹${q.amount.toLocaleString()}</td><td>${q.valid}</td>
+    <td><span class="sb ${q.status==='accepted'?'sp':q.status==='sent'?'spen':'sdr'}">${q.status}</span></td>
+    <td><div style="display:flex;gap:3px">
+      <button class="btn btn-o btn-sm" onclick="showToast('👁 Quote opened')">👁</button>
+      <button class="btn btn-p btn-sm" onclick="convertQuote('${q.no}','${q.customer}',${q.amount})">→ Invoice</button>
+    </div></td></tr>`).join('');
+}
+
+function convertQuote(no,cust,amt){
+  showToast('✅ Quote '+no+' converted to invoice for '+cust);
+  addAuditEntry('CONVERT','Quote','Converted '+no+' to invoice — '+cust);
+  setTimeout(()=>nav('create',null),800);
+}
+
+function renderReturns(){
+  const b=document.getElementById('retBody');if(!b)return;
+  b.innerHTML=RETURNS.map(r=>`<tr>
+    <td class="b mono">${r.no}</td><td>${r.date}</td>
+    <td><span class="chip cbl2">${r.type}</span></td>
+    <td class="mono">${r.against}</td><td class="b">${r.party}</td>
+    <td class="b">₹${r.amount.toLocaleString()}</td>
+    <td><span class="sb ${r.status==='processed'?'sp':'spen'}">${r.status}</span></td>
+    <td><button class="btn btn-o btn-sm" onclick="showToast('👁 Return opened')">👁</button></td></tr>`).join('');
+}
+
+// ============================================================
+// ACCOUNTING
+// ============================================================
+function renderAccounting(){
+  const lb=document.getElementById('ledgerBody');
+  if(lb) lb.innerHTML=LEDGER_DATA.map(l=>`<tr><td>${l.date}</td><td class="b">${l.account}</td><td>${l.narr}</td>
+    <td style="color:var(--accent)">${l.dr||'—'}</td><td style="color:var(--green)">${l.cr||'—'}</td>
+    <td class="b">₹${l.bal}</td></tr>`).join('');
+  const cb=document.getElementById('cashBody');
+  if(cb) cb.innerHTML=`
+    <tr><td>01 Jun</td><td>INV-2466 — Priya Mobiles</td><td style="color:var(--green)">8,746</td><td>—</td><td class="b">3,42,000</td></tr>
+    <tr><td>31 May</td><td>Salary paid — June advance</td><td>—</td><td style="color:var(--red)">80,000</td><td class="b">3,33,254</td></tr>
+    <tr><td>29 May</td><td>INV-2463 — Gupta Brothers</td><td style="color:var(--green)">128,000</td><td>—</td><td class="b">4,13,254</td></tr>`;
+  const bb=document.getElementById('bankBody');
+  if(bb) bb.innerHTML=`
+    <tr><td>01 Jun</td><td>NEFT received — Kumar Electronics</td><td>—</td><td style="color:var(--green)">42,000</td><td class="b">8,24,000</td></tr>
+    <tr><td>28 May</td><td>PO-0041 — Samsung India payment</td><td style="color:var(--red)">265,500</td><td>—</td><td class="b">7,82,000</td></tr>`;
+}
+
+// ============================================================
+// PAYMENTS
+// ============================================================
+function renderPayments(){
+  const pm=document.getElementById('payMethods');
+  if(pm) pm.innerHTML=[
+    {m:'UPI (PhonePe/GPay)',v:842000,pct:45},
+    {m:'Bank Transfer / NEFT',v:620000,pct:33},
+    {m:'Cash',v:280000,pct:15},
+    {m:'Razorpay / Card',v:104500,pct:7},
+  ].map(x=>`<div style="padding:10px;background:var(--bg3);border-radius:var(--r2)">
+    <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:12px;font-weight:600">${x.m}</span><span style="font-size:12px;color:var(--green);font-weight:700">₹${(x.v/1000).toFixed(0)}K</span></div>
+    <div class="prog"><div class="pb" style="width:${x.pct}%;background:linear-gradient(90deg,var(--accent),var(--green))"></div></div></div>`).join('');
+  const pb=document.getElementById('payBody');
+  if(pb) pb.innerHTML=PAYMENTS_DATA.map(p=>`<tr>
+    <td>${p.date}</td><td class="b">${p.party}</td><td class="mono">${p.invoice}</td>
+    <td><span class="chip ${p.method==='Cash'?'cor':p.method.includes('UPI')?'cgr':'cbl2'}">${p.method}</span></td>
+    <td class="b" style="color:${p.type==='received'?'var(--green)':'var(--red)'}">₹${p.amount.toLocaleString()}</td>
+    <td><span class="sb ${p.type==='received'?'sp':'sov'}">${p.type}</span></td></tr>`).join('');
+}
+
+function savePayment(){
+  const amt=getVal('payAmt');
+  showToast('✅ Payment of ₹'+parseInt(amt||0).toLocaleString()+' recorded');
+  closeModal('payModal');
+  addAuditEntry('CREATE','Payment','Recorded payment ₹'+amt);
+  renderPayments();
+}
+
+// ============================================================
+// AUDIT LOG
+// ============================================================
+function renderAuditLog(){
+  const b=document.getElementById('auditBody');if(!b)return;
+  b.innerHTML=AUDIT_LOG.map(l=>`<tr>
+    <td class="mono" style="font-size:10px">${l.ts}</td><td class="b">${l.user}</td>
+    <td><span class="chip ${l.action==='CREATE'?'cgr':l.action==='DELETE'?'crd':l.action==='EDIT'||l.action==='EDIT_START'?'cor':l.action==='LOGIN'?'cbl2':'sdr'}">${l.action}</span></td>
+    <td>${l.module}</td><td style="font-size:11px;color:var(--text2)">${l.detail}</td>
+    <td class="mono" style="font-size:10px">${l.ip}</td></tr>`).join('');
+}
+
+function addAuditEntry(action,module,detail){
+  AUDIT_LOG.unshift({ts:new Date().toLocaleString('en-IN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).replace(/\//g,' '),user:'Rajesh Sharma',action,module,detail,ip:'192.168.1.10'});
+}
+
+// ============================================================
+// WAREHOUSES / E-INVOICE
+// ============================================================
+function renderWarehouses(){
+  const g=document.getElementById('whGrid');if(!g)return;
+  g.innerHTML=WAREHOUSES.map(w=>`<div class="card chov">
+    <div style="font-size:22px;margin-bottom:8px">🏭</div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:4px">${w.name}</div>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:12px">${w.addr}</div>
+    <div class="tr"><span style="font-size:11px;color:var(--text3)">Manager</span><span style="font-size:11px;font-weight:600">${w.manager}</span></div>
+    <div class="tr"><span style="font-size:11px;color:var(--text3)">Products</span><span style="font-size:11px;font-weight:600;color:var(--accent)">${w.items}</span></div>
+    <div class="tr"><span style="font-size:11px;color:var(--text3)">Stock Value</span><span style="font-size:11px;font-weight:700;color:var(--green)">₹${(w.value/100000).toFixed(1)}L</span></div>
+    <button class="btn btn-o btn-sm" style="width:100%;justify-content:center;margin-top:11px" onclick="showToast('📦 Stock report for ${w.name}')">View Stock</button>
+  </div>`).join('')+`<div class="card chov" style="display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;min-height:200px" onclick="openModal('whModal')">
+    <div style="font-size:32px;margin-bottom:8px">➕</div>
+    <div style="font-size:12px;font-weight:600;color:var(--text2)">Add Warehouse</div>
+  </div>`;
+}
+
+function renderEInvoice(){
+  const el=document.getElementById('einvList');if(!el)return;
+  el.innerHTML=INVOICES.filter(i=>i.type==='GST Invoice'&&i.custGst).slice(0,5).map(inv=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:var(--r2);margin-bottom:8px">
+      <div><div style="font-size:12px;font-weight:600">${inv.no}</div>
+        <div style="font-size:10px;color:var(--text3)">${inv.customer} · ₹${inv.total.toLocaleString()}</div></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        ${inv.status==='paid'?`<span class="sb sp">IRN Generated</span>`:`<button class="btn btn-p btn-sm" onclick="genIRN('${inv.no}')">Generate IRN</button>`}
+      </div>
+    </div>`).join('');
+}
+
+function genIRN(no){ showToast('⚡ IRN generated for '+no+' — QR code attached'); addAuditEntry('CREATE','E-Invoice','Generated IRN for '+no); }
+function genEWB(){ const inv=getVal('ewbInv'); showToast('🛣️ E-Way Bill generated for '+inv); addAuditEntry('CREATE','E-Way Bill','Generated EWB for '+inv); }
+
+// ============================================================
+// AI ASSISTANT
+// ============================================================
+function initAI(){
+  const m=document.getElementById('aiMsgs');if(!m||m.children.length>0)return;
+  addAIMsg('bot','👋 Namaste! I\'m your AI Business Assistant with live access to all your business data. What would you like to know?');
+  const s=document.getElementById('aiSug');
+  if(s) s.innerHTML=['Today\'s sales','Low stock','Top customers','Pending payments','Profit analysis','Sales forecast'].map(x=>`<button class="chip cbl2" style="cursor:pointer;padding:5px 11px;font-size:11px" onclick="askAI('${x}')">${x}</button>`).join('');
+  const p=document.getElementById('aiPreds');
+  if(p) p.innerHTML=[
+    {i:'📈',t:'June revenue likely ₹22.8L (+23%)'},
+    {i:'⚠️',t:'Mi Router AX6000 stockout in ~4 days'},
+    {i:'💰',t:'₹67,800 at risk — Metro Traders overdue'},
+    {i:'🎯',t:'Restock Samsung Galaxy A55 (best margin)'},
+  ].map(x=>`<div style="display:flex;gap:9px;padding:9px;background:var(--bg3);border-radius:var(--r2);margin-bottom:7px"><span>${x.i}</span><div style="font-size:11px;color:var(--text2)">${x.t}</div></div>`).join('');
+}
+
+function addAIMsg(type,text){
+  const m=document.getElementById('aiMsgs');if(!m)return;
+  const d=document.createElement('div');d.className='aimsg '+type;
+  d.innerHTML=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+  m.appendChild(d);m.scrollTop=m.scrollHeight;
+}
+
+function sendAI(){
+  const inp=document.getElementById('aiIn');if(!inp||!inp.value.trim())return;
+  const msg=inp.value.trim();inp.value='';askAI(msg);
+}
+
+function askAI(msg){
+  addAIMsg('usr',msg);
+  const ld=document.createElement('div');ld.className='aimsg bot';ld.innerHTML='<div class="ld"></div>';
+  document.getElementById('aiMsgs').appendChild(ld);
+  document.getElementById('aiMsgs').scrollTop=99999;
+  setTimeout(()=>{
+    ld.remove();
+    const l=msg.toLowerCase();
+    let r=AI_KB.default;
+    if(l.includes('sale')||l.includes('revenue')||l.includes('today')) r=AI_KB.sales;
+    else if(l.includes('stock')||l.includes('inventory')||l.includes('low')||l.includes('alert')) r=AI_KB.stock;
+    else if(l.includes('customer')) r=AI_KB.customers;
+    else if(l.includes('payment')||l.includes('pending')||l.includes('due')||l.includes('outstanding')) r=AI_KB.payment;
+    else if(l.includes('profit')||l.includes('margin')||l.includes('p&l')) r=AI_KB.profit;
+    else if(l.includes('forecast')||l.includes('predict')||l.includes('next')) r=AI_KB.forecast;
+    addAIMsg('bot',r);
+  },900);
+}
+
+function clearAI(){const m=document.getElementById('aiMsgs');if(m)m.innerHTML='';initAI();}
+
+// ============================================================
+// MODALS
+// ============================================================
+function openModal(id){document.getElementById(id).classList.remove('hidden');}
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+
+function saveVend(){ showToast('✅ Vendor saved'); closeModal('vendModal'); addAuditEntry('CREATE','Vendor','Saved vendor'); renderVendors(); }
+function saveLead(){ showToast('✅ Lead saved'); closeModal('leadModal'); addAuditEntry('CREATE','CRM','Added new lead'); renderCRM(); }
+function savePO(){ showToast('✅ Purchase order created'); closeModal('poModal'); addAuditEntry('CREATE','Purchase','Created new PO'); renderPO(); }
+function saveReturn(){ showToast('✅ Return saved'); closeModal('retModal'); addAuditEntry('CREATE','Returns','Created new return'); renderReturns(); }
+function saveWH(){ showToast('✅ Warehouse added'); closeModal('whModal'); addAuditEntry('CREATE','Warehouse','Added new warehouse'); renderWarehouses(); }
+function saveJE(){ showToast('✅ Journal entry posted'); closeModal('jeModal'); addAuditEntry('CREATE','Accounting','Posted journal entry'); }
+function openQuote(){ showToast('💡 Tip: Use Create Invoice with type "Quotation"'); setTimeout(()=>nav('create',null),600); }
+
+// ============================================================
+// TAB SWITCHER (generic)
+// ============================================================
+function switchTab(btn, ns, id) {
+  // find all tabb siblings
+  btn.closest('.tabr').querySelectorAll('.tabb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // find all tab content for this namespace
+  document.querySelectorAll(`[id^="${ns}-"]`).forEach(el=>el.classList.add('hidden'));
+  const target=document.getElementById(`${ns}-${id}`);
+  if(target) target.classList.remove('hidden');
+}
+
+// ============================================================
+// SEARCH
+// ============================================================
+function doSearch(q) {
+  if(!q||q.length<2) return;
+  const l=q.toLowerCase();
+  const inv=INVOICES.find(i=>i.no.toLowerCase().includes(l)||i.customer.toLowerCase().includes(l));
+  if(inv){ showToast('🔍 Found: '+inv.no+' — '+inv.customer); return; }
+  const prod=PRODUCTS.find(p=>p.name.toLowerCase().includes(l)||p.sku.toLowerCase().includes(l));
+  if(prod){ showToast('🔍 Found product: '+prod.name); return; }
+  const cust=CUSTOMERS.find(c=>c.name.toLowerCase().includes(l));
+  if(cust){ showToast('🔍 Found customer: '+cust.name); }
+}
+
+// ============================================================
+// PAYMENT QR
+// ============================================================
+function genUPI(){
+  const amt=getVal('upiAmt');const uid=getVal('upiId');
+  if(!amt){showToast('⚠️ Enter amount','warn');return;}
+  document.getElementById('upiQR').style.display='block';
+  document.getElementById('upiIdShow').textContent=uid;
+  showToast('📱 UPI QR generated for ₹'+parseInt(amt).toLocaleString());
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+function showNotifs(){
+  const notifs=['⚠️ Metro Traders — ₹67,800 overdue (18 days)','📦 Mi Router AX6000 critically low (1 unit)','📦 Samsung Galaxy A55 out of stock','✅ INV-2468 payment received — Kumar Electronics'];
+  showToast(notifs[Math.floor(Math.random()*notifs.length)]);
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg,type) {
+  const el=document.getElementById('toastEl');
+  el.textContent=msg;
+  el.className='toast'+(type?' '+type:'');
+  clearTimeout(window._tt);
+  window._tt=setTimeout(()=>el.classList.add('hidden'),3000);
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function setVal(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+function getVal(id){ const el=document.getElementById(id); return el?el.value:''; }
+function setTxt(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; }
+function fmtDate(d){ if(!d)return'—'; try{ const dt=new Date(d); return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }catch(e){return d;} }
+
+// ============================================================
+// INIT
+// ============================================================
+window.onload = () => {
+  renderDashboard();
+  renderInvoices();
+  renderInventory();
+  renderCustomers();
+  renderVendors();
+  renderCRM();
+  renderPO();
+  renderQuotes();
+  renderReturns();
+  renderPayments();
+  renderAuditLog();
+  renderWarehouses();
+  renderEInvoice();
+  renderAccounting();
+  initAI();
+  initNewInvoice();
+
+  document.addEventListener('keydown', e => {
+    if((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); document.getElementById('gSearch').focus(); }
+    if((e.ctrlKey||e.metaKey)&&e.key==='n'){ e.preventDefault(); nav('create',null); }
+    if(e.key==='Escape') document.querySelectorAll('.mo:not(.hidden)').forEach(m=>m.classList.add('hidden'));
+  });
+
+  // Close modals on overlay click
+  document.querySelectorAll('.mo').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.add('hidden'); }));
+};
+</script>
+</body>
+</html>
