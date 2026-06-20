@@ -120,21 +120,35 @@ def create_reset_token(user_id: str | UUID, email: str) -> str:
 def decode_token(token: str, expected_type: str | None = None) -> TokenPayload:
     """
     Decode and validate a JWT token.
-    Raises TokenExpiredError or TokenInvalidError on failure.
     """
+
     try:
         payload = jwt.decode(
             token,
             settings.JWT_SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],
         )
+
+        print("PAYLOAD =", payload)
+
     except JWTError as exc:
+        print("JWT ERROR =", repr(exc))
+
         if "expired" in str(exc).lower():
             raise TokenExpiredError() from exc
+
         raise TokenInvalidError() from exc
 
     if expected_type and payload.get("type") != expected_type:
-        raise TokenInvalidError(f"Expected token type '{expected_type}'")
+        print(
+            "TYPE MISMATCH:",
+            payload.get("type"),
+            "expected:",
+            expected_type,
+        )
+        raise TokenInvalidError(
+            f"Expected token type '{expected_type}'"
+        )
 
     return payload
 

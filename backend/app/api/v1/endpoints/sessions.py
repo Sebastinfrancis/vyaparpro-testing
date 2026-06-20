@@ -32,7 +32,7 @@ async def list_sessions(current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     data = [
         {
             "id": str(s.id),
-            "ip_address": s.ip_address,
+            "ip_address": str(s.ip_address),
             "device_info": s.device_info,
             "created_at": s.created_at.isoformat(),
             "expires_at": s.expires_at.isoformat(),

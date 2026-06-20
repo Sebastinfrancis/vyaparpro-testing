@@ -92,7 +92,7 @@ class RoleRepository(BaseRepository[Role]):
         return result.scalar_one_or_none()
 
     async def get_by_company(self, company_id: UUID) -> list[Role]:
-        stmt = select(Role).where(Role.company_id == company_id).order_by(Role.role_level, Role.role_name)
+        stmt = select(Role).where(Role.company_id == company_id).options(selectinload(Role.permissions)).order_by(Role.role_level, Role.role_name)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
@@ -155,7 +155,7 @@ class UserRepository(BaseRepository[User]):
         stmt = (
             select(User)
             .where(User.company_id == company_id)
-            .options(selectinload(User.role), selectinload(User.branch))
+            .options(selectinload(User.role).selectinload(Role.permissions), selectinload(User.branch))
         )
         if active_only:
             stmt = stmt.where(User.is_active == True)

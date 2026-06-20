@@ -14,7 +14,7 @@ from app.core.config import settings
 from app.schemas import (
     ChangePasswordRequest, ForgotPasswordRequest, LoginRequest,
     RefreshRequest, ResetPasswordRequest, Setup2FAResponse,
-    TokenResponse, Verify2FARequest,
+    TokenResponse, UserOut, Verify2FARequest,
 )
 from app.services import AuthService
 from app.utils.responses import ok
@@ -87,18 +87,35 @@ async def change_password(
 @router.post("/forgot-password", summary="Request a password-reset email")
 async def forgot_password(
     payload: ForgotPasswordRequest,
-    background: BackgroundTasks,
+    background_tasks: BackgroundTasks,
     db: DBDep,
 ) -> ORJSONResponse:
     # Always return 200 to prevent user enumeration
     from app.db.repositories import UserRepository
     repo = UserRepository(db)
+    
     user = await repo.get_by_email(payload.company_id, str(payload.email))
+    
     if user:
         from app.core.security import create_reset_token
         token = create_reset_token(user.id, user.email)
-        # background.add_task(send_reset_email, user.email, token)
-        # ^ Wire in your email task when ready
+        
+        # ✅ SAFE PRINTS: These only execute if a user was found in the DB
+        print("\n" + "="*50)
+        print(f"🚀 USER FOUND: {user.email}")
+        print(f"🔑 GENERATED TOKEN: {token}")
+        print("="*50 + "\n")
+        
+        # background_tasks.add_task(send_reset_email, user.email, token)
+        
+    else:
+        # ✅ SAFE DIAGNOSTIC: Executes if the company_id or email did not match anything
+        print("\n" + "❌ "*15)
+        print("DATABASE LOOKUP FAILED!")
+        print(f"Provided Email: '{payload.email}'")
+        print(f"Provided Company ID: '{payload.company_id}'")
+        print("❌ "*15 + "\n")
+
     return ok(message="If that email exists, a reset link has been sent.")
 
 
@@ -161,7 +178,17 @@ async def disable_2fa(
 @router.get("/me", summary="Get current authenticated user profile")
 async def me(current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories import UserRepository
-    from app.schemas import UserOut
+
     repo = UserRepository(db)
     user = await repo.get_with_role(current.user_id)
-    return ok(data=UserOut.model_validate(user).model_dump())
+
+    print("ROLE:", user.role)
+
+    if user.role:
+        print("PERMISSIONS COUNT:", len(user.role.permissions))
+
+    print("USEROUT START")
+    data = UserOut.model_validate(user).model_dump(mode="json")
+    print("USEROUT SUCCESS")
+
+    return ok(data=data)

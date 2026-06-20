@@ -24,6 +24,10 @@ from app.schemas import PartyContactCreate, PartyContactOut, PartyCreate, PartyO
 from app.services import PartyService
 from app.utils.responses import created, ok, paginated
 
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from app.db.models import Party
+
 router = APIRouter()
 
 
@@ -82,8 +86,11 @@ async def create_vendor(
     svc = PartyService(db)
     party = await svc.create(current.company_id, payload, current.user_id)
     await cache.delete_pattern(f"vendors:{current.company_id}:*")
+    stmt = (select(Party).where(Party.id == party.id).options(selectinload(Party.contacts)))
+    result = await db.execute(stmt)
+    party_loaded = result.scalar_one()
     return created(
-        data=PartyOut.model_validate(party).model_dump(),
+        data=PartyOut.model_validate(party_loaded).model_dump(mode="json"),
         message="Vendor created successfully.",
     )
 
@@ -107,7 +114,7 @@ async def get_vendor(
     if not party:
         from app.core.exceptions import NotFoundError
         raise NotFoundError("Vendor not found.")
-    return ok(data=PartyOut.model_validate(party).model_dump())
+    return ok(data=PartyOut.model_validate(party).model_dump(mode="json"))
 
 
 @router.patch(
@@ -125,7 +132,10 @@ async def update_vendor(
     svc = PartyService(db)
     party = await svc.update(vendor_id, payload, current.company_id, current.user_id)
     await cache.delete_pattern(f"vendors:{current.company_id}:*")
-    return ok(data=PartyOut.model_validate(party).model_dump(), message="Vendor updated.")
+    stmt = (select(Party).where(Party.id == party.id).options(selectinload(Party.contacts)))
+    result = await db.execute(stmt)
+    party_loaded = result.scalar_one()
+    return ok(data=PartyOut.model_validate(party_loaded).model_dump(mode="json"), message="Vendor updated.")
 
 
 @router.delete(
@@ -159,7 +169,7 @@ async def add_contact(
     await db.flush()
     await db.refresh(contact)
     return created(
-        data=PartyContactOut.model_validate(contact).model_dump(),
+        data=PartyContactOut.model_validate(contact).model_dump(mode="json"),
         message="Contact added.",
     )
 

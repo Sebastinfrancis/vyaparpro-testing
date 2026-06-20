@@ -47,7 +47,7 @@ async def create_branch(
 ) -> ORJSONResponse:
     svc = BranchService(db)
     branch = await svc.create(company_id, payload, current.user_id)
-    return created(data=BranchOut.model_validate(branch).model_dump(), message="Branch created.")
+    return created(data=BranchOut.model_validate(branch).model_dump(mode='json'), message="Branch created.")
 
 
 @router.get("/{branch_id}", summary="Get branch by ID")
@@ -60,7 +60,7 @@ async def get_branch(
     from app.db.repositories import BranchRepository
     repo = BranchRepository(db)
     branch = await repo.get_or_raise(branch_id)
-    return ok(data=BranchOut.model_validate(branch).model_dump())
+    return ok(data=BranchOut.model_validate(branch).model_dump(mode='json'))
 
 
 @router.patch(
@@ -77,7 +77,7 @@ async def update_branch(
 ) -> ORJSONResponse:
     svc = BranchService(db)
     branch = await svc.update(branch_id, payload, company_id, current.user_id)
-    return ok(data=BranchOut.model_validate(branch).model_dump(), message="Branch updated.")
+    return ok(data=BranchOut.model_validate(branch).model_dump(mode='json'), message="Branch updated.")
 
 
 @router.delete(

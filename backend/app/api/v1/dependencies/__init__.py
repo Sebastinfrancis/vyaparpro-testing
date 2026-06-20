@@ -53,6 +53,8 @@ async def get_current_user(
 ) -> CurrentUser:
     if not credentials:
         raise TokenInvalidError("Authorization header missing.")
+    print("SCHEME =", credentials.scheme)
+    print("TOKEN =", credentials.credentials)
 
     payload = decode_token(credentials.credentials, expected_type="access")
     current = CurrentUser(payload)

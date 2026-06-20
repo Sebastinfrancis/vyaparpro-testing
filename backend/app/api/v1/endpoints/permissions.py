@@ -22,4 +22,4 @@ async def list_permissions(
     perms = await svc.list_permissions()
     if module:
         perms = [p for p in perms if p.module == module]
-    return ok(data=[PermissionOut.model_validate(p).model_dump() for p in perms])
+    return ok(data=[PermissionOut.model_validate(p).model_dump(mode="json") for p in perms])

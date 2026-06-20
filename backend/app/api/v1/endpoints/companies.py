@@ -21,6 +21,7 @@ from app.api.v1.dependencies import (
 from app.schemas import CompanyCreate, CompanyOut, CompanyUpdate
 from app.services import CompanyService
 from app.utils.responses import created, ok, paginated
+from fastapi.encoders import jsonable_encoder
 
 router = APIRouter()
 
@@ -48,8 +49,9 @@ async def list_companies(
         "data": {"items": items, "total": result.total,
                  "page": result.page, "page_size": result.page_size, "pages": result.pages},
     }
-    await cache.set(cache_key, resp, ttl=_TTL)
-    return ORJSONResponse(content=resp)
+    safe_resp = jsonable_encoder(resp)
+    await cache.set(cache_key, safe_resp, ttl=_TTL)
+    return ORJSONResponse(content=safe_resp)
 
 
 @router.post(
@@ -68,7 +70,7 @@ async def create_company(
     company = await svc.create(payload, created_by=current.user_id)
     await cache.delete_pattern("companies:*")
     return created(
-        data=CompanyOut.model_validate(company).model_dump(),
+        data=CompanyOut.model_validate(company).model_dump(mode="json"),
         message="Company created successfully.",
     )
 
@@ -89,8 +91,9 @@ async def get_company(
     repo = CompanyRepository(db)
     company = await repo.get_or_raise(company_id)
     data = CompanyOut.model_validate(company).model_dump()
-    await cache.set(cache_key, data, ttl=_TTL)
-    return ok(data=data)
+    safe_data = jsonable_encoder(data)
+    await cache.set(cache_key, safe_data, ttl=_TTL)
+    return ok(data=safe_data)
 
 
 @router.patch(
@@ -107,9 +110,10 @@ async def update_company(
 ) -> ORJSONResponse:
     svc = CompanyService(db)
     company = await svc.update(company_id, payload, user_id=current.user_id)
+    safe_data = jsonable_encoder(CompanyOut.model_validate(company).model_dump())
     await cache.delete(cache.cache_key("company", str(company_id)))
     await cache.delete_pattern("companies:*")
-    return ok(data=CompanyOut.model_validate(company).model_dump(), message="Company updated.")
+    return ok(data=safe_data, message="Company updated.")
 
 
 @router.delete(

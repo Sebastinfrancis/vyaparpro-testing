@@ -23,6 +23,7 @@ from app.schemas import (
 )
 from app.services import CategoryService, MasterDataService
 from app.utils.responses import created, ok
+from fastapi.encoders import jsonable_encoder
 
 router = APIRouter()
 
@@ -44,8 +45,9 @@ async def list_categories(
     svc = CategoryService(db)
     cats = await svc.tree(current.company_id)
     data = [CategoryOut.model_validate(c).model_dump() for c in cats]
-    await cache.set(cache_key, data, ttl=300)
-    return ok(data=data)
+    safe_data = jsonable_encoder(data)
+    await cache.set(cache_key, safe_data, ttl=300)
+    return ok(data=safe_data)
 
 
 @router.post(
@@ -63,7 +65,7 @@ async def create_category(
     svc = CategoryService(db)
     cat = await svc.create(current.company_id, payload)
     await cache.delete(cache.cache_key("categories", str(current.company_id)))
-    return created(data=CategoryOut.model_validate(cat).model_dump(), message="Category created.")
+    return created(data=CategoryOut.model_validate(cat).model_dump(mode='json'), message="Category created.")
 
 
 @router.get("/categories/{cat_id}", summary="Get category by ID")
@@ -71,8 +73,7 @@ async def get_category(cat_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJS
     from app.db.repositories import ProductCategoryRepository
     repo = ProductCategoryRepository(db)
     cat = await repo.get_or_raise(cat_id)
-    return ok(data=CategoryOut.model_validate(cat).model_dump())
-
+    return ok(data=CategoryOut.model_validate(cat).model_dump(mode='json'))
 
 @router.patch(
     "/categories/{cat_id}",
@@ -89,7 +90,7 @@ async def update_category(
     svc = CategoryService(db)
     cat = await svc.update(cat_id, payload, current.company_id)
     await cache.delete(cache.cache_key("categories", str(current.company_id)))
-    return ok(data=CategoryOut.model_validate(cat).model_dump(), message="Category updated.")
+    return ok(data=CategoryOut.model_validate(cat).model_dump(mode='json'), message="Category updated.")
 
 
 @router.delete(
@@ -164,7 +165,7 @@ async def brand_products(
     result = await db.execute(stmt)
     products = result.scalars().all()
     from app.schemas import ProductOut
-    return ok(data=[ProductOut.model_validate(p).model_dump() for p in products])
+    return ok(data=[ProductOut.model_validate(p).model_dump(mode='json') for p in products])
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -183,7 +184,7 @@ async def list_uoms(
         return ORJSONResponse(content={"success": True, "data": cached})
     svc = MasterDataService(db)
     uoms = await svc.get_uoms()
-    data = [UOMOut.model_validate(u).model_dump() for u in uoms]
+    data = [UOMOut.model_validate(u).model_dump(mode='json') for u in uoms]
     await cache.set(cache_key, data, ttl=600)
     return ok(data=data)
 
@@ -208,7 +209,7 @@ async def create_uom(
         raise AlreadyExistsError(f"UOM code '{payload.uom_code}' already exists.")
     uom = await repo.create({**payload.model_dump(), "uom_code": payload.uom_code.upper()})
     await cache.delete("master:uoms")
-    return created(data=UOMOut.model_validate(uom).model_dump(), message="UOM created.")
+    return created(data=UOMOut.model_validate(uom).model_dump(mode='json'), message="UOM created.")
 
 
 @router.patch("/uoms/{uom_id}", summary="Update a UOM")
@@ -224,12 +225,12 @@ async def update_uom(
     uom = await repo.get_or_raise(uom_id)
     updated = await repo.update(uom, payload.model_dump(exclude_unset=True))
     await cache.delete("master:uoms")
-    return ok(data=UOMOut.model_validate(updated).model_dump(), message="UOM updated.")
+    return ok(data=UOMOut.model_validate(updated).model_dump(mode='json'), message="UOM updated.")
 
 
 # ════════════════════════════════════════════════════════════════════
 # GST RATES
-# ════════════════════════════════════════════════════════════════════
+# ════════════════════════════════════════════
 
 @router.get("/gst-rates", summary="List all GST rate slabs")
 async def list_gst_rates(
@@ -243,7 +244,7 @@ async def list_gst_rates(
         return ORJSONResponse(content={"success": True, "data": cached})
     svc = MasterDataService(db)
     rates = await svc.get_gst_rates()
-    data = [GSTRateOut.model_validate(r).model_dump() for r in rates]
+    data = [GSTRateOut.model_validate(r).model_dump(mode='json') for r in rates]
     await cache.set(cache_key, data, ttl=3600)
     return ok(data=data)
 

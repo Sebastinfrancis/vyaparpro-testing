@@ -18,7 +18,7 @@ router = APIRouter()
 async def list_roles(current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = RoleService(db)
     roles = await svc.list_by_company(current.company_id)
-    return ok(data=[RoleOut.model_validate(r).model_dump() for r in roles])
+    return ok(data=[RoleOut.model_validate(r).model_dump(mode="json") for r in roles])
 
 
 @router.post(
@@ -34,7 +34,7 @@ async def create_role(
 ) -> ORJSONResponse:
     svc = RoleService(db)
     role = await svc.create(current.company_id, payload, current.user_id)
-    return created(data=RoleOut.model_validate(role).model_dump(), message="Role created.")
+    return created(data=RoleOut.model_validate(role).model_dump(mode="json"), message="Role created.")
 
 
 @router.get("/{role_id}", summary="Get role by ID with permissions")
@@ -45,7 +45,7 @@ async def get_role(role_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONR
     if not role:
         from app.core.exceptions import NotFoundError
         raise NotFoundError("Role not found.")
-    return ok(data=RoleOut.model_validate(role).model_dump())
+    return ok(data=RoleOut.model_validate(role).model_dump(mode="json"))
 
 
 @router.patch(
@@ -61,7 +61,7 @@ async def update_role(
 ) -> ORJSONResponse:
     svc = RoleService(db)
     role = await svc.update(role_id, payload, current.company_id, current.user_id)
-    return ok(data=RoleOut.model_validate(role).model_dump(), message="Role updated.")
+    return ok(data=RoleOut.model_validate(role).model_dump(mode="json"), message="Role updated.")
 
 
 @router.delete(

@@ -21,6 +21,10 @@ from app.api.v1.dependencies import (
 from app.schemas import UserCreate, UserOut, UserUpdate
 from app.services import UserService
 from app.utils.responses import created, ok, paginated
+from app.db.models import User, Role
+
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 router = APIRouter()
 
@@ -49,7 +53,7 @@ async def list_users(
         page=pg.page,
         page_size=pg.page_size,
     )
-    items = [UserOut.model_validate(u).model_dump() for u in result.items]
+    items = [UserOut.model_validate(u).model_dump(mode="json") for u in result.items]
     return paginated(items, result.total, result.page, result.page_size, result.pages)
 
 
@@ -70,8 +74,11 @@ async def create_user(
         payload=payload,
         created_by=current.user_id,
     )
+    stmt = (select(User).where(User.id == user.id).options(selectinload(User.role).selectinload(Role.permissions)))
+    result = await db.execute(stmt)
+    user_loaded = result.scalar_one_or_none()
     return created(
-        data=UserOut.model_validate(user).model_dump(),
+        data=UserOut.model_validate(user_loaded).model_dump(mode="json"),
         message="User created successfully.",
     )
 
@@ -88,7 +95,7 @@ async def get_user(
 ) -> ORJSONResponse:
     svc = UserService(db)
     user = await svc.get_with_role(user_id)
-    return ok(data=UserOut.model_validate(user).model_dump())
+    return ok(data=UserOut.model_validate(user).model_dump(mode="json"))
 
 
 @router.patch(
@@ -109,7 +116,10 @@ async def update_user(
         company_id=current.company_id,
         actor_id=current.user_id,
     )
-    return ok(data=UserOut.model_validate(user).model_dump(), message="User updated.")
+    stmt = (select(User).where(User.id == user.id).options(selectinload(User.role).selectinload(Role.permissions)))
+    result = await db.execute(stmt)
+    user_loaded = result.scalar_one()
+    return ok(data=UserOut.model_validate(user_loaded).model_dump(mode="json"), message="User updated.")
 
 
 @router.delete(

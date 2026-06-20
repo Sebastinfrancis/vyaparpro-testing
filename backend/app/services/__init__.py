@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
+from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
@@ -463,6 +465,7 @@ class PartyService:
 
 class ProductService:
     def __init__(self, session: AsyncSession) -> None:
+        self.session = session
         self.products = ProductRepository(session)
         self.audit = AuditLogRepository(session)
 
@@ -484,6 +487,9 @@ class ProductService:
             user_id=user_id, entity_type="products", entity_id=product.id,
             entity_ref=product.product_name,
         )
+        stmt = select(Product).where(Product.id == product.id).options(selectinload(Product.category),selectinload(Product.uom))
+        result = await self.session.execute(stmt)
+        product = result.scalar_one()
         return product
 
     async def update(self, product_id: UUID, payload: ProductUpdate, company_id: UUID, user_id: UUID) -> Product:
@@ -495,6 +501,9 @@ class ProductService:
             company_id=company_id, action="UPDATE", module="inventory",
             user_id=user_id, entity_type="products", entity_id=product_id,
         )
+        stmt = select(Product).where(Product.id == updated.id).options(selectinload(Product.category),selectinload(Product.uom))
+        result = await self.session.execute(stmt)
+        updated = result.scalar_one()
         return updated
 
     async def search(self, company_id: UUID, **kwargs: Any):

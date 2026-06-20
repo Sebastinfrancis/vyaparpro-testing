@@ -16,6 +16,8 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from fastapi.encoders import jsonable_encoder
+
 from fastapi import APIRouter, Query, UploadFile
 from fastapi.responses import ORJSONResponse
 
@@ -73,8 +75,9 @@ async def list_products(
             "page": result.page, "page_size": result.page_size, "pages": result.pages,
         },
     }
-    await cache.set(cache_key, resp, ttl=_TTL)
-    return ORJSONResponse(content=resp)
+    clean_resp = jsonable_encoder(resp)
+    await cache.set(cache_key, clean_resp, ttl=_TTL)
+    return ORJSONResponse(content=clean_resp)
 
 
 @router.post(
@@ -93,7 +96,7 @@ async def create_product(
     product = await svc.create(current.company_id, payload, current.user_id)
     await cache.delete_pattern(f"products:{current.company_id}:*")
     return created(
-        data=ProductOut.model_validate(product).model_dump(),
+        data=ProductOut.model_validate(product).model_dump(mode='json'),
         message="Product created successfully.",
     )
 
@@ -110,13 +113,20 @@ async def get_by_barcode(
     if cached:
         return ORJSONResponse(content={"success": True, "data": cached})
 
-    from app.db.repositories import ProductRepository
-    repo = ProductRepository(db)
-    product = await repo.get_by_barcode(current.company_id, barcode)
+    from sqlalchemy.future import select
+    from sqlalchemy.orm import selectinload
+    from app.db.models import Product
+    stmt = (
+        select(Product).where(Product.company_id == current.company_id, Product.barcode == barcode).options(
+            selectinload(Product.category), selectinload(Product.uom)
+        )
+    )
+    result = await db.execute(stmt)
+    product = result.scalar_one_or_none()
     if not product:
         from app.core.exceptions import NotFoundError
         raise NotFoundError(f"No product found with barcode '{barcode}'.")
-    data = ProductOut.model_validate(product).model_dump()
+    data = ProductOut.model_validate(product).model_dump(mode='json')
     await cache.set(cache_key, data, ttl=300)
     return ok(data=data)
 
@@ -141,7 +151,7 @@ async def get_product(
     if not product:
         from app.core.exceptions import NotFoundError
         raise NotFoundError("Product not found.")
-    return ok(data=ProductOut.model_validate(product).model_dump())
+    return ok(data=ProductOut.model_validate(product).model_dump(mode='json'))
 
 
 @router.patch(
@@ -160,7 +170,7 @@ async def update_product(
     product = await svc.update(product_id, payload, current.company_id, current.user_id)
     await cache.delete_pattern(f"products:{current.company_id}:*")
     await cache.delete_pattern(f"barcode:{current.company_id}:*")
-    return ok(data=ProductOut.model_validate(product).model_dump(), message="Product updated.")
+    return ok(data=ProductOut.model_validate(product).model_dump(mode='json'), message="Product updated.")
 
 
 @router.delete(
@@ -222,7 +232,7 @@ async def list_variants(product_id: UUID, current: CurrentUserDep, db: DBDep) ->
     result = await db.execute(stmt)
     variants = result.scalars().all()
     from app.schemas import ProductVariantOut
-    return ok(data=[ProductVariantOut.model_validate(v).model_dump() for v in variants])
+    return ok(data=[ProductVariantOut.model_validate(v).model_dump(mode='json') for v in variants])
 
 
 @router.post("/{product_id}/variants", summary="Add a product variant", status_code=201)
@@ -239,6 +249,6 @@ async def create_variant(
     await db.flush()
     await db.refresh(variant)
     return created(
-        data=ProductVariantOut.model_validate(variant).model_dump(),
+        data=ProductVariantOut.model_validate(variant).model_dump(mode='json'),
         message="Variant created.",
     )
