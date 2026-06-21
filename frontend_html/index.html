@@ -15,7 +15,6 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-he
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 .topbar{height:58px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
 .content{flex:1;overflow-y:auto;padding:22px}
-/* SIDEBAR */
 .logo{padding:18px 14px 14px;border-bottom:1px solid var(--border)}
 .logo-text{font-size:19px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .logo-sub{font-size:9px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
@@ -31,7 +30,6 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-he
 .sfooter{margin-top:auto;padding:11px;border-top:1px solid var(--border)}
 .upill{display:flex;align-items:center;gap:9px;padding:7px;background:var(--bg3);border-radius:var(--r2);cursor:pointer}
 .av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
-/* TOPBAR */
 .sbox{flex:1;max-width:380px;background:var(--bg3);border:1px solid var(--border);border-radius:18px;padding:7px 14px;display:flex;align-items:center;gap:7px}
 .sbox input{background:none;border:none;outline:none;color:var(--text);font-family:'Sora',sans-serif;font-size:12px;flex:1}
 .sbox input::placeholder{color:var(--text3)}
@@ -40,7 +38,6 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-he
 .bic:hover{border-color:var(--accent);color:var(--accent)}
 .sdot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
-/* BUTTONS */
 .btn{padding:8px 16px;border-radius:var(--r2);border:none;cursor:pointer;font-family:'Sora',sans-serif;font-size:12px;font-weight:600;transition:all .13s;display:inline-flex;align-items:center;gap:5px}
 .btn-p{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0a0e1a}
 .btn-p:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,212,255,.28)}
@@ -50,11 +47,9 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-he
 .btn-d{background:rgba(255,68,68,.12);border:1px solid var(--red);color:var(--red)}
 .btn-warn{background:rgba(255,145,0,.12);border:1px solid var(--orange);color:var(--orange)}
 .btn-sm{padding:5px 11px;font-size:11px}
-/* CARDS */
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px}
 .chov{transition:all .18s;cursor:pointer}
 .chov:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:var(--shadow)}
-/* STATS */
 .sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
 .sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;position:relative;overflow:hidden}
 .sc::before{content:'';position:absolute;top:0;right:0;width:50px;height:50px;border-radius:50%;filter:blur(18px);opacity:.28}
@@ -65,7 +60,6 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-he
 .sval.bl{color:var(--accent)}.sval.gr{color:var(--green)}.sval.or{color:var(--orange)}.sval.pu{color:var(--purple)}
 .sch{font-size:10px;display:flex;align-items:center;gap:3px}
 .up{color:var(--green)}.dn{color:var(--red)}
-/* TABLES */
 .tw{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:12px}
 thead th{padding:9px 12px;text-align:left;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap}
@@ -79,7 +73,6 @@ tbody td.b{color:var(--text);font-weight:600}
 .sov{background:rgba(255,68,68,.09);color:var(--red);border:1px solid rgba(255,68,68,.18)}
 .sdr{background:rgba(139,163,199,.09);color:var(--text3);border:1px solid var(--border)}
 .scan{background:rgba(0,212,255,.09);color:var(--accent);border:1px solid rgba(0,212,255,.18)}
-/* FORMS */
 .fg{margin-bottom:14px}
 .fl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:5px;display:block}
 .fi{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:9px 12px;color:var(--text);font-family:'Sora',sans-serif;font-size:12px;outline:none;transition:border .13s}
@@ -89,7 +82,6 @@ select.fi option{background:var(--bg2)}
 .fr{display:grid;gap:14px}
 .fr.c2{grid-template-columns:1fr 1fr}
 .fr.c3{grid-template-columns:1fr 1fr 1fr}
-/* MODAL */
 .mo{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
 .md{background:var(--bg2);border:1px solid var(--border);border-radius:14px;width:100%;max-height:92vh;overflow-y:auto;animation:min .18s ease}
 .md-sm{max-width:460px}.md-md{max-width:680px}.md-lg{max-width:940px}.md-xl{max-width:1100px}
@@ -99,21 +91,17 @@ select.fi option{background:var(--bg2)}
 .mc{width:30px;height:30px;border-radius:7px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;color:var(--text2)}
 .mb{padding:22px}
 .mf{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:9px}
-/* SECTION HEADER */
 .sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
 .st{font-size:19px;font-weight:700}
 .ss{font-size:12px;color:var(--text3);margin-top:2px}
 .bc{font-size:11px;color:var(--text3);margin-bottom:3px}
 .bc span{color:var(--text2)}
-/* CHART */
 .cbw{display:flex;align-items:flex-end;gap:5px;height:90px;padding-top:6px}
 .cb{flex:1;border-radius:3px 3px 0 0;min-width:18px;transition:opacity .18s;cursor:pointer}
 .cb:hover{opacity:.75}
 .cbl{font-size:8px;color:var(--text3);text-align:center;margin-top:3px}
-/* INV ITEMS */
 .iir{display:grid;grid-template-columns:2fr 70px 95px 70px 70px 95px 32px;gap:7px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
 .iih{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px}
-/* AI */
 .aip{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;height:390px}
 .aim{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
 .aimsg{max-width:82%;padding:9px 13px;border-radius:11px;font-size:12px;line-height:1.5}
@@ -122,7 +110,6 @@ select.fi option{background:var(--bg2)}
 .aiir{padding:10px;border-top:1px solid var(--border);display:flex;gap:7px}
 .aiin{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:18px;padding:7px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:12px;outline:none}
 .aisd{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
-/* MISC */
 .chip{display:inline-flex;align-items:center;padding:2px 9px;border-radius:18px;font-size:10px;font-weight:600}
 .cbl2{background:rgba(0,212,255,.09);color:var(--accent);border:1px solid rgba(0,212,255,.18)}
 .cgr{background:rgba(0,230,118,.09);color:var(--green);border:1px solid rgba(0,230,118,.18)}
@@ -153,22 +140,53 @@ select.fi option{background:var(--bg2)}
 .esb{font-size:11px;margin-top:3px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-/* INVOICE PREVIEW */
 .inv-preview{background:#fff;color:#111;border-radius:var(--r);padding:32px;font-family:'Sora',sans-serif;max-width:700px;margin:0 auto}
 .inv-preview table{width:100%;border-collapse:collapse;font-size:12px}
 .inv-preview thead th{background:#f5f5f5;padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#666}
 .inv-preview tbody td{padding:8px 10px;border-bottom:1px solid #eee;color:#333}
 .edit-mode-banner{background:linear-gradient(135deg,rgba(255,145,0,.1),rgba(255,145,0,.05));border:1px solid rgba(255,145,0,.3);border-radius:var(--r2);padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:12px}
+/* Login Screen */
+.login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9000}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:36px;width:380px}
+.login-logo{font-size:24px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
+.api-status{display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:3px 9px;border-radius:18px;font-weight:600;margin-bottom:18px}
+.api-online{background:rgba(0,230,118,.09);color:var(--green);border:1px solid rgba(0,230,118,.18)}
+.api-offline{background:rgba(255,68,68,.09);color:var(--red);border:1px solid rgba(255,68,68,.18)}
 @media(max-width:860px){.sidebar{display:none}.sgrid{grid-template-columns:1fr 1fr}.fr.c3{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
-<div class="app" id="app">
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-box">
+    <div class="login-logo">VyaparPro</div>
+    <div style="font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:18px">AI-Powered ERP</div>
+    <div id="apiStatusPill" class="api-status api-offline">⏳ Checking API…</div>
+    <div class="fg"><label class="fl">Username / Email</label>
+      <input class="fi" id="loginUser" placeholder="admin@vyaparpro.com" value="admin@vyaparpro.com"/></div>
+    <div class="fg"><label class="fl">Password</label>
+      <input class="fi" type="password" id="loginPass" placeholder="••••••••" value="admin123"
+        onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px" onclick="doLogin()" id="loginBtn">
+      Sign In
+    </button>
+    <div id="loginErr" style="color:var(--red);font-size:11px;margin-top:10px;text-align:center"></div>
+    <div style="margin-top:18px;padding:11px;background:var(--bg3);border-radius:var(--r2);font-size:10px;color:var(--text3)">
+      💡 If API is offline, app runs on local demo data automatically.
+    </div>
+  </div>
+</div>
+
+<div class="app" id="app" style="display:none">
 
 <!-- ======== SIDEBAR ======== -->
 <aside class="sidebar">
   <div class="logo"><div class="logo-text">VyaparPro</div><div class="logo-sub">AI-Powered ERP</div></div>
-  <div class="co-sel"><div class="co-name">🏢 Sharma Electronics</div><div class="co-gstin mono">27AABCS1234F1Z5</div></div>
+  <div class="co-sel" id="coSelBox">
+    <div class="co-name" id="coSelName">🏢 Sharma Electronics</div>
+    <div class="co-gstin mono" id="coSelGstin">27AABCS1234F1Z5</div>
+  </div>
   <div style="flex:1;overflow-y:auto">
     <div class="ns">Main</div>
     <div class="ni active" onclick="nav('dashboard',this)"><span class="ni-ic">📊</span>Dashboard</div>
@@ -198,20 +216,32 @@ select.fi option{background:var(--bg2)}
     <div class="ni" onclick="nav('settings',this)"><span class="ni-ic">⚙️</span>Settings</div>
   </div>
   <div class="sfooter">
-    <div class="upill"><div class="av">RS</div><div><div style="font-size:11px;font-weight:600">Rajesh Sharma</div><div style="font-size:9px;color:var(--text3)">Owner · Admin</div></div><div style="margin-left:auto;color:var(--text3);font-size:11px">⚙</div></div>
-    <div style="margin-top:7px;font-size:9px;color:var(--text3);text-align:center"><span class="sdot" style="display:inline-block;margin-right:3px;vertical-align:middle"></span>Synced · Online · Last: just now</div>
+    <div class="upill" id="userPill">
+      <div class="av" id="userAvatar">RS</div>
+      <div><div style="font-size:11px;font-weight:600" id="userFullName">Rajesh Sharma</div>
+        <div style="font-size:9px;color:var(--text3)" id="userRole">Owner · Admin</div></div>
+      <div style="margin-left:auto;color:var(--text3);font-size:11px;cursor:pointer" onclick="doLogout()">⏻</div>
+    </div>
+    <div style="margin-top:7px;font-size:9px;color:var(--text3);text-align:center" id="syncStatus">
+      <span class="sdot" style="display:inline-block;margin-right:3px;vertical-align:middle"></span>
+      <span id="syncLabel">Connecting…</span>
+    </div>
   </div>
 </aside>
 
 <!-- ======== MAIN ======== -->
 <div class="main">
   <div class="topbar">
-    <div class="sbox"><span style="font-size:13px;color:var(--text3)">🔍</span><input id="gSearch" placeholder="Search invoices, customers, products… (Ctrl+K)" oninput="doSearch(this.value)"/></div>
+    <div class="sbox"><span style="font-size:13px;color:var(--text3)">🔍</span>
+      <input id="gSearch" placeholder="Search invoices, customers, products… (Ctrl+K)" oninput="doSearch(this.value)"/></div>
     <div class="tba">
       <div class="bic" onclick="nav('create',null)" title="New Invoice (Ctrl+N)">➕</div>
       <div class="bic" style="position:relative" onclick="showNotifs()">🔔<div class="ndot"></div></div>
-      <div class="bic" onclick="showToast('☁️ Sync complete — all data up to date')">☁️</div>
-      <div style="display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);padding:5px 11px;border-radius:7px;font-size:11px"><div class="sdot"></div><span style="color:var(--text2)">Live</span></div>
+      <div class="bic" onclick="syncAll()">☁️</div>
+      <div style="display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);padding:5px 11px;border-radius:7px;font-size:11px" id="liveIndicator">
+        <div class="sdot" id="liveDot" style="background:var(--text3)"></div>
+        <span style="color:var(--text2)" id="liveLabel">Offline</span>
+      </div>
     </div>
   </div>
 
@@ -221,10 +251,13 @@ select.fi option{background:var(--bg2)}
     <div class="page active" id="page-dashboard">
       <div class="bc">Home / <span>Dashboard</span></div>
       <div class="sh" style="margin-top:8px">
-        <div><div class="st">Good morning, Rajesh! 👋</div><div class="ss">Business overview — June 1, 2026</div></div>
-        <div style="display:flex;gap:7px"><select class="fi" style="width:110px;padding:7px 10px">
-          <option>This Month</option><option>This Week</option><option>This Year</option></select>
-          <button class="btn btn-p btn-sm" onclick="nav('create',null)">➕ New Invoice</button></div>
+        <div><div class="st">Good morning, <span id="dashGreetName">Rajesh</span>! 👋</div>
+          <div class="ss">Business overview — <span id="dashDate"></span></div></div>
+        <div style="display:flex;gap:7px">
+          <select class="fi" style="width:110px;padding:7px 10px">
+            <option>This Month</option><option>This Week</option><option>This Year</option></select>
+          <button class="btn btn-p btn-sm" onclick="nav('create',null)">➕ New Invoice</button>
+        </div>
       </div>
       <div style="background:linear-gradient(135deg,rgba(0,212,255,.07),rgba(0,230,118,.04));border:1px solid rgba(0,212,255,.18);border-radius:var(--r);padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px">
         <div style="font-size:26px">🤖</div>
@@ -233,10 +266,10 @@ select.fi option{background:var(--bg2)}
         <button class="btn btn-o btn-sm" style="margin-left:auto;white-space:nowrap" onclick="nav('ai',null)">Ask AI →</button>
       </div>
       <div class="sgrid">
-        <div class="sc bl"><div class="slbl">Today's Sales</div><div class="sval bl">₹84,200</div><div class="sch up">▲ 12% vs yesterday</div></div>
-        <div class="sc gr"><div class="slbl">Monthly Revenue</div><div class="sval gr">₹18,46,500</div><div class="sch up">▲ 18% vs last month</div></div>
-        <div class="sc or"><div class="slbl">Outstanding</div><div class="sval or">₹3,24,800</div><div class="sch dn">▼ 12 invoices pending</div></div>
-        <div class="sc pu"><div class="slbl">Net Profit (MTD)</div><div class="sval pu">₹2,18,400</div><div class="sch up">▲ 22% margin</div></div>
+        <div class="sc bl"><div class="slbl">Today's Sales</div><div class="sval bl" id="dash-today-sales">₹84,200</div><div class="sch up">▲ 12% vs yesterday</div></div>
+        <div class="sc gr"><div class="slbl">Monthly Revenue</div><div class="sval gr" id="dash-monthly-rev">₹18,46,500</div><div class="sch up">▲ 18% vs last month</div></div>
+        <div class="sc or"><div class="slbl">Outstanding</div><div class="sval or" id="dash-outstanding">₹3,24,800</div><div class="sch dn">▼ 12 invoices pending</div></div>
+        <div class="sc pu"><div class="slbl">Net Profit (MTD)</div><div class="sval pu" id="dash-net-profit">₹2,18,400</div><div class="sch up">▲ 22% margin</div></div>
       </div>
       <div class="g2" style="margin-bottom:18px">
         <div class="card">
@@ -249,9 +282,9 @@ select.fi option{background:var(--bg2)}
           <div class="g2" style="gap:8px">
             <button class="btn btn-p" style="justify-content:center" onclick="nav('create',null)">🧾 New Invoice</button>
             <button class="btn btn-s" style="justify-content:center" onclick="nav('purchase',null)">🛒 New Purchase</button>
-            <button class="btn btn-o" style="justify-content:center" onclick="nav('customers',null)">👥 Add Customer</button>
-            <button class="btn btn-o" style="justify-content:center" onclick="nav('inventory',null)">📦 Add Product</button>
-            <button class="btn btn-o" style="justify-content:center" onclick="nav('payments',null)">💳 Record Payment</button>
+            <button class="btn btn-o" style="justify-content:center" onclick="openModal('custModal')">👥 Add Customer</button>
+            <button class="btn btn-o" style="justify-content:center" onclick="openModal('prodModal')">📦 Add Product</button>
+            <button class="btn btn-o" style="justify-content:center" onclick="openModal('payModal')">💳 Record Payment</button>
             <button class="btn btn-o" style="justify-content:center" onclick="nav('reports',null)">📊 Reports</button>
           </div>
         </div>
@@ -370,7 +403,7 @@ select.fi option{background:var(--bg2)}
             <div class="tr"><span style="color:var(--text3)">Taxable Amount</span><span id="s_tax">₹0.00</span></div>
             <div class="tr" id="cgst_row"><span style="color:var(--text3)">CGST</span><span id="s_cgst">₹0.00</span></div>
             <div class="tr" id="sgst_row"><span style="color:var(--text3)">SGST</span><span id="s_sgst">₹0.00</span></div>
-            <div class="tr" id="igst_row" class="hidden"><span style="color:var(--text3)">IGST</span><span id="s_igst">₹0.00</span></div>
+            <div class="tr" id="igst_row"><span style="color:var(--text3)">IGST</span><span id="s_igst">₹0.00</span></div>
             <div class="tr"><span style="color:var(--text3)">Round Off</span><span id="s_round">₹0.00</span></div>
             <div class="tr fin"><span>GRAND TOTAL</span><span id="s_total" style="color:var(--green)">₹0.00</span></div>
             <div style="margin-top:12px;display:flex;gap:7px">
@@ -398,10 +431,10 @@ select.fi option{background:var(--bg2)}
         </div>
       </div>
       <div style="display:flex;gap:14px;margin-bottom:18px">
-        <div class="sc bl" style="flex:1"><div class="slbl">Total Products</div><div class="sval bl" style="font-size:20px" id="totalProds">247</div></div>
-        <div class="sc or" style="flex:1"><div class="slbl">Low Stock</div><div class="sval or" style="font-size:20px" id="lowProds">18</div></div>
-        <div class="sc" style="flex:1;border-color:var(--border)"><div class="slbl">Out of Stock</div><div class="sval" style="font-size:20px;color:var(--red)" id="outProds">4</div></div>
-        <div class="sc gr" style="flex:1"><div class="slbl">Stock Value</div><div class="sval gr" style="font-size:20px">₹48.2L</div></div>
+        <div class="sc bl" style="flex:1"><div class="slbl">Total Products</div><div class="sval bl" style="font-size:20px" id="totalProds">—</div></div>
+        <div class="sc or" style="flex:1"><div class="slbl">Low Stock</div><div class="sval or" style="font-size:20px" id="lowProds">—</div></div>
+        <div class="sc" style="flex:1;border-color:var(--border)"><div class="slbl">Out of Stock</div><div class="sval" style="font-size:20px;color:var(--red)" id="outProds">—</div></div>
+        <div class="sc gr" style="flex:1"><div class="slbl">Stock Value</div><div class="sval gr" style="font-size:20px" id="stockValue">—</div></div>
       </div>
       <div style="display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap">
         <input class="fi" style="width:220px" id="prodSearch" placeholder="🔍 Search products…" oninput="filterProds()"/>
@@ -422,10 +455,10 @@ select.fi option{background:var(--bg2)}
         <button class="btn btn-p btn-sm" onclick="openModal('custModal')">➕ Add Customer</button>
       </div>
       <div style="display:flex;gap:14px;margin-bottom:18px">
-        <div class="sc bl" style="flex:1"><div class="slbl">Total</div><div class="sval bl" style="font-size:20px">342</div></div>
-        <div class="sc gr" style="flex:1"><div class="slbl">Active (30d)</div><div class="sval gr" style="font-size:20px">128</div></div>
-        <div class="sc or" style="flex:1"><div class="slbl">Outstanding</div><div class="sval or" style="font-size:20px">₹3.2L</div></div>
-        <div class="sc pu" style="flex:1"><div class="slbl">Avg LTV</div><div class="sval pu" style="font-size:20px">₹84K</div></div>
+        <div class="sc bl" style="flex:1"><div class="slbl">Total</div><div class="sval bl" style="font-size:20px" id="custTotal">—</div></div>
+        <div class="sc gr" style="flex:1"><div class="slbl">Active (30d)</div><div class="sval gr" style="font-size:20px">—</div></div>
+        <div class="sc or" style="flex:1"><div class="slbl">Outstanding</div><div class="sval or" style="font-size:20px">—</div></div>
+        <div class="sc pu" style="flex:1"><div class="slbl">Avg LTV</div><div class="sval pu" style="font-size:20px">—</div></div>
       </div>
       <div style="display:flex;gap:9px;margin-bottom:14px">
         <input class="fi" style="width:240px" id="custSearch" placeholder="🔍 Search customers…" oninput="filterCust()"/>
@@ -445,10 +478,10 @@ select.fi option{background:var(--bg2)}
         <button class="btn btn-p btn-sm" onclick="openModal('vendModal')">➕ Add Vendor</button>
       </div>
       <div style="display:flex;gap:14px;margin-bottom:18px">
-        <div class="sc bl" style="flex:1"><div class="slbl">Total Vendors</div><div class="sval bl" style="font-size:20px">48</div></div>
-        <div class="sc or" style="flex:1"><div class="slbl">Payable</div><div class="sval or" style="font-size:20px">₹4.8L</div></div>
-        <div class="sc gr" style="flex:1"><div class="slbl">Active</div><div class="sval gr" style="font-size:20px">32</div></div>
-        <div class="sc pu" style="flex:1"><div class="slbl">Orders (Month)</div><div class="sval pu" style="font-size:20px">14</div></div>
+        <div class="sc bl" style="flex:1"><div class="slbl">Total Vendors</div><div class="sval bl" style="font-size:20px" id="vendTotal">—</div></div>
+        <div class="sc or" style="flex:1"><div class="slbl">Payable</div><div class="sval or" style="font-size:20px">—</div></div>
+        <div class="sc gr" style="flex:1"><div class="slbl">Active</div><div class="sval gr" style="font-size:20px">—</div></div>
+        <div class="sc pu" style="flex:1"><div class="slbl">Orders (Month)</div><div class="sval pu" style="font-size:20px">—</div></div>
       </div>
       <div class="card"><div class="tw"><table>
         <thead><tr><th>Vendor</th><th>GSTIN</th><th>Mobile</th><th>City</th><th>Total Purchases</th><th>Payable</th><th>AI Score</th><th>Actions</th></tr></thead>
@@ -567,10 +600,7 @@ select.fi option{background:var(--bg2)}
       <div class="bc">GST / <span>E-Invoice & E-Way Bill</span></div>
       <div class="sh" style="margin-top:8px"><div><div class="st">E-Invoice & E-Way Bill</div><div class="ss">NIC portal integration — IRN, QR, e-way bill</div></div></div>
       <div class="g2" style="margin-bottom:18px">
-        <div class="card">
-          <div style="font-size:13px;font-weight:700;margin-bottom:14px">⚡ E-Invoice Status</div>
-          <div id="einvList"></div>
-        </div>
+        <div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:14px">⚡ E-Invoice Status</div><div id="einvList"></div></div>
         <div class="card">
           <div style="font-size:13px;font-weight:700;margin-bottom:14px">🛣️ E-Way Bill</div>
           <div class="fg"><label class="fl">Invoice No</label><input class="fi" id="ewbInv" placeholder="INV-2468"/></div>
@@ -714,9 +744,6 @@ select.fi option{background:var(--bg2)}
         <div class="card chov" onclick="nav('gst',null)"><div style="font-size:26px;margin-bottom:7px">🇮🇳</div><div style="font-size:13px;font-weight:700">GST Reports</div><div style="font-size:11px;color:var(--text3);margin-top:3px">GSTR-1, GSTR-3B, HSN</div></div>
         <div class="card chov" onclick="showToast('👥 Customer report generated')"><div style="font-size:26px;margin-bottom:7px">👥</div><div style="font-size:13px;font-weight:700">Customer Report</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Outstanding, LTV, purchase history</div></div>
         <div class="card chov" onclick="nav('accounting',null)"><div style="font-size:26px;margin-bottom:7px">📒</div><div style="font-size:13px;font-weight:700">P&L / Balance Sheet</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Full financial statements</div></div>
-        <div class="card chov" onclick="showToast('💰 Cash-flow report generated')"><div style="font-size:26px;margin-bottom:7px">💰</div><div style="font-size:13px;font-weight:700">Cash Flow</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Cash inflow, outflow, net position</div></div>
-        <div class="card chov" onclick="showToast('🏭 Branch report generated')"><div style="font-size:26px;margin-bottom:7px">🏭</div><div style="font-size:13px;font-weight:700">Branch Report</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Multi-branch P&L comparison</div></div>
-        <div class="card chov" onclick="showToast('🔮 AI forecast report generated')"><div style="font-size:26px;margin-bottom:7px">🔮</div><div style="font-size:13px;font-weight:700">AI Forecast Report</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Predictive analytics dashboard</div></div>
       </div>
     </div>
 
@@ -754,7 +781,6 @@ select.fi option{background:var(--bg2)}
               <div style="font-size:12px;font-weight:600;color:var(--text2)">Scan Supplier Invoice</div>
               <div style="font-size:10px;color:var(--text3);margin-top:3px">AI extracts all details automatically</div>
             </div>
-            <div style="margin-top:11px;font-size:10px;color:var(--text3)">Extracts: vendor name, GSTIN, invoice no, products, qty, price, GST → auto-creates purchase entry</div>
           </div>
         </div>
       </div>
@@ -787,7 +813,6 @@ select.fi option{background:var(--bg2)}
               <div class="fg"><label class="fl">Business Type</label><select class="fi"><option>Retailer</option><option>Wholesaler</option><option>Manufacturer</option></select></div>
             </div>
             <div class="fg"><label class="fl">Invoice Prefix</label><input class="fi" value="INV-"/></div>
-            <div class="fg"><label class="fl">Financial Year Start</label><select class="fi"><option>April</option><option>January</option></select></div>
             <button class="btn btn-p btn-sm" onclick="showToast('✅ Settings saved!')">Save Changes</button>
           </div>
           <div class="card">
@@ -797,10 +822,8 @@ select.fi option{background:var(--bg2)}
               <tbody>
                 <tr><td class="b">Rajesh Sharma</td><td><span class="chip crd">Owner</span></td><td><span class="sb sp">Active</span></td><td><button class="btn btn-o btn-sm">Edit</button></td></tr>
                 <tr><td class="b">Priya Sharma</td><td><span class="chip cor">Accountant</span></td><td><span class="sb sp">Active</span></td><td><button class="btn btn-o btn-sm">Edit</button></td></tr>
-                <tr><td class="b">Suresh Kumar</td><td><span class="chip cbl2">Salesperson</span></td><td><span class="sb sp">Active</span></td><td><button class="btn btn-o btn-sm">Edit</button></td></tr>
               </tbody>
             </table></div>
-            <button class="btn btn-o btn-sm" style="margin-top:11px" onclick="showToast('➕ Add user dialog opened')">➕ Add User</button>
           </div>
         </div>
         <div>
@@ -808,42 +831,11 @@ select.fi option{background:var(--bg2)}
             <div style="font-size:13px;font-weight:700;margin-bottom:14px">🔐 Security</div>
             <div style="display:flex;flex-direction:column;gap:9px">
               <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
-                <div><div style="font-size:12px;font-weight:600">Two-Factor Auth (TOTP)</div><div style="font-size:10px;color:var(--text3)">Google Authenticator / SMS OTP</div></div>
-                <span class="chip cgr">Enabled</span>
-              </div>
+                <div><div style="font-size:12px;font-weight:600">Two-Factor Auth (TOTP)</div><div style="font-size:10px;color:var(--text3)">Google Authenticator / SMS OTP</div></div><span class="chip cgr">Enabled</span></div>
               <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
-                <div><div style="font-size:12px;font-weight:600">Auto Cloud Backup</div><div style="font-size:10px;color:var(--text3)">Daily 2 AM → AWS S3 encrypted</div></div>
-                <span class="chip cgr">Active</span>
-              </div>
+                <div><div style="font-size:12px;font-weight:600">Auto Cloud Backup</div><div style="font-size:10px;color:var(--text3)">Daily 2 AM → AWS S3 encrypted</div></div><span class="chip cgr">Active</span></div>
               <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
-                <div><div style="font-size:12px;font-weight:600">Audit Logging</div><div style="font-size:10px;color:var(--text3)">All actions tracked & stored 7 years</div></div>
-                <span class="chip cgr">Active</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
-                <div><div style="font-size:12px;font-weight:600">Offline Mode (SQLite)</div><div style="font-size:10px;color:var(--text3)">Auto-sync when online</div></div>
-                <span class="chip cgr">Enabled</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
-                <div><div style="font-size:12px;font-weight:600">Data Encryption (AES-256)</div><div style="font-size:10px;color:var(--text3)">At rest & in transit</div></div>
-                <span class="chip cgr">Active</span>
-              </div>
-            </div>
-          </div>
-          <div class="card">
-            <div style="font-size:13px;font-weight:700;margin-bottom:14px">🔔 Notifications</div>
-            <div style="display:flex;flex-direction:column;gap:9px">
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
-                <div style="font-size:12px;font-weight:600">WhatsApp Invoice Sharing</div><span class="chip cgr">On</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
-                <div style="font-size:12px;font-weight:600">Payment Reminders</div><span class="chip cgr">On</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
-                <div style="font-size:12px;font-weight:600">Low Stock Alerts</div><span class="chip cgr">On</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
-                <div style="font-size:12px;font-weight:600">SMS (via Twilio)</div><span class="chip cor">Off</span>
-              </div>
+                <div><div style="font-size:12px;font-weight:600">Data Encryption (AES-256)</div><div style="font-size:10px;color:var(--text3)">At rest & in transit</div></div><span class="chip cgr">Active</span></div>
             </div>
           </div>
         </div>
@@ -855,18 +847,13 @@ select.fi option{background:var(--bg2)}
 </div><!-- /app -->
 
 <!-- ===== MODALS ===== -->
-
-<!-- INVOICE VIEW/EDIT PICKER -->
 <div id="invPickModal" class="mo hidden">
   <div class="md md-sm">
     <div class="mh"><span class="mt2">Invoice Actions</span><button class="mc" onclick="closeModal('invPickModal')">✕</button></div>
-    <div class="mb">
-      <div id="invPickContent"></div>
-    </div>
+    <div class="mb"><div id="invPickContent"></div></div>
   </div>
 </div>
 
-<!-- INVOICE PREVIEW -->
 <div id="invPreviewModal" class="mo hidden">
   <div class="md md-lg">
     <div class="mh"><span class="mt2" id="prevTitle">Invoice Preview</span>
@@ -881,7 +868,6 @@ select.fi option{background:var(--bg2)}
   </div>
 </div>
 
-<!-- PRODUCT MODAL -->
 <div id="prodModal" class="mo hidden">
   <div class="md md-md">
     <div class="mh"><span class="mt2" id="prodModalTitle">Add Product</span><button class="mc" onclick="closeModal('prodModal')">✕</button></div>
@@ -904,7 +890,6 @@ select.fi option{background:var(--bg2)}
   </div>
 </div>
 
-<!-- CUSTOMER MODAL -->
 <div id="custModal" class="mo hidden">
   <div class="md md-md">
     <div class="mh"><span class="mt2" id="custModalTitle">Add Customer</span><button class="mc" onclick="closeModal('custModal')">✕</button></div>
@@ -923,25 +908,21 @@ select.fi option{background:var(--bg2)}
   </div>
 </div>
 
-<!-- VENDOR MODAL -->
 <div id="vendModal" class="mo hidden">
   <div class="md md-md">
     <div class="mh"><span class="mt2">Add Vendor</span><button class="mc" onclick="closeModal('vendModal')">✕</button></div>
     <div class="mb">
-      <div class="fr c2"><div class="fg"><label class="fl">Vendor Name</label><input class="fi" placeholder="Samsung India Pvt Ltd"/></div>
+      <div class="fr c2"><div class="fg"><label class="fl">Vendor Name</label><input class="fi" id="vm_name" placeholder="Samsung India Pvt Ltd"/></div>
         <div class="fg"><label class="fl">Contact Person</label><input class="fi" placeholder="Amit Singh"/></div></div>
-      <div class="fr c2"><div class="fg"><label class="fl">GSTIN</label><input class="fi mono" placeholder="07AAACS1234A1Z5"/></div>
-        <div class="fg"><label class="fl">Mobile</label><input class="fi" placeholder="9876543210"/></div></div>
+      <div class="fr c2"><div class="fg"><label class="fl">GSTIN</label><input class="fi mono" id="vm_gstin" placeholder="07AAACS1234A1Z5"/></div>
+        <div class="fg"><label class="fl">Mobile</label><input class="fi" id="vm_mobile" placeholder="9876543210"/></div></div>
       <div class="fr c2"><div class="fg"><label class="fl">Email</label><input class="fi" placeholder="vendor@samsung.com"/></div>
-        <div class="fg"><label class="fl">City</label><input class="fi" placeholder="Delhi"/></div></div>
-      <div class="fr c2"><div class="fg"><label class="fl">Credit Period (days)</label><input class="fi" type="number" placeholder="30"/></div>
-        <div class="fg"><label class="fl">Category</label><select class="fi"><option>Electronics</option><option>FMCG</option><option>IT Hardware</option><option>Services</option></select></div></div>
+        <div class="fg"><label class="fl">City</label><input class="fi" id="vm_city" placeholder="Delhi"/></div></div>
     </div>
     <div class="mf"><button class="btn btn-o" onclick="closeModal('vendModal')">Cancel</button><button class="btn btn-p" onclick="saveVend()">Save Vendor</button></div>
   </div>
 </div>
 
-<!-- LEAD MODAL -->
 <div id="leadModal" class="mo hidden">
   <div class="md md-md">
     <div class="mh"><span class="mt2">Add Lead / Opportunity</span><button class="mc" onclick="closeModal('leadModal')">✕</button></div>
@@ -959,7 +940,6 @@ select.fi option{background:var(--bg2)}
   </div>
 </div>
 
-<!-- PURCHASE ORDER MODAL -->
 <div id="poModal" class="mo hidden">
   <div class="md md-md">
     <div class="mh"><span class="mt2">New Purchase Order</span><button class="mc" onclick="closeModal('poModal')">✕</button></div>
@@ -967,7 +947,7 @@ select.fi option{background:var(--bg2)}
       <div class="fr c2"><div class="fg"><label class="fl">PO Number</label><input class="fi" value="PO-0042"/></div>
         <div class="fg"><label class="fl">Date</label><input type="date" class="fi"/></div></div>
       <div class="fg"><label class="fl">Vendor</label><select class="fi"><option>Samsung India Pvt Ltd</option><option>LG Electronics India</option><option>Lenovo India</option><option>Xiaomi India</option></select></div>
-      <div class="fg"><label class="fl">Items (brief)</label><textarea class="fi" rows="2" placeholder="e.g. Samsung 55 QLED x5, iPhone 15 Pro x3…"></textarea></div>
+      <div class="fg"><label class="fl">Items (brief)</label><textarea class="fi" rows="2" placeholder="e.g. Samsung 55 QLED x5…"></textarea></div>
       <div class="fr c2"><div class="fg"><label class="fl">Expected Delivery</label><input type="date" class="fi"/></div>
         <div class="fg"><label class="fl">Payment Terms</label><select class="fi"><option>Net 30</option><option>Net 45</option><option>Advance</option></select></div></div>
     </div>
@@ -975,7 +955,6 @@ select.fi option{background:var(--bg2)}
   </div>
 </div>
 
-<!-- PAYMENT MODAL -->
 <div id="payModal" class="mo hidden">
   <div class="md md-sm">
     <div class="mh"><span class="mt2">Record Payment</span><button class="mc" onclick="closeModal('payModal')">✕</button></div>
@@ -991,7 +970,6 @@ select.fi option{background:var(--bg2)}
   </div>
 </div>
 
-<!-- RETURN MODAL -->
 <div id="retModal" class="mo hidden">
   <div class="md md-sm">
     <div class="mh"><span class="mt2">New Return / Credit Note</span><button class="mc" onclick="closeModal('retModal')">✕</button></div>
@@ -1007,7 +985,6 @@ select.fi option{background:var(--bg2)}
   </div>
 </div>
 
-<!-- WAREHOUSE MODAL -->
 <div id="whModal" class="mo hidden">
   <div class="md md-sm">
     <div class="mh"><span class="mt2">Add Warehouse / Branch</span><button class="mc" onclick="closeModal('whModal')">✕</button></div>
@@ -1021,7 +998,6 @@ select.fi option{background:var(--bg2)}
   </div>
 </div>
 
-<!-- JOURNAL ENTRY MODAL -->
 <div id="jeModal" class="mo hidden">
   <div class="md md-sm">
     <div class="mh"><span class="mt2">Manual Journal Entry</span><button class="mc" onclick="closeModal('jeModal')">✕</button></div>
@@ -1041,33 +1017,184 @@ select.fi option{background:var(--bg2)}
 
 <script>
 // ============================================================
-// DATA STORE
+//  CONFIGURATION — change API_BASE to match your FastAPI host
 // ============================================================
-let INVOICES = [
-  {id:1,no:'INV-2468',date:'2026-06-01',customer:'Kumar Electronics',custGst:'27AABCK5678G1Z2',custMobile:'9876541234',custAddr:'Shop 12, Andheri East, Mumbai',custEmail:'kumar@email.com',custState:'27',type:'GST Invoice',state:'27 - Maharashtra',supply:'intra',notes:'Payment due within 15 days.',items:[{prod:'Samsung 55" QLED TV',qty:1,rate:35593,disc:0,gst:18,amt:35593}],subtotal:35593,discount:0,taxable:35593,cgst:3203,sgst:3204,igst:0,round:0,total:42000,due:'2026-06-15',status:'paid'},
-  {id:2,no:'INV-2467',date:'2026-05-31',customer:'Raj Computers',custGst:'27AAACR9012H1Z3',custMobile:'9876542345',custAddr:'FC Road, Pune',custEmail:'raj@computers.com',custState:'27',type:'GST Invoice',state:'27 - Maharashtra',supply:'intra',notes:'',items:[{prod:'Lenovo V15 Laptop',qty:1,rate:15678,disc:0,gst:18,amt:15678}],subtotal:15678,discount:0,taxable:15678,cgst:1411,sgst:1411,igst:0,round:0,total:18500,due:'2026-06-14',status:'pending'},
-  {id:3,no:'INV-2466',date:'2026-05-30',customer:'Priya Mobiles',custGst:'',custMobile:'9876543456',custAddr:'Nashik Road, Nashik',custEmail:'',custState:'27',type:'Tax Invoice',state:'27 - Maharashtra',supply:'intra',notes:'',items:[{prod:'boAt Cosmos A35 Earbuds',qty:3,rate:2599,disc:5,gst:18,amt:7412}],subtotal:7797,discount:385,taxable:7412,cgst:667,sgst:667,igst:0,round:0,total:8746,due:'2026-06-13',status:'paid'},
-  {id:4,no:'INV-2465',date:'2026-05-29',customer:'Metro Traders',custGst:'27AABCM3456I1Z4',custMobile:'9876544567',custAddr:'Nagpur City, Nagpur',custEmail:'metro@traders.com',custState:'27',type:'GST Invoice',state:'27 - Maharashtra',supply:'intra',notes:'Bulk order — 30 day credit.',items:[{prod:'Sony WH-1000XM5',qty:3,rate:26000,disc:0,gst:18,amt:78000}],subtotal:78000,discount:0,taxable:66102,cgst:5949,sgst:5949,igst:0,round:0,total:67800,due:'2026-06-12',status:'overdue'},
-  {id:5,no:'INV-2464',date:'2026-05-28',customer:'Star Distributors',custGst:'27AABCS7890J1Z5',custMobile:'9876545678',custAddr:'Aurangabad, MH',custEmail:'star@dist.com',custState:'27',type:'Proforma',state:'27 - Maharashtra',supply:'intra',notes:'Proforma — awaiting confirmation.',items:[{prod:'HP 680 Ink Cartridge',qty:30,rate:680,disc:5,gst:12,amt:19380}],subtotal:20400,discount:1020,taxable:19380,cgst:1163,sgst:1163,igst:0,round:0,total:21706,due:'2026-06-11',status:'draft'},
-  {id:6,no:'INV-2463',date:'2026-05-27',customer:'Gupta Brothers',custGst:'07AABCG1234K1Z6',custMobile:'9876546789',custAddr:'Chandni Chowk, Delhi',custEmail:'gupta@brothers.com',custState:'07',type:'GST Invoice',state:'07 - Delhi',supply:'inter',notes:'Inter-state supply.',items:[{prod:'Apple iPhone 15 Pro',qty:1,rate:128000,disc:5,gst:18,amt:121600}],subtotal:128000,discount:6400,taxable:108475,cgst:0,sgst:0,igst:19525,round:0,total:128000,due:'2026-06-10',status:'paid'},
-];
-let nextInvId = 7;
-let nextInvNo = 2469;
-let editingInvId = null; // null = create mode, number = edit mode
-let itemCounter = 0;
+const CFG = {
+  // Your FastAPI backend URL (no trailing slash)
+  API_BASE: 'http://localhost:8000/api/v1',
+  // Auth endpoint — backend uses /api/v1/auth/login (from auth_router)
+  LOGIN_PATH: '/auth/login',
+  // How the backend returns the JWT field in the login response
+  TOKEN_FIELD: 'access_token',
+  // Company defaults (shown when API has no company data yet)
+  COMPANY_NAME: 'Sharma Electronics',
+  COMPANY_GSTIN: '27AABCS1234F1Z5',
+};
 
-const PRODUCTS = [
+// ============================================================
+//  AUTH STATE
+//  Token is stored in sessionStorage so it clears on tab close.
+//  We also keep a parsed copy of the user profile in memory.
+// ============================================================
+let AUTH = { token: null, user: null, apiOnline: false };
+
+function getHeaders() {
+  const h = { 'Content-Type': 'application/json' };
+  if (AUTH.token) h['Authorization'] = 'Bearer ' + AUTH.token;
+  return h;
+}
+
+// ============================================================
+//  API FETCH WRAPPER
+//  Returns parsed JSON or throws.  Never crashes silently.
+// ============================================================
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(CFG.API_BASE + path, {
+    headers: getHeaders(),
+    ...opts,
+  });
+  if (res.status === 401) {
+    // Token expired — log out
+    doLogout();
+    throw new Error('Session expired. Please log in again.');
+  }
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try { const body = await res.json(); msg = body.detail || body.message || msg; } catch (_) {}
+    throw new Error(msg);
+  }
+  // 204 No Content
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+// ============================================================
+//  NORMALISE API RESPONSES
+//  Your FastAPI may wrap data in {data:…}, {items:…}, etc.
+//  These helpers unwrap consistently.
+// ============================================================
+function unwrapList(result, ...keys) {
+  if (Array.isArray(result)) return result;
+  for (const k of keys) if (result[k] !== undefined) return Array.isArray(result[k]) ? result[k] : [];
+  return [];
+}
+
+// Normalise one invoice object from API → internal schema
+function normInvoice(inv) {
+  return {
+    id:         inv.id,
+    no:         inv.invoice_number  || inv.number       || inv.no        || '—',
+    date:       inv.invoice_date    || inv.date          || '',
+    due:        inv.due_date        || inv.due           || '',
+    customer:   inv.customer_name   || inv.customer      || '—',
+    custGst:    inv.customer_gstin  || inv.gstin         || inv.custGst   || '',
+    custMobile: inv.customer_phone  || inv.phone         || inv.custMobile|| '',
+    custAddr:   inv.billing_address || inv.custAddr      || '',
+    custEmail:  inv.customer_email  || inv.email         || inv.custEmail || '',
+    custState:  inv.place_of_supply_code || inv.custState|| '27',
+    type:       inv.invoice_type    || inv.type          || 'GST Invoice',
+    state:      inv.place_of_supply || inv.state         || '27 - Maharashtra',
+    supply:     inv.supply_type     || inv.supply        || 'intra',
+    notes:      inv.notes           || '',
+    items:      (inv.line_items     || inv.items         || []).map(it => ({
+      prod:   it.product_name || it.description || it.prod || it.name || '',
+      qty:    it.quantity     || it.qty  || 1,
+      rate:   it.unit_price   || it.rate || 0,
+      disc:   it.discount_percent || it.disc || 0,
+      gst:    it.tax_rate     || it.gst_rate || it.gst  || 18,
+      amt:    it.amount       || it.amt  || 0,
+      hsn:    it.hsn_code     || it.hsn  || '',
+    })),
+    subtotal: inv.subtotal          || inv.sub_total      || 0,
+    discount: inv.total_discount    || inv.discount       || 0,
+    taxable:  inv.taxable_amount    || inv.taxable        || 0,
+    cgst:     inv.cgst_amount       || inv.cgst           || 0,
+    sgst:     inv.sgst_amount       || inv.sgst           || 0,
+    igst:     inv.igst_amount       || inv.igst           || 0,
+    round:    inv.round_off         || inv.round          || 0,
+    total:    inv.total_amount      || inv.grand_total    || inv.total || 0,
+    status:   inv.status            || 'draft',
+  };
+}
+
+// Normalise one customer object from API → internal schema
+function normCustomer(c) {
+  return {
+    id:          c.id,
+    name:        c.display_name     || c.legal_name  || c.name || '—',
+    gstin:       c.gstin_number     || c.gstin       || '',
+    mobile:      c.phone            || c.mobile      || '',
+    city:        c.billing_city     || c.city        || '',
+    email:       c.email            || '',
+    addr:        c.billing_address  || c.address     || '',
+    contact:     c.contact_person   || c.contact     || '',
+    credit:      c.credit_limit     || 0,
+    terms:       c.payment_terms    || 'Net 30',
+    total:       c.total_business   || c.lifetime_value || 0,
+    outstanding: c.outstanding_amount || c.outstanding || 0,
+    last:        c.last_purchase_date || '—',
+    score:       c.credit_score     || c.ai_score    || 0,
+  };
+}
+
+// Normalise one product/inventory item from API → internal schema
+function normProduct(p) {
+  const stock = p.current_stock ?? p.stock ?? p.quantity_on_hand ?? 0;
+  const reorder = p.reorder_level  ?? p.reorder_point ?? p.reorder ?? 0;
+  const status = stock === 0 ? 'out' : stock <= reorder ? 'low' : 'ok';
+  return {
+    id:      p.id,
+    sku:     p.sku              || p.product_code  || p.code || '',
+    name:    p.product_name     || p.name          || '—',
+    cat:     p.category         || p.category_name || '',
+    brand:   p.brand            || '',
+    hsn:     p.hsn_code         || p.hsn           || '',
+    mrp:     p.mrp              || p.max_retail_price || 0,
+    price:   p.selling_price    || p.sale_price     || p.price || 0,
+    pp:      p.purchase_price   || p.cost_price     || 0,
+    stock,
+    reorder,
+    gst:     p.gst_rate         || p.tax_rate      || 18,
+    status,
+  };
+}
+
+// Normalise vendor
+function normVendor(v) {
+  return {
+    id:      v.id,
+    name:    v.display_name     || v.name          || '—',
+    gstin:   v.gstin_number     || v.gstin         || '',
+    mobile:  v.phone            || v.mobile        || '',
+    city:    v.city             || '',
+    total:   v.total_purchases  || v.total         || 0,
+    payable: v.payable_amount   || v.outstanding   || 0,
+    score:   v.performance_score || v.ai_score     || 0,
+  };
+}
+
+// ============================================================
+//  LOCAL CACHE  (offline fallback demo data)
+// ============================================================
+let INVOICES  = [
+  {id:1,no:'INV-2468',date:'2026-06-01',customer:'Kumar Electronics',custGst:'27AABCK5678G1Z2',custMobile:'9876541234',custAddr:'Shop 12, Andheri East, Mumbai',custEmail:'kumar@email.com',custState:'27',type:'GST Invoice',state:'27 - Maharashtra',supply:'intra',notes:'Payment due within 15 days.',items:[{prod:'Samsung 55" QLED TV',qty:1,rate:35593,disc:0,gst:28,amt:35593,hsn:'85287200'}],subtotal:35593,discount:0,taxable:27806,cgst:3097,sgst:3097,igst:0,round:0,total:42000,due:'2026-06-15',status:'paid'},
+  {id:2,no:'INV-2467',date:'2026-05-31',customer:'Raj Computers',custGst:'27AAACR9012H1Z3',custMobile:'9876542345',custAddr:'FC Road, Pune',custEmail:'raj@computers.com',custState:'27',type:'GST Invoice',state:'27 - Maharashtra',supply:'intra',notes:'',items:[{prod:'Lenovo V15 Laptop',qty:1,rate:15678,disc:0,gst:18,amt:15678,hsn:'84713000'}],subtotal:15678,discount:0,taxable:13286,cgst:1197,sgst:1197,igst:0,round:0,total:18500,due:'2026-06-14',status:'pending'},
+  {id:3,no:'INV-2466',date:'2026-05-30',customer:'Priya Mobiles',custGst:'',custMobile:'9876543456',custAddr:'Nashik Road, Nashik',custEmail:'',custState:'27',type:'Tax Invoice',state:'27 - Maharashtra',supply:'intra',notes:'',items:[{prod:'boAt Cosmos A35 Earbuds',qty:3,rate:2599,disc:5,gst:18,amt:7412,hsn:'85183000'}],subtotal:7797,discount:385,taxable:6281,cgst:566,sgst:565,igst:0,round:0,total:8746,due:'2026-06-13',status:'paid'},
+  {id:4,no:'INV-2465',date:'2026-05-29',customer:'Metro Traders',custGst:'27AABCM3456I1Z4',custMobile:'9876544567',custAddr:'Nagpur City, Nagpur',custEmail:'metro@traders.com',custState:'27',type:'GST Invoice',state:'27 - Maharashtra',supply:'intra',notes:'Bulk order — 30 day credit.',items:[{prod:'Sony WH-1000XM5',qty:3,rate:26000,disc:0,gst:18,amt:78000,hsn:'85183000'}],subtotal:78000,discount:0,taxable:66102,cgst:5949,sgst:5949,igst:0,round:0,total:78000,due:'2026-06-12',status:'overdue'},
+  {id:5,no:'INV-2464',date:'2026-05-28',customer:'Star Distributors',custGst:'27AABCS7890J1Z5',custMobile:'9876545678',custAddr:'Aurangabad, MH',custEmail:'star@dist.com',custState:'27',type:'Proforma',state:'27 - Maharashtra',supply:'intra',notes:'Proforma — awaiting confirmation.',items:[{prod:'HP 680 Ink Cartridge',qty:30,rate:680,disc:5,gst:12,amt:19380,hsn:'84439910'}],subtotal:20400,discount:1020,taxable:17304,cgst:1038,sgst:1038,igst:0,round:0,total:21706,due:'2026-06-11',status:'draft'},
+  {id:6,no:'INV-2463',date:'2026-05-27',customer:'Gupta Brothers',custGst:'07AABCG1234K1Z6',custMobile:'9876546789',custAddr:'Chandni Chowk, Delhi',custEmail:'gupta@brothers.com',custState:'07',type:'GST Invoice',state:'07 - Delhi',supply:'inter',notes:'Inter-state supply.',items:[{prod:'Apple iPhone 15 Pro',qty:1,rate:128000,disc:5,gst:18,amt:121600,hsn:'85171200'}],subtotal:128000,discount:6400,taxable:103051,cgst:0,sgst:0,igst:18549,round:0,total:128000,due:'2026-06-10',status:'paid'},
+];
+let PRODUCTS  = [
   {id:1,sku:'SAM-TV-55Q',name:'Samsung 55" QLED TV',cat:'TVs',hsn:'85287200',mrp:65000,price:59000,pp:45000,stock:8,reorder:3,gst:28,status:'ok',brand:'Samsung'},
   {id:2,sku:'APL-IPH-15P',name:'Apple iPhone 15 Pro',cat:'Smartphones',hsn:'85171200',mrp:134900,price:128000,pp:115000,stock:2,reorder:5,gst:18,status:'low',brand:'Apple'},
-  {id:3,sku:'MI-RTR-AX6',name:'Mi Router AX6000',cat:'Networking',hsn:'85176200',mrp:6499,price:5800,pp:4200,stock:1,reorder:10,gst:18,status:'critical',brand:'Xiaomi'},
+  {id:3,sku:'MI-RTR-AX6',name:'Mi Router AX6000',cat:'Networking',hsn:'85176200',mrp:6499,price:5800,pp:4200,stock:1,reorder:10,gst:18,status:'low',brand:'Xiaomi'},
   {id:4,sku:'BOA-EAR-A35',name:'boAt Cosmos A35 Earbuds',cat:'Accessories',hsn:'85183000',mrp:3499,price:2800,pp:1800,stock:34,reorder:15,gst:18,status:'ok',brand:'boAt'},
   {id:5,sku:'LEN-LAP-V15',name:'Lenovo V15 G4 Laptop',cat:'Laptops',hsn:'84713000',mrp:52000,price:48000,pp:40000,stock:4,reorder:3,gst:18,status:'low',brand:'Lenovo'},
   {id:6,sku:'HP-INK-680',name:'HP 680 Ink Cartridge',cat:'Accessories',hsn:'84439910',mrp:800,price:680,pp:400,stock:45,reorder:20,gst:12,status:'ok',brand:'HP'},
   {id:7,sku:'SON-BT-WH1',name:'Sony WH-1000XM5 Headphones',cat:'Accessories',hsn:'85183000',mrp:29990,price:26000,pp:20000,stock:6,reorder:3,gst:18,status:'ok',brand:'Sony'},
   {id:8,sku:'SAM-GAL-A55',name:'Samsung Galaxy A55',cat:'Smartphones',hsn:'85171200',mrp:38000,price:35000,pp:29000,stock:0,reorder:5,gst:18,status:'out',brand:'Samsung'},
 ];
-
-const CUSTOMERS = [
+let CUSTOMERS = [
   {id:1,name:'Kumar Electronics',gstin:'27AABCK5678G1Z2',mobile:'9876541234',city:'Mumbai',total:420000,outstanding:42000,last:'01 Jun 2026',score:94,contact:'Suresh Kumar',email:'kumar@email.com',addr:'Shop 12, Andheri East, Mumbai',credit:200000,terms:'Net 30'},
   {id:2,name:'Raj Computers',gstin:'27AAACR9012H1Z3',mobile:'9876542345',city:'Pune',total:185000,outstanding:18500,last:'31 May 2026',score:82,contact:'Rajesh Verma',email:'raj@computers.com',addr:'FC Road, Pune',credit:100000,terms:'Net 30'},
   {id:3,name:'Priya Mobiles',gstin:'',mobile:'9876543456',city:'Nashik',total:92000,outstanding:0,last:'30 May 2026',score:71,contact:'Priya Joshi',email:'',addr:'Nashik Road, Nashik',credit:50000,terms:'Due on Receipt'},
@@ -1075,194 +1202,387 @@ const CUSTOMERS = [
   {id:5,name:'Star Distributors',gstin:'27AABCS7890J1Z5',mobile:'9876545678',city:'Aurangabad',total:241000,outstanding:24100,last:'28 May 2026',score:88,contact:'Suresh Star',email:'star@dist.com',addr:'Aurangabad, MH',credit:150000,terms:'Net 30'},
   {id:6,name:'Gupta Brothers',gstin:'07AABCG1234K1Z6',mobile:'9876546789',city:'Delhi',total:150000,outstanding:0,last:'27 May 2026',score:95,contact:'Amit Gupta',email:'gupta@brothers.com',addr:'Chandni Chowk, Delhi',credit:500000,terms:'Net 15'},
 ];
-
-const VENDORS = [
-  {name:'Samsung India Pvt Ltd',gstin:'07AAACS1234A1Z5',mobile:'9811001100',city:'Delhi',total:3200000,payable:120000,score:96},
-  {name:'LG Electronics India',gstin:'29AAACL5678B1Z3',mobile:'9822002200',city:'Bengaluru',total:1800000,payable:85000,score:88},
-  {name:'Lenovo India',gstin:'07AAACL9012C1Z1',mobile:'9833003300',city:'Delhi',total:2400000,payable:65000,score:92},
-  {name:'Xiaomi India',gstin:'29AAACX3456D1Z9',mobile:'9844004400',city:'Bengaluru',total:950000,payable:48000,score:79},
-  {name:'Sony India',gstin:'27AAACS7890E1Z7',mobile:'9855005500',city:'Mumbai',total:1200000,payable:160000,score:85},
+let VENDORS   = [
+  {id:1,name:'Samsung India Pvt Ltd',gstin:'07AAACS1234A1Z5',mobile:'9811001100',city:'Delhi',total:3200000,payable:120000,score:96},
+  {id:2,name:'LG Electronics India',gstin:'29AAACL5678B1Z3',mobile:'9822002200',city:'Bengaluru',total:1800000,payable:85000,score:88},
+  {id:3,name:'Lenovo India',gstin:'07AAACL9012C1Z1',mobile:'9833003300',city:'Delhi',total:2400000,payable:65000,score:92},
+  {id:4,name:'Xiaomi India',gstin:'29AAACX3456D1Z9',mobile:'9844004400',city:'Bengaluru',total:950000,payable:48000,score:79},
 ];
-
-const CRM_LEADS = [
+const CRM_LEADS=[
   {name:'Deepak Traders',company:'Deepak Enterprises',mobile:'9876501234',stage:'Proposal',value:500000,followup:'2026-06-05',ai:'Send product catalogue & quotation'},
-  {name:'Anil Electronics',company:'Anil Stores',mobile:'9876502345',stage:'Contacted',value:200000,followup:'2026-06-03',ai:'Follow up on demo request'},
   {name:'Ravi Distributors',company:'Ravi & Co',mobile:'9876503456',stage:'Negotiation',value:800000,followup:'2026-06-02',ai:'Offer 3% extra discount to close deal'},
   {name:'Neha Retail',company:'Neha Shop',mobile:'9876504567',stage:'New',value:150000,followup:'2026-06-07',ai:'Introduce yourself & understand needs'},
-  {name:'Prakash Wholesale',company:'Prakash & Sons',mobile:'9876505678',stage:'Won',value:1200000,followup:'—',ai:'Send thank you & schedule next order'},
 ];
-
-const PO_DATA = [
+const PO_DATA=[
   {no:'PO-0041',date:'28 May 2026',vendor:'Samsung India',amount:225000,gst:40500,total:265500,status:'received'},
   {no:'PO-0040',date:'25 May 2026',vendor:'LG Electronics India',amount:180000,gst:32400,total:212400,status:'pending'},
   {no:'PO-0039',date:'22 May 2026',vendor:'Lenovo India',amount:160000,gst:28800,total:188800,status:'received'},
-  {no:'PO-0038',date:'18 May 2026',vendor:'Xiaomi India',amount:84000,gst:15120,total:99120,status:'pending'},
 ];
-
-const QUOTES = [
+const QUOTES=[
   {no:'QT-0028',date:'30 May 2026',customer:'Deepak Traders',amount:480000,valid:'30 Jun 2026',status:'sent'},
   {no:'QT-0027',date:'27 May 2026',customer:'Anil Electronics',amount:195000,valid:'27 Jun 2026',status:'draft'},
   {no:'QT-0026',date:'24 May 2026',customer:'Metro Traders',amount:320000,valid:'24 Jun 2026',status:'accepted'},
 ];
-
-const RETURNS = [
+const RETURNS=[
   {no:'CN-0012',date:'30 May 2026',type:'Credit Note',against:'INV-2460',party:'Raj Computers',amount:5000,status:'processed'},
   {no:'SR-0008',date:'28 May 2026',type:'Sales Return',against:'INV-2455',party:'Priya Mobiles',amount:2800,status:'pending'},
 ];
-
-const PAYMENTS_DATA = [
+const PAYMENTS_DATA=[
   {date:'01 Jun 2026',party:'Kumar Electronics',invoice:'INV-2468',method:'UPI',amount:42000,type:'received'},
   {date:'30 May 2026',party:'Priya Mobiles',invoice:'INV-2466',method:'Cash',amount:8746,type:'received'},
   {date:'29 May 2026',party:'Gupta Brothers',invoice:'INV-2463',method:'Bank Transfer',amount:128000,type:'received'},
   {date:'28 May 2026',party:'Samsung India',invoice:'PO-0040',method:'NEFT',amount:265500,type:'paid'},
-  {date:'26 May 2026',party:'LG Electronics',invoice:'PO-0039',method:'Bank Transfer',amount:188800,type:'paid'},
 ];
-
-const AUDIT_LOG = [
-  {ts:'01 Jun 2026 09:42:18',user:'Rajesh Sharma',action:'CREATE',module:'Invoice',detail:'Created INV-2468 for Kumar Electronics — ₹42,000',ip:'192.168.1.10'},
-  {ts:'01 Jun 2026 09:40:05',user:'Rajesh Sharma',action:'LOGIN',module:'Auth',detail:'Successful login from Chrome browser',ip:'192.168.1.10'},
-  {ts:'31 May 2026 17:22:33',user:'Priya Sharma',action:'EDIT',module:'Invoice',detail:'Edited INV-2465 — updated customer address',ip:'192.168.1.12'},
-  {ts:'31 May 2026 16:55:10',user:'Rajesh Sharma',action:'DELETE',module:'Product',detail:'Deleted product SKU: OLD-PROD-01',ip:'192.168.1.10'},
-  {ts:'31 May 2026 14:30:42',user:'Suresh Kumar',action:'CREATE',module:'Customer',detail:'Added new customer: Deepak Traders',ip:'192.168.1.14'},
-  {ts:'31 May 2026 11:10:00',user:'Priya Sharma',action:'EXPORT',module:'GST',detail:'Exported GSTR-1 JSON for May 2026',ip:'192.168.1.12'},
-];
-
-const WAREHOUSES = [
+const WAREHOUSES=[
   {name:'Andheri Showroom',addr:'Shop 4-6, Veera Desai Road, Andheri West, Mumbai',manager:'Suresh Kumar',items:142,value:2840000},
   {name:'Pune Godown',addr:'Plot 8, Bhosari MIDC, Pune',manager:'Ramesh Patil',items:68,value:1240000},
-  {name:'Nagpur Branch',addr:'Dharampeth, Nagpur',manager:'Vikram Joshi',items:37,value:680000},
 ];
-
-const LEDGER_DATA = [
+const LEDGER_DATA=[
   {date:'01 Jun 2026',account:'Sales A/c',narr:'INV-2468 Kumar Electronics',dr:'',cr:'35,593',bal:'18,46,500'},
   {date:'01 Jun 2026',account:'Output GST A/c',narr:'GST on INV-2468',dr:'',cr:'6,407',bal:'2,78,766'},
   {date:'01 Jun 2026',account:'Accounts Receivable',narr:'INV-2468 — payment received',dr:'42,000',cr:'',bal:'3,24,800'},
-  {date:'31 May 2026',account:'Cash A/c',narr:'Payment received INV-2466',dr:'8,746',cr:'',bal:'3,42,000'},
-  {date:'28 May 2026',account:'Purchase A/c',narr:'PO-0041 Samsung India',dr:'2,25,000',cr:'',bal:'12,40,000'},
 ];
-
-const AI_KB = {
-  sales:    "📊 **Today's Sales** (June 1, 2026):\n• Total: ₹84,200 across 6 invoices\n• Top seller: Samsung 55\" QLED TV (3 units)\n• Cash collected: ₹62,000 | Pending: ₹22,200\n• Month-to-date revenue: ₹18,46,500 (+18% vs May)",
-  stock:    "📦 **Stock Alerts** (Requires Action):\n• Mi Router AX6000 — 🔴 CRITICAL: 1 unit (reorder: 10)\n• Apple iPhone 15 Pro — 🟡 Low: 2 units (reorder: 5)\n• Lenovo V15 Laptop — 🟡 Low: 4 units (reorder: 3)\n• Samsung Galaxy A55 — ⛔ OUT OF STOCK\n\nAI recommends placing purchase orders immediately for top 3.",
-  customers:"👥 **Top Customers (May 2026)**:\n1. Metro Traders — ₹6,78,000 ⚠️ ₹67,800 overdue\n2. Kumar Electronics — ₹4,20,000 ✅ Paid\n3. Star Distributors — ₹2,41,000 🕐 Due Jun 11\n4. Gupta Brothers — ₹1,50,000 ✅ Paid\n5. Raj Computers — ₹1,85,000 🕐 Due Jun 14",
-  payment:  "💰 **Pending Payments** (₹3,24,800 total):\n• Metro Traders — ₹67,800 (18 days OVERDUE ⚠️)\n• Star Distributors — ₹24,100 (due Jun 11)\n• Raj Computers — ₹18,500 (due Jun 14)\n• Apex Retail — ₹30,000 (22 days OVERDUE ⚠️)\n\n💡 AI Tip: Send WhatsApp reminders to Metro & Apex now.",
-  profit:   "📈 **Profit Analysis (May 2026)**:\n• Revenue: ₹18,46,500\n• COGS: ₹10,80,000 (58.5%)\n• Gross Profit: ₹7,78,500 (42.1%)\n• Operating Expenses: ₹3,60,100\n• **Net Profit: ₹4,18,400 (22.7%)**\n\n📊 Up 22% vs April. TV & laptop categories leading.",
-  forecast: "🔮 **AI Sales Forecast**:\n• This Week: ₹4,20,000 (85% confidence)\n• June 2026: ₹22,80,000 (+23% vs May)\n• Best case: ₹25,40,000 | Worst: ₹19,60,000\n\nSeasonal factors: Monsoon tech demand rising. Plan inventory build-up for Diwali (Oct).",
-  default:  "I have full access to your live business data. Ask me:\n• \"What are today's sales?\"\n• \"Which products are low in stock?\"\n• \"Top customers this month?\"\n• \"Pending payments?\"\n• \"What is my profit?\"\n• \"Sales forecast for June?\"\n• \"Create invoice for [customer] with [items]\"\n\nYou can also use 🎤 Voice Mode above."
+let AUDIT_LOG=[
+  {ts:'01 Jun 2026 09:42:18',user:'Rajesh Sharma',action:'CREATE',module:'Invoice',detail:'Created INV-2468 for Kumar Electronics — ₹42,000',ip:'192.168.1.10'},
+  {ts:'01 Jun 2026 09:40:05',user:'Rajesh Sharma',action:'LOGIN',module:'Auth',detail:'Successful login from Chrome browser',ip:'192.168.1.10'},
+];
+const AI_KB={
+  sales:    "📊 **Today's Sales** (June 1, 2026):\n• Total: ₹84,200 across 6 invoices\n• Top seller: Samsung 55\" QLED TV (3 units)\n• Month-to-date revenue: ₹18,46,500 (+18% vs May)",
+  stock:    "📦 **Stock Alerts** (Requires Action):\n• Mi Router AX6000 — 🔴 CRITICAL: 1 unit (reorder: 10)\n• Apple iPhone 15 Pro — 🟡 Low: 2 units (reorder: 5)\n• Lenovo V15 Laptop — 🟡 Low: 4 units (reorder: 3)\n• Samsung Galaxy A55 — ⛔ OUT OF STOCK",
+  customers:"👥 **Top Customers (May 2026)**:\n1. Metro Traders — ₹6,78,000 ⚠️ ₹67,800 overdue\n2. Kumar Electronics — ₹4,20,000 ✅ Paid\n3. Star Distributors — ₹2,41,000 🕐 Due Jun 11",
+  payment:  "💰 **Pending Payments** (₹3,24,800 total):\n• Metro Traders — ₹67,800 (18 days OVERDUE ⚠️)\n• Star Distributors — ₹24,100 (due Jun 11)\n• Raj Computers — ₹18,500 (due Jun 14)",
+  profit:   "📈 **Profit Analysis (May 2026)**:\n• Revenue: ₹18,46,500\n• COGS: ₹10,80,000 (58.5%)\n• Gross Profit: ₹7,78,500 (42.1%)\n• **Net Profit: ₹4,18,400 (22.7%)**",
+  forecast: "🔮 **AI Sales Forecast**:\n• June 2026: ₹22,80,000 (+23% vs May)\n• Seasonal factors: Monsoon tech demand rising.",
+  default:  "I have full access to your live business data. Ask me:\n• \"What are today's sales?\"\n• \"Which products are low in stock?\"\n• \"Top customers this month?\"\n• \"Pending payments?\"\n• \"What is my profit?\"\n• \"Sales forecast for June?\""
 };
 
+let nextInvNo    = 2469;
+let itemCounter  = 0;
+let editingInvId = null;  // null = create mode, else invoice id
+
 // ============================================================
-// NAVIGATION
+//  LOGIN / LOGOUT
 // ============================================================
-function nav(id, el) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const pg = document.getElementById('page-'+id);
-  if(pg) pg.classList.add('active');
-  document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
-  if(el) el.classList.add('active');
-  else document.querySelectorAll('.ni').forEach(n => {
-    if((n.getAttribute('onclick')||'').includes("'"+id+"'")) n.classList.add('active');
-  });
-  if(id === 'create' && editingInvId === null) initNewInvoice();
-  if(id === 'ai') initAI();
-  if(id === 'accounting') renderAccounting();
-  if(id === 'payments') renderPayments();
-  if(id === 'auditlog') renderAuditLog();
-  if(id === 'warehouses') renderWarehouses();
-  if(id === 'einvoice') renderEInvoice();
-  if(id === 'crm') renderCRM();
-  if(id === 'purchase') renderPO();
-  if(id === 'quotations') renderQuotes();
-  if(id === 'returns') renderReturns();
-  if(id === 'vendors') renderVendors();
+async function checkApiHealth() {
+  try {
+    const res = await fetch(CFG.API_BASE.replace('/api/v1','') + '/health', { signal: AbortSignal.timeout(3000) });
+    return res.ok;
+  } catch (_) { return false; }
+}
+
+async function doLogin() {
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const btn  = document.getElementById('loginBtn');
+  const err  = document.getElementById('loginErr');
+  if (!user || !pass) { err.textContent = 'Please enter credentials.'; return; }
+
+  btn.innerHTML = '<div class="ld" style="display:inline-block"></div> Signing in…';
+  btn.disabled = true;
+  err.textContent = '';
+
+  // Try real login first
+  try {
+    // FastAPI OAuth2 password flow uses form-encoded body by default.
+    // Your auth router may accept JSON — we try JSON first, then form.
+    let result;
+    try {
+      result = await (await fetch(CFG.API_BASE + CFG.LOGIN_PATH, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({  company_id:'34091ba5-aa42-40c8-9d22-e916cfefef6b', email: user, password: pass }),
+      })).json();
+      console.log("Login result:", result);
+    } catch (_) {
+      // Fallback: form-encoded (OAuth2PasswordRequestForm)
+      const fd = new URLSearchParams();
+      fd.append('username', user); fd.append('password', pass);
+      result = await (await fetch(CFG.API_BASE + CFG.LOGIN_PATH, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_id:'34091ba5-aa42-40c8-9d22-e916cfefef6b', email: user, password: pass}) 
+      })).json();
+    }
+    const token = result?.data?.access_token || result?.access_token;
+    if (token){
+      AUTH.token = token;
+      AUTH.apiOnline = true;
+      // Try to read user info from token payload
+      try {
+        const userData = result?.data?.user;
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        AUTH.user = {
+          name: userData?.full_name || payload.full_name || payload.sub || user,
+          role: userData?.role || payload.role || 'User'
+        };
+      } catch (_) {
+        AUTH.user = { name: user, role: 'User' };
+      }
+      sessionStorage.setItem('vyaparpro_token', AUTH.token);
+      bootApp();
+      return;
+    }
+    // API returned something without a token — wrong credentials
+    err.textContent = result.detail || result.message || 'Invalid credentials.';
+  } catch (e) {
+    // API completely unreachable — boot in offline/demo mode
+    AUTH.apiOnline = false;
+    AUTH.user      = { name: 'Rajesh Sharma', role: 'Owner · Admin (Demo)' };
+    bootApp();
+    return;
+  } finally {
+    btn.innerHTML = 'Sign In';
+    btn.disabled  = false;
+  }
+}
+
+function bootApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display         = 'flex';
+  // Update UI with user info
+  const u = AUTH.user || {};
+  const initials = (u.name || 'U').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  document.getElementById('userAvatar').textContent   = initials;
+  document.getElementById('userFullName').textContent = u.name  || 'User';
+  document.getElementById('userRole').textContent     = u.role  || 'Staff';
+  const firstName = (u.name || '').split(' ')[0] || 'there';
+  document.getElementById('dashGreetName').textContent = firstName;
+  // Live indicator
+  setLiveStatus(AUTH.apiOnline);
+  addAuditEntry('LOGIN', 'Auth', 'Signed in as ' + (u.name || 'User') + (AUTH.apiOnline ? ' (API online)' : ' (Demo mode)'));
+  // Kick off data loading
+  renderDashboard();
+  renderInvoices();
+  preloadRefData();
+  initNewInvoice();
+  initAI();
+  // Set today's date in header
+  document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-IN', {day:'numeric',month:'long',year:'numeric'});
+  if (!AUTH.apiOnline) showToast('⚠️ Running in demo mode — API offline', 'warn');
+}
+
+function doLogout() {
+  AUTH = { token: null, user: null, apiOnline: false };
+  sessionStorage.removeItem('vyaparpro_token');
+  document.getElementById('app').style.display          = 'none';
+  document.getElementById('loginScreen').style.display  = 'flex';
+  document.getElementById('loginPass').value            = '';
+  document.getElementById('loginErr').textContent       = '';
+}
+
+function setLiveStatus(online) {
+  AUTH.apiOnline = online;
+  const dot = document.getElementById('liveDot');
+  const lbl = document.getElementById('liveLabel');
+  const snc = document.getElementById('syncLabel');
+  if (online) {
+    dot.style.background = 'var(--green)';
+    lbl.textContent      = 'Live';
+    if (snc) snc.textContent = 'Synced · Online · Just now';
+  } else {
+    dot.style.background = 'var(--orange)';
+    lbl.textContent      = 'Demo';
+    if (snc) snc.textContent = 'Offline — Demo data';
+  }
+}
+
+async function syncAll() {
+  showToast('☁️ Syncing…');
+  const ok = await checkApiHealth();
+  setLiveStatus(ok);
+  if (ok) {
+    showToast('☁️ Sync complete — all data up to date');
+    renderInvoices(); renderCustomers(); renderInventory();
+  } else {
+    showToast('⚠️ API offline — using local data', 'warn');
+  }
 }
 
 // ============================================================
-// INVOICE LIST
+//  NAVIGATION
 // ============================================================
-function renderInvoices(list) {
-  const data = list || INVOICES;
+function nav(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pg = document.getElementById('page-' + id);
+  if (pg) pg.classList.add('active');
+  document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  else document.querySelectorAll('.ni').forEach(n => {
+    if ((n.getAttribute('onclick')||'').includes("'"+id+"'")) n.classList.add('active');
+  });
+  if (id === 'create' && editingInvId === null) initNewInvoice();
+  triggerModuleRefresh(id);
+}
+
+function triggerModuleRefresh(id) {
+  ({
+    dashboard:   renderDashboard,
+    invoices:    renderInvoices,
+    inventory:   renderInventory,
+    customers:   renderCustomers,
+    vendors:     renderVendors,
+    crm:         renderCRM,
+    purchase:    renderPO,
+    quotations:  renderQuotes,
+    returns:     renderReturns,
+    payments:    renderPayments,
+    auditlog:    renderAuditLog,
+    warehouses:  renderWarehouses,
+    einvoice:    renderEInvoice,
+    accounting:  renderAccounting,
+    ai:          initAI,
+  }[id] || (() => {}))();
+}
+
+// ============================================================
+//  PRELOAD REFERENCE DATA (customers + products for dropdowns)
+// ============================================================
+async function preloadRefData() {
+  if (!AUTH.apiOnline) return;
+  try {
+    const [cr, pr] = await Promise.allSettled([
+      apiFetch('/customers?limit=500'),
+      apiFetch('/products?limit=500'),
+    ]);
+    if (cr.status === 'fulfilled') {
+      const list = unwrapList(cr.value, 'data','items','customers','results');
+      if (list.length) CUSTOMERS = list.map(normCustomer);
+    }
+    if (pr.status === 'fulfilled') {
+      const list = unwrapList(pr.value, 'data','items','products','results');
+      if (list.length) PRODUCTS = list.map(normProduct);
+    }
+    // Refresh datalist in invoice form
+    refreshCustomerDatalist();
+  } catch (_) {}
+}
+
+function refreshCustomerDatalist() {
+  const dl = document.getElementById('custDL');
+  if (dl) dl.innerHTML = CUSTOMERS.map(c=>`<option value="${c.name}">`).join('');
+}
+
+// ============================================================
+//  INVOICES — LIST
+// ============================================================
+async function renderInvoices(list) {
   const b = document.getElementById('invBody');
-  if(!b) return;
-  b.innerHTML = data.length ? data.map((inv,i) => `
-    <tr style="cursor:pointer" onclick="openInvActions(${inv.id})">
+  if (!b) return;
+  b.innerHTML = loadingRow(11);
+
+  let data = list;
+  if (!data) {
+    if (AUTH.apiOnline) {
+      try {
+        const result = await apiFetch('/invoices?limit=200');
+        const raw    = unwrapList(result,'data','items','invoices','results');
+        data = raw.map(normInvoice);
+        INVOICES = data;
+      } catch (e) {
+        data = INVOICES;
+        console.warn('[API] invoices fallback:', e.message);
+      }
+    } else {
+      data = INVOICES;
+    }
+  }
+
+  b.innerHTML = data.length ? data.map((inv,i) => {
+    const sc = statusClass(inv.status);
+    const dc = inv.status==='overdue' ? 'var(--red)' : inv.status==='pending' ? 'var(--orange)' : 'var(--text3)';
+    const gstTotal = (inv.cgst||0)+(inv.sgst||0)+(inv.igst||0);
+    return `<tr style="cursor:pointer" onclick="openInvActions('${inv.id}')">
       <td>${i+1}</td>
       <td class="b mono">${inv.no}</td>
       <td>${fmtDate(inv.date)}</td>
       <td class="b">${inv.customer}</td>
       <td><span class="chip cbl2" style="font-size:9px">${inv.type}</span></td>
-      <td>₹${inv.taxable.toLocaleString()}</td>
-      <td>₹${(inv.cgst+inv.sgst+inv.igst).toLocaleString()}</td>
-      <td class="b">₹${inv.total.toLocaleString()}</td>
-      <td style="color:${inv.status==='overdue'?'var(--red)':inv.status==='pending'?'var(--orange)':'var(--text3)'}">${fmtDate(inv.due)}</td>
-      <td><span class="sb ${inv.status==='paid'?'sp':inv.status==='pending'?'spen':inv.status==='overdue'?'sov':'sdr'}">${inv.status}</span></td>
+      <td>₹${fmt(inv.taxable)}</td>
+      <td>₹${fmt(gstTotal)}</td>
+      <td class="b">₹${fmt(inv.total)}</td>
+      <td style="color:${dc}">${fmtDate(inv.due)}</td>
+      <td><span class="sb ${sc}">${inv.status}</span></td>
       <td onclick="event.stopPropagation()">
         <div style="display:flex;gap:4px">
-          <button class="btn btn-o btn-sm" onclick="viewInvoice(${inv.id})" title="View">👁</button>
-          <button class="btn btn-o btn-sm" onclick="editInvoice(${inv.id})" title="Edit">✏️</button>
-          <button class="btn btn-o btn-sm" onclick="showToast('📄 PDF downloaded!')" title="PDF">📄</button>
-          <button class="btn btn-o btn-sm" onclick="showToast('📱 Sent via WhatsApp!')" title="WhatsApp">📱</button>
-          <button class="btn btn-d btn-sm" onclick="deleteInvoice(${inv.id})" title="Delete">🗑</button>
+          <button class="btn btn-o btn-sm" onclick="viewInvoice('${inv.id}')" title="View">👁</button>
+          <button class="btn btn-o btn-sm" onclick="loadInvoiceToEdit('${inv.id}')" title="Edit">✏️</button>
+          <button class="btn btn-o btn-sm" onclick="showToast('📄 PDF generated!')" title="PDF">📄</button>
+          <button class="btn btn-d btn-sm" onclick="deleteInvoice('${inv.id}')" title="Delete">🗑</button>
         </div>
       </td>
-    </tr>`).join('') :
-    `<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text3)">No invoices found</td></tr>`;
+    </tr>`;
+  }).join('') : '<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text3)">No invoices found</td></tr>';
+
+  renderDashInvoices(data);
 }
 
 function filterInvoices() {
-  const q = (document.getElementById('invSearch')?.value||'').toLowerCase();
-  const st = (document.getElementById('invStatusF')?.value||'');
-  const ty = (document.getElementById('invTypeF')?.value||'');
-  renderInvoices(INVOICES.filter(inv =>
-    (!q || inv.no.toLowerCase().includes(q) || inv.customer.toLowerCase().includes(q)) &&
-    (!st || inv.status === st) &&
-    (!ty || inv.type === ty)
+  const q  = (document.getElementById('invSearch')?.value||'').toLowerCase();
+  const st = document.getElementById('invStatusF')?.value||'';
+  const ty = document.getElementById('invTypeF')?.value||'';
+  renderInvoices(INVOICES.filter(inv=>
+    (!q  || inv.no.toLowerCase().includes(q) || inv.customer.toLowerCase().includes(q)) &&
+    (!st || inv.status===st) &&
+    (!ty || inv.type===ty)
   ));
+}
+
+function renderDashInvoices(data) {
+  const di=document.getElementById('dashInv'); if(!di) return;
+  di.innerHTML=(data||[]).slice(0,5).map(inv=>{
+    const sc=statusClass(inv.status);
+    return `<tr style="cursor:pointer" onclick="viewInvoice('${inv.id}')">
+      <td class="b mono">${inv.no}</td><td>${inv.customer}</td>
+      <td class="b">₹${fmt(inv.total)}</td>
+      <td><span class="sb ${sc}">${inv.status}</span></td>
+      <td><button class="btn btn-o btn-sm" onclick="event.stopPropagation();loadInvoiceToEdit('${inv.id}')">✏️</button></td>
+    </tr>`;
+  }).join('');
 }
 
 function exportInvoices() { showToast('📤 Invoices exported to Excel'); }
 
 // ============================================================
-// INVOICE ACTIONS (View / Edit picker)
+//  INVOICE ACTIONS MODAL
 // ============================================================
 function openInvActions(id) {
-  const inv = INVOICES.find(i=>i.id===id);
-  if(!inv) return;
-  document.getElementById('invPickContent').innerHTML = `
-    <div style="padding:4px 0">
+  const inv = INVOICES.find(i=>String(i.id)===String(id));
+  if (!inv) return;
+  const sc = statusClass(inv.status);
+  document.getElementById('invPickContent').innerHTML=`
+    <div>
       <div style="font-size:13px;font-weight:700;margin-bottom:4px">${inv.no}</div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:16px">${inv.customer} · ₹${inv.total.toLocaleString()} · <span class="sb ${inv.status==='paid'?'sp':inv.status==='pending'?'spen':inv.status==='overdue'?'sov':'sdr'}">${inv.status}</span></div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:16px">${inv.customer} · ₹${fmt(inv.total)} · <span class="sb ${sc}">${inv.status}</span></div>
       <div style="display:flex;flex-direction:column;gap:8px">
-        <button class="btn btn-p" style="justify-content:center" onclick="closeModal('invPickModal');viewInvoice(${id})">👁 View Invoice</button>
-        <button class="btn btn-warn" style="justify-content:center" onclick="closeModal('invPickModal');editInvoice(${id})">✏️ Edit Invoice</button>
+        <button class="btn btn-p" style="justify-content:center" onclick="closeModal('invPickModal');viewInvoice('${id}')">👁 View Invoice</button>
+        <button class="btn btn-warn" style="justify-content:center" onclick="closeModal('invPickModal');loadInvoiceToEdit('${id}')">✏️ Edit Invoice</button>
         <button class="btn btn-o" style="justify-content:center" onclick="showToast('📄 PDF downloaded!');closeModal('invPickModal')">📄 Download PDF</button>
         <button class="btn btn-o" style="justify-content:center" onclick="showToast('📱 Sent via WhatsApp!');closeModal('invPickModal')">📱 Share WhatsApp</button>
-        <button class="btn btn-o" style="justify-content:center" onclick="markPaid(${id})">✅ Mark as Paid</button>
-        <button class="btn btn-d" style="justify-content:center" onclick="closeModal('invPickModal');deleteInvoice(${id})">🗑 Delete Invoice</button>
+        <button class="btn btn-o" style="justify-content:center" onclick="markPaid('${id}')">✅ Mark as Paid</button>
+        <button class="btn btn-d" style="justify-content:center" onclick="closeModal('invPickModal');deleteInvoice('${id}')">🗑 Delete Invoice</button>
       </div>
     </div>`;
   openModal('invPickModal');
 }
 
 // ============================================================
-// VIEW INVOICE (Preview)
+//  VIEW INVOICE (PREVIEW MODAL)
 // ============================================================
 function viewInvoice(id) {
-  const inv = INVOICES.find(i=>i.id===id);
-  if(!inv) return;
-  document.getElementById('prevTitle').textContent = 'Invoice — '+inv.no;
-  const isInter = inv.supply === 'inter';
-  document.getElementById('invPreviewBody').innerHTML = `
+  const inv = INVOICES.find(i=>String(i.id)===String(id));
+  if (!inv) return;
+  const isInter = inv.supply==='inter';
+  document.getElementById('prevTitle').textContent='Invoice — '+inv.no;
+  document.getElementById('invPreviewBody').innerHTML=`
     <div class="inv-preview">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
         <div>
-          <div style="font-size:22px;font-weight:800;color:#111">Sharma Electronics</div>
-          <div style="font-size:11px;color:#555;margin-top:4px">GSTIN: 27AABCS1234F1Z5</div>
+          <div style="font-size:22px;font-weight:800;color:#111">${CFG.COMPANY_NAME}</div>
+          <div style="font-size:11px;color:#555;margin-top:4px">GSTIN: ${CFG.COMPANY_GSTIN}</div>
           <div style="font-size:11px;color:#555">Andheri East, Mumbai — 400069</div>
-          <div style="font-size:11px;color:#555">📞 +91 98765 43210</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:18px;font-weight:800;color:#0099cc">${inv.type.toUpperCase()}</div>
+          <div style="font-size:18px;font-weight:800;color:#0099cc">${(inv.type||'').toUpperCase()}</div>
           <div style="font-size:13px;font-weight:700;margin-top:4px">${inv.no}</div>
           <div style="font-size:11px;color:#555">Date: ${fmtDate(inv.date)}</div>
           <div style="font-size:11px;color:#555">Due: ${fmtDate(inv.due)}</div>
@@ -1272,265 +1592,237 @@ function viewInvoice(id) {
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:6px">Bill To</div>
         <div style="font-size:13px;font-weight:700">${inv.customer}</div>
         ${inv.custGst?`<div style="font-size:11px;color:#555;font-family:monospace">GSTIN: ${inv.custGst}</div>`:''}
-        <div style="font-size:11px;color:#555">${inv.custAddr}</div>
-        <div style="font-size:11px;color:#555">📞 ${inv.custMobile}</div>
+        <div style="font-size:11px;color:#555">${inv.custAddr||''}</div>
+        <div style="font-size:11px;color:#555">📞 ${inv.custMobile||''}</div>
       </div>
       <table style="margin-bottom:16px">
-        <thead><tr><th style="width:5%">#</th><th style="width:35%">Product / Description</th><th style="width:8%">HSN</th><th style="width:8%">Qty</th><th style="width:12%">Rate</th><th style="width:8%">Disc%</th><th style="width:8%">GST%</th><th style="width:16%">Amount</th></tr></thead>
-        <tbody>
-          ${inv.items.map((it,i)=>`<tr><td style="color:#666">${i+1}</td><td style="font-weight:600">${it.prod}</td><td style="font-family:monospace;color:#888;font-size:10px">—</td><td>${it.qty}</td><td>₹${it.rate.toLocaleString()}</td><td>${it.disc}%</td><td>${it.gst}%</td><td style="font-weight:700">₹${it.amt.toLocaleString()}</td></tr>`).join('')}
-        </tbody>
+        <thead><tr><th style="width:5%">#</th><th style="width:35%">Product</th><th style="width:8%">HSN</th><th style="width:8%">Qty</th><th style="width:12%">Rate</th><th style="width:8%">Disc%</th><th style="width:8%">GST%</th><th style="width:16%">Amount</th></tr></thead>
+        <tbody>${(inv.items||[]).map((it,i)=>`<tr>
+          <td style="color:#666">${i+1}</td>
+          <td style="font-weight:600">${it.prod||'—'}</td>
+          <td style="font-family:monospace;color:#888;font-size:10px">${it.hsn||'—'}</td>
+          <td>${it.qty||0}</td><td>₹${fmt(it.rate)}</td><td>${it.disc||0}%</td><td>${it.gst||18}%</td>
+          <td style="font-weight:700">₹${fmt(it.amt)}</td></tr>`).join('')}</tbody>
       </table>
       <div style="display:flex;justify-content:flex-end">
         <div style="min-width:280px">
-          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Subtotal</span><span>₹${inv.subtotal.toLocaleString()}</span></div>
-          ${inv.discount?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#d00"><span>Discount</span><span>-₹${inv.discount.toLocaleString()}</span></div>`:''}
-          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Taxable Amount</span><span>₹${inv.taxable.toLocaleString()}</span></div>
-          ${!isInter?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>CGST</span><span>₹${inv.cgst.toLocaleString()}</span></div>
-          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>SGST</span><span>₹${inv.sgst.toLocaleString()}</span></div>`
-          :`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>IGST</span><span>₹${inv.igst.toLocaleString()}</span></div>`}
-          <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:800;border-top:2px solid #333;margin-top:6px"><span>TOTAL</span><span style="color:#0099cc">₹${inv.total.toLocaleString()}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Subtotal</span><span>₹${fmt(inv.subtotal)}</span></div>
+          ${inv.discount?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#d00"><span>Discount</span><span>-₹${fmt(inv.discount)}</span></div>`:''}
+          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Taxable Amount</span><span>₹${fmt(inv.taxable)}</span></div>
+          ${!isInter
+            ?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>CGST</span><span>₹${fmt(inv.cgst)}</span></div>
+               <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>SGST</span><span>₹${fmt(inv.sgst)}</span></div>`
+            :`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>IGST</span><span>₹${fmt(inv.igst)}</span></div>`}
+          <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:800;border-top:2px solid #333;margin-top:6px">
+            <span>TOTAL</span><span style="color:#0099cc">₹${fmt(inv.total)}</span></div>
         </div>
       </div>
       ${inv.notes?`<div style="margin-top:16px;padding:10px;background:#f8f8f8;border-radius:6px;font-size:11px;color:#666"><strong>Notes:</strong> ${inv.notes}</div>`:''}
-      <div style="margin-top:20px;text-align:center;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:12px">Thank you for your business! · VyaparPro ERP · Powered by AI</div>
+      <div style="margin-top:20px;text-align:center;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:12px">Thank you for your business! · VyaparPro ERP</div>
     </div>`;
   openModal('invPreviewModal');
 }
 
 // ============================================================
-// EDIT INVOICE
+//  LOAD INVOICE TO EDIT
 // ============================================================
-function editInvoice(id) {
-  const inv = INVOICES.find(i=>i.id===id);
-  if(!inv) return;
-  editingInvId = id;
+async function loadInvoiceToEdit(id) {
+  let inv = INVOICES.find(i=>String(i.id)===String(id));
+  if (!inv && AUTH.apiOnline) {
+    try {
+      const r = await apiFetch(`/invoices/${id}`);
+      inv = normInvoice(r.data || r);
+    } catch (e) { showToast('⚠️ Could not load invoice','warn'); return; }
+  }
+  if (!inv) { showToast('Invoice not found','warn'); return; }
+  editingInvId = inv.id;
   nav('create', null);
-  // Update UI to edit mode
   document.getElementById('invFormTitle').textContent = 'Edit Invoice — '+inv.no;
   document.getElementById('invFormBc').innerHTML = 'Billing / <span>Edit Invoice</span>';
   document.getElementById('editBanner').classList.remove('hidden');
   document.getElementById('editBannerNo').textContent = inv.no;
-  // Fill header fields
-  setVal('invType', inv.type);
-  setVal('invNo', inv.no);
-  setVal('invDate', inv.date);
-  setVal('invDue', inv.due);
-  setVal('invState', inv.state);
-  setVal('supplyType', inv.supply);
-  setVal('invNotes', inv.notes||'');
-  // Fill customer fields
-  setVal('custName', inv.customer);
-  setVal('custGst', inv.custGst||'');
-  setVal('custMobile', inv.custMobile||'');
-  setVal('custAddr', inv.custAddr||'');
-  setVal('custEmail', inv.custEmail||'');
-  setVal('custState', inv.custState||'');
-  // Fill items
-  document.getElementById('invoiceItems').innerHTML = '';
-  itemCounter = 0;
-  inv.items.forEach(it => {
+  ['invType','invNo','invDate','invDue','invState','supplyType','invNotes'].forEach(f=>{
+    const map={invType:inv.type,invNo:inv.no,invDate:inv.date,invDue:inv.due,invState:inv.state,supplyType:inv.supply,invNotes:inv.notes};
+    setVal(f,map[f]||'');
+  });
+  setVal('custName',inv.customer); setVal('custGst',inv.custGst); setVal('custMobile',inv.custMobile);
+  setVal('custAddr',inv.custAddr); setVal('custEmail',inv.custEmail); setVal('custState',inv.custState);
+  document.getElementById('invoiceItems').innerHTML='';
+  itemCounter=0;
+  (inv.items||[]).forEach(it=>{
     addItem();
-    const id2 = itemCounter;
-    const sel = document.querySelector(`#item-${id2} select`);
-    // Set product by name
-    const opt = Array.from(sel.options).find(o=>o.value===it.prod);
-    if(!opt){ const o=document.createElement('option');o.value=it.prod;o.textContent=it.prod;sel.appendChild(o); }
-    sel.value = it.prod;
-    setVal(`qty-${id2}`, it.qty);
-    setVal(`rate-${id2}`, it.rate);
-    setVal(`disc-${id2}`, it.disc);
-    setVal(`gst-${id2}`, it.gst+'%');
-    calcItem(id2);
+    const n=itemCounter;
+    const sel=document.querySelector(`#item-${n} select`);
+    if (sel) {
+      let opt=Array.from(sel.options).find(o=>o.value===it.prod);
+      if (!opt) { opt=document.createElement('option'); opt.value=it.prod; opt.textContent=it.prod; sel.appendChild(opt); }
+      sel.value=it.prod;
+    }
+    setVal(`qty-${n}`,it.qty); setVal(`rate-${n}`,it.rate);
+    setVal(`disc-${n}`,it.disc); setVal(`gst-${n}`,it.gst+'%');
+    calcItem(n);
   });
   calcTotals();
   addAuditEntry('EDIT_START','Invoice','Opened '+inv.no+' for editing');
 }
 
 function cancelEdit() {
-  editingInvId = null;
+  editingInvId=null;
   document.getElementById('editBanner').classList.add('hidden');
-  document.getElementById('invFormTitle').textContent = 'Create GST Invoice';
-  document.getElementById('invFormBc').innerHTML = 'Billing / <span>New Invoice</span>';
-  nav('invoices', null);
+  document.getElementById('invFormTitle').textContent='Create GST Invoice';
+  document.getElementById('invFormBc').innerHTML='Billing / <span>New Invoice</span>';
+  nav('invoices',null);
 }
 
-function markPaid(id) {
-  const inv = INVOICES.find(i=>i.id===id);
-  if(inv){ inv.status = 'paid'; renderInvoices(); showToast('✅ '+inv.no+' marked as Paid'); closeModal('invPickModal'); }
-}
-
-function deleteInvoice(id) {
-  const inv = INVOICES.find(i=>i.id===id);
-  if(!inv) return;
-  if(!confirm('Delete '+inv.no+'? This cannot be undone.')) return;
-  INVOICES = INVOICES.filter(i=>i.id!==id);
+async function markPaid(id) {
+  const inv=INVOICES.find(i=>String(i.id)===String(id));
+  if (AUTH.apiOnline) {
+    try {
+      // PATCH /invoices/{id} — update status
+      await apiFetch(`/invoices/${id}`,{ method:'PATCH', body:JSON.stringify({status:'paid'}) });
+    } catch (_) {}
+  }
+  if (inv) inv.status='paid';
+  showToast('✅ '+(inv?.no||'Invoice')+' marked as Paid');
+  closeModal('invPickModal');
   renderInvoices();
-  addAuditEntry('DELETE','Invoice','Deleted '+inv.no+' — '+inv.customer);
-  showToast('🗑 Invoice '+inv.no+' deleted');
+}
+
+async function deleteInvoice(id) {
+  const inv=INVOICES.find(i=>String(i.id)===String(id));
+  if (!confirm('Delete '+(inv?.no||'this invoice')+'? This cannot be undone.')) return;
+  if (AUTH.apiOnline) {
+    try { await apiFetch(`/invoices/${id}`,{method:'DELETE'}); } catch (_) {}
+  }
+  INVOICES=INVOICES.filter(i=>String(i.id)!==String(id));
+  addAuditEntry('DELETE','Invoice','Deleted '+(inv?.no||id));
+  showToast('🗑 Invoice deleted');
+  renderInvoices();
 }
 
 // ============================================================
-// CREATE / EDIT INVOICE FORM
+//  FINALIZE / CREATE OR UPDATE INVOICE
+//  Sends the field names YOUR FastAPI endpoints expect.
 // ============================================================
-function initNewInvoice() {
-  editingInvId = null;
-  document.getElementById('editBanner').classList.add('hidden');
-  document.getElementById('invFormTitle').textContent = 'Create GST Invoice';
-  document.getElementById('invFormBc').innerHTML = 'Billing / <span>New Invoice</span>';
-  const today = new Date().toISOString().split('T')[0];
-  const due = new Date(Date.now()+15*864e5).toISOString().split('T')[0];
-  setVal('invNo','INV-'+nextInvNo);
-  setVal('invDate',today);
-  setVal('invDue',due);
-  setVal('invType','GST Invoice');
-  setVal('invState','27 - Maharashtra');
-  setVal('supplyType','intra');
-  setVal('invNotes','');
-  ['custName','custGst','custMobile','custAddr','custEmail','custState'].forEach(id=>setVal(id,''));
-  document.getElementById('invoiceItems').innerHTML = '';
-  itemCounter = 0;
-  addItem(); addItem();
-  // Populate customer datalist
-  const dl = document.getElementById('custDL');
-  if(dl) dl.innerHTML = CUSTOMERS.map(c=>`<option value="${c.name}">`).join('');
-  calcTotals();
-}
+async function finalizeInvoice() {
+  const cust=getVal('custName');
+  if (!cust.trim()) { showToast('⚠️ Please enter customer name','warn'); return; }
 
-function addItem() {
-  itemCounter++;
-  const id = itemCounter;
-  const prodOpts = ['<option value="">Select product…</option>',...PRODUCTS.map(p=>`<option value="${p.name}" data-price="${p.price}" data-gst="${p.gst}">${p.name}</option>`)].join('');
-  const row = document.createElement('div');
-  row.className = 'iir';
-  row.id = 'item-'+id;
-  row.innerHTML = `
-    <select class="fi" style="padding:6px 7px;font-size:11px" onchange="itemPicked(this,${id})">${prodOpts}</select>
-    <input type="number" class="fi" style="padding:6px 7px;font-size:11px" value="1" id="qty-${id}" oninput="calcItem(${id})" min="1"/>
-    <input type="number" class="fi" style="padding:6px 7px;font-size:11px" placeholder="0" id="rate-${id}" oninput="calcItem(${id})"/>
-    <input type="number" class="fi" style="padding:6px 7px;font-size:11px" value="0" id="disc-${id}" oninput="calcItem(${id})" min="0" max="100"/>
-    <input type="text" class="fi mono" style="padding:6px 7px;font-size:11px;background:var(--bg)" id="gst-${id}" readonly value="18%"/>
-    <input type="text" class="fi" style="padding:6px 7px;font-size:11px;background:var(--bg);font-weight:700;color:var(--green)" id="amt-${id}" readonly value="₹0.00"/>
-    <button style="background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--red);cursor:pointer;padding:5px 8px;font-size:12px" onclick="removeItem(${id})">✕</button>`;
-  document.getElementById('invoiceItems').appendChild(row);
-  calcTotals();
-}
-
-function itemPicked(sel, id) {
-  const opt = sel.options[sel.selectedIndex];
-  if(opt.dataset.price) {
-    setVal('rate-'+id, opt.dataset.price);
-    setVal('gst-'+id, (opt.dataset.gst||18)+'%');
-  }
-  calcItem(id);
-}
-
-function calcItem(id) {
-  const qty = +getVal('qty-'+id)||0;
-  const rate = +getVal('rate-'+id)||0;
-  const disc = +getVal('disc-'+id)||0;
-  const amt = qty * rate * (1-disc/100);
-  const el = document.getElementById('amt-'+id);
-  if(el) el.value = '₹'+amt.toFixed(2);
-  calcTotals();
-}
-
-function removeItem(id) {
-  document.getElementById('item-'+id)?.remove();
-  calcTotals();
-}
-
-function calcTotals() {
-  let subtotal = 0, discTotal = 0;
-  document.querySelectorAll('[id^="amt-"]').forEach(el => { subtotal += parseFloat(el.value.replace('₹',''))||0; });
-  document.querySelectorAll('[id^="disc-"]').forEach((el,i) => {
-    const id = el.id.replace('disc-','');
-    const qty = +getVal('qty-'+id)||0;
-    const rate = +getVal('rate-'+id)||0;
-    const d = +el.value||0;
-    discTotal += qty*rate*(d/100);
+  // Collect line items
+  const lineItems=[];
+  document.querySelectorAll('[id^="item-"]').forEach(row=>{
+    const n=row.id.replace('item-','');
+    const sel=row.querySelector('select');
+    const prod=sel?.value; if (!prod) return;
+    const qty   = +getVal('qty-'+n)  || 1;
+    const rate  = +getVal('rate-'+n) || 0;
+    const disc  = +getVal('disc-'+n) || 0;
+    const gstPct= parseInt(getVal('gst-'+n)) || 18;
+    // Amount already includes GST (exclusive), calc net excluding GST
+    const grossAmt = qty * rate * (1 - disc/100);
+    lineItems.push({
+      // API field names (what FastAPI endpoint expects)
+      product_name:      prod,
+      description:       prod,
+      quantity:          qty,
+      unit_price:        rate,
+      discount_percent:  disc,
+      tax_rate:          gstPct,
+      amount:            Math.round(grossAmt * 100) / 100,
+      // Keep short aliases too for safety
+      prod, qty, rate, disc, gst: gstPct, amt: Math.round(grossAmt*100)/100,
+    });
   });
-  const taxable = subtotal;
-  // Get blended GST rate from items (simplified: use first item or default 18%)
-  let avgGstRate = 0.18;
-  const gstInputs = document.querySelectorAll('[id^="gst-"]');
-  if(gstInputs.length) {
-    const rates = Array.from(gstInputs).map(g=>parseFloat(g.value)||18);
-    avgGstRate = rates.reduce((a,b)=>a+b,0)/rates.length/100;
-  }
-  const gstAmt = taxable * avgGstRate / (1+avgGstRate);
-  const taxableBase = taxable - gstAmt;
-  const isInter = getVal('supplyType') === 'inter';
-  const round = Math.round(subtotal) - subtotal;
-  const total = Math.round(subtotal);
+  if (!lineItems.length) { showToast('⚠️ Add at least one item','warn'); return; }
 
-  setTxt('s_sub','₹'+(subtotal+discTotal).toFixed(2));
-  setTxt('s_disc','-₹'+discTotal.toFixed(2));
-  setTxt('s_tax','₹'+taxableBase.toFixed(2));
-  setTxt('s_round','₹'+round.toFixed(2));
-  setTxt('s_total','₹'+total.toLocaleString());
+  // Aggregate totals
+  const subtotal   = lineItems.reduce((a,it)=>a+it.qty*it.rate,0);
+  const discount   = lineItems.reduce((a,it)=>a+it.qty*it.rate*(it.disc/100),0);
+  const grossTotal = lineItems.reduce((a,it)=>a+it.amount,0);
 
-  if(isInter) {
-    setTxt('s_igst','₹'+gstAmt.toFixed(2));
-    setTxt('s_cgst','₹0.00'); setTxt('s_sgst','₹0.00');
-  } else {
-    setTxt('s_cgst','₹'+(gstAmt/2).toFixed(2));
-    setTxt('s_sgst','₹'+(gstAmt/2).toFixed(2));
-    setTxt('s_igst','₹0.00');
-  }
-}
+  // Derive weighted avg GST to back-calculate taxable vs tax
+  const weightedGst = lineItems.reduce((a,it)=>a+it.amount*(it.gst/100/(1+it.gst/100)),0);
+  const taxableAmt  = grossTotal - weightedGst;
 
-function finalizeInvoice() {
-  const cust = getVal('custName');
-  if(!cust.trim()) { showToast('⚠️ Please enter customer name','warn'); return; }
-  const items = [];
-  document.querySelectorAll('[id^="item-"]').forEach(row => {
-    const id = row.id.replace('item-','');
-    const prod = row.querySelector('select')?.value;
-    if(!prod) return;
-    items.push({prod, qty:+getVal('qty-'+id)||1, rate:+getVal('rate-'+id)||0, disc:+getVal('disc-'+id)||0, gst:parseInt(getVal('gst-'+id))||18, amt:parseFloat(document.getElementById('amt-'+id)?.value.replace('₹',''))||0});
-  });
-  if(!items.length) { showToast('⚠️ Add at least one item','warn'); return; }
+  const isInter  = getVal('supplyType')==='inter';
+  const cgst     = isInter ? 0 : Math.round(weightedGst/2*100)/100;
+  const sgst     = isInter ? 0 : Math.round(weightedGst/2*100)/100;
+  const igst     = isInter ? Math.round(weightedGst*100)/100 : 0;
+  const roundOff = Math.round(grossTotal) - grossTotal;
+  const grandTotal = Math.round(grossTotal);
 
-  const isInter = getVal('supplyType') === 'inter';
-  let subtotal = items.reduce((a,it)=>a+it.qty*it.rate,0);
-  let discount = items.reduce((a,it)=>a+it.qty*it.rate*(it.disc/100),0);
-  let taxable = items.reduce((a,it)=>a+it.amt,0);
-  const avgRate = items.reduce((a,it)=>a+it.gst,0)/items.length/100;
-  const gstAmt = taxable * avgRate/(1+avgRate);
-  const taxableBase = taxable - gstAmt;
-
-  const invData = {
-    no: getVal('invNo'), date: getVal('invDate'), customer: cust,
-    custGst: getVal('custGst'), custMobile: getVal('custMobile'), custAddr: getVal('custAddr'),
-    custEmail: getVal('custEmail'), custState: getVal('custState'),
-    type: getVal('invType'), state: getVal('invState'), supply: getVal('supplyType'),
-    notes: getVal('invNotes'), items,
-    subtotal: Math.round(subtotal), discount: Math.round(discount),
-    taxable: Math.round(taxableBase),
-    cgst: isInter?0:Math.round(gstAmt/2), sgst: isInter?0:Math.round(gstAmt/2),
-    igst: isInter?Math.round(gstAmt):0, round: 0,
-    total: Math.round(taxable),
-    due: getVal('invDue'), status: 'pending'
+  // Payload — uses BOTH the API field names AND legacy aliases so it
+  // works whether the backend returns/reads snake_case or the frontend alias.
+  const payload = {
+    // --- API (snake_case) field names ---
+    invoice_number:       getVal('invNo'),
+    invoice_date:         getVal('invDate'),
+    due_date:             getVal('invDue'),
+    invoice_type:         getVal('invType'),
+    place_of_supply:      getVal('invState'),
+    supply_type:          getVal('supplyType'),
+    notes:                getVal('invNotes'),
+    customer_name:        cust,
+    customer_gstin:       getVal('custGst'),
+    customer_phone:       getVal('custMobile'),
+    billing_address:      getVal('custAddr'),
+    customer_email:       getVal('custEmail'),
+    place_of_supply_code: getVal('custState'),
+    line_items:           lineItems,
+    subtotal:             Math.round(subtotal*100)/100,
+    total_discount:       Math.round(discount*100)/100,
+    taxable_amount:       Math.round(taxableAmt*100)/100,
+    cgst_amount:          cgst,
+    sgst_amount:          sgst,
+    igst_amount:          igst,
+    round_off:            Math.round(roundOff*100)/100,
+    total_amount:         grandTotal,
+    status:               editingInvId !== null
+                            ? (INVOICES.find(i=>String(i.id)===String(editingInvId))?.status || 'pending')
+                            : 'pending',
   };
 
-  if(editingInvId !== null) {
-    const idx = INVOICES.findIndex(i=>i.id===editingInvId);
-    if(idx>=0){ invData.id=editingInvId; invData.status=INVOICES[idx].status; INVOICES[idx]=invData; }
-    addAuditEntry('EDIT','Invoice','Updated '+invData.no+' for '+cust+' — ₹'+invData.total.toLocaleString());
-    showToast('✅ Invoice '+invData.no+' updated successfully!');
-    editingInvId = null;
-  } else {
-    invData.id = nextInvId++;
-    invData.no = 'INV-'+nextInvNo++;
-    INVOICES.unshift(invData);
-    addAuditEntry('CREATE','Invoice','Created '+invData.no+' for '+cust+' — ₹'+invData.total.toLocaleString());
-    showToast('✅ Invoice '+invData.no+' created!');
+  let savedId = editingInvId;
+  try {
+    if (editingInvId !== null) {
+      // UPDATE — PUT /invoices/{id}
+      const r = AUTH.apiOnline ? await apiFetch(`/invoices/${editingInvId}`,{method:'PUT',body:JSON.stringify(payload)}) : null;
+      const updated = normInvoice({ ...payload, id: editingInvId, ...(r?.data||r||{}) });
+      const idx = INVOICES.findIndex(i=>String(i.id)===String(editingInvId));
+      if (idx>=0) INVOICES[idx]=updated; else INVOICES.unshift(updated);
+      addAuditEntry('EDIT','Invoice','Updated '+payload.invoice_number+' — ₹'+grandTotal.toLocaleString());
+      showToast('✅ Invoice '+payload.invoice_number+' updated!');
+    } else {
+      // CREATE — POST /invoices
+      const r = AUTH.apiOnline ? await apiFetch('/invoices',{method:'POST',body:JSON.stringify(payload)}) : null;
+      const newId = r?.id || r?.data?.id || Date.now();
+      const newInv = normInvoice({ ...payload, id: newId });
+      INVOICES.unshift(newInv);
+      savedId = newId;
+      nextInvNo++;
+      addAuditEntry('CREATE','Invoice','Created '+payload.invoice_number+' — ₹'+grandTotal.toLocaleString());
+      showToast('✅ Invoice '+payload.invoice_number+' created!');
+    }
+  } catch (e) {
+    // Offline fallback — persist to local cache
+    if (editingInvId !== null) {
+      const idx=INVOICES.findIndex(i=>String(i.id)===String(editingInvId));
+      if (idx>=0) INVOICES[idx]={...INVOICES[idx],...normInvoice({...payload,id:editingInvId})};
+      showToast('✅ Invoice updated (offline mode)');
+    } else {
+      const newInv=normInvoice({...payload,id:Date.now()});
+      INVOICES.unshift(newInv);
+      nextInvNo++;
+      showToast('✅ Invoice saved (offline mode)');
+    }
   }
+
+  editingInvId=null;
   document.getElementById('editBanner').classList.add('hidden');
-  document.getElementById('invFormTitle').textContent = 'Create GST Invoice';
+  document.getElementById('invFormTitle').textContent='Create GST Invoice';
+  document.getElementById('invFormBc').innerHTML='Billing / <span>New Invoice</span>';
   renderInvoices();
-  setTimeout(()=>nav('invoices',null), 600);
+  setTimeout(()=>nav('invoices',null),600);
 }
 
 function saveDraft() {
@@ -1539,186 +1831,312 @@ function saveDraft() {
 }
 
 function previewInvoice() {
-  // Build temp invoice from form
-  const tmpId = -1;
-  const items = [];
-  document.querySelectorAll('[id^="item-"]').forEach(row => {
-    const id = row.id.replace('item-','');
-    const prod = row.querySelector('select')?.value;
-    if(prod) items.push({prod,qty:+getVal('qty-'+id)||1,rate:+getVal('rate-'+id)||0,disc:+getVal('disc-'+id)||0,gst:parseInt(getVal('gst-'+id))||18,amt:parseFloat(document.getElementById('amt-'+id)?.value.replace('₹',''))||0});
+  const items=[];
+  document.querySelectorAll('[id^="item-"]').forEach(row=>{
+    const n=row.id.replace('item-','');
+    const prod=row.querySelector('select')?.value; if(!prod)return;
+    const qty=+getVal('qty-'+n)||1,rate=+getVal('rate-'+n)||0,disc=+getVal('disc-'+n)||0,gst=parseInt(getVal('gst-'+n))||18;
+    items.push({prod,qty,rate,disc,gst,amt:qty*rate*(1-disc/100),hsn:''});
   });
-  const taxable = items.reduce((a,it)=>a+it.amt,0);
-  const isInter = getVal('supplyType')==='inter';
-  const avgRate = items.length ? items.reduce((a,it)=>a+it.gst,0)/items.length/100 : 0.18;
-  const gstAmt = taxable*avgRate/(1+avgRate);
-  const tmp = {id:tmpId,no:getVal('invNo')||'DRAFT',date:getVal('invDate'),customer:getVal('custName')||'—',custGst:getVal('custGst'),custMobile:getVal('custMobile'),custAddr:getVal('custAddr'),custEmail:getVal('custEmail'),type:getVal('invType'),supply:getVal('supplyType'),notes:getVal('invNotes'),items,subtotal:Math.round(taxable),discount:0,taxable:Math.round(taxable-gstAmt),cgst:isInter?0:Math.round(gstAmt/2),sgst:isInter?0:Math.round(gstAmt/2),igst:isInter?Math.round(gstAmt):0,round:0,total:Math.round(taxable),due:getVal('invDue'),status:'draft'};
+  const grossTotal=items.reduce((a,i)=>a+i.amt,0);
+  const isInter=getVal('supplyType')==='inter';
+  const wGst=items.reduce((a,i)=>a+i.amt*(i.gst/100/(1+i.gst/100)),0);
+  const taxable=grossTotal-wGst;
+  const tmp={id:'_prev',no:getVal('invNo')||'DRAFT',date:getVal('invDate'),customer:getVal('custName')||'—',custGst:getVal('custGst'),custMobile:getVal('custMobile'),custAddr:getVal('custAddr'),custEmail:getVal('custEmail'),type:getVal('invType'),supply:isInter?'inter':'intra',notes:getVal('invNotes'),items,subtotal:Math.round(grossTotal),discount:0,taxable:Math.round(taxable),cgst:isInter?0:Math.round(wGst/2),sgst:isInter?0:Math.round(wGst/2),igst:isInter?Math.round(wGst):0,round:0,total:Math.round(grossTotal),due:getVal('invDue'),status:'draft'};
   INVOICES.push(tmp);
-  viewInvoice(tmpId);
+  viewInvoice('_prev');
   INVOICES.pop();
 }
 
 function autofillCustomer(name) {
-  const c = CUSTOMERS.find(x=>x.name===name);
-  if(c){ setVal('custGst',c.gstin); setVal('custMobile',c.mobile); setVal('custAddr',c.addr); setVal('custEmail',c.email||''); setVal('custState',c.gstin.substring(0,2)||'27'); }
+  const c=CUSTOMERS.find(x=>x.name===name);
+  if (c) {
+    setVal('custGst',c.gstin||''); setVal('custMobile',c.mobile||'');
+    setVal('custAddr',c.addr||''); setVal('custEmail',c.email||'');
+    setVal('custState',(c.gstin||'27').substring(0,2)||'27');
+  }
 }
 
 // ============================================================
-// DASHBOARD RENDERS
+//  CUSTOMERS
 // ============================================================
-function renderDashboard() {
-  // Sales chart
-  const vals=[62000,84000,71000,95000,68000,88000,84200];
-  const days=['26M','27T','28W','29T','30F','31S','1J'];
-  const max=Math.max(...vals);
-  const sc=document.getElementById('salesChart'); const sl=document.getElementById('salesLabels');
-  if(sc){sc.innerHTML='';sl.innerHTML='';vals.forEach((v,i)=>{
-    const b=document.createElement('div');b.className='cb';const h=Math.round(v/max*80)+10;
-    b.style.cssText=`height:${h}px;background:${i===vals.length-1?'linear-gradient(180deg,var(--accent),var(--accent2))':'rgba(0,212,255,.28)'};`;
-    b.title='₹'+v.toLocaleString();sc.appendChild(b);
-    const l=document.createElement('div');l.className='cbl';l.style.flex='1';l.textContent=days[i];sl.appendChild(l);
-  });}
-  // Low stock
-  const lsl=document.getElementById('lowStockList');
-  if(lsl) lsl.innerHTML=PRODUCTS.filter(p=>p.status!=='ok').map(p=>`
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px;background:var(--bg3);border-radius:var(--r2);margin-bottom:8px">
-      <div><div style="font-size:12px;font-weight:600">${p.name}</div><div style="font-size:10px;color:var(--text3)">${p.sku}</div></div>
-      <span class="sb ${p.status==='out'?'sov':'spen'}">${p.status==='out'?'Out of Stock':'Stock: '+p.stock}</span>
-    </div>`).join('');
-  // Top customers
-  const tc=document.getElementById('topCust');
-  if(tc){const s=[...CUSTOMERS].sort((a,b)=>b.total-a.total).slice(0,5);const mx=s[0].total;
-    tc.innerHTML=s.map((c,i)=>`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:600">${i+1}. ${c.name}</span><span style="font-size:12px;color:var(--green);font-weight:700">₹${(c.total/1000).toFixed(0)}K</span></div><div class="prog"><div class="pb" style="width:${Math.round(c.total/mx*100)}%;background:linear-gradient(90deg,var(--accent),var(--green))"></div></div></div>`).join('');}
-  // Forecast
-  const fb=document.getElementById('forecastBars');
-  if(fb){const ms=['Mar','Apr','May','Jun*','Jul*'];const vs=[1420,1680,1846,2280,2100];const mx=Math.max(...vs);
-    fb.innerHTML=`<div style="display:flex;align-items:flex-end;gap:9px;height:70px">${ms.map((m,i)=>{const h=Math.round(vs[i]/mx*60)+10;const fc=i>=3;return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="font-size:9px;color:${fc?'var(--accent)':'var(--text3)'};font-weight:600">₹${(vs[i]/100).toFixed(1)}L</div><div style="width:100%;height:${h}px;border-radius:3px 3px 0 0;background:${fc?'linear-gradient(180deg,rgba(0,212,255,.45),rgba(0,212,255,.15))':'rgba(0,212,255,.25)'}"></div><div style="font-size:9px;color:var(--text3)">${m}</div></div>`;}).join('')}</div>`;}
-  // Dash invoices
-  const di=document.getElementById('dashInv');
-  if(di) di.innerHTML=INVOICES.slice(0,5).map(inv=>`
-    <tr style="cursor:pointer" onclick="viewInvoice(${inv.id})">
-      <td class="b mono">${inv.no}</td><td>${inv.customer}</td>
-      <td class="b">₹${inv.total.toLocaleString()}</td>
-      <td><span class="sb ${inv.status==='paid'?'sp':inv.status==='pending'?'spen':inv.status==='overdue'?'sov':'sdr'}">${inv.status}</span></td>
-      <td><button class="btn btn-o btn-sm" onclick="event.stopPropagation();editInvoice(${inv.id})">✏️</button></td>
-    </tr>`).join('');
+async function renderCustomers(list) {
+  const b=document.getElementById('custBody'); if(!b)return;
+  b.innerHTML=loadingRow(9);
+  let data=list;
+  if (!data) {
+    if (AUTH.apiOnline) {
+      try {
+        const r=await apiFetch('/customers?limit=200');
+        data=unwrapList(r,'data','items','customers','results').map(normCustomer);
+        CUSTOMERS=data;
+      } catch(e) { data=CUSTOMERS; console.warn('[API] customers fallback:',e.message); }
+    } else { data=CUSTOMERS; }
+  }
+  setTxt('custTotal', data.length);
+  b.innerHTML=data.length?data.map(c=>`<tr>
+    <td class="b">${c.name}</td>
+    <td class="mono" style="font-size:10px">${c.gstin||'—'}</td>
+    <td>${c.mobile||'—'}</td><td>${c.city||'—'}</td>
+    <td class="b" style="color:var(--green)">₹${fmt(c.total)}</td>
+    <td style="color:${(c.outstanding||0)>0?'var(--orange)':'var(--text3)'}">₹${fmt(c.outstanding)}</td>
+    <td>${c.last||'—'}</td>
+    <td><div style="display:flex;align-items:center;gap:5px">
+      <div style="width:30px;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${c.score||0}%;background:${(c.score||0)>80?'var(--green)':'var(--orange)'}"></div></div>
+      <span style="font-size:11px;font-weight:700;color:${(c.score||0)>80?'var(--green)':'var(--orange)'}">${c.score||'—'}</span></div></td>
+    <td><div style="display:flex;gap:3px">
+      <button class="btn btn-o btn-sm" onclick="editCust(${c.id})">✏️</button>
+      <button class="btn btn-d btn-sm" onclick="deleteCustomer(${c.id})">🗑</button>
+    </div></td></tr>`).join('')
+  :'<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text3)">No customers found</td></tr>';
+}
+
+function filterCust() {
+  const q=(document.getElementById('custSearch')?.value||'').toLowerCase();
+  const city=document.getElementById('custCityF')?.value||'';
+  renderCustomers(CUSTOMERS.filter(c=>(!q||(c.name||'').toLowerCase().includes(q)||(c.mobile||'').includes(q))&&(!city||c.city===city)));
+}
+
+function editCust(id) {
+  const c=CUSTOMERS.find(x=>String(x.id)===String(id)); if(!c)return;
+  document.getElementById('custModalTitle').textContent='Edit Customer';
+  setVal('cm_name',c.name); setVal('cm_contact',c.contact||''); setVal('cm_gstin',c.gstin||'');
+  setVal('cm_mobile',c.mobile||''); setVal('cm_email',c.email||''); setVal('cm_city',c.city||'');
+  setVal('cm_addr',c.addr||''); setVal('cm_credit',c.credit||''); setVal('cm_terms',c.terms||'Net 30');
+  openModal('custModal');
+}
+
+async function saveCust() {
+  const name=getVal('cm_name');
+  if (!name.trim()) { showToast('⚠️ Customer name required','warn'); return; }
+  // API field names that match your customers router
+  const payload={
+    display_name:   name,
+    legal_name:     getVal('cm_contact')||name,
+    gstin_number:   getVal('cm_gstin')||'',
+    phone:          getVal('cm_mobile')||'',
+    email:          getVal('cm_email')||'',
+    billing_city:   getVal('cm_city')||'',
+    billing_address:getVal('cm_addr')||'',
+    credit_limit:   parseFloat(getVal('cm_credit'))||0,
+    payment_terms:  getVal('cm_terms')||'Net 30',
+  };
+  try {
+    if (AUTH.apiOnline) await apiFetch('/customers',{method:'POST',body:JSON.stringify(payload)});
+    showToast('✅ Customer "'+name+'" saved');
+    addAuditEntry('CREATE','Customer','Saved customer: '+name);
+  } catch(e) { showToast('✅ Customer saved (offline)'); }
+  closeModal('custModal');
+  CUSTOMERS.push({ id:Date.now(), ...payload, name, gstin:payload.gstin_number, mobile:payload.phone, city:payload.billing_city, addr:payload.billing_address, total:0, outstanding:0, last:'—', score:0 });
+  renderCustomers();
+  refreshCustomerDatalist();
+}
+
+async function deleteCustomer(id) {
+  if (!confirm('Delete this customer?')) return;
+  if (AUTH.apiOnline) { try { await apiFetch(`/customers/${id}`,{method:'DELETE'}); } catch(_) {} }
+  CUSTOMERS=CUSTOMERS.filter(c=>String(c.id)!==String(id));
+  showToast('🗑 Customer deleted'); renderCustomers();
 }
 
 // ============================================================
-// INVENTORY
+//  VENDORS
 // ============================================================
-function renderInventory(list) {
-  const data = list||PRODUCTS;
-  const b = document.getElementById('invBody2'); if(!b) return;
-  b.innerHTML = data.map(p=>`<tr>
-    <td class="b mono">${p.sku}</td><td class="b">${p.name}</td><td>${p.cat}</td>
-    <td class="mono">${p.hsn}</td><td>₹${p.mrp.toLocaleString()}</td>
-    <td class="b">₹${p.price.toLocaleString()}</td>
+async function renderVendors(list) {
+  const b=document.getElementById('vendBody'); if(!b)return;
+  b.innerHTML=loadingRow(8);
+  let data=list;
+  if (!data) {
+    if (AUTH.apiOnline) {
+      try {
+        const r=await apiFetch('/vendors?limit=200');
+        data=unwrapList(r,'data','items','vendors','results').map(normVendor);
+        VENDORS=data;
+      } catch(e) { data=VENDORS; }
+    } else { data=VENDORS; }
+  }
+  setTxt('vendTotal',data.length);
+  b.innerHTML=data.length?data.map(v=>`<tr>
+    <td class="b">${v.name}</td><td class="mono" style="font-size:10px">${v.gstin||'—'}</td>
+    <td>${v.mobile||'—'}</td><td>${v.city||'—'}</td>
+    <td class="b" style="color:var(--green)">₹${(((v.total||0)/100000)).toFixed(1)}L</td>
+    <td style="color:var(--orange);font-weight:600">₹${fmt(v.payable)}</td>
+    <td><div style="display:flex;align-items:center;gap:5px">
+      <div style="width:30px;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${v.score||0}%;background:${(v.score||0)>85?'var(--green)':'var(--orange)'}"></div></div>
+      <span style="font-size:11px;font-weight:700;color:${(v.score||0)>85?'var(--green)':'var(--orange)'}">${v.score||'—'}</span></div></td>
+    <td><div style="display:flex;gap:3px">
+      <button class="btn btn-o btn-sm" onclick="showToast('👁 ${v.name.replace(/'/g,"\\'")}')"">👁</button>
+      <button class="btn btn-o btn-sm" onclick="showToast('✏️ Editing vendor')">✏️</button>
+    </div></td></tr>`).join('')
+  :'<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">No vendors found</td></tr>';
+}
+
+async function saveVend() {
+  const name=getVal('vm_name');
+  const payload={ display_name:name, gstin_number:getVal('vm_gstin')||'', phone:getVal('vm_mobile')||'', city:getVal('vm_city')||'' };
+  try {
+    if (AUTH.apiOnline) await apiFetch('/vendors',{method:'POST',body:JSON.stringify(payload)});
+    showToast('✅ Vendor saved'); addAuditEntry('CREATE','Vendor','Saved vendor: '+name);
+  } catch(e) { showToast('✅ Vendor saved (offline)'); }
+  closeModal('vendModal'); renderVendors();
+}
+
+// ============================================================
+//  INVENTORY / PRODUCTS
+// ============================================================
+async function renderInventory(list) {
+  const b=document.getElementById('invBody2'); if(!b)return;
+  b.innerHTML=loadingRow(11);
+  let data=list;
+  if (!data) {
+    if (AUTH.apiOnline) {
+      try {
+        const r=await apiFetch('/products?limit=500');
+        data=unwrapList(r,'data','items','products','results').map(normProduct);
+        PRODUCTS=data;
+      } catch(e) { data=PRODUCTS; }
+    } else { data=PRODUCTS; }
+  }
+  const total=data.length, low=data.filter(p=>p.status==='low').length, out=data.filter(p=>p.status==='out').length;
+  const val=data.reduce((a,p)=>a+p.pp*p.stock,0);
+  setTxt('totalProds',total); setTxt('lowProds',low); setTxt('outProds',out);
+  setTxt('stockValue','₹'+((val/100000)).toFixed(1)+'L');
+  b.innerHTML=data.length?data.map(p=>`<tr>
+    <td class="b mono">${p.sku||'—'}</td><td class="b">${p.name}</td><td>${p.cat||'—'}</td>
+    <td class="mono">${p.hsn||'—'}</td><td>₹${fmt(p.mrp)}</td><td class="b">₹${fmt(p.price)}</td>
     <td class="b" style="color:${p.stock===0?'var(--red)':p.stock<=p.reorder?'var(--orange)':'var(--green)'}">${p.stock}</td>
     <td>${p.reorder}</td><td>${p.gst}%</td>
-    <td><span class="sb ${p.status==='out'?'sov':p.status==='critical'||p.status==='low'?'spen':'sp'}">${p.status==='out'?'Out':'In Stock'}</span></td>
+    <td><span class="sb ${p.status==='out'?'sov':p.status==='low'?'spen':'sp'}">${p.status==='out'?'Out':'In Stock'}</span></td>
     <td><div style="display:flex;gap:3px">
       <button class="btn btn-o btn-sm" onclick="editProd(${p.id})">✏️</button>
-      <button class="btn btn-o btn-sm" onclick="showToast('📊 Stock adjustment for ${p.name}')">📊</button>
-    </div></td></tr>`).join('');
+      <button class="btn btn-o btn-sm" onclick="showToast('📊 Stock adjustment')">📊</button>
+    </div></td></tr>`).join('')
+  :'<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text3)">No products found</td></tr>';
 }
 
 function filterProds() {
   const q=(document.getElementById('prodSearch')?.value||'').toLowerCase();
-  const cat=(document.getElementById('prodCatF')?.value||'');
-  const stk=(document.getElementById('prodStockF')?.value||'');
+  const cat=document.getElementById('prodCatF')?.value||'';
+  const stk=document.getElementById('prodStockF')?.value||'';
   renderInventory(PRODUCTS.filter(p=>
-    (!q||p.name.toLowerCase().includes(q)||p.sku.toLowerCase().includes(q))&&
+    (!q||(p.name||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q))&&
     (!cat||p.cat===cat)&&
-    (!stk||p.status===stk||(stk==='low'&&(p.status==='low'||p.status==='critical')))
+    (!stk||p.status===stk||('low'===stk&&p.status==='low'))
   ));
 }
 
 function editProd(id) {
-  const p=PRODUCTS.find(x=>x.id===id);
-  if(!p) return;
+  const p=PRODUCTS.find(x=>String(x.id)===String(id)); if(!p)return;
   document.getElementById('prodModalTitle').textContent='Edit Product';
-  setVal('pm_name',p.name);setVal('pm_sku',p.sku);setVal('pm_cat',p.cat);setVal('pm_brand',p.brand);
-  setVal('pm_hsn',p.hsn);setVal('pm_pp',p.pp);setVal('pm_mrp',p.mrp);setVal('pm_sp',p.price);
-  setVal('pm_stock',p.stock);setVal('pm_reorder',p.reorder);setVal('pm_gst',p.gst);
+  ['pm_name','pm_sku','pm_cat','pm_brand','pm_hsn','pm_pp','pm_mrp','pm_sp','pm_stock','pm_reorder','pm_gst'].forEach(f=>{
+    const map={pm_name:p.name,pm_sku:p.sku,pm_cat:p.cat,pm_brand:p.brand,pm_hsn:p.hsn,pm_pp:p.pp,pm_mrp:p.mrp,pm_sp:p.price,pm_stock:p.stock,pm_reorder:p.reorder,pm_gst:p.gst};
+    setVal(f,map[f]??'');
+  });
   openModal('prodModal');
 }
 
-function saveProd() {
-  const name = getVal('pm_name');
-  if(!name.trim()){showToast('⚠️ Product name required','warn');return;}
-  showToast('✅ Product "'+name+'" saved');
+async function saveProd() {
+  const name=getVal('pm_name');
+  if (!name.trim()) { showToast('⚠️ Product name required','warn'); return; }
+  // API field names that match your products router
+  const payload={
+    product_name:   name,
+    sku:            getVal('pm_sku')||'',
+    category:       getVal('pm_cat')||'',
+    brand:          getVal('pm_brand')||'',
+    hsn_code:       getVal('pm_hsn')||'',
+    purchase_price: parseFloat(getVal('pm_pp'))||0,
+    mrp:            parseFloat(getVal('pm_mrp'))||0,
+    selling_price:  parseFloat(getVal('pm_sp'))||0,
+    current_stock:  parseFloat(getVal('pm_stock'))||0,
+    reorder_level:  parseFloat(getVal('pm_reorder'))||0,
+    gst_rate:       parseFloat(getVal('pm_gst'))||18,
+  };
+  try {
+    if (AUTH.apiOnline) await apiFetch('/products',{method:'POST',body:JSON.stringify(payload)});
+    showToast('✅ Product "'+name+'" saved'); addAuditEntry('SAVE','Product','Saved product: '+name);
+  } catch(e) { showToast('✅ Product saved (offline)'); }
   closeModal('prodModal');
-  addAuditEntry('SAVE','Product','Saved product: '+name);
+  PRODUCTS.push({id:Date.now(),...normProduct(payload)});
   renderInventory();
 }
 
 // ============================================================
-// CUSTOMERS
+//  GLOBAL SEARCH
+//  Your backend has no /search endpoint, so we implement smart
+//  client-side search that also tries the individual list endpoints.
 // ============================================================
-function renderCustomers(list) {
-  const data=list||CUSTOMERS;
-  const b=document.getElementById('custBody');if(!b)return;
-  b.innerHTML=data.map(c=>`<tr>
-    <td class="b">${c.name}</td>
-    <td class="mono" style="font-size:10px">${c.gstin||'<span style="color:var(--text3)">—</span>'}</td>
-    <td>${c.mobile}</td><td>${c.city}</td>
-    <td class="b" style="color:var(--green)">₹${(c.total/1000).toFixed(0)}K</td>
-    <td style="color:${c.outstanding>0?'var(--orange)':'var(--green)'};font-weight:600">${c.outstanding>0?'₹'+c.outstanding.toLocaleString():'—'}</td>
-    <td style="color:var(--text3)">${c.last}</td>
-    <td><div style="display:flex;align-items:center;gap:5px">
-      <div style="width:30px;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${c.score}%;background:${c.score>85?'var(--green)':c.score>60?'var(--orange)':'var(--red)'}"></div></div>
-      <span style="font-size:11px;font-weight:700;color:${c.score>85?'var(--green)':c.score>60?'var(--orange)':'var(--red)'}">${c.score}</span></div></td>
-    <td><div style="display:flex;gap:3px">
-      <button class="btn btn-o btn-sm" onclick="showToast('👁 ${c.name}')">👁</button>
-      <button class="btn btn-o btn-sm" onclick="editCust(${c.id})">✏️</button>
-      <button class="btn btn-o btn-sm" onclick="showToast('📱 WhatsApp opened')">📱</button>
-    </div></td></tr>`).join('');
-}
-
-function filterCust(){
-  const q=(document.getElementById('custSearch')?.value||'').toLowerCase();
-  const city=(document.getElementById('custCityF')?.value||'');
-  renderCustomers(CUSTOMERS.filter(c=>(!q||c.name.toLowerCase().includes(q)||c.mobile.includes(q))&&(!city||c.city===city)));
-}
-
-function editCust(id){
-  const c=CUSTOMERS.find(x=>x.id===id);if(!c)return;
-  document.getElementById('custModalTitle').textContent='Edit Customer';
-  setVal('cm_name',c.name);setVal('cm_contact',c.contact||'');setVal('cm_gstin',c.gstin);
-  setVal('cm_mobile',c.mobile);setVal('cm_email',c.email||'');setVal('cm_city',c.city);
-  setVal('cm_addr',c.addr||'');setVal('cm_credit',c.credit||'');setVal('cm_terms',c.terms||'Net 30');
-  openModal('custModal');
-}
-
-function saveCust(){
-  const n=getVal('cm_name');if(!n.trim()){showToast('⚠️ Customer name required','warn');return;}
-  showToast('✅ Customer "'+n+'" saved');
-  closeModal('custModal');
-  addAuditEntry('SAVE','Customer','Saved customer: '+n);
-  renderCustomers();
+async function doSearch(query) {
+  if (!query||query.length<2) return;
+  const l=query.toLowerCase();
+  // Client-side fast search first
+  const inv=INVOICES.find(i=>(i.no||'').toLowerCase().includes(l)||(i.customer||'').toLowerCase().includes(l));
+  if (inv) { showToast('🔍 Invoice: '+inv.no+' — '+inv.customer); return; }
+  const prod=PRODUCTS.find(p=>(p.name||'').toLowerCase().includes(l)||(p.sku||'').toLowerCase().includes(l));
+  if (prod) { showToast('🔍 Product: '+prod.name); return; }
+  const cust=CUSTOMERS.find(c=>(c.name||'').toLowerCase().includes(l));
+  if (cust) { showToast('🔍 Customer: '+cust.name); return; }
+  showToast('🔍 No local results for "'+query+'"');
 }
 
 // ============================================================
-// VENDORS / CRM / PO / QUOTES / RETURNS
+//  DASHBOARD
 // ============================================================
-function renderVendors(){
-  const b=document.getElementById('vendBody');if(!b)return;
-  b.innerHTML=VENDORS.map(v=>`<tr>
-    <td class="b">${v.name}</td><td class="mono" style="font-size:10px">${v.gstin}</td>
-    <td>${v.mobile}</td><td>${v.city}</td>
-    <td class="b" style="color:var(--green)">₹${(v.total/100000).toFixed(1)}L</td>
-    <td style="color:var(--orange);font-weight:600">₹${v.payable.toLocaleString()}</td>
-    <td><div style="display:flex;align-items:center;gap:5px">
-      <div style="width:30px;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${v.score}%;background:${v.score>85?'var(--green)':'var(--orange)'}"></div></div>
-      <span style="font-size:11px;font-weight:700;color:${v.score>85?'var(--green)':'var(--orange)'}">${v.score}</span></div></td>
-    <td><div style="display:flex;gap:3px">
-      <button class="btn btn-o btn-sm" onclick="showToast('👁 '+${JSON.stringify(v.name)})">👁</button>
-      <button class="btn btn-o btn-sm" onclick="showToast('✏️ Editing vendor')">✏️</button>
-    </div></td></tr>`).join('');
+async function renderDashboard() {
+  renderSalesChart([62000,84000,71000,95000,68000,88000,84200],['26M','27T','28W','29T','30F','31S','1J']);
+  renderLowStock(PRODUCTS);
+  renderTopCustomers(CUSTOMERS);
+  renderForecastBars();
+  renderDashInvoices(INVOICES);
 }
 
-function renderCRM(){
-  const b=document.getElementById('crmBody');if(!b)return;
+function renderSalesChart(vals,days) {
+  const max=Math.max(...vals);
+  const sc=document.getElementById('salesChart');
+  const sl=document.getElementById('salesLabels');
+  if (!sc) return;
+  sc.innerHTML=''; sl.innerHTML='';
+  vals.forEach((v,i)=>{
+    const b=document.createElement('div'); b.className='cb';
+    b.style.cssText=`height:${Math.round(v/max*80)+10}px;background:${i===vals.length-1?'linear-gradient(180deg,var(--accent),var(--accent2))':'rgba(0,212,255,.28)'};`;
+    b.title='₹'+v.toLocaleString(); sc.appendChild(b);
+    const l=document.createElement('div'); l.className='cbl'; l.style.flex='1'; l.textContent=days[i]; sl.appendChild(l);
+  });
+}
+
+function renderLowStock(products) {
+  const lsl=document.getElementById('lowStockList'); if(!lsl)return;
+  lsl.innerHTML=(products||[]).filter(p=>p.status!=='ok').map(p=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px;background:var(--bg3);border-radius:var(--r2);margin-bottom:8px">
+      <div><div style="font-size:12px;font-weight:600">${p.name}</div><div style="font-size:10px;color:var(--text3)">${p.sku}</div></div>
+      <span class="sb ${p.status==='out'?'sov':'spen'}">${p.status==='out'?'Out of Stock':'Stock: '+p.stock}</span>
+    </div>`).join('');
+}
+
+function renderTopCustomers(customers) {
+  const tc=document.getElementById('topCust'); if(!tc)return;
+  const s=[...(customers||[])].sort((a,b)=>(b.total||0)-(a.total||0)).slice(0,5);
+  const mx=s[0]?.total||1;
+  tc.innerHTML=s.map((c,i)=>`<div style="margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+      <span style="font-size:12px;font-weight:600">${i+1}. ${c.name}</span>
+      <span style="font-size:12px;color:var(--green);font-weight:700">₹${((c.total||0)/1000).toFixed(0)}K</span></div>
+    <div class="prog"><div class="pb" style="width:${Math.round((c.total||0)/mx*100)}%;background:linear-gradient(90deg,var(--accent),var(--green))"></div></div></div>`).join('');
+}
+
+function renderForecastBars() {
+  const fb=document.getElementById('forecastBars'); if(!fb)return;
+  const ms=['Mar','Apr','May','Jun*','Jul*'],vs=[1420,1680,1846,2280,2100],mx=Math.max(...vs);
+  fb.innerHTML=`<div style="display:flex;align-items:flex-end;gap:9px;height:70px">${ms.map((m,i)=>{const h=Math.round(vs[i]/mx*60)+10,fc=i>=3;return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="font-size:9px;color:${fc?'var(--accent)':'var(--text3)'};font-weight:600">₹${(vs[i]/100).toFixed(1)}L</div><div style="width:100%;height:${h}px;border-radius:3px 3px 0 0;background:${fc?'linear-gradient(180deg,rgba(0,212,255,.45),rgba(0,212,255,.15))':'rgba(0,212,255,.25)'}"></div><div style="font-size:9px;color:var(--text3)">${m}</div></div>`;}).join('')}</div>`;
+}
+
+// ============================================================
+//  OTHER MODULE RENDERS (CRM, PO, Quotes, Returns, etc.)
+// ============================================================
+function renderCRM() {
+  const b=document.getElementById('crmBody'); if(!b)return;
   const stageColor={New:'cbl2',Contacted:'cor',Proposal:'cor',Negotiation:'crd',Won:'cgr',Lost:'sdr'};
   b.innerHTML=CRM_LEADS.map(l=>`<tr>
     <td class="b">${l.name}</td><td>${l.company}</td><td>${l.mobile}</td>
@@ -1727,44 +2145,43 @@ function renderCRM(){
     <td style="color:${l.followup==='—'?'var(--text3)':'var(--orange)'}">${l.followup}</td>
     <td style="font-size:11px;color:var(--text2)">💡 ${l.ai}</td>
     <td><div style="display:flex;gap:3px">
-      <button class="btn btn-o btn-sm" onclick="showToast('📞 Calling ${l.name}')">📞</button>
+      <button class="btn btn-o btn-sm" onclick="showToast('📞 Calling')">📞</button>
       <button class="btn btn-o btn-sm" onclick="showToast('📝 Notes opened')">📝</button>
     </div></td></tr>`).join('');
 }
 
-function renderPO(){
-  const b=document.getElementById('poBody');if(!b)return;
+function renderPO() {
+  const b=document.getElementById('poBody'); if(!b)return;
   b.innerHTML=PO_DATA.map(p=>`<tr>
     <td class="b mono">${p.no}</td><td>${p.date}</td><td class="b">${p.vendor}</td>
-    <td>₹${p.amount.toLocaleString()}</td><td>₹${p.gst.toLocaleString()}</td>
-    <td class="b">₹${p.total.toLocaleString()}</td>
+    <td>₹${p.amount.toLocaleString()}</td><td>₹${p.gst.toLocaleString()}</td><td class="b">₹${p.total.toLocaleString()}</td>
     <td><span class="sb ${p.status==='received'?'sp':'spen'}">${p.status}</span></td>
     <td><div style="display:flex;gap:3px">
-      <button class="btn btn-o btn-sm" onclick="showToast('👁 '+${JSON.stringify(p.no)})">👁</button>
+      <button class="btn btn-o btn-sm" onclick="showToast('👁 ${p.no}')">👁</button>
       <button class="btn btn-o btn-sm" onclick="showToast('✅ GRN created')">✅ GRN</button>
     </div></td></tr>`).join('');
 }
 
-function renderQuotes(){
-  const b=document.getElementById('quoteBody');if(!b)return;
+function renderQuotes() {
+  const b=document.getElementById('quoteBody'); if(!b)return;
   b.innerHTML=QUOTES.map(q=>`<tr>
     <td class="b mono">${q.no}</td><td>${q.date}</td><td class="b">${q.customer}</td>
     <td class="b">₹${q.amount.toLocaleString()}</td><td>${q.valid}</td>
     <td><span class="sb ${q.status==='accepted'?'sp':q.status==='sent'?'spen':'sdr'}">${q.status}</span></td>
     <td><div style="display:flex;gap:3px">
-      <button class="btn btn-o btn-sm" onclick="showToast('👁 Quote opened')">👁</button>
+      <button class="btn btn-o btn-sm" onclick="showToast('👁 Quote')">👁</button>
       <button class="btn btn-p btn-sm" onclick="convertQuote('${q.no}','${q.customer}',${q.amount})">→ Invoice</button>
     </div></td></tr>`).join('');
 }
 
-function convertQuote(no,cust,amt){
+function convertQuote(no,cust,amt) {
   showToast('✅ Quote '+no+' converted to invoice for '+cust);
-  addAuditEntry('CONVERT','Quote','Converted '+no+' to invoice — '+cust);
+  addAuditEntry('CONVERT','Quote','Converted '+no+' to invoice');
   setTimeout(()=>nav('create',null),800);
 }
 
-function renderReturns(){
-  const b=document.getElementById('retBody');if(!b)return;
+function renderReturns() {
+  const b=document.getElementById('retBody'); if(!b)return;
   b.innerHTML=RETURNS.map(r=>`<tr>
     <td class="b mono">${r.no}</td><td>${r.date}</td>
     <td><span class="chip cbl2">${r.type}</span></td>
@@ -1774,75 +2191,22 @@ function renderReturns(){
     <td><button class="btn btn-o btn-sm" onclick="showToast('👁 Return opened')">👁</button></td></tr>`).join('');
 }
 
-// ============================================================
-// ACCOUNTING
-// ============================================================
-function renderAccounting(){
-  const lb=document.getElementById('ledgerBody');
-  if(lb) lb.innerHTML=LEDGER_DATA.map(l=>`<tr><td>${l.date}</td><td class="b">${l.account}</td><td>${l.narr}</td>
-    <td style="color:var(--accent)">${l.dr||'—'}</td><td style="color:var(--green)">${l.cr||'—'}</td>
-    <td class="b">₹${l.bal}</td></tr>`).join('');
-  const cb=document.getElementById('cashBody');
-  if(cb) cb.innerHTML=`
-    <tr><td>01 Jun</td><td>INV-2466 — Priya Mobiles</td><td style="color:var(--green)">8,746</td><td>—</td><td class="b">3,42,000</td></tr>
-    <tr><td>31 May</td><td>Salary paid — June advance</td><td>—</td><td style="color:var(--red)">80,000</td><td class="b">3,33,254</td></tr>
-    <tr><td>29 May</td><td>INV-2463 — Gupta Brothers</td><td style="color:var(--green)">128,000</td><td>—</td><td class="b">4,13,254</td></tr>`;
-  const bb=document.getElementById('bankBody');
-  if(bb) bb.innerHTML=`
-    <tr><td>01 Jun</td><td>NEFT received — Kumar Electronics</td><td>—</td><td style="color:var(--green)">42,000</td><td class="b">8,24,000</td></tr>
-    <tr><td>28 May</td><td>PO-0041 — Samsung India payment</td><td style="color:var(--red)">265,500</td><td>—</td><td class="b">7,82,000</td></tr>`;
-}
-
-// ============================================================
-// PAYMENTS
-// ============================================================
-function renderPayments(){
-  const pm=document.getElementById('payMethods');
-  if(pm) pm.innerHTML=[
-    {m:'UPI (PhonePe/GPay)',v:842000,pct:45},
-    {m:'Bank Transfer / NEFT',v:620000,pct:33},
-    {m:'Cash',v:280000,pct:15},
-    {m:'Razorpay / Card',v:104500,pct:7},
-  ].map(x=>`<div style="padding:10px;background:var(--bg3);border-radius:var(--r2)">
-    <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:12px;font-weight:600">${x.m}</span><span style="font-size:12px;color:var(--green);font-weight:700">₹${(x.v/1000).toFixed(0)}K</span></div>
-    <div class="prog"><div class="pb" style="width:${x.pct}%;background:linear-gradient(90deg,var(--accent),var(--green))"></div></div></div>`).join('');
-  const pb=document.getElementById('payBody');
-  if(pb) pb.innerHTML=PAYMENTS_DATA.map(p=>`<tr>
+function renderPayments() {
+  const pm=document.getElementById('payMethods'); if(!pm)return;
+  pm.innerHTML=[{m:'UPI (PhonePe/GPay)',v:842000,pct:45},{m:'Bank Transfer / NEFT',v:620000,pct:33},{m:'Cash',v:280000,pct:15},{m:'Razorpay / Card',v:104500,pct:7}]
+    .map(x=>`<div style="padding:10px;background:var(--bg3);border-radius:var(--r2)">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:12px;font-weight:600">${x.m}</span><span style="font-size:12px;color:var(--green);font-weight:700">₹${(x.v/1000).toFixed(0)}K</span></div>
+      <div class="prog"><div class="pb" style="width:${x.pct}%;background:linear-gradient(90deg,var(--accent),var(--green))"></div></div></div>`).join('');
+  const pb=document.getElementById('payBody'); if(!pb)return;
+  pb.innerHTML=PAYMENTS_DATA.map(p=>`<tr>
     <td>${p.date}</td><td class="b">${p.party}</td><td class="mono">${p.invoice}</td>
     <td><span class="chip ${p.method==='Cash'?'cor':p.method.includes('UPI')?'cgr':'cbl2'}">${p.method}</span></td>
     <td class="b" style="color:${p.type==='received'?'var(--green)':'var(--red)'}">₹${p.amount.toLocaleString()}</td>
     <td><span class="sb ${p.type==='received'?'sp':'sov'}">${p.type}</span></td></tr>`).join('');
 }
 
-function savePayment(){
-  const amt=getVal('payAmt');
-  showToast('✅ Payment of ₹'+parseInt(amt||0).toLocaleString()+' recorded');
-  closeModal('payModal');
-  addAuditEntry('CREATE','Payment','Recorded payment ₹'+amt);
-  renderPayments();
-}
-
-// ============================================================
-// AUDIT LOG
-// ============================================================
-function renderAuditLog(){
-  const b=document.getElementById('auditBody');if(!b)return;
-  b.innerHTML=AUDIT_LOG.map(l=>`<tr>
-    <td class="mono" style="font-size:10px">${l.ts}</td><td class="b">${l.user}</td>
-    <td><span class="chip ${l.action==='CREATE'?'cgr':l.action==='DELETE'?'crd':l.action==='EDIT'||l.action==='EDIT_START'?'cor':l.action==='LOGIN'?'cbl2':'sdr'}">${l.action}</span></td>
-    <td>${l.module}</td><td style="font-size:11px;color:var(--text2)">${l.detail}</td>
-    <td class="mono" style="font-size:10px">${l.ip}</td></tr>`).join('');
-}
-
-function addAuditEntry(action,module,detail){
-  AUDIT_LOG.unshift({ts:new Date().toLocaleString('en-IN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).replace(/\//g,' '),user:'Rajesh Sharma',action,module,detail,ip:'192.168.1.10'});
-}
-
-// ============================================================
-// WAREHOUSES / E-INVOICE
-// ============================================================
-function renderWarehouses(){
-  const g=document.getElementById('whGrid');if(!g)return;
+function renderWarehouses() {
+  const g=document.getElementById('whGrid'); if(!g)return;
   g.innerHTML=WAREHOUSES.map(w=>`<div class="card chov">
     <div style="font-size:22px;margin-bottom:8px">🏭</div>
     <div style="font-size:13px;font-weight:700;margin-bottom:4px">${w.name}</div>
@@ -1850,186 +2214,260 @@ function renderWarehouses(){
     <div class="tr"><span style="font-size:11px;color:var(--text3)">Manager</span><span style="font-size:11px;font-weight:600">${w.manager}</span></div>
     <div class="tr"><span style="font-size:11px;color:var(--text3)">Products</span><span style="font-size:11px;font-weight:600;color:var(--accent)">${w.items}</span></div>
     <div class="tr"><span style="font-size:11px;color:var(--text3)">Stock Value</span><span style="font-size:11px;font-weight:700;color:var(--green)">₹${(w.value/100000).toFixed(1)}L</span></div>
-    <button class="btn btn-o btn-sm" style="width:100%;justify-content:center;margin-top:11px" onclick="showToast('📦 Stock report for ${w.name}')">View Stock</button>
-  </div>`).join('')+`<div class="card chov" style="display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;min-height:200px" onclick="openModal('whModal')">
-    <div style="font-size:32px;margin-bottom:8px">➕</div>
-    <div style="font-size:12px;font-weight:600;color:var(--text2)">Add Warehouse</div>
+    <button class="btn btn-o btn-sm" style="width:100%;justify-content:center;margin-top:11px" onclick="showToast('📦 Stock report')">View Stock</button>
+  </div>`).join('')+`<div class="card chov" style="display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;min-height:180px" onclick="openModal('whModal')">
+    <div style="font-size:32px;margin-bottom:8px">➕</div><div style="font-size:12px;font-weight:600;color:var(--text2)">Add Warehouse</div>
   </div>`;
 }
 
-function renderEInvoice(){
-  const el=document.getElementById('einvList');if(!el)return;
+function renderEInvoice() {
+  const el=document.getElementById('einvList'); if(!el)return;
   el.innerHTML=INVOICES.filter(i=>i.type==='GST Invoice'&&i.custGst).slice(0,5).map(inv=>`
     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:var(--r2);margin-bottom:8px">
       <div><div style="font-size:12px;font-weight:600">${inv.no}</div>
-        <div style="font-size:10px;color:var(--text3)">${inv.customer} · ₹${inv.total.toLocaleString()}</div></div>
-      <div style="display:flex;gap:6px;align-items:center">
-        ${inv.status==='paid'?`<span class="sb sp">IRN Generated</span>`:`<button class="btn btn-p btn-sm" onclick="genIRN('${inv.no}')">Generate IRN</button>`}
-      </div>
+        <div style="font-size:10px;color:var(--text3)">${inv.customer} · ₹${fmt(inv.total)}</div></div>
+      ${inv.status==='paid'?`<span class="sb sp">IRN Generated</span>`:`<button class="btn btn-p btn-sm" onclick="genIRN('${inv.no}')">Generate IRN</button>`}
     </div>`).join('');
 }
 
-function genIRN(no){ showToast('⚡ IRN generated for '+no+' — QR code attached'); addAuditEntry('CREATE','E-Invoice','Generated IRN for '+no); }
-function genEWB(){ const inv=getVal('ewbInv'); showToast('🛣️ E-Way Bill generated for '+inv); addAuditEntry('CREATE','E-Way Bill','Generated EWB for '+inv); }
+function renderAccounting() {
+  const lb=document.getElementById('ledgerBody');
+  if (lb) lb.innerHTML=LEDGER_DATA.map(l=>`<tr><td>${l.date}</td><td class="b">${l.account}</td><td>${l.narr}</td>
+    <td style="color:var(--accent)">${l.dr||'—'}</td><td style="color:var(--green)">${l.cr||'—'}</td>
+    <td class="b">₹${l.bal}</td></tr>`).join('');
+  const cb=document.getElementById('cashBody');
+  if (cb) cb.innerHTML=`<tr><td>01 Jun</td><td>INV-2466 — Priya Mobiles</td><td style="color:var(--green)">8,746</td><td>—</td><td class="b">3,42,000</td></tr>
+    <tr><td>31 May</td><td>Salary paid</td><td>—</td><td style="color:var(--red)">80,000</td><td class="b">3,33,254</td></tr>`;
+  const bb=document.getElementById('bankBody');
+  if (bb) bb.innerHTML=`<tr><td>01 Jun</td><td>NEFT — Kumar Electronics</td><td>—</td><td style="color:var(--green)">42,000</td><td class="b">8,24,000</td></tr>
+    <tr><td>28 May</td><td>PO-0041 Samsung India</td><td style="color:var(--red)">265,500</td><td>—</td><td class="b">7,82,000</td></tr>`;
+}
+
+function renderAuditLog() {
+  const b=document.getElementById('auditBody'); if(!b)return;
+  b.innerHTML=AUDIT_LOG.map(l=>`<tr>
+    <td class="mono" style="font-size:10px">${l.ts}</td><td class="b">${l.user}</td>
+    <td><span class="chip ${l.action==='CREATE'?'cgr':l.action==='DELETE'?'crd':l.action.startsWith('EDIT')?'cor':l.action==='LOGIN'?'cbl2':'sdr'}">${l.action}</span></td>
+    <td>${l.module}</td><td style="font-size:11px;color:var(--text2)">${l.detail}</td>
+    <td class="mono" style="font-size:10px">${l.ip}</td></tr>`).join('');
+}
+
+function addAuditEntry(action,module,detail) {
+  AUDIT_LOG.unshift({ts:new Date().toLocaleString('en-IN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).replace(/\//g,' '),user:(AUTH.user?.name||'User'),action,module,detail,ip:'192.168.1.10'});
+}
 
 // ============================================================
-// AI ASSISTANT
+//  INVOICE FORM — ITEM ENGINE
 // ============================================================
-function initAI(){
-  const m=document.getElementById('aiMsgs');if(!m||m.children.length>0)return;
-  addAIMsg('bot','👋 Namaste! I\'m your AI Business Assistant with live access to all your business data. What would you like to know?');
+function initNewInvoice() {
+  editingInvId=null;
+  document.getElementById('editBanner').classList.add('hidden');
+  document.getElementById('invFormTitle').textContent='Create GST Invoice';
+  document.getElementById('invFormBc').innerHTML='Billing / <span>New Invoice</span>';
+  const today=new Date().toISOString().split('T')[0];
+  const due=new Date(Date.now()+15*864e5).toISOString().split('T')[0];
+  setVal('invNo','INV-'+nextInvNo); setVal('invDate',today); setVal('invDue',due);
+  setVal('invType','GST Invoice'); setVal('invState','27 - Maharashtra'); setVal('supplyType','intra'); setVal('invNotes','');
+  ['custName','custGst','custMobile','custAddr','custEmail','custState'].forEach(id=>setVal(id,''));
+  document.getElementById('invoiceItems').innerHTML=''; itemCounter=0;
+  addItem(); addItem();
+  refreshCustomerDatalist();
+  calcTotals();
+}
+
+function addItem() {
+  itemCounter++;
+  const n=itemCounter;
+  const prodOpts=['<option value="">Select product…</option>',...PRODUCTS.map(p=>`<option value="${p.name}" data-price="${p.price}" data-gst="${p.gst}">${p.name}</option>`)].join('');
+  const row=document.createElement('div'); row.className='iir'; row.id='item-'+n;
+  row.innerHTML=`
+    <select class="fi" style="padding:6px 7px;font-size:11px" onchange="itemPicked(this,${n})">${prodOpts}</select>
+    <input type="number" class="fi" style="padding:6px 7px;font-size:11px" value="1" id="qty-${n}" oninput="calcItem(${n})" min="1"/>
+    <input type="number" class="fi" style="padding:6px 7px;font-size:11px" placeholder="0" id="rate-${n}" oninput="calcItem(${n})"/>
+    <input type="number" class="fi" style="padding:6px 7px;font-size:11px" value="0" id="disc-${n}" oninput="calcItem(${n})" min="0" max="100"/>
+    <input type="text" class="fi mono" style="padding:6px 7px;font-size:11px;background:var(--bg)" id="gst-${n}" readonly value="18%"/>
+    <input type="text" class="fi" style="padding:6px 7px;font-size:11px;background:var(--bg);font-weight:700;color:var(--green)" id="amt-${n}" readonly value="₹0.00"/>
+    <button style="background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--red);cursor:pointer;padding:5px 8px;font-size:12px" onclick="removeItem(${n})">✕</button>`;
+  document.getElementById('invoiceItems').appendChild(row);
+  calcTotals();
+}
+
+function itemPicked(sel,n) {
+  const opt=sel.options[sel.selectedIndex];
+  if (opt.dataset.price) { setVal('rate-'+n,opt.dataset.price); setVal('gst-'+n,(opt.dataset.gst||18)+'%'); }
+  calcItem(n);
+}
+
+function calcItem(n) {
+  const qty=+getVal('qty-'+n)||0, rate=+getVal('rate-'+n)||0, disc=+getVal('disc-'+n)||0;
+  const amt=qty*rate*(1-disc/100);
+  const el=document.getElementById('amt-'+n); if(el)el.value='₹'+amt.toFixed(2);
+  calcTotals();
+}
+
+function removeItem(n) { document.getElementById('item-'+n)?.remove(); calcTotals(); }
+
+function calcTotals() {
+  let subtotalGross=0, discTotal=0;
+  document.querySelectorAll('[id^="item-"]').forEach(row=>{
+    const n=row.id.replace('item-','');
+    const qty=+getVal('qty-'+n)||0, rate=+getVal('rate-'+n)||0, disc=+getVal('disc-'+n)||0;
+    subtotalGross+=qty*rate; discTotal+=qty*rate*(disc/100);
+  });
+  const grossItems=subtotalGross-discTotal;
+
+  // Weighted GST extraction
+  let wGst=0;
+  document.querySelectorAll('[id^="item-"]').forEach(row=>{
+    const n=row.id.replace('item-','');
+    const qty=+getVal('qty-'+n)||0, rate=+getVal('rate-'+n)||0, disc=+getVal('disc-'+n)||0;
+    const gstPct=parseFloat(getVal('gst-'+n))||18;
+    const itemAmt=qty*rate*(1-disc/100);
+    wGst+=itemAmt*(gstPct/100/(1+gstPct/100));
+  });
+  const taxableBase=grossItems-wGst;
+  const isInter=getVal('supplyType')==='inter';
+  const roundOff=Math.round(grossItems)-grossItems;
+  const total=Math.round(grossItems);
+
+  setTxt('s_sub','₹'+(subtotalGross).toFixed(2));
+  setTxt('s_disc','-₹'+discTotal.toFixed(2));
+  setTxt('s_tax','₹'+taxableBase.toFixed(2));
+  setTxt('s_round','₹'+roundOff.toFixed(2));
+  setTxt('s_total','₹'+total.toLocaleString());
+  if (isInter) {
+    setTxt('s_igst','₹'+wGst.toFixed(2)); setTxt('s_cgst','₹0.00'); setTxt('s_sgst','₹0.00');
+  } else {
+    setTxt('s_cgst','₹'+(wGst/2).toFixed(2)); setTxt('s_sgst','₹'+(wGst/2).toFixed(2)); setTxt('s_igst','₹0.00');
+  }
+}
+
+// ============================================================
+//  TAB SWITCHER
+// ============================================================
+function switchTab(btn,ns,id) {
+  btn.closest('.tabr').querySelectorAll('.tabb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll(`[id^="${ns}-"]`).forEach(el=>el.classList.add('hidden'));
+  document.getElementById(`${ns}-${id}`)?.classList.remove('hidden');
+}
+
+// ============================================================
+//  AI ASSISTANT
+// ============================================================
+function initAI() {
+  const m=document.getElementById('aiMsgs'); if(!m||m.children.length>0)return;
+  addAIMsg('bot','👋 Namaste! I\'m your AI Business Assistant. Ask me anything about your business.');
   const s=document.getElementById('aiSug');
-  if(s) s.innerHTML=['Today\'s sales','Low stock','Top customers','Pending payments','Profit analysis','Sales forecast'].map(x=>`<button class="chip cbl2" style="cursor:pointer;padding:5px 11px;font-size:11px" onclick="askAI('${x}')">${x}</button>`).join('');
+  if (s) s.innerHTML=['Today\'s sales','Low stock','Top customers','Pending payments','Profit analysis','Sales forecast'].map(x=>`<button class="chip cbl2" style="cursor:pointer;padding:5px 11px;font-size:11px" onclick="askAI('${x}')">${x}</button>`).join('');
   const p=document.getElementById('aiPreds');
-  if(p) p.innerHTML=[
-    {i:'📈',t:'June revenue likely ₹22.8L (+23%)'},
-    {i:'⚠️',t:'Mi Router AX6000 stockout in ~4 days'},
-    {i:'💰',t:'₹67,800 at risk — Metro Traders overdue'},
-    {i:'🎯',t:'Restock Samsung Galaxy A55 (best margin)'},
-  ].map(x=>`<div style="display:flex;gap:9px;padding:9px;background:var(--bg3);border-radius:var(--r2);margin-bottom:7px"><span>${x.i}</span><div style="font-size:11px;color:var(--text2)">${x.t}</div></div>`).join('');
+  if (p) p.innerHTML=[{i:'📈',t:'June revenue likely ₹22.8L (+23%)'},{i:'⚠️',t:'Mi Router AX6000 stockout in ~4 days'},{i:'💰',t:'₹67,800 at risk — Metro Traders overdue'},{i:'🎯',t:'Restock Samsung Galaxy A55 (best margin)'}].map(x=>`<div style="display:flex;gap:9px;padding:9px;background:var(--bg3);border-radius:var(--r2);margin-bottom:7px"><span>${x.i}</span><div style="font-size:11px;color:var(--text2)">${x.t}</div></div>`).join('');
 }
 
-function addAIMsg(type,text){
-  const m=document.getElementById('aiMsgs');if(!m)return;
-  const d=document.createElement('div');d.className='aimsg '+type;
+function addAIMsg(type,text) {
+  const m=document.getElementById('aiMsgs'); if(!m)return;
+  const d=document.createElement('div'); d.className='aimsg '+type;
   d.innerHTML=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
-  m.appendChild(d);m.scrollTop=m.scrollHeight;
+  m.appendChild(d); m.scrollTop=m.scrollHeight;
 }
 
-function sendAI(){
-  const inp=document.getElementById('aiIn');if(!inp||!inp.value.trim())return;
-  const msg=inp.value.trim();inp.value='';askAI(msg);
+function sendAI() {
+  const inp=document.getElementById('aiIn'); if(!inp||!inp.value.trim())return;
+  const msg=inp.value.trim(); inp.value='';
+  askAI(msg);
 }
 
-function askAI(msg){
+function askAI(msg) {
   addAIMsg('usr',msg);
-  const ld=document.createElement('div');ld.className='aimsg bot';ld.innerHTML='<div class="ld"></div>';
+  const ld=document.createElement('div'); ld.className='aimsg bot'; ld.innerHTML='<div class="ld"></div>';
   document.getElementById('aiMsgs').appendChild(ld);
   document.getElementById('aiMsgs').scrollTop=99999;
   setTimeout(()=>{
     ld.remove();
     const l=msg.toLowerCase();
     let r=AI_KB.default;
-    if(l.includes('sale')||l.includes('revenue')||l.includes('today')) r=AI_KB.sales;
-    else if(l.includes('stock')||l.includes('inventory')||l.includes('low')||l.includes('alert')) r=AI_KB.stock;
-    else if(l.includes('customer')) r=AI_KB.customers;
-    else if(l.includes('payment')||l.includes('pending')||l.includes('due')||l.includes('outstanding')) r=AI_KB.payment;
-    else if(l.includes('profit')||l.includes('margin')||l.includes('p&l')) r=AI_KB.profit;
-    else if(l.includes('forecast')||l.includes('predict')||l.includes('next')) r=AI_KB.forecast;
+    if (l.includes('sale')||l.includes('revenue')||l.includes('today')) r=AI_KB.sales;
+    else if (l.includes('stock')||l.includes('inventory')||l.includes('low')) r=AI_KB.stock;
+    else if (l.includes('customer')) r=AI_KB.customers;
+    else if (l.includes('payment')||l.includes('pending')||l.includes('due')||l.includes('outstanding')) r=AI_KB.payment;
+    else if (l.includes('profit')||l.includes('margin')) r=AI_KB.profit;
+    else if (l.includes('forecast')||l.includes('predict')||l.includes('next')) r=AI_KB.forecast;
     addAIMsg('bot',r);
   },900);
 }
 
-function clearAI(){const m=document.getElementById('aiMsgs');if(m)m.innerHTML='';initAI();}
+function clearAI() { const m=document.getElementById('aiMsgs'); if(m)m.innerHTML=''; initAI(); }
 
 // ============================================================
-// MODALS
+//  MODAL HELPERS
 // ============================================================
-function openModal(id){document.getElementById(id).classList.remove('hidden');}
-function closeModal(id){document.getElementById(id).classList.add('hidden');}
-
-function saveVend(){ showToast('✅ Vendor saved'); closeModal('vendModal'); addAuditEntry('CREATE','Vendor','Saved vendor'); renderVendors(); }
-function saveLead(){ showToast('✅ Lead saved'); closeModal('leadModal'); addAuditEntry('CREATE','CRM','Added new lead'); renderCRM(); }
-function savePO(){ showToast('✅ Purchase order created'); closeModal('poModal'); addAuditEntry('CREATE','Purchase','Created new PO'); renderPO(); }
-function saveReturn(){ showToast('✅ Return saved'); closeModal('retModal'); addAuditEntry('CREATE','Returns','Created new return'); renderReturns(); }
-function saveWH(){ showToast('✅ Warehouse added'); closeModal('whModal'); addAuditEntry('CREATE','Warehouse','Added new warehouse'); renderWarehouses(); }
-function saveJE(){ showToast('✅ Journal entry posted'); closeModal('jeModal'); addAuditEntry('CREATE','Accounting','Posted journal entry'); }
-function openQuote(){ showToast('💡 Tip: Use Create Invoice with type "Quotation"'); setTimeout(()=>nav('create',null),600); }
+function openModal(id) { document.getElementById(id)?.classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); }
 
 // ============================================================
-// TAB SWITCHER (generic)
+//  OTHER MODAL SAVE HANDLERS
 // ============================================================
-function switchTab(btn, ns, id) {
-  // find all tabb siblings
-  btn.closest('.tabr').querySelectorAll('.tabb').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  // find all tab content for this namespace
-  document.querySelectorAll(`[id^="${ns}-"]`).forEach(el=>el.classList.add('hidden'));
-  const target=document.getElementById(`${ns}-${id}`);
-  if(target) target.classList.remove('hidden');
-}
+function savePayment() { showToast('✅ Payment of ₹'+(parseInt(getVal('payAmt'))||0).toLocaleString()+' recorded'); closeModal('payModal'); addAuditEntry('CREATE','Payment','Recorded payment'); renderPayments(); }
+function saveLead()    { showToast('✅ Lead saved'); closeModal('leadModal'); addAuditEntry('CREATE','CRM','Added new lead'); renderCRM(); }
+function savePO()      { showToast('✅ Purchase order created'); closeModal('poModal'); addAuditEntry('CREATE','Purchase','Created new PO'); renderPO(); }
+function saveReturn()  { showToast('✅ Return saved'); closeModal('retModal'); addAuditEntry('CREATE','Returns','Created new return'); renderReturns(); }
+function saveWH()      { showToast('✅ Warehouse added'); closeModal('whModal'); addAuditEntry('CREATE','Warehouse','Added warehouse'); renderWarehouses(); }
+function saveJE()      { showToast('✅ Journal entry posted'); closeModal('jeModal'); addAuditEntry('CREATE','Accounting','Posted journal entry'); }
+function openQuote()   { showToast('💡 Tip: Create Invoice → Type = Quotation'); setTimeout(()=>nav('create',null),600); }
+function genIRN(no)    { showToast('⚡ IRN generated for '+no); addAuditEntry('CREATE','E-Invoice','Generated IRN for '+no); }
+function genEWB()      { const inv=getVal('ewbInv'); showToast('🛣️ E-Way Bill generated for '+inv); addAuditEntry('CREATE','E-Way Bill','Generated EWB for '+inv); }
+function genUPI()      { const amt=getVal('upiAmt'),uid=getVal('upiId'); if(!amt){showToast('⚠️ Enter amount','warn');return;} document.getElementById('upiQR').style.display='block'; document.getElementById('upiIdShow').textContent=uid; showToast('📱 UPI QR generated for ₹'+parseInt(amt).toLocaleString()); }
+function showNotifs()  { const n=['⚠️ Metro Traders — ₹67,800 overdue','📦 Mi Router AX6000 critically low','📦 Samsung Galaxy A55 out of stock','✅ INV-2468 paid — Kumar Electronics']; showToast(n[Math.floor(Math.random()*n.length)]); }
+function exportInvoices() { showToast('📤 Invoices exported to Excel'); }
 
 // ============================================================
-// SEARCH
-// ============================================================
-function doSearch(q) {
-  if(!q||q.length<2) return;
-  const l=q.toLowerCase();
-  const inv=INVOICES.find(i=>i.no.toLowerCase().includes(l)||i.customer.toLowerCase().includes(l));
-  if(inv){ showToast('🔍 Found: '+inv.no+' — '+inv.customer); return; }
-  const prod=PRODUCTS.find(p=>p.name.toLowerCase().includes(l)||p.sku.toLowerCase().includes(l));
-  if(prod){ showToast('🔍 Found product: '+prod.name); return; }
-  const cust=CUSTOMERS.find(c=>c.name.toLowerCase().includes(l));
-  if(cust){ showToast('🔍 Found customer: '+cust.name); }
-}
-
-// ============================================================
-// PAYMENT QR
-// ============================================================
-function genUPI(){
-  const amt=getVal('upiAmt');const uid=getVal('upiId');
-  if(!amt){showToast('⚠️ Enter amount','warn');return;}
-  document.getElementById('upiQR').style.display='block';
-  document.getElementById('upiIdShow').textContent=uid;
-  showToast('📱 UPI QR generated for ₹'+parseInt(amt).toLocaleString());
-}
-
-// ============================================================
-// NOTIFICATIONS
-// ============================================================
-function showNotifs(){
-  const notifs=['⚠️ Metro Traders — ₹67,800 overdue (18 days)','📦 Mi Router AX6000 critically low (1 unit)','📦 Samsung Galaxy A55 out of stock','✅ INV-2468 payment received — Kumar Electronics'];
-  showToast(notifs[Math.floor(Math.random()*notifs.length)]);
-}
-
-// ============================================================
-// TOAST
+//  TOAST
 // ============================================================
 function showToast(msg,type) {
   const el=document.getElementById('toastEl');
-  el.textContent=msg;
-  el.className='toast'+(type?' '+type:'');
-  clearTimeout(window._tt);
-  window._tt=setTimeout(()=>el.classList.add('hidden'),3000);
+  el.textContent=msg; el.className='toast'+(type?' '+type:'');
+  clearTimeout(window._tt); window._tt=setTimeout(()=>el.classList.add('hidden'),3200);
 }
 
 // ============================================================
-// UTILS
+//  UTILS
 // ============================================================
-function setVal(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
-function getVal(id){ const el=document.getElementById(id); return el?el.value:''; }
-function setTxt(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; }
-function fmtDate(d){ if(!d)return'—'; try{ const dt=new Date(d); return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }catch(e){return d;} }
+function setVal(id,v) { const el=document.getElementById(id); if(el)el.value=v; }
+function getVal(id)   { const el=document.getElementById(id); return el?el.value:''; }
+function setTxt(id,v) { const el=document.getElementById(id); if(el)el.textContent=v; }
+function fmt(n)       { return (n||0).toLocaleString('en-IN'); }
+function fmtDate(d)   { if(!d)return'—'; try{return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}catch(e){return d;} }
+function statusClass(s){ return s==='paid'?'sp':s==='pending'?'spen':s==='overdue'?'sov':'sdr'; }
+function loadingRow(cols){ return `<tr><td colspan="${cols}" style="text-align:center;padding:30px;color:var(--text3)"><div class="ld" style="display:inline-block;margin-right:8px"></div>Loading…</td></tr>`; }
 
 // ============================================================
-// INIT
+//  BOOT — check for existing session before showing login
 // ============================================================
-window.onload = () => {
-  renderDashboard();
-  renderInvoices();
-  renderInventory();
-  renderCustomers();
-  renderVendors();
-  renderCRM();
-  renderPO();
-  renderQuotes();
-  renderReturns();
-  renderPayments();
-  renderAuditLog();
-  renderWarehouses();
-  renderEInvoice();
-  renderAccounting();
-  initAI();
-  initNewInvoice();
+window.onload = async () => {
+  // Show API health on login screen
+  const pill = document.getElementById('apiStatusPill');
+  const ok   = await checkApiHealth();
+  if (ok) { pill.textContent='✅ API Online'; pill.className='api-status api-online'; }
+  else    { pill.textContent='⚠️ API Offline (Demo mode available)'; pill.className='api-status api-offline'; }
 
-  document.addEventListener('keydown', e => {
-    if((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); document.getElementById('gSearch').focus(); }
-    if((e.ctrlKey||e.metaKey)&&e.key==='n'){ e.preventDefault(); nav('create',null); }
-    if(e.key==='Escape') document.querySelectorAll('.mo:not(.hidden)').forEach(m=>m.classList.add('hidden'));
+  // Restore existing session from sessionStorage
+  const saved=sessionStorage.getItem('vyaparpro_token');
+  if (saved) {
+    AUTH.token=saved; AUTH.apiOnline=ok;
+    try {
+      const payload=JSON.parse(atob(saved.split('.')[1]));
+      AUTH.user={ name:payload.name||payload.full_name||payload.sub||'User', role:payload.role||'User' };
+    } catch(_) { AUTH.user={ name:'User', role:'User' }; }
+    bootApp();
+  }
+
+  // Global keyboard shortcuts
+  document.addEventListener('keydown',e=>{
+    if ((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); document.getElementById('gSearch').focus(); }
+    if ((e.ctrlKey||e.metaKey)&&e.key==='n'){ e.preventDefault(); nav('create',null); }
+    if (e.key==='Escape') document.querySelectorAll('.mo:not(.hidden)').forEach(m=>m.classList.add('hidden'));
   });
-
-  // Close modals on overlay click
-  document.querySelectorAll('.mo').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.add('hidden'); }));
+  document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m)m.classList.add('hidden'); }));
 };
 </script>
 </body>

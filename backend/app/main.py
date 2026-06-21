@@ -87,13 +87,15 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    origins = ["http://localhost:5500", "http://127.0.1:5500", "http://localhost:5173"]  # Allow local static file access during development
+
     # ── Middleware (order matters: outermost first) ────────────────────
     app.add_middleware(RequestIDMiddleware)
     app.add_middleware(TimingMiddleware)
     app.add_middleware(AuditMiddleware)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[str(o) for o in settings.ALLOWED_ORIGINS],
+        allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
