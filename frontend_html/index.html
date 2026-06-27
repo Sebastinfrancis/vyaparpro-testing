@@ -282,7 +282,7 @@ select.fi option{background:var(--bg2)}
           <div class="g2" style="gap:8px">
             <button class="btn btn-p" style="justify-content:center" onclick="nav('create',null)">🧾 New Invoice</button>
             <button class="btn btn-s" style="justify-content:center" onclick="nav('purchase',null)">🛒 New Purchase</button>
-            <button class="btn btn-o" style="justify-content:center" onclick="openModal('custModal')">👥 Add Customer</button>
+            <button class="btn btn-o" style="justify-content:center" onclick="openAddCust()">👥 Add Customer</button>
             <button class="btn btn-o" style="justify-content:center" onclick="openModal('prodModal')">📦 Add Product</button>
             <button class="btn btn-o" style="justify-content:center" onclick="openModal('payModal')">💳 Record Payment</button>
             <button class="btn btn-o" style="justify-content:center" onclick="nav('reports',null)">📊 Reports</button>
@@ -475,7 +475,7 @@ select.fi option{background:var(--bg2)}
       <div class="bc">Parties / <span>Vendors</span></div>
       <div class="sh" style="margin-top:8px">
         <div><div class="st">Vendor Management</div><div class="ss">Suppliers, PO, payments, AI performance score</div></div>
-        <button class="btn btn-p btn-sm" onclick="openModal('vendModal')">➕ Add Vendor</button>
+        <button class="btn btn-p btn-sm" onclick="openAddVend()">➕ Add Vendor</button>
       </div>
       <div style="display:flex;gap:14px;margin-bottom:18px">
         <div class="sc bl" style="flex:1"><div class="slbl">Total Vendors</div><div class="sval bl" style="font-size:20px" id="vendTotal">—</div></div>
@@ -868,25 +868,59 @@ select.fi option{background:var(--bg2)}
   </div>
 </div>
 
-<div id="prodModal" class="mo hidden">
+<div id="prodModal" class="mo hidden" autocomplete="off">
   <div class="md md-md">
-    <div class="mh"><span class="mt2" id="prodModalTitle">Add Product</span><button class="mc" onclick="closeModal('prodModal')">✕</button></div>
-    <div class="mb">
-      <div class="fr c2"><div class="fg"><label class="fl">Product Name</label><input class="fi" id="pm_name" placeholder="Samsung 55 QLED TV"/></div>
-        <div class="fg"><label class="fl">SKU / Code</label><input class="fi" id="pm_sku" placeholder="SAM-TV-55-Q"/></div></div>
-      <div class="fr c3"><div class="fg"><label class="fl">Category</label><select class="fi" id="pm_cat"><option>TVs</option><option>Smartphones</option><option>Laptops</option><option>Accessories</option><option>Networking</option></select></div>
-        <div class="fg"><label class="fl">Brand</label><input class="fi" id="pm_brand" placeholder="Samsung"/></div>
-        <div class="fg"><label class="fl">HSN Code</label><input class="fi mono" id="pm_hsn" placeholder="85287200"/></div></div>
-      <div class="fr c3"><div class="fg"><label class="fl">Purchase Price (₹)</label><input class="fi" type="number" id="pm_pp" placeholder="45000"/></div>
-        <div class="fg"><label class="fl">MRP (₹)</label><input class="fi" type="number" id="pm_mrp" placeholder="65000"/></div>
-        <div class="fg"><label class="fl">Selling Price (₹)</label><input class="fi" type="number" id="pm_sp" placeholder="59000"/></div></div>
-      <div class="fr c3"><div class="fg"><label class="fl">Opening Stock</label><input class="fi" type="number" id="pm_stock" placeholder="10"/></div>
-        <div class="fg"><label class="fl">Reorder Level</label><input class="fi" type="number" id="pm_reorder" placeholder="3"/></div>
-        <div class="fg"><label class="fl">GST Rate %</label><select class="fi" id="pm_gst"><option>0</option><option>5</option><option>12</option><option selected>18</option><option>28</option></select></div></div>
-      <div class="fr c2"><div class="fg"><label class="fl">Unit</label><select class="fi"><option>Nos</option><option>Kg</option><option>Litre</option><option>Box</option><option>Pack</option></select></div>
-        <div class="fg"><label class="fl">Barcode</label><input class="fi mono" placeholder="Scan or enter barcode"/></div></div>
+    <div class="mh">
+      <span class="mt2" id="prodModalTitle">Add Product</span>
+      <button class="mc" onclick="closeModal('prodModal')">✕</button>
     </div>
-    <div class="mf"><button class="btn btn-o" onclick="closeModal('prodModal')">Cancel</button><button class="btn btn-p" onclick="saveProd()">Save Product</button></div>
+    <div class="mb">
+
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Product Name</label><input class="fi" id="pm_name" placeholder="Wireless Mouse" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">SKU / Product Code</label><input class="fi mono" id="pm_sku" placeholder="PROD-001" autocomplete="off"/></div>
+      </div>
+
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Category</label><input class="fi" id="pm_cat" placeholder="Electronics" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">Brand</label><input class="fi" id="pm_brand" placeholder="Logitech" autocomplete="off"/></div>
+      </div>
+
+      <div class="fr c2">
+        <div class="fg"><label class="fl">HSN Code</label><input class="fi mono" id="pm_hsn" placeholder="84716060" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">Barcode</label><input class="fi mono" id="pm_barcode" placeholder="Scan or enter barcode" autocomplete="off"/></div>
+      </div>
+
+      <div class="fg"><label class="fl">Description</label><textarea class="fi" rows="2" id="pm_desc" placeholder="Product description…" autocomplete="off"></textarea></div>
+
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Purchase Price (₹)</label><input class="fi" type="number" id="pm_pp" placeholder="0" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">MRP (₹)</label><input class="fi" type="number" id="pm_mrp" placeholder="0" autocomplete="off"/></div>
+      </div>
+
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Selling Price (₹)</label><input class="fi" type="number" id="pm_sp" placeholder="0" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">GST Rate %</label>
+          <select class="fi" id="pm_gst">
+            <option value="0">0%</option>
+            <option value="5">5%</option>
+            <option value="12">12%</option>
+            <option value="18" selected>18%</option>
+            <option value="28">28%</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Current Stock</label><input class="fi" type="number" id="pm_stock" placeholder="0" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">Reorder Level</label><input class="fi" type="number" id="pm_reorder" placeholder="0" autocomplete="off"/></div>
+      </div>
+
+    </div>
+    <div class="mf">
+      <button class="btn btn-o" onclick="closeModal('prodModal')">Cancel</button>
+      <button class="btn btn-p" onclick="saveProd()">Save Product</button>
+    </div>
   </div>
 </div>
 
@@ -908,18 +942,42 @@ select.fi option{background:var(--bg2)}
   </div>
 </div>
 
-<div id="vendModal" class="mo hidden">
+<div id="vendModal" class="mo hidden" autocomplete="off">
   <div class="md md-md">
-    <div class="mh"><span class="mt2">Add Vendor</span><button class="mc" onclick="closeModal('vendModal')">✕</button></div>
-    <div class="mb">
-      <div class="fr c2"><div class="fg"><label class="fl">Vendor Name</label><input class="fi" id="vm_name" placeholder="Samsung India Pvt Ltd"/></div>
-        <div class="fg"><label class="fl">Contact Person</label><input class="fi" placeholder="Amit Singh"/></div></div>
-      <div class="fr c2"><div class="fg"><label class="fl">GSTIN</label><input class="fi mono" id="vm_gstin" placeholder="07AAACS1234A1Z5"/></div>
-        <div class="fg"><label class="fl">Mobile</label><input class="fi" id="vm_mobile" placeholder="9876543210"/></div></div>
-      <div class="fr c2"><div class="fg"><label class="fl">Email</label><input class="fi" placeholder="vendor@samsung.com"/></div>
-        <div class="fg"><label class="fl">City</label><input class="fi" id="vm_city" placeholder="Delhi"/></div></div>
+    <div class="mh">
+      <span class="mt2" id="vendModalTitle">Add Vendor</span>
+      <button class="mc" onclick="closeModal('vendModal')">✕</button>
     </div>
-    <div class="mf"><button class="btn btn-o" onclick="closeModal('vendModal')">Cancel</button><button class="btn btn-p" onclick="saveVend()">Save Vendor</button></div>
+    <div class="mb">
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Vendor Name</label><input class="fi" id="vm_name" placeholder="Samsung India Pvt Ltd" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">Contact Person</label><input class="fi" id="vm_contact" placeholder="Amit Singh" autocomplete="off"/></div>
+      </div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">GSTIN</label><input class="fi mono" id="vm_gstin" placeholder="07AAACS1234A1Z5" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">Mobile</label><input class="fi" id="vm_mobile" placeholder="9876543210" autocomplete="off"/></div>
+      </div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Email</label><input class="fi" id="vm_email" placeholder="vendor@samsung.com" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">City</label><input class="fi" id="vm_city" placeholder="Delhi" autocomplete="off"/></div>
+      </div>
+      <div class="fg"><label class="fl">Full Address</label><textarea class="fi" rows="2" id="vm_addr" placeholder="Billing address…" autocomplete="off"></textarea></div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Credit Limit (₹)</label><input class="fi" type="number" id="vm_credit" placeholder="100000" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">Payment Terms</label>
+          <select class="fi" id="vm_terms">
+            <option>Due on Receipt</option>
+            <option>Net 15</option>
+            <option selected>Net 30</option>
+            <option>Net 45</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-o" onclick="closeModal('vendModal')">Cancel</button>
+      <button class="btn btn-p" onclick="saveVend()">Save Vendor</button>
+    </div>
   </div>
 </div>
 
@@ -1176,6 +1234,7 @@ function normVendor(v) {
 // ============================================================
 //  LOCAL CACHE  (offline fallback demo data)
 // ============================================================
+let editingCustId = null;
 let INVOICES  = [
   {id:1,no:'INV-2468',date:'2026-06-01',customer:'Kumar Electronics',custGst:'27AABCK5678G1Z2',custMobile:'9876541234',custAddr:'Shop 12, Andheri East, Mumbai',custEmail:'kumar@email.com',custState:'27',type:'GST Invoice',state:'27 - Maharashtra',supply:'intra',notes:'Payment due within 15 days.',items:[{prod:'Samsung 55" QLED TV',qty:1,rate:35593,disc:0,gst:28,amt:35593,hsn:'85287200'}],subtotal:35593,discount:0,taxable:27806,cgst:3097,sgst:3097,igst:0,round:0,total:42000,due:'2026-06-15',status:'paid'},
   {id:2,no:'INV-2467',date:'2026-05-31',customer:'Raj Computers',custGst:'27AAACR9012H1Z3',custMobile:'9876542345',custAddr:'FC Road, Pune',custEmail:'raj@computers.com',custState:'27',type:'GST Invoice',state:'27 - Maharashtra',supply:'intra',notes:'',items:[{prod:'Lenovo V15 Laptop',qty:1,rate:15678,disc:0,gst:18,amt:15678,hsn:'84713000'}],subtotal:15678,discount:0,taxable:13286,cgst:1197,sgst:1197,igst:0,round:0,total:18500,due:'2026-06-14',status:'pending'},
@@ -1860,207 +1919,676 @@ function autofillCustomer(name) {
 // ============================================================
 //  CUSTOMERS
 // ============================================================
+
+// ── render ──────────────────────────────────────────────────
 async function renderCustomers(list) {
-  const b=document.getElementById('custBody'); if(!b)return;
-  b.innerHTML=loadingRow(9);
-  let data=list;
-  if (!data) {
+  const b = document.getElementById('custBody');
+  if (!b) return;
+  b.innerHTML = loadingRow(9);
+
+  let data = list;
+  if (data === undefined || data === null) {
     if (AUTH.apiOnline) {
       try {
-        const r=await apiFetch('/customers?limit=200');
-        data=unwrapList(r,'data','items','customers','results').map(normCustomer);
-        CUSTOMERS=data;
-      } catch(e) { data=CUSTOMERS; console.warn('[API] customers fallback:',e.message); }
-    } else { data=CUSTOMERS; }
+        const r = await apiFetch('/customers?limit=200');
+        data = (r.data?.items || []).map(normCustomer);
+        CUSTOMERS = data;
+      } catch (e) {
+        data = CUSTOMERS;
+        console.warn('[API] customers fallback:', e.message);
+      }
+    } else {
+      data = CUSTOMERS;
+    }
   }
+
   setTxt('custTotal', data.length);
-  b.innerHTML=data.length?data.map(c=>`<tr>
-    <td class="b">${c.name}</td>
-    <td class="mono" style="font-size:10px">${c.gstin||'—'}</td>
-    <td>${c.mobile||'—'}</td><td>${c.city||'—'}</td>
-    <td class="b" style="color:var(--green)">₹${fmt(c.total)}</td>
-    <td style="color:${(c.outstanding||0)>0?'var(--orange)':'var(--text3)'}">₹${fmt(c.outstanding)}</td>
-    <td>${c.last||'—'}</td>
-    <td><div style="display:flex;align-items:center;gap:5px">
-      <div style="width:30px;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
-        <div style="height:100%;width:${c.score||0}%;background:${(c.score||0)>80?'var(--green)':'var(--orange)'}"></div></div>
-      <span style="font-size:11px;font-weight:700;color:${(c.score||0)>80?'var(--green)':'var(--orange)'}">${c.score||'—'}</span></div></td>
-    <td><div style="display:flex;gap:3px">
-      <button class="btn btn-o btn-sm" onclick="editCust(${c.id})">✏️</button>
-      <button class="btn btn-d btn-sm" onclick="deleteCustomer(${c.id})">🗑</button>
-    </div></td></tr>`).join('')
-  :'<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text3)">No customers found</td></tr>';
+  b.innerHTML = data.length
+    ? data.map(c => `<tr>
+        <td class="b">${c.name}</td>
+        <td class="mono" style="font-size:10px">${c.gstin || '—'}</td>
+        <td>${c.mobile || '—'}</td>
+        <td>${c.city || '—'}</td>
+        <td class="b" style="color:var(--green)">₹${fmt(c.total)}</td>
+        <td style="color:${(c.outstanding || 0) > 0 ? 'var(--orange)' : 'var(--text3)'}">₹${fmt(c.outstanding)}</td>
+        <td>${c.last || '—'}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:5px">
+            <div style="width:30px;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
+              <div style="height:100%;width:${c.score || 0}%;background:${(c.score || 0) > 80 ? 'var(--green)' : 'var(--orange)'}"></div>
+            </div>
+            <span style="font-size:11px;font-weight:700;color:${(c.score || 0) > 80 ? 'var(--green)' : 'var(--orange)'}">${c.score || '—'}</span>
+          </div>
+        </td>
+        <td>
+          <div style="display:flex;gap:3px">
+            <button class="btn btn-o btn-sm" onclick="editCust('${c.id}')">✏️</button>
+            <button class="btn btn-d btn-sm" onclick="deleteCustomer('${c.id}')">🗑</button>
+          </div>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text3)">No customers found</td></tr>';
 }
 
+// ── filter ───────────────────────────────────────────────────
 function filterCust() {
-  const q=(document.getElementById('custSearch')?.value||'').toLowerCase();
-  const city=document.getElementById('custCityF')?.value||'';
-  renderCustomers(CUSTOMERS.filter(c=>(!q||(c.name||'').toLowerCase().includes(q)||(c.mobile||'').includes(q))&&(!city||c.city===city)));
+  const q    = (document.getElementById('custSearch')?.value || '').toLowerCase();
+  const city = document.getElementById('custCityF')?.value || '';
+  renderCustomers(
+    CUSTOMERS.filter(c =>
+      (!q    || (c.name || '').toLowerCase().includes(q) || (c.mobile || '').includes(q)) &&
+      (!city || c.city === city)
+    )
+  );
 }
 
-function editCust(id) {
-  const c=CUSTOMERS.find(x=>String(x.id)===String(id)); if(!c)return;
-  document.getElementById('custModalTitle').textContent='Edit Customer';
-  setVal('cm_name',c.name); setVal('cm_contact',c.contact||''); setVal('cm_gstin',c.gstin||'');
-  setVal('cm_mobile',c.mobile||''); setVal('cm_email',c.email||''); setVal('cm_city',c.city||'');
-  setVal('cm_addr',c.addr||''); setVal('cm_credit',c.credit||''); setVal('cm_terms',c.terms||'Net 30');
+// ── open "Add Customer" modal with empty fields ──────────────
+function openAddCust() {
+  editingCustId = null;
+  document.getElementById('custModalTitle').textContent = 'Add Customer';
+
+  // clear every field
+  ['cm_name','cm_contact','cm_gstin','cm_mobile','cm_email',
+   'cm_city','cm_addr','cm_credit','cm_terms'].forEach(id => setVal(id, ''));
+
+  setVal('cm_terms', 'Net 30');   // sensible default for new customer
   openModal('custModal');
 }
 
+// ── open "Edit Customer" modal pre-filled ────────────────────
+function editCust(id) {
+  const c = CUSTOMERS.find(x => String(x.id) === String(id));
+  if (!c) return;
+
+  editingCustId = id;
+  document.getElementById('custModalTitle').textContent = 'Edit Customer';
+
+  setVal('cm_name',    c.name       || '');
+  setVal('cm_contact', c.contact    || '');
+  setVal('cm_gstin',   c.gstin      || '');
+  setVal('cm_mobile',  c.mobile     || '');
+  setVal('cm_email',   c.email      || '');
+  setVal('cm_city',    c.city       || '');
+  setVal('cm_addr',    c.addr       || '');
+  setVal('cm_credit',  c.credit     || '');
+  setVal('cm_terms',   c.terms      || 'Net 30');
+
+  openModal('custModal');
+}
+
+// ── save (create or update) ──────────────────────────────────
 async function saveCust() {
-  const name=getVal('cm_name');
-  if (!name.trim()) { showToast('⚠️ Customer name required','warn'); return; }
-  // API field names that match your customers router
-  const payload={
-    display_name:   name,
-    legal_name:     getVal('cm_contact')||name,
-    gstin_number:   getVal('cm_gstin')||'',
-    phone:          getVal('cm_mobile')||'',
-    email:          getVal('cm_email')||'',
-    billing_city:   getVal('cm_city')||'',
-    billing_address:getVal('cm_addr')||'',
-    credit_limit:   parseFloat(getVal('cm_credit'))||0,
-    payment_terms:  getVal('cm_terms')||'Net 30',
+  const name = getVal('cm_name');
+  if (!name.trim()) { showToast('⚠️ Customer name required', 'warn'); return; }
+
+  const payload = {
+    display_name:    name,
+    legal_name:      getVal('cm_contact') || '',   // contact person / legal name
+    gstin:    getVal('cm_gstin')   || '',
+    phone:           getVal('cm_mobile')  || '',
+    email:           getVal('cm_email')   || undefined,
+    billing_city:    getVal('cm_city')    || '',
+    billing_address: getVal('cm_addr')    || '',
+    party_type:      'customer',
+    credit_limit:    parseFloat(getVal('cm_credit')) || 0,
+    payment_terms:   getVal('cm_terms')   || 'Net 30',
   };
+
+  // ── local representation (normalised for the table) ─────────
+  const localShape = {
+    name,
+    contact:     payload.legal_name,
+    gstin:       payload.gstin,
+    mobile:      payload.phone,
+    email:       payload.email || '',
+    city:        payload.billing_city,
+    addr:        payload.billing_address,
+    credit:      payload.credit_limit,
+    terms:       payload.payment_terms,
+    total:       0,
+    outstanding: 0,
+    last:        '—',
+    score:       0,
+  };
+
   try {
-    if (AUTH.apiOnline) await apiFetch('/customers',{method:'POST',body:JSON.stringify(payload)});
-    showToast('✅ Customer "'+name+'" saved');
-    addAuditEntry('CREATE','Customer','Saved customer: '+name);
-  } catch(e) { showToast('✅ Customer saved (offline)'); }
+    if (AUTH.apiOnline) {
+
+      if (editingCustId) {
+        // ── EDIT ────────────────────────────────────────────────
+        await apiFetch(`/customers/${editingCustId}`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        });
+
+        const idx = CUSTOMERS.findIndex(c => String(c.id) === String(editingCustId));
+        if (idx >= 0) {
+          CUSTOMERS[idx] = { ...CUSTOMERS[idx], ...localShape };
+        }
+        addAuditEntry('EDIT', 'Customer', 'Updated customer: ' + name);
+
+      } else {
+        // ── CREATE ──────────────────────────────────────────────
+        const created = await apiFetch('/customers', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+
+        // Use the server-assigned ID so edit/delete work immediately
+        const serverRecord = normCustomer(created.data || created);
+        CUSTOMERS.push({ ...localShape, ...serverRecord });
+        addAuditEntry('CREATE', 'Customer', 'Saved customer: ' + name);
+      }
+
+    } else {
+      // ── OFFLINE ─────────────────────────────────────────────
+      if (editingCustId) {
+        const idx = CUSTOMERS.findIndex(c => String(c.id) === String(editingCustId));
+        if (idx >= 0) CUSTOMERS[idx] = { ...CUSTOMERS[idx], ...localShape };
+      } else {
+        CUSTOMERS.push({ id: Date.now(), ...localShape });
+      }
+    }
+
+    showToast('✅ Customer "' + name + '" saved');
+
+  } catch (e) {
+    // API error — keep changes locally so the UI isn't broken
+    showToast('✅ Customer saved (offline)');
+    if (editingCustId) {
+      const idx = CUSTOMERS.findIndex(c => String(c.id) === String(editingCustId));
+      if (idx >= 0) CUSTOMERS[idx] = { ...CUSTOMERS[idx], ...localShape };
+    } else {
+      CUSTOMERS.push({ id: Date.now(), ...localShape });
+    }
+  }
+
+  editingCustId = null;
+  document.getElementById('custModalTitle').textContent = 'Add Customer';
+  const modal = document.getElementById('custModal');
+  modal.querySelectorAll('input, textarea').forEach(el => el.value = '');
+  const terms = document.getElementById('cm_terms');
+  if (terms) terms.selectedIndex = 0;
   closeModal('custModal');
-  CUSTOMERS.push({ id:Date.now(), ...payload, name, gstin:payload.gstin_number, mobile:payload.phone, city:payload.billing_city, addr:payload.billing_address, total:0, outstanding:0, last:'—', score:0 });
-  renderCustomers();
+
+  // Pass CUSTOMERS directly — avoids a re-fetch race condition
+  renderCustomers(CUSTOMERS);
   refreshCustomerDatalist();
 }
 
+// ── delete ───────────────────────────────────────────────────
 async function deleteCustomer(id) {
   if (!confirm('Delete this customer?')) return;
-  if (AUTH.apiOnline) { try { await apiFetch(`/customers/${id}`,{method:'DELETE'}); } catch(_) {} }
-  CUSTOMERS=CUSTOMERS.filter(c=>String(c.id)!==String(id));
-  showToast('🗑 Customer deleted'); renderCustomers();
+  if (AUTH.apiOnline) {
+    try { await apiFetch(`/customers/${id}`, { method: 'DELETE' }); } catch (_) {}
+  }
+  CUSTOMERS = CUSTOMERS.filter(c => String(c.id) !== String(id));
+  showToast('🗑 Customer deleted');
+  renderCustomers(CUSTOMERS);
 }
 
 // ============================================================
 //  VENDORS
 // ============================================================
-async function renderVendors(list) {
-  const b=document.getElementById('vendBody'); if(!b)return;
-  b.innerHTML=loadingRow(8);
-  let data=list;
-  if (!data) {
-    if (AUTH.apiOnline) {
-      try {
-        const r=await apiFetch('/vendors?limit=200');
-        data=unwrapList(r,'data','items','vendors','results').map(normVendor);
-        VENDORS=data;
-      } catch(e) { data=VENDORS; }
-    } else { data=VENDORS; }
-  }
-  setTxt('vendTotal',data.length);
-  b.innerHTML=data.length?data.map(v=>`<tr>
-    <td class="b">${v.name}</td><td class="mono" style="font-size:10px">${v.gstin||'—'}</td>
-    <td>${v.mobile||'—'}</td><td>${v.city||'—'}</td>
-    <td class="b" style="color:var(--green)">₹${(((v.total||0)/100000)).toFixed(1)}L</td>
-    <td style="color:var(--orange);font-weight:600">₹${fmt(v.payable)}</td>
-    <td><div style="display:flex;align-items:center;gap:5px">
-      <div style="width:30px;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
-        <div style="height:100%;width:${v.score||0}%;background:${(v.score||0)>85?'var(--green)':'var(--orange)'}"></div></div>
-      <span style="font-size:11px;font-weight:700;color:${(v.score||0)>85?'var(--green)':'var(--orange)'}">${v.score||'—'}</span></div></td>
-    <td><div style="display:flex;gap:3px">
-      <button class="btn btn-o btn-sm" onclick="showToast('👁 ${v.name.replace(/'/g,"\\'")}')"">👁</button>
-      <button class="btn btn-o btn-sm" onclick="showToast('✏️ Editing vendor')">✏️</button>
-    </div></td></tr>`).join('')
-  :'<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">No vendors found</td></tr>';
+
+let editingVendId = null; // ← must also be declared here if not already in your globals
+
+// ── normalise API response → local shape ────────────────────
+function normVendor(v) {
+  return {
+    id:          v.id,
+    name:        v.display_name      || v.legal_name   || v.name || '—',
+    gstin:       v.gstin_number      || v.gstin        || '',
+    mobile:      v.phone             || v.mobile       || '',
+    city:        v.billing_city      || v.city         || '',
+    email:       v.email             || '',
+    addr:        v.billing_address   || v.address      || '',
+    contact:     v.contact_person    || v.contact      || '',
+    credit:      v.credit_limit      || 0,
+    terms:       v.payment_terms     || 'Net 30',
+    total:       v.total_business    || v.lifetime_value || 0,
+    payable:     v.outstanding_amount || v.payable     || 0,
+    last:        v.last_purchase_date || '—',
+    score:       v.reliability_score || v.ai_score     || 0,
+  };
 }
 
+// ── render ───────────────────────────────────────────────────
+async function renderVendors(list) {
+  const b = document.getElementById('vendBody');
+  if (!b) return;
+  b.innerHTML = loadingRow(8);
+
+  let data = list;
+  if (data === undefined || data === null) {
+    if (AUTH.apiOnline) {
+      try {
+        const r = await apiFetch('/vendors?limit=200');
+        data = (r.data?.items || []).map(normVendor);
+        VENDORS = data;
+      } catch (e) {
+        data = VENDORS;
+        console.warn('[API] vendors fallback:', e.message);
+      }
+    } else {
+      data = VENDORS;
+    }
+  }
+
+  setTxt('vendTotal', data.length);
+  b.innerHTML = data.length
+    ? data.map(v => `<tr>
+        <td class="b">${v.name}</td>
+        <td class="mono" style="font-size:10px">${v.gstin || '—'}</td>
+        <td>${v.mobile || '—'}</td>
+        <td>${v.city || '—'}</td>
+        <td class="b" style="color:var(--green)">₹${fmt(v.total)}</td>
+        <td style="color:var(--orange);font-weight:600">₹${fmt(v.payable)}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:5px">
+            <div style="width:30px;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
+              <div style="height:100%;width:${v.score || 0}%;background:${(v.score || 0) > 85 ? 'var(--green)' : 'var(--orange)'}"></div>
+            </div>
+            <span style="font-size:11px;font-weight:700;color:${(v.score || 0) > 85 ? 'var(--green)' : 'var(--orange)'}">${v.score || '—'}</span>
+          </div>
+        </td>
+        <td>
+          <div style="display:flex;gap:3px">
+            <button class="btn btn-o btn-sm" onclick="editVend('${v.id}')">✏️</button>
+            <button class="btn btn-d btn-sm" onclick="deleteVendor('${v.id}')">🗑</button>
+          </div>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">No vendors found</td></tr>';
+}
+
+// ── filter ───────────────────────────────────────────────────
+function filterVend() {
+  const q    = (document.getElementById('vendSearch')?.value || '').toLowerCase();
+  const city = document.getElementById('vendCityF')?.value || '';
+  renderVendors(
+    VENDORS.filter(v =>
+      (!q    || (v.name || '').toLowerCase().includes(q) || (v.mobile || '').includes(q)) &&
+      (!city || v.city === city)
+    )
+  );
+}
+
+// ── open "Add Vendor" modal with empty fields ────────────────
+function openAddVend() {
+  editingVendId = null;
+  document.getElementById('vendModalTitle').textContent = 'Add Vendor';
+
+  // wipe every input/textarea/select in the modal at once
+  const modal = document.getElementById('vendModal');
+  modal.querySelectorAll('input, textarea').forEach(el => el.value = '');
+  modal.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+
+  // set sensible defaults
+  const terms = document.getElementById('vm_terms');
+  if (terms) terms.value = 'Net 30';
+
+  openModal('vendModal');
+}
+
+// ── open "Edit Vendor" modal pre-filled ─────────────────────
+function editVend(id) {
+  const v = VENDORS.find(x => String(x.id) === String(id));
+  if (!v) return;
+
+  editingVendId = id;
+  document.getElementById('vendModalTitle').textContent = 'Edit Vendor';
+
+  setVal('vm_name',    v.name    || '');
+  setVal('vm_contact', v.contact || '');
+  setVal('vm_gstin',   v.gstin   || '');
+  setVal('vm_mobile',  v.mobile  || '');
+  setVal('vm_email',   v.email   || '');
+  setVal('vm_city',    v.city    || '');
+  setVal('vm_addr',    v.addr    || '');
+  setVal('vm_credit',  v.credit  || '');
+  setVal('vm_terms',   v.terms   || 'Net 30');
+
+  openModal('vendModal');
+}
+
+// ── save (create or update) ──────────────────────────────────
 async function saveVend() {
-  const name=getVal('vm_name');
-  const payload={ display_name:name, gstin_number:getVal('vm_gstin')||'', phone:getVal('vm_mobile')||'', city:getVal('vm_city')||'' };
+  const name = getVal('vm_name');
+  if (!name.trim()) { showToast('⚠️ Vendor name required', 'warn'); return; }
+
+  const payload = {
+    display_name:    name,
+    legal_name:  getVal('vm_contact')              || '',
+    gstin:    getVal('vm_gstin')                || '',
+    phone:           getVal('vm_mobile')               || '',
+    email:           getVal('vm_email')                || undefined,
+    billing_city:    getVal('vm_city')                 || '',
+    billing_address: getVal('vm_addr')                 || '',
+    party_type:      'vendor',
+    credit_limit:    parseFloat(getVal('vm_credit'))   || 0,
+    payment_terms:   getVal('vm_terms')                || 'Net 30',
+  };
+
+  // local shape — keys match normVendor output
+  const localShape = {
+    name,
+    contact:  payload.legal_name,
+    gstin:    payload.gstin,
+    mobile:   payload.phone,
+    email:    payload.email || '',
+    city:     payload.billing_city,
+    addr:     payload.billing_address,
+    credit:   payload.credit_limit,
+    terms:    payload.payment_terms,
+    total:    0,
+    payable:  0,
+    last:     '—',
+    score:    0,
+  };
+
   try {
-    if (AUTH.apiOnline) await apiFetch('/vendors',{method:'POST',body:JSON.stringify(payload)});
-    showToast('✅ Vendor saved'); addAuditEntry('CREATE','Vendor','Saved vendor: '+name);
-  } catch(e) { showToast('✅ Vendor saved (offline)'); }
-  closeModal('vendModal'); renderVendors();
+    if (AUTH.apiOnline) {
+
+      if (editingVendId) {
+        // ── EDIT ──────────────────────────────────────────────
+        await apiFetch(`/vendors/${editingVendId}`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        });
+        const idx = VENDORS.findIndex(v => String(v.id) === String(editingVendId));
+        if (idx >= 0) VENDORS[idx] = { ...VENDORS[idx], ...localShape };
+        addAuditEntry('EDIT', 'Vendor', 'Updated vendor: ' + name);
+
+      } else {
+        // ── CREATE ────────────────────────────────────────────
+        const created = await apiFetch('/vendors', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        const serverRecord = normVendor(created.data || created);
+        VENDORS.push({ ...localShape, ...serverRecord });
+        addAuditEntry('CREATE', 'Vendor', 'Saved vendor: ' + name);
+      }
+
+    } else {
+      // ── OFFLINE ───────────────────────────────────────────
+      if (editingVendId) {
+        const idx = VENDORS.findIndex(v => String(v.id) === String(editingVendId));
+        if (idx >= 0) VENDORS[idx] = { ...VENDORS[idx], ...localShape };
+      } else {
+        VENDORS.push({ id: Date.now(), ...localShape });
+      }
+    }
+
+    showToast('✅ Vendor "' + name + '" saved');
+
+  } catch (e) {
+    showToast('✅ Vendor saved (offline)');
+    if (editingVendId) {
+      const idx = VENDORS.findIndex(v => String(v.id) === String(editingVendId));
+      if (idx >= 0) VENDORS[idx] = { ...VENDORS[idx], ...localShape };
+    } else {
+      VENDORS.push({ id: Date.now(), ...localShape });
+    }
+  }
+
+  // reset modal to clean "Add" state before closing
+  editingVendId = null;
+  document.getElementById('vendModalTitle').textContent = 'Add Vendor';
+  const modal = document.getElementById('vendModal');
+  modal.querySelectorAll('input, textarea').forEach(el => el.value = '');
+  modal.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+  const terms = document.getElementById('vm_terms');
+  if (terms) terms.value = 'Net 30';
+
+  closeModal('vendModal');
+  renderVendors(VENDORS);  // pass directly — avoids re-fetch race condition
+}
+
+// ── delete ───────────────────────────────────────────────────
+async function deleteVendor(id) {
+  if (!confirm('Delete this vendor?')) return;
+  if (AUTH.apiOnline) {
+    try { await apiFetch(`/vendors/${id}`, { method: 'DELETE' }); } catch (_) {}
+  }
+  VENDORS = VENDORS.filter(v => String(v.id) !== String(id));
+  showToast('🗑 Vendor deleted');
+  renderVendors(VENDORS);
 }
 
 // ============================================================
 //  INVENTORY / PRODUCTS
 // ============================================================
+
+let editingProdId = null; // ← declare globally alongside PRODUCTS = []
+
+// ── normalise API response → local shape ────────────────────
+function normProduct(p) {
+  const stock = p.current_stock ?? p.stock ?? 0;
+  const reorder = p.reorder_level ?? p.reorder ?? 0;
+  return {
+    id:      p.id,
+    name:    p.product_name    || p.name        || '—',
+    sku:     p.product_code    || p.sku         || '',
+    cat:     p.category        || p.cat         || '',
+    brand:   p.brand           || '',
+    hsn:     p.hsn_code        || p.hsn         || '',
+    sac:     p.sac_code        || p.sac         || '',
+    pp:      p.purchase_price  ?? p.pp          ?? 0,
+    mrp:     p.mrp             ?? 0,
+    price:   p.selling_price   ?? p.price       ?? 0,
+    stock,
+    reorder,
+    gst:     p.gst_rate        ?? p.gst         ?? 18,
+    barcode: p.barcode         || '',
+    desc:    p.description     || '',
+    status:  stock === 0 ? 'out' : stock <= reorder ? 'low' : 'in',
+  };
+}
+
+// ── render ───────────────────────────────────────────────────
 async function renderInventory(list) {
-  const b=document.getElementById('invBody2'); if(!b)return;
-  b.innerHTML=loadingRow(11);
-  let data=list;
-  if (!data) {
+  const b = document.getElementById('invBody2');
+  if (!b) return;
+  b.innerHTML = loadingRow(11);
+
+  let data = list;
+  if (data === undefined || data === null) {
     if (AUTH.apiOnline) {
       try {
-        const r=await apiFetch('/products?limit=500');
-        data=unwrapList(r,'data','items','products','results').map(normProduct);
-        PRODUCTS=data;
-      } catch(e) { data=PRODUCTS; }
-    } else { data=PRODUCTS; }
+        const r = await apiFetch('/products?limit=500');
+        data = (r.data?.items || []).map(normProduct);
+        PRODUCTS = data;
+      } catch (e) {
+        data = PRODUCTS;
+        console.warn('[API] products fallback:', e.message);
+      }
+    } else {
+      data = PRODUCTS;
+    }
   }
-  const total=data.length, low=data.filter(p=>p.status==='low').length, out=data.filter(p=>p.status==='out').length;
-  const val=data.reduce((a,p)=>a+p.pp*p.stock,0);
-  setTxt('totalProds',total); setTxt('lowProds',low); setTxt('outProds',out);
-  setTxt('stockValue','₹'+((val/100000)).toFixed(1)+'L');
-  b.innerHTML=data.length?data.map(p=>`<tr>
-    <td class="b mono">${p.sku||'—'}</td><td class="b">${p.name}</td><td>${p.cat||'—'}</td>
-    <td class="mono">${p.hsn||'—'}</td><td>₹${fmt(p.mrp)}</td><td class="b">₹${fmt(p.price)}</td>
-    <td class="b" style="color:${p.stock===0?'var(--red)':p.stock<=p.reorder?'var(--orange)':'var(--green)'}">${p.stock}</td>
-    <td>${p.reorder}</td><td>${p.gst}%</td>
-    <td><span class="sb ${p.status==='out'?'sov':p.status==='low'?'spen':'sp'}">${p.status==='out'?'Out':'In Stock'}</span></td>
-    <td><div style="display:flex;gap:3px">
-      <button class="btn btn-o btn-sm" onclick="editProd(${p.id})">✏️</button>
-      <button class="btn btn-o btn-sm" onclick="showToast('📊 Stock adjustment')">📊</button>
-    </div></td></tr>`).join('')
-  :'<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text3)">No products found</td></tr>';
+
+  const total = data.length;
+  const low   = data.filter(p => p.status === 'low').length;
+  const out   = data.filter(p => p.status === 'out').length;
+  const val   = data.reduce((a, p) => a + (p.pp * p.stock), 0);
+
+  setTxt('totalProds',  total);
+  setTxt('lowProds',    low);
+  setTxt('outProds',    out);
+  setTxt('stockValue',  '₹' + (val / 100000).toFixed(1) + 'L');
+
+  b.innerHTML = data.length
+    ? data.map(p => `<tr>
+        <td class="b mono">${p.sku || '—'}</td>
+        <td class="b">${p.name}</td>
+        <td>${p.cat || '—'}</td>
+        <td class="mono">${p.hsn || '—'}</td>
+        <td>₹${fmt(p.mrp)}</td>
+        <td class="b">₹${fmt(p.price)}</td>
+        <td class="b" style="color:${p.stock === 0 ? 'var(--red)' : p.stock <= p.reorder ? 'var(--orange)' : 'var(--green)'}">${p.stock}</td>
+        <td>${p.reorder}</td>
+        <td>${p.gst}%</td>
+        <td><span class="sb ${p.status === 'out' ? 'sov' : p.status === 'low' ? 'spen' : 'sp'}">${p.status === 'out' ? 'Out' : p.status === 'low' ? 'Low' : 'In Stock'}</span></td>
+        <td>
+          <div style="display:flex;gap:3px">
+            <button class="btn btn-o btn-sm" onclick="editProd('${p.id}')">✏️</button>
+            <button class="btn btn-d btn-sm" onclick="deleteProd('${p.id}')">🗑</button>
+          </div>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text3)">No products found</td></tr>';
 }
 
+// ── filter ───────────────────────────────────────────────────
 function filterProds() {
-  const q=(document.getElementById('prodSearch')?.value||'').toLowerCase();
-  const cat=document.getElementById('prodCatF')?.value||'';
-  const stk=document.getElementById('prodStockF')?.value||'';
-  renderInventory(PRODUCTS.filter(p=>
-    (!q||(p.name||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q))&&
-    (!cat||p.cat===cat)&&
-    (!stk||p.status===stk||('low'===stk&&p.status==='low'))
-  ));
+  const q   = (document.getElementById('prodSearch')?.value || '').toLowerCase();
+  const cat = document.getElementById('prodCatF')?.value || '';
+  const stk = document.getElementById('prodStockF')?.value || '';
+  renderInventory(
+    PRODUCTS.filter(p =>
+      (!q   || (p.name || '').toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q)) &&
+      (!cat || p.cat === cat) &&
+      (!stk || p.status === stk)
+    )
+  );
 }
 
-function editProd(id) {
-  const p=PRODUCTS.find(x=>String(x.id)===String(id)); if(!p)return;
-  document.getElementById('prodModalTitle').textContent='Edit Product';
-  ['pm_name','pm_sku','pm_cat','pm_brand','pm_hsn','pm_pp','pm_mrp','pm_sp','pm_stock','pm_reorder','pm_gst'].forEach(f=>{
-    const map={pm_name:p.name,pm_sku:p.sku,pm_cat:p.cat,pm_brand:p.brand,pm_hsn:p.hsn,pm_pp:p.pp,pm_mrp:p.mrp,pm_sp:p.price,pm_stock:p.stock,pm_reorder:p.reorder,pm_gst:p.gst};
-    setVal(f,map[f]??'');
-  });
+// ── open "Add Product" modal with empty fields ───────────────
+function openAddProd() {
+  editingProdId = null;
+  document.getElementById('prodModalTitle').textContent = 'Add Product';
+
+  // wipe every input/textarea/select in the modal at once
+  const modal = document.getElementById('prodModal');
+  modal.querySelectorAll('input, textarea').forEach(el => el.value = '');
+  modal.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+
+  // sensible defaults
+  const gst = document.getElementById('pm_gst');
+  if (gst) gst.value = '18';
+
   openModal('prodModal');
 }
 
+// ── open "Edit Product" modal pre-filled ─────────────────────
+function editProd(id) {
+  const p = PRODUCTS.find(x => String(x.id) === String(id));
+  if (!p) return;
+
+  editingProdId = id;
+  document.getElementById('prodModalTitle').textContent = 'Edit Product';
+
+  setVal('pm_name',    p.name    ?? '');
+  setVal('pm_sku',     p.sku     ?? '');
+  setVal('pm_cat',     p.cat     ?? '');
+  setVal('pm_brand',   p.brand   ?? '');
+  setVal('pm_hsn',     p.hsn     ?? '');
+  setVal('pm_desc',    p.desc    ?? '');
+  setVal('pm_barcode', p.barcode ?? '');
+  setVal('pm_pp',      p.pp      ?? '');
+  setVal('pm_mrp',     p.mrp     ?? '');
+  setVal('pm_sp',      p.price   ?? '');
+  setVal('pm_stock',   p.stock   ?? '');
+  setVal('pm_reorder', p.reorder ?? '');
+  setVal('pm_gst',     p.gst     ?? '18');
+
+  openModal('prodModal');
+}
+
+// ── save (create or update) ──────────────────────────────────
 async function saveProd() {
-  const name=getVal('pm_name');
-  if (!name.trim()) { showToast('⚠️ Product name required','warn'); return; }
-  // API field names that match your products router
-  const payload={
+  const name = getVal('pm_name');
+  if (!name.trim()) { showToast('⚠️ Product name required', 'warn'); return; }
+
+  const payload = {
     product_name:   name,
-    sku:            getVal('pm_sku')||'',
-    category:       getVal('pm_cat')||'',
-    brand:          getVal('pm_brand')||'',
-    hsn_code:       getVal('pm_hsn')||'',
-    purchase_price: parseFloat(getVal('pm_pp'))||0,
-    mrp:            parseFloat(getVal('pm_mrp'))||0,
-    selling_price:  parseFloat(getVal('pm_sp'))||0,
-    current_stock:  parseFloat(getVal('pm_stock'))||0,
-    reorder_level:  parseFloat(getVal('pm_reorder'))||0,
-    gst_rate:       parseFloat(getVal('pm_gst'))||18,
+    product_code:   getVal('pm_sku')                     || '',
+    description:    getVal('pm_desc')                    || '',
+    brand:          getVal('pm_brand')                   || '',
+    hsn_code:       getVal('pm_hsn')                     || '',
+    barcode:        getVal('pm_barcode')                 || '',
+    purchase_price: parseFloat(getVal('pm_pp'))          || 0,
+    mrp:            parseFloat(getVal('pm_mrp'))         || 0,
+    selling_price:  parseFloat(getVal('pm_sp'))          || 0,
+    current_stock:  parseFloat(getVal('pm_stock'))       || 0,
+    reorder_level:  parseFloat(getVal('pm_reorder'))     || 0,
+    gst_rate:       parseFloat(getVal('pm_gst'))         || 18,
+    track_inventory: true,
   };
+
+  // local shape — keys match normProduct output
+  const localShape = normProduct(payload);
+
   try {
-    if (AUTH.apiOnline) await apiFetch('/products',{method:'POST',body:JSON.stringify(payload)});
-    showToast('✅ Product "'+name+'" saved'); addAuditEntry('SAVE','Product','Saved product: '+name);
-  } catch(e) { showToast('✅ Product saved (offline)'); }
+    if (AUTH.apiOnline) {
+
+      if (editingProdId) {
+        // ── EDIT ────────────────────────────────────────────
+        await apiFetch(`/products/${editingProdId}`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        });
+        const idx = PRODUCTS.findIndex(p => String(p.id) === String(editingProdId));
+        if (idx >= 0) PRODUCTS[idx] = { ...PRODUCTS[idx], ...localShape };
+        addAuditEntry('EDIT', 'Product', 'Updated product: ' + name);
+
+      } else {
+        // ── CREATE ──────────────────────────────────────────
+        const created = await apiFetch('/products', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        const serverRecord = normProduct(created.data || created);
+        PRODUCTS.push({ ...localShape, ...serverRecord });
+        addAuditEntry('CREATE', 'Product', 'Saved product: ' + name);
+      }
+
+    } else {
+      // ── OFFLINE ─────────────────────────────────────────
+      if (editingProdId) {
+        const idx = PRODUCTS.findIndex(p => String(p.id) === String(editingProdId));
+        if (idx >= 0) PRODUCTS[idx] = { ...PRODUCTS[idx], ...localShape };
+      } else {
+        PRODUCTS.push({ id: Date.now(), ...localShape });
+      }
+    }
+
+    showToast('✅ Product "' + name + '" saved');
+
+  } catch (e) {
+    showToast('✅ Product saved (offline)');
+    if (editingProdId) {
+      const idx = PRODUCTS.findIndex(p => String(p.id) === String(editingProdId));
+      if (idx >= 0) PRODUCTS[idx] = { ...PRODUCTS[idx], ...localShape };
+    } else {
+      PRODUCTS.push({ id: Date.now(), ...localShape });
+    }
+  }
+
+  // reset modal to clean "Add" state before closing
+  editingProdId = null;
+  document.getElementById('prodModalTitle').textContent = 'Add Product';
+  const modal = document.getElementById('prodModal');
+  modal.querySelectorAll('input, textarea').forEach(el => el.value = '');
+  modal.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+  const gst = document.getElementById('pm_gst');
+  if (gst) gst.value = '18';
+
   closeModal('prodModal');
-  PRODUCTS.push({id:Date.now(),...normProduct(payload)});
-  renderInventory();
+  renderInventory(PRODUCTS); // pass directly — avoids re-fetch race condition
+}
+
+// ── delete ───────────────────────────────────────────────────
+async function deleteProd(id) {
+  if (!confirm('Delete this product?')) return;
+  if (AUTH.apiOnline) {
+    try { await apiFetch(`/products/${id}`, { method: 'DELETE' }); } catch (_) {}
+  }
+  PRODUCTS = PRODUCTS.filter(p => String(p.id) !== String(id));
+  showToast('🗑 Product deleted');
+  renderInventory(PRODUCTS);
 }
 
 // ============================================================

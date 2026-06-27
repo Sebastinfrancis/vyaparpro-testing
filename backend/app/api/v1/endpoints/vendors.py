@@ -59,7 +59,7 @@ async def list_vendors(
         page=pg.page,
         page_size=pg.page_size,
     )
-    items = [PartyOut.model_validate(p).model_dump() for p in result.items]
+    items = [PartyOut.model_validate(p).model_dump(mode="json") for p in result.items]
     resp = {
         "success": True, "message": "OK",
         "data": {"items": items, "total": result.total,
