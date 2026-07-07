@@ -571,6 +571,7 @@ class ProductCreate(APIModel):
     batch_tracking: bool = False
     serial_tracking: bool = False
     expiry_tracking: bool = False
+    current_stock: int = 0
     reorder_level: Decimal = Decimal("0")
     reorder_qty: Decimal = Decimal("0")
     image_url: Optional[str] = None
@@ -590,6 +591,7 @@ class ProductUpdate(APIModel):
     selling_price: Optional[Decimal] = None
     min_selling_price: Optional[Decimal] = None
     gst_rate: Optional[Decimal] = None
+    current_stock: Optional[int] = None
     reorder_level: Optional[Decimal] = None
     reorder_qty: Optional[Decimal] = None
     image_url: Optional[str] = None
@@ -616,8 +618,9 @@ class ProductOut(APIModel):
     cess_rate: Decimal
     is_service: bool
     track_inventory: bool
+    current_stock: int
     reorder_level: Decimal
-    reorder_qty: Decimal
+    reorder_qty: int
     image_url: Optional[str]
     tags: Optional[list[str]]
     ai_demand_score: Optional[Decimal]

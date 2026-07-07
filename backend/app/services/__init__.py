@@ -481,6 +481,11 @@ class ProductService:
         data = payload.model_dump()
         data["company_id"] = company_id
         data["created_by"] = user_id
+
+        # filter to only valid DB columns — prevents TypeError on extra schema fields
+        valid_fields = {c.key for c in Product.__mapper__.columns}
+        data = {k: v for k, v in data.items() if k in valid_fields}
+
         product = await self.products.create(data)
         await self.audit.log(
             company_id=company_id, action="CREATE", module="inventory",
@@ -496,14 +501,18 @@ class ProductService:
         product = await self.products.get_or_raise(product_id)
         if product.company_id != company_id:
             raise PermissionDeniedError()
-        updated = await self.products.update(product, payload.model_dump(exclude_unset=True))
-        await self.audit.log(
-            company_id=company_id, action="UPDATE", module="inventory",
-            user_id=user_id, entity_type="products", entity_id=product_id,
-        )
-        stmt = select(Product).where(Product.id == updated.id).options(selectinload(Product.category),selectinload(Product.uom))
-        result = await self.session.execute(stmt)
-        updated = result.scalar_one()
+    
+        update_data = payload.model_dump(exclude_unset=True)
+    
+        # explicitly include current_stock if sent
+        if payload.current_stock is not None:
+            update_data["current_stock"] = payload.current_stock
+    
+        # filter to only valid DB columns
+        valid_fields = {c.key for c in Product.__mapper__.columns}
+        update_data = {k: v for k, v in update_data.items() if k in valid_fields}
+    
+        updated = await self.products.update(product, update_data)
         return updated
 
     async def search(self, company_id: UUID, **kwargs: Any):

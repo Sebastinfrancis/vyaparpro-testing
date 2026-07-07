@@ -2371,7 +2371,7 @@ function normProduct(p) {
     id:      p.id,
     name:    p.product_name    || p.name        || '—',
     sku:     p.product_code    || p.sku         || '',
-    cat:     p.category        || p.cat         || '',
+    cat:     p.category?.cat_name || p.cat  || '',
     brand:   p.brand           || '',
     hsn:     p.hsn_code        || p.hsn         || '',
     sac:     p.sac_code        || p.sac         || '',
@@ -2427,8 +2427,8 @@ async function renderInventory(list) {
         <td class="mono">${p.hsn || '—'}</td>
         <td>₹${fmt(p.mrp)}</td>
         <td class="b">₹${fmt(p.price)}</td>
-        <td class="b" style="color:${p.stock === 0 ? 'var(--red)' : p.stock <= p.reorder ? 'var(--orange)' : 'var(--green)'}">${p.stock}</td>
-        <td>${p.reorder}</td>
+        <td class="b" style="color:${p.stock === 0 ? 'var(--red)' : p.stock <= p.reorder ? 'var(--orange)' : 'var(--green)'}">${Number(p.stock)}</td>
+        <td>${Number(p.reorder)}</td>
         <td>${p.gst}%</td>
         <td><span class="sb ${p.status === 'out' ? 'sov' : p.status === 'low' ? 'spen' : 'sp'}">${p.status === 'out' ? 'Out' : p.status === 'low' ? 'Low' : 'In Stock'}</span></td>
         <td>
@@ -2504,7 +2504,8 @@ async function saveProd() {
 
   const payload = {
     product_name:   name,
-    product_code:   getVal('pm_sku')                     || '',
+    product_code:   getVal('pm_sku') || 'PRD-' + Date.now(),
+    cat_id:         undefined,
     description:    getVal('pm_desc')                    || '',
     brand:          getVal('pm_brand')                   || '',
     hsn_code:       getVal('pm_hsn')                     || '',
@@ -2517,6 +2518,7 @@ async function saveProd() {
     gst_rate:       parseFloat(getVal('pm_gst'))         || 18,
     track_inventory: true,
   };
+  console.log('Payload:', JSON.stringify(payload));
 
   // local shape — keys match normProduct output
   const localShape = normProduct(payload);
