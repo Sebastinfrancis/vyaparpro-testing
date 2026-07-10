@@ -30,7 +30,7 @@ async def list_branches(
 ) -> ORJSONResponse:
     svc = BranchService(db)
     branches = await svc.list_by_company(company_id)
-    return ok(data=[BranchOut.model_validate(b).model_dump() for b in branches])
+    return ok(data=[BranchOut.model_validate(b).model_dump(mode='json') for b in branches])
 
 
 @router.post(

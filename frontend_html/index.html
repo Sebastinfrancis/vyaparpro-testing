@@ -202,7 +202,7 @@ select.fi option{background:var(--bg2)}
     <div class="ni" onclick="nav('einvoice',this)"><span class="ni-ic">⚡</span>E-Invoice / E-Way</div>
     <div class="ns">Inventory</div>
     <div class="ni" onclick="nav('inventory',this)"><span class="ni-ic">📦</span>Products & Stock</div>
-    <div class="ni" onclick="nav('warehouses',this)"><span class="ni-ic">🏭</span>Warehouses</div>
+    <div class="ni" onclick="nav('branches',this)"><span class="ni-ic">🏢</span>Branches</div>
     <div class="ns">Parties</div>
     <div class="ni" onclick="nav('customers',this)"><span class="ni-ic">👥</span>Customers</div>
     <div class="ni" onclick="nav('vendors',this)"><span class="ni-ic">🏪</span>Vendors</div>
@@ -283,7 +283,7 @@ select.fi option{background:var(--bg2)}
             <button class="btn btn-p" style="justify-content:center" onclick="nav('create',null)">🧾 New Invoice</button>
             <button class="btn btn-s" style="justify-content:center" onclick="nav('purchase',null)">🛒 New Purchase</button>
             <button class="btn btn-o" style="justify-content:center" onclick="openAddCust()">👥 Add Customer</button>
-            <button class="btn btn-o" style="justify-content:center" onclick="openModal('prodModal')">📦 Add Product</button>
+            <button class="btn btn-o" style="justify-content:center" onclick="openAddProd()">📦 Add Product</button>
             <button class="btn btn-o" style="justify-content:center" onclick="openModal('payModal')">💳 Record Payment</button>
             <button class="btn btn-o" style="justify-content:center" onclick="nav('reports',null)">📊 Reports</button>
           </div>
@@ -426,8 +426,7 @@ select.fi option{background:var(--bg2)}
       <div class="sh" style="margin-top:8px">
         <div><div class="st">Inventory Management</div><div class="ss">Products, HSN, batch tracking, barcode</div></div>
         <div style="display:flex;gap:7px">
-          <button class="btn btn-o btn-sm" onclick="showToast('📷 Barcode scanner ready')">📷 Scan</button>
-          <button class="btn btn-p btn-sm" onclick="openModal('prodModal')">➕ Add Product</button>
+          <button class="btn btn-p btn-sm" onclick="openAddProd()">➕ Add Product</button>
         </div>
       </div>
       <div style="display:flex;gap:14px;margin-bottom:18px">
@@ -438,11 +437,10 @@ select.fi option{background:var(--bg2)}
       </div>
       <div style="display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap">
         <input class="fi" style="width:220px" id="prodSearch" placeholder="🔍 Search products…" oninput="filterProds()"/>
-        <select class="fi" style="width:130px" id="prodCatF" onchange="filterProds()"><option value="">All Categories</option><option>TVs</option><option>Smartphones</option><option>Laptops</option><option>Networking</option><option>Accessories</option></select>
-        <select class="fi" style="width:130px" id="prodStockF" onchange="filterProds()"><option value="">All Stock</option><option value="low">Low Stock</option><option value="out">Out of Stock</option><option value="ok">In Stock</option></select>
+        <select class="fi" style="width:130px" id="prodStockF" onchange="filterProds()"><option value="">All Stock</option><option value="low">Low Stock</option><option value="out">Out of Stock</option><option value="in">In Stock</option></select>
       </div>
       <div class="card"><div class="tw"><table>
-        <thead><tr><th>SKU</th><th>Product</th><th>Category</th><th>HSN</th><th>MRP</th><th>Price</th><th>Stock</th><th>Reorder</th><th>GST%</th><th>Status</th><th>Actions</th></tr></thead>
+        <thead><tr><th>SKU</th><th>Product</th><th>HSN</th><th>MRP</th><th>Price</th><th>Stock</th><th>Reorder</th><th>GST%</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody id="invBody2"></tbody>
       </table></div></div>
     </div>
@@ -614,14 +612,14 @@ select.fi option{background:var(--bg2)}
       </div>
     </div>
 
-    <!-- ======== WAREHOUSES ======== -->
-    <div class="page" id="page-warehouses">
-      <div class="bc">Inventory / <span>Warehouses</span></div>
+    <!-- ======== BRANCHES ======== -->
+    <div class="page" id="page-branches">
+      <div class="bc">Inventory / <span>Branches</span></div>
       <div class="sh" style="margin-top:8px">
-        <div><div class="st">Multi-Warehouse Management</div><div class="ss">Branch-wise stock, inter-warehouse transfers</div></div>
-        <button class="btn btn-p btn-sm" onclick="openModal('whModal')">➕ Add Warehouse</button>
+        <div><div class="st">Branch Management</div><div class="ss">Branch-wise stock, inter-branch transfers</div></div>
+        <button class="btn btn-p btn-sm" onclick="openAddBranch()">➕ Add Branch</button>
       </div>
-      <div class="g3" id="whGrid"></div>
+      <div class="g3" id="branchGrid"></div>
     </div>
 
     <!-- ======== ACCOUNTING ======== -->
@@ -882,7 +880,6 @@ select.fi option{background:var(--bg2)}
       </div>
 
       <div class="fr c2">
-        <div class="fg"><label class="fl">Category</label><input class="fi" id="pm_cat" placeholder="Electronics" autocomplete="off"/></div>
         <div class="fg"><label class="fl">Brand</label><input class="fi" id="pm_brand" placeholder="Logitech" autocomplete="off"/></div>
       </div>
 
@@ -1043,16 +1040,38 @@ select.fi option{background:var(--bg2)}
   </div>
 </div>
 
-<div id="whModal" class="mo hidden">
+<div id="branchModal" class="mo hidden" autocomplete="off">
   <div class="md md-sm">
-    <div class="mh"><span class="mt2">Add Warehouse / Branch</span><button class="mc" onclick="closeModal('whModal')">✕</button></div>
+    <div class="mh"><span class="mt2" id="branchModalTitle">Add Branch</span><button class="mc" onclick="closeModal('branchModal')">✕</button></div>
     <div class="mb">
-      <div class="fg"><label class="fl">Warehouse Name</label><input class="fi" placeholder="Andheri Showroom"/></div>
-      <div class="fg"><label class="fl">Address</label><textarea class="fi" rows="2" placeholder="Full address…"></textarea></div>
-      <div class="fr c2"><div class="fg"><label class="fl">Manager</label><input class="fi" placeholder="Suresh Kumar"/></div>
-        <div class="fg"><label class="fl">Mobile</label><input class="fi" placeholder="9876543210"/></div></div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Branch Name</label><input class="fi" id="br_name" placeholder="Andheri Showroom" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">Branch Code</label><input class="fi mono" id="br_code" placeholder="BR-001" autocomplete="off"/></div>
+      </div>
+      <div class="fg"><label class="fl">Address</label><textarea class="fi" rows="2" id="br_address" placeholder="Full address…" autocomplete="off"></textarea></div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">City</label><input class="fi" id="br_city" placeholder="Mumbai" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">State</label><input class="fi" id="br_state" placeholder="Maharashtra" autocomplete="off"/></div>
+      </div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">State Code</label><input class="fi mono" id="br_state_code" placeholder="27" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">Pincode</label><input class="fi mono" id="br_pincode" placeholder="400069" autocomplete="off"/></div>
+      </div>
+      <div class="fg"><label class="fl">GSTIN</label><input class="fi mono" id="br_gstin" placeholder="27AABCS1234F1Z5" autocomplete="off"/></div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Phone</label><input class="fi" id="br_phone" placeholder="9876543210" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">Email</label><input class="fi" id="br_email" placeholder="branch@example.com" autocomplete="off"/></div>
+      </div>
+      <div class="fg"><label class="fl">Branch Type</label>
+        <select class="fi" id="br_type">
+          <option value="branch">Branch</option>
+          <option value="warehouse">Warehouse</option>
+          <option value="godown">Godown</option>
+          <option value="showroom">Showroom</option>
+        </select>
+      </div>
     </div>
-    <div class="mf"><button class="btn btn-o" onclick="closeModal('whModal')">Cancel</button><button class="btn btn-p" onclick="saveWH()">Add Warehouse</button></div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('branchModal')">Cancel</button><button class="btn btn-p" onclick="saveBranch()">Save Branch</button></div>
   </div>
 </div>
 
@@ -1087,6 +1106,8 @@ const CFG = {
   // Company defaults (shown when API has no company data yet)
   COMPANY_NAME: 'Sharma Electronics',
   COMPANY_GSTIN: '27AABCS1234F1Z5',
+  // Same company_id used at login — branches are nested under /companies/{company_id}/branches
+  COMPANY_ID: '34091ba5-aa42-40c8-9d22-e916cfefef6b',
 };
 
 // ============================================================
@@ -1292,10 +1313,31 @@ const PAYMENTS_DATA=[
   {date:'29 May 2026',party:'Gupta Brothers',invoice:'INV-2463',method:'Bank Transfer',amount:128000,type:'received'},
   {date:'28 May 2026',party:'Samsung India',invoice:'PO-0040',method:'NEFT',amount:265500,type:'paid'},
 ];
-const WAREHOUSES=[
-  {name:'Andheri Showroom',addr:'Shop 4-6, Veera Desai Road, Andheri West, Mumbai',manager:'Suresh Kumar',items:142,value:2840000},
-  {name:'Pune Godown',addr:'Plot 8, Bhosari MIDC, Pune',manager:'Ramesh Patil',items:68,value:1240000},
+let BRANCHES=[
+  {id:1,name:'Andheri Showroom',code:'BR-001',addr:'Shop 4-6, Veera Desai Road, Andheri West, Mumbai',city:'Mumbai',state:'Maharashtra',stateCode:'27',pincode:'400069',gstin:'',phone:'',email:'',type:'branch',items:142,value:2840000},
+  {id:2,name:'Pune Godown',code:'BR-002',addr:'Plot 8, Bhosari MIDC, Pune',city:'Pune',state:'Maharashtra',stateCode:'27',pincode:'',gstin:'',phone:'',email:'',type:'warehouse',items:68,value:1240000},
 ];
+let editingBranchId = null; // ← declare globally alongside BRANCHES = []
+
+// ── normalise API response → local shape ────────────────────
+function normBranch(b) {
+  return {
+    id:        b.id,
+    name:      b.branch_name  || b.name || '—',
+    code:      b.branch_code  || b.code || '',
+    addr:      b.address      || b.addr || '',
+    city:      b.city         || '',
+    state:     b.state        || '',
+    stateCode: b.state_code   || '',
+    pincode:   b.pincode      || '',
+    gstin:     b.gstin        || '',
+    phone:     b.phone        || '',
+    email:     b.email        || '',
+    type:      b.branch_type  || b.type || 'branch',
+    items:     b.items ?? b.product_count ?? 0,
+    value:     b.value ?? b.stock_value   ?? 0,
+  };
+}
 const LEDGER_DATA=[
   {date:'01 Jun 2026',account:'Sales A/c',narr:'INV-2468 Kumar Electronics',dr:'',cr:'35,593',bal:'18,46,500'},
   {date:'01 Jun 2026',account:'Output GST A/c',narr:'GST on INV-2468',dr:'',cr:'6,407',bal:'2,78,766'},
@@ -1486,7 +1528,7 @@ function triggerModuleRefresh(id) {
     returns:     renderReturns,
     payments:    renderPayments,
     auditlog:    renderAuditLog,
-    warehouses:  renderWarehouses,
+    branches:    renderBranches,
     einvoice:    renderEInvoice,
     accounting:  renderAccounting,
     ai:          initAI,
@@ -2371,7 +2413,6 @@ function normProduct(p) {
     id:      p.id,
     name:    p.product_name    || p.name        || '—',
     sku:     p.product_code    || p.sku         || '',
-    cat:     p.category?.cat_name || p.cat  || '',
     brand:   p.brand           || '',
     hsn:     p.hsn_code        || p.hsn         || '',
     sac:     p.sac_code        || p.sac         || '',
@@ -2391,7 +2432,7 @@ function normProduct(p) {
 async function renderInventory(list) {
   const b = document.getElementById('invBody2');
   if (!b) return;
-  b.innerHTML = loadingRow(11);
+  b.innerHTML = loadingRow(10);
 
   let data = list;
   if (data === undefined || data === null) {
@@ -2423,7 +2464,6 @@ async function renderInventory(list) {
     ? data.map(p => `<tr>
         <td class="b mono">${p.sku || '—'}</td>
         <td class="b">${p.name}</td>
-        <td>${p.cat || '—'}</td>
         <td class="mono">${p.hsn || '—'}</td>
         <td>₹${fmt(p.mrp)}</td>
         <td class="b">₹${fmt(p.price)}</td>
@@ -2438,18 +2478,16 @@ async function renderInventory(list) {
           </div>
         </td>
       </tr>`).join('')
-    : '<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text3)">No products found</td></tr>';
+    : '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text3)">No products found</td></tr>';
 }
 
 // ── filter ───────────────────────────────────────────────────
 function filterProds() {
   const q   = (document.getElementById('prodSearch')?.value || '').toLowerCase();
-  const cat = document.getElementById('prodCatF')?.value || '';
   const stk = document.getElementById('prodStockF')?.value || '';
   renderInventory(
     PRODUCTS.filter(p =>
       (!q   || (p.name || '').toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q)) &&
-      (!cat || p.cat === cat) &&
       (!stk || p.status === stk)
     )
   );
@@ -2482,7 +2520,6 @@ function editProd(id) {
 
   setVal('pm_name',    p.name    ?? '');
   setVal('pm_sku',     p.sku     ?? '');
-  setVal('pm_cat',     p.cat     ?? '');
   setVal('pm_brand',   p.brand   ?? '');
   setVal('pm_hsn',     p.hsn     ?? '');
   setVal('pm_desc',    p.desc    ?? '');
@@ -2735,19 +2772,165 @@ function renderPayments() {
     <td><span class="sb ${p.type==='received'?'sp':'sov'}">${p.type}</span></td></tr>`).join('');
 }
 
-function renderWarehouses() {
-  const g=document.getElementById('whGrid'); if(!g)return;
-  g.innerHTML=WAREHOUSES.map(w=>`<div class="card chov">
-    <div style="font-size:22px;margin-bottom:8px">🏭</div>
-    <div style="font-size:13px;font-weight:700;margin-bottom:4px">${w.name}</div>
-    <div style="font-size:10px;color:var(--text3);margin-bottom:12px">${w.addr}</div>
-    <div class="tr"><span style="font-size:11px;color:var(--text3)">Manager</span><span style="font-size:11px;font-weight:600">${w.manager}</span></div>
-    <div class="tr"><span style="font-size:11px;color:var(--text3)">Products</span><span style="font-size:11px;font-weight:600;color:var(--accent)">${w.items}</span></div>
-    <div class="tr"><span style="font-size:11px;color:var(--text3)">Stock Value</span><span style="font-size:11px;font-weight:700;color:var(--green)">₹${(w.value/100000).toFixed(1)}L</span></div>
-    <button class="btn btn-o btn-sm" style="width:100%;justify-content:center;margin-top:11px" onclick="showToast('📦 Stock report')">View Stock</button>
-  </div>`).join('')+`<div class="card chov" style="display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;min-height:180px" onclick="openModal('whModal')">
-    <div style="font-size:32px;margin-bottom:8px">➕</div><div style="font-size:12px;font-weight:600;color:var(--text2)">Add Warehouse</div>
+async function renderBranches(list) {
+  const g=document.getElementById('branchGrid'); if(!g)return;
+
+  let data = list;
+  if (data === undefined || data === null) {
+    if (AUTH.apiOnline) {
+      try {
+        const r = await apiFetch(`/companies/${CFG.COMPANY_ID}/branches`);
+        data = (r.data || []).map(normBranch);
+        BRANCHES = data;
+      } catch (e) {
+        data = BRANCHES;
+        console.warn('[API] branches fallback:', e.message);
+      }
+    } else {
+      data = BRANCHES;
+    }
+  }
+
+  g.innerHTML=data.map(b=>`<div class="card chov">
+    <div style="font-size:22px;margin-bottom:8px">🏢</div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:4px">${b.name}</div>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:12px">${b.addr || '—'}</div>
+    <div class="tr"><span style="font-size:11px;color:var(--text3)">Code</span><span style="font-size:11px;font-weight:600">${b.code || '—'}</span></div>
+    <div class="tr"><span style="font-size:11px;color:var(--text3)">Products</span><span style="font-size:11px;font-weight:600;color:var(--accent)">${b.items}</span></div>
+    <div class="tr"><span style="font-size:11px;color:var(--text3)">Stock Value</span><span style="font-size:11px;font-weight:700;color:var(--green)">₹${(b.value/100000).toFixed(1)}L</span></div>
+    <div style="display:flex;gap:6px;margin-top:11px">
+      <button class="btn btn-o btn-sm" style="flex:1;justify-content:center" onclick="showToast('📦 Stock report')">View Stock</button>
+      <button class="btn btn-o btn-sm" onclick="editBranch('${b.id}')">✏️</button>
+      <button class="btn btn-d btn-sm" onclick="deleteBranch('${b.id}')">🗑</button>
+    </div>
+  </div>`).join('')+`<div class="card chov" style="display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;min-height:180px" onclick="openAddBranch()">
+    <div style="font-size:32px;margin-bottom:8px">➕</div><div style="font-size:12px;font-weight:600;color:var(--text2)">Add Branch</div>
   </div>`;
+}
+
+// ── open "Add Branch" modal with empty fields ────────────────
+function openAddBranch() {
+  editingBranchId = null;
+  document.getElementById('branchModalTitle').textContent = 'Add Branch';
+  ['br_name','br_code','br_address','br_city','br_state','br_state_code',
+   'br_pincode','br_gstin','br_phone','br_email'].forEach(id => setVal(id, ''));
+  setVal('br_type', 'branch');
+  openModal('branchModal');
+}
+
+// ── open "Edit Branch" modal pre-filled ──────────────────────
+function editBranch(id) {
+  const b = BRANCHES.find(x => String(x.id) === String(id));
+  if (!b) return;
+
+  editingBranchId = id;
+  document.getElementById('branchModalTitle').textContent = 'Edit Branch';
+
+  setVal('br_name',       b.name      || '');
+  setVal('br_code',       b.code      || '');
+  setVal('br_address',    b.addr      || '');
+  setVal('br_city',       b.city      || '');
+  setVal('br_state',      b.state     || '');
+  setVal('br_state_code', b.stateCode || '');
+  setVal('br_pincode',    b.pincode   || '');
+  setVal('br_gstin',      b.gstin     || '');
+  setVal('br_phone',      b.phone     || '');
+  setVal('br_email',      b.email     || '');
+  setVal('br_type',       b.type      || 'branch');
+
+  openModal('branchModal');
+}
+
+// ── save (create or update) ──────────────────────────────────
+async function saveBranch() {
+  const name = getVal('br_name');
+  if (!name.trim()) { showToast('⚠️ Branch name required', 'warn'); return; }
+
+  const payload = {
+    branch_code: getVal('br_code')       || 'BR-' + Date.now(),
+    branch_name: name,
+    gstin:       getVal('br_gstin')      || '',
+    address:     getVal('br_address')    || '',
+    city:        getVal('br_city')       || '',
+    state:       getVal('br_state')      || '',
+    state_code:  getVal('br_state_code') || '',
+    pincode:     getVal('br_pincode')    || '',
+    phone:       getVal('br_phone')      || '',
+    email:       getVal('br_email')      || '',
+    branch_type: getVal('br_type')       || 'branch',
+  };
+
+  // local shape — keys match normBranch output
+  const localShape = normBranch({
+    branch_name: payload.branch_name, branch_code: payload.branch_code,
+    address: payload.address, city: payload.city, state: payload.state,
+    state_code: payload.state_code, pincode: payload.pincode, gstin: payload.gstin,
+    phone: payload.phone, email: payload.email, branch_type: payload.branch_type,
+  });
+
+  try {
+    if (AUTH.apiOnline) {
+
+      if (editingBranchId) {
+        // ── EDIT ────────────────────────────────────────────
+        await apiFetch(`/companies/${CFG.COMPANY_ID}/branches/${editingBranchId}`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        });
+        const idx = BRANCHES.findIndex(b => String(b.id) === String(editingBranchId));
+        if (idx >= 0) BRANCHES[idx] = { ...BRANCHES[idx], ...localShape };
+        addAuditEntry('EDIT', 'Branch', 'Updated branch: ' + name);
+
+      } else {
+        // ── CREATE ──────────────────────────────────────────
+        const created = await apiFetch(`/companies/${CFG.COMPANY_ID}/branches`, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        const serverRecord = normBranch(created.data || created);
+        BRANCHES.push({ ...localShape, ...serverRecord });
+        addAuditEntry('CREATE', 'Branch', 'Added branch: ' + name);
+      }
+
+    } else {
+      // ── OFFLINE ─────────────────────────────────────────
+      if (editingBranchId) {
+        const idx = BRANCHES.findIndex(b => String(b.id) === String(editingBranchId));
+        if (idx >= 0) BRANCHES[idx] = { ...BRANCHES[idx], ...localShape };
+      } else {
+        BRANCHES.push({ id: Date.now(), ...localShape });
+      }
+    }
+
+    showToast('✅ Branch "' + name + '" saved');
+
+  } catch (e) {
+    showToast('✅ Branch saved (offline)');
+    if (editingBranchId) {
+      const idx = BRANCHES.findIndex(b => String(b.id) === String(editingBranchId));
+      if (idx >= 0) BRANCHES[idx] = { ...BRANCHES[idx], ...localShape };
+    } else {
+      BRANCHES.push({ id: Date.now(), ...localShape });
+    }
+  }
+
+  editingBranchId = null;
+  document.getElementById('branchModalTitle').textContent = 'Add Branch';
+  closeModal('branchModal');
+  renderBranches(BRANCHES); // pass directly — avoids re-fetch race condition
+}
+
+// ── delete ───────────────────────────────────────────────────
+async function deleteBranch(id) {
+  if (!confirm('Deactivate this branch?')) return;
+  if (AUTH.apiOnline) {
+    try {
+      await apiFetch(`/companies/${CFG.COMPANY_ID}/branches/${id}`, { method: 'DELETE' });
+    } catch (_) {}
+  }
+  BRANCHES = BRANCHES.filter(b => String(b.id) !== String(id));
+  showToast('🗑 Branch deactivated');
+  renderBranches(BRANCHES);
 }
 
 function renderEInvoice() {
@@ -2941,7 +3124,6 @@ function savePayment() { showToast('✅ Payment of ₹'+(parseInt(getVal('payAmt
 function saveLead()    { showToast('✅ Lead saved'); closeModal('leadModal'); addAuditEntry('CREATE','CRM','Added new lead'); renderCRM(); }
 function savePO()      { showToast('✅ Purchase order created'); closeModal('poModal'); addAuditEntry('CREATE','Purchase','Created new PO'); renderPO(); }
 function saveReturn()  { showToast('✅ Return saved'); closeModal('retModal'); addAuditEntry('CREATE','Returns','Created new return'); renderReturns(); }
-function saveWH()      { showToast('✅ Warehouse added'); closeModal('whModal'); addAuditEntry('CREATE','Warehouse','Added warehouse'); renderWarehouses(); }
 function saveJE()      { showToast('✅ Journal entry posted'); closeModal('jeModal'); addAuditEntry('CREATE','Accounting','Posted journal entry'); }
 function openQuote()   { showToast('💡 Tip: Create Invoice → Type = Quotation'); setTimeout(()=>nav('create',null),600); }
 function genIRN(no)    { showToast('⚡ IRN generated for '+no); addAuditEntry('CREATE','E-Invoice','Generated IRN for '+no); }
