@@ -329,6 +329,7 @@ class InvoiceService:
             "po_date": payload.po_date,
             "quote_id": payload.quote_id,
             "dc_id": payload.dc_id,
+            "against_invoice_id": payload.against_invoice_id,
             "place_of_supply": payload.place_of_supply,
             "supply_type": payload.supply_type,
             "reverse_charge": payload.reverse_charge,

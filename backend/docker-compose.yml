@@ -5,10 +5,11 @@ services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
+    env_file: .env
     environment:
-      POSTGRES_USER: vyaparpro
-      POSTGRES_PASSWORD: vyaparpro_secret
-      POSTGRES_DB: vyaparpro_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -43,12 +44,14 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      POSTGRES_HOST: db
+      POSTGRES_HOST: host.docker.internal
       REDIS_HOST: redis
     ports:
       - "8000:8000"
     volumes:
       - ./logs:/app/logs
+      - ./app:/app/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
       db:
         condition: service_healthy
@@ -108,3 +111,5 @@ services:
 volumes:
   pgdata:
   redisdata:
+
+

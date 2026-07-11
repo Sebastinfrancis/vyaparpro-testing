@@ -1,12 +1,13 @@
 """VyaparPro – Billing API Endpoints"""
 from __future__ import annotations
 from datetime import date
+from decimal import Decimal
 from uuid import UUID
 from fastapi import APIRouter, Query, Response
 from fastapi.responses import ORJSONResponse
 from app.api.v1.dependencies import CacheDep, CurrentUserDep, DBDep, PaginationDep, require_perm
 from app.schemas.billing import (
-    DeliveryChallanCreate, InvoiceCreate, InvoiceCancelRequest,
+    DeliveryChallanCreate, InvoiceCreate, InvoiceCancelRequest, InvoiceUpdate,
     JobOrderCreate, JobOrderUpdate, PaymentCreate,
     PurchaseOrderCreate, QuotationCreate,
 )
@@ -202,6 +203,33 @@ async def get_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> O
         from app.core.exceptions import NotFoundError
         raise NotFoundError("Invoice not found.")
     return ok(InvoiceOut.model_validate(inv).model_dump())
+
+@router.put("/invoices/{invoice_id}", summary="Update invoice (draft only)")
+async def update_invoice(invoice_id: UUID, payload: InvoiceUpdate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
+    from app.db.repositories.billing import InvoiceRepository
+    from app.schemas.billing import InvoiceOut
+    repo = InvoiceRepository(db)
+    inv = await repo.get_or_raise(invoice_id)
+    updated = await repo.update(inv, payload.model_dump(exclude_unset=True, exclude={"items"}))
+    return ok(InvoiceOut.model_validate(updated).model_dump(), "Invoice updated.")
+
+@router.patch("/invoices/{invoice_id}", summary="Partially update invoice (e.g. status)")
+async def patch_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep, payload: dict) -> ORJSONResponse:
+    from app.db.repositories.billing import InvoiceRepository
+    from app.schemas.billing import InvoiceOut
+    repo = InvoiceRepository(db)
+    inv = await repo.get_or_raise(invoice_id)
+    allowed = {"status", "due_date", "notes"}
+    updated = await repo.update(inv, {k: v for k, v in payload.items() if k in allowed})
+    return ok(InvoiceOut.model_validate(updated).model_dump(), "Invoice updated.")
+
+@router.delete("/invoices/{invoice_id}", status_code=204, summary="Delete invoice (draft only)")
+async def delete_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> Response:
+    from app.db.repositories.billing import InvoiceRepository
+    repo = InvoiceRepository(db)
+    inv = await repo.get_or_raise(invoice_id)
+    await repo.delete(inv)
+    return Response(status_code=204)
 
 @router.post("/invoices/{invoice_id}/finalize", summary="Finalize invoice (locks it, triggers accounting)")
 async def finalize_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:

@@ -1575,7 +1575,7 @@ async function renderInvoices(list) {
   if (!data) {
     if (AUTH.apiOnline) {
       try {
-        const result = await apiFetch('/invoices?limit=200');
+        const result = await apiFetch('/billing/invoices?limit=200');
         const raw    = unwrapList(result,'data','items','invoices','results');
         data = raw.map(normInvoice);
         INVOICES = data;
@@ -1731,7 +1731,7 @@ async function loadInvoiceToEdit(id) {
   let inv = INVOICES.find(i=>String(i.id)===String(id));
   if (!inv && AUTH.apiOnline) {
     try {
-      const r = await apiFetch(`/invoices/${id}`);
+      const r = await apiFetch(`/billing/invoices/${id}`);
       inv = normInvoice(r.data || r);
     } catch (e) { showToast('⚠️ Could not load invoice','warn'); return; }
   }
@@ -1780,7 +1780,7 @@ async function markPaid(id) {
   if (AUTH.apiOnline) {
     try {
       // PATCH /invoices/{id} — update status
-      await apiFetch(`/invoices/${id}`,{ method:'PATCH', body:JSON.stringify({status:'paid'}) });
+      await apiFetch(`/billing/invoices/${id}`,{ method:'PATCH', body:JSON.stringify({status:'paid'}) });
     } catch (_) {}
   }
   if (inv) inv.status='paid';
@@ -1793,7 +1793,7 @@ async function deleteInvoice(id) {
   const inv=INVOICES.find(i=>String(i.id)===String(id));
   if (!confirm('Delete '+(inv?.no||'this invoice')+'? This cannot be undone.')) return;
   if (AUTH.apiOnline) {
-    try { await apiFetch(`/invoices/${id}`,{method:'DELETE'}); } catch (_) {}
+    try { await apiFetch(`/billing/invoices/${id}`,{method:'DELETE'}); } catch (_) {}
   }
   INVOICES=INVOICES.filter(i=>String(i.id)!==String(id));
   addAuditEntry('DELETE','Invoice','Deleted '+(inv?.no||id));
@@ -1822,27 +1822,24 @@ async function finalizeInvoice() {
     // Amount already includes GST (exclusive), calc net excluding GST
     const grossAmt = qty * rate * (1 - disc/100);
     lineItems.push({
-      // API field names (what FastAPI endpoint expects)
-      product_name:      prod,
-      description:       prod,
-      quantity:          qty,
-      unit_price:        rate,
-      discount_percent:  disc,
-      tax_rate:          gstPct,
-      amount:            Math.round(grossAmt * 100) / 100,
-      // Keep short aliases too for safety
-      prod, qty, rate, disc, gst: gstPct, amt: Math.round(grossAmt*100)/100,
+      description: prod,
+      quantity: qty,
+      rate: rate,
+      discount_pct: disc,
+      gst_rate: gstPct,
+      amount: grossAmt,
+      hsn: PRODUCTS.find(p=>p.name===prod)?.hsn || '',
     });
   });
   if (!lineItems.length) { showToast('⚠️ Add at least one item','warn'); return; }
 
   // Aggregate totals
-  const subtotal   = lineItems.reduce((a,it)=>a+it.qty*it.rate,0);
-  const discount   = lineItems.reduce((a,it)=>a+it.qty*it.rate*(it.disc/100),0);
+  const subtotal   = lineItems.reduce((a,it)=>a+it.quantity*it.rate,0);
+  const discount   = lineItems.reduce((a,it)=>a+it.quantity*it.rate*(it.discount_pct/100),0);
   const grossTotal = lineItems.reduce((a,it)=>a+it.amount,0);
 
   // Derive weighted avg GST to back-calculate taxable vs tax
-  const weightedGst = lineItems.reduce((a,it)=>a+it.amount*(it.gst/100/(1+it.gst/100)),0);
+  const weightedGst = lineItems.reduce((a,it)=>a+it.amount*(it.gst_rate/100/(1+it.gst_rate/100)),0);
   const taxableAmt  = grossTotal - weightedGst;
 
   const isInter  = getVal('supplyType')==='inter';
@@ -1863,13 +1860,13 @@ async function finalizeInvoice() {
     place_of_supply:      getVal('invState'),
     supply_type:          getVal('supplyType'),
     notes:                getVal('invNotes'),
-    customer_name:        cust,
+    billing_name:         cust,
     customer_gstin:       getVal('custGst'),
     customer_phone:       getVal('custMobile'),
     billing_address:      getVal('custAddr'),
     customer_email:       getVal('custEmail'),
     place_of_supply_code: getVal('custState'),
-    line_items:           lineItems,
+    items:           lineItems,
     subtotal:             Math.round(subtotal*100)/100,
     total_discount:       Math.round(discount*100)/100,
     taxable_amount:       Math.round(taxableAmt*100)/100,
@@ -1886,16 +1883,16 @@ async function finalizeInvoice() {
   let savedId = editingInvId;
   try {
     if (editingInvId !== null) {
-      // UPDATE — PUT /invoices/{id}
-      const r = AUTH.apiOnline ? await apiFetch(`/invoices/${editingInvId}`,{method:'PUT',body:JSON.stringify(payload)}) : null;
+      // UPDATE — PUT /billing/invoices/{id}
+      const r = AUTH.apiOnline ? await apiFetch(`/billing/invoices/${editingInvId}`,{method:'PUT',body:JSON.stringify(payload)}) : null;
       const updated = normInvoice({ ...payload, id: editingInvId, ...(r?.data||r||{}) });
       const idx = INVOICES.findIndex(i=>String(i.id)===String(editingInvId));
       if (idx>=0) INVOICES[idx]=updated; else INVOICES.unshift(updated);
       addAuditEntry('EDIT','Invoice','Updated '+payload.invoice_number+' — ₹'+grandTotal.toLocaleString());
       showToast('✅ Invoice '+payload.invoice_number+' updated!');
     } else {
-      // CREATE — POST /invoices
-      const r = AUTH.apiOnline ? await apiFetch('/invoices',{method:'POST',body:JSON.stringify(payload)}) : null;
+      // CREATE — POST /billing/invoices
+      const r = AUTH.apiOnline ? await apiFetch('/billing/invoices',{method:'POST',body:JSON.stringify(payload)}) : null;
       const newId = r?.id || r?.data?.id || Date.now();
       const newInv = normInvoice({ ...payload, id: newId });
       INVOICES.unshift(newInv);

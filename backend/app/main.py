@@ -39,6 +39,7 @@ from app.api.v1.endpoints.customers import router as customers_router
 from app.api.v1.endpoints.vendors import router as vendors_router
 from app.api.v1.endpoints.products import router as products_router
 from app.api.v1.endpoints.master import router as master_router
+from app.api.v1.endpoints.billing import router as billing_router 
 
 log = get_logger(__name__)
 
@@ -124,6 +125,7 @@ def create_app() -> FastAPI:
     app.include_router(vendors_router,     prefix=f"{prefix}/vendors",     tags=["Vendors"])
     app.include_router(products_router,    prefix=f"{prefix}/products",    tags=["Products"])
     app.include_router(master_router,      prefix=f"{prefix}/master",      tags=["Master Data"])
+    app.include_router(billing_router,     prefix=f"{prefix}/billing",     tags=["Billing"])
 
     # ── Health / readiness probes ─────────────────────────────────────
     @app.get("/health", include_in_schema=False)
