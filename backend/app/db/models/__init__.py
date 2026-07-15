@@ -401,3 +401,23 @@ class ProductVariant(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
     reorder_level: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=Decimal("0"))
 
     product: Mapped["Product"] = relationship("Product", back_populates="variants")
+    # ── Ensure billing, accounting, and inventory models are always registered ──
+# These live in separate files; importing them here (not just in Alembic's
+# env.py) guarantees their tables are in Base.metadata whenever the app
+# runs, so foreign keys referencing them (e.g. Invoice.warehouse_id) resolve
+# correctly at runtime, not just during migrations.
+from app.db.models.billing import (  # noqa: F401, E402
+    Quotation, QuotationItem, JobOrder, JobOrderItem,
+    PurchaseOrder, PurchaseOrderItem, GoodsReceiptNote, GRNItem,
+    DeliveryChallan, DeliveryChallanItem, Invoice, InvoiceItem,
+    Payment, PaymentAllocation, DocumentSequence, EInvoiceLog,
+)
+from app.db.models.accounting import (  # noqa: F401, E402
+    AccountGroup, Account, CostCenter, JournalVoucher, JournalEntry,
+    AccountLedger, BankReconciliation, GSTReturn, ITCLedger, FinancialYear,
+)
+from app.db.models.inventory import (  # noqa: F401, E402
+    Warehouse, WarehouseZone, InventoryStock, StockMovement,
+    StockAdjustment, StockAdjustmentItem, StockTransfer, StockTransferItem,
+    ProductBatch, SerialNumber, BarcodeLabel,
+)

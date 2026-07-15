@@ -263,6 +263,7 @@ class InvoiceCreate(APIModel):
     invoice_date: date
     due_date: Optional[date] = None
     party_id: Optional[UUID] = None
+    against_invoice_id: Optional[UUID] = None
     billing_name: str = Field(max_length=200)
     billing_gstin: Optional[str] = None
     billing_address: Optional[str] = None
@@ -278,6 +279,7 @@ class InvoiceCreate(APIModel):
     po_date: Optional[date] = None
     quote_id: Optional[UUID] = None
     dc_id: Optional[UUID] = None
+    against_invoice_id: Optional[UUID] = None
     place_of_supply: str = "27"
     supply_type: str = "intra"
     reverse_charge: bool = False

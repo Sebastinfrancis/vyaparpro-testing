@@ -19,6 +19,21 @@ from app.db.models import (  # noqa: F401
     Product, ProductVariant,
     AuditLog,
 )
+from app.db.models.billing import (  # noqa: F401
+    Quotation, QuotationItem, JobOrder, JobOrderItem,
+    PurchaseOrder, PurchaseOrderItem, GoodsReceiptNote, GRNItem,
+    DeliveryChallan, DeliveryChallanItem, Invoice, InvoiceItem,
+    Payment, PaymentAllocation, DocumentSequence, EInvoiceLog,
+)
+from app.db.models.accounting import (  # noqa: F401
+    AccountGroup, Account, CostCenter, JournalVoucher, JournalEntry,
+    AccountLedger, BankReconciliation, GSTReturn, ITCLedger, FinancialYear,
+)
+from app.db.models.inventory import (  # noqa: F401
+    Warehouse, WarehouseZone, InventoryStock, StockMovement,
+    StockAdjustment, StockAdjustmentItem, StockTransfer, StockTransferItem,
+    ProductBatch, SerialNumber, BarcodeLabel,
+)
 
 config = context.config
 if config.config_file_name:

@@ -4,6 +4,7 @@ from datetime import date
 from decimal import Decimal
 from uuid import UUID
 from fastapi import APIRouter, Query, Response
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import ORJSONResponse
 from app.api.v1.dependencies import CacheDep, CurrentUserDep, DBDep, PaginationDep, require_perm
 from app.schemas.billing import (
@@ -176,7 +177,7 @@ async def list_invoices(
     repo = InvoiceRepository(db)
     result = await repo.search(current.company_id, q, status, invoice_type, party_id,
                                from_date, to_date, overdue_only, pg.page, pg.page_size)
-    return paginated([InvoiceOut.model_validate(r).model_dump() for r in result.items],
+    return paginated([InvoiceOut.model_validate(r).model_dump(mode='json') for r in result.items],
                      result.total, result.page, result.page_size, result.pages)
 
 @router.post("/invoices", status_code=201, summary="Create invoice (draft)")
@@ -184,14 +185,14 @@ async def create_invoice(payload: InvoiceCreate, current: CurrentUserDep, db: DB
     from app.schemas.billing import InvoiceOut
     svc = InvoiceService(db)
     inv = await svc.create(current.company_id, payload, current.user_id)
-    return created(InvoiceOut.model_validate(inv).model_dump(), "Invoice created.")
+    return created(InvoiceOut.model_validate(inv).model_dump(mode='json'), "Invoice created.")
 
 @router.get("/invoices/stats", summary="Invoice dashboard statistics")
 async def invoice_stats(current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories.billing import InvoiceRepository
     repo = InvoiceRepository(db)
     stats = await repo.get_dashboard_stats(current.company_id)
-    return ok(stats)
+    return ok(jsonable_encoder(stats))
 
 @router.get("/invoices/{invoice_id}", summary="Get invoice by ID")
 async def get_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
@@ -202,7 +203,7 @@ async def get_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> O
     if not inv:
         from app.core.exceptions import NotFoundError
         raise NotFoundError("Invoice not found.")
-    return ok(InvoiceOut.model_validate(inv).model_dump())
+    return ok(InvoiceOut.model_validate(inv).model_dump(mode='json'))
 
 @router.put("/invoices/{invoice_id}", summary="Update invoice (draft only)")
 async def update_invoice(invoice_id: UUID, payload: InvoiceUpdate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
@@ -211,7 +212,7 @@ async def update_invoice(invoice_id: UUID, payload: InvoiceUpdate, current: Curr
     repo = InvoiceRepository(db)
     inv = await repo.get_or_raise(invoice_id)
     updated = await repo.update(inv, payload.model_dump(exclude_unset=True, exclude={"items"}))
-    return ok(InvoiceOut.model_validate(updated).model_dump(), "Invoice updated.")
+    return ok(InvoiceOut.model_validate(updated).model_dump(mode='json'), "Invoice updated.")
 
 @router.patch("/invoices/{invoice_id}", summary="Partially update invoice (e.g. status)")
 async def patch_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep, payload: dict) -> ORJSONResponse:
@@ -221,7 +222,7 @@ async def patch_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep, pa
     inv = await repo.get_or_raise(invoice_id)
     allowed = {"status", "due_date", "notes"}
     updated = await repo.update(inv, {k: v for k, v in payload.items() if k in allowed})
-    return ok(InvoiceOut.model_validate(updated).model_dump(), "Invoice updated.")
+    return ok(InvoiceOut.model_validate(updated).model_dump(mode='json'), "Invoice updated.")
 
 @router.delete("/invoices/{invoice_id}", status_code=204, summary="Delete invoice (draft only)")
 async def delete_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> Response:
@@ -236,7 +237,7 @@ async def finalize_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep)
     from app.schemas.billing import InvoiceOut
     svc = InvoiceService(db)
     inv = await svc.finalize(invoice_id, current.company_id, current.user_id)
-    return ok(InvoiceOut.model_validate(inv).model_dump(), "Invoice finalized.")
+    return ok(InvoiceOut.model_validate(inv).model_dump(mode='json'), "Invoice finalized.")
 
 @router.post("/invoices/{invoice_id}/cancel", summary="Cancel invoice")
 async def cancel_invoice(invoice_id: UUID, payload: InvoiceCancelRequest,
@@ -244,7 +245,7 @@ async def cancel_invoice(invoice_id: UUID, payload: InvoiceCancelRequest,
     from app.schemas.billing import InvoiceOut
     svc = InvoiceService(db)
     inv = await svc.cancel(invoice_id, current.company_id, payload.reason, current.user_id)
-    return ok(InvoiceOut.model_validate(inv).model_dump(), "Invoice cancelled.")
+    return ok(InvoiceOut.model_validate(inv).model_dump(mode='json'), "Invoice cancelled.")
 
 @router.get("/invoices/{invoice_id}/pdf", summary="Download invoice as PDF")
 async def download_invoice_pdf(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> Response:
@@ -279,7 +280,7 @@ async def list_payments(current: CurrentUserDep, db: DBDep, pg: PaginationDep,
     from app.schemas.billing import PaymentOut
     repo = PaymentRepository(db)
     result = await repo.search(current.company_id, payment_type, None, from_date, to_date, pg.page, pg.page_size)
-    return paginated([PaymentOut.model_validate(r).model_dump() for r in result.items],
+    return paginated([PaymentOut.model_validate(r).model_dump(mode='json') for r in result.items],
                      result.total, result.page, result.page_size, result.pages)
 
 @router.post("/payments", status_code=201, summary="Record a payment / receipt")
@@ -287,7 +288,7 @@ async def create_payment(payload: PaymentCreate, current: CurrentUserDep, db: DB
     from app.schemas.billing import PaymentOut
     svc = PaymentService(db)
     pay = await svc.create(current.company_id, payload, current.user_id)
-    return created(PaymentOut.model_validate(pay).model_dump(), "Payment recorded.")
+    return created(PaymentOut.model_validate(pay).model_dump(mode='json'), "Payment recorded.")
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -301,7 +302,7 @@ async def list_challans(current: CurrentUserDep, db: DBDep, pg: PaginationDep,
     from app.schemas.billing import DeliveryChallanOut
     repo = DeliveryChallanRepository(db)
     result = await repo.search(current.company_id, q, pg.page, pg.page_size)
-    return paginated([DeliveryChallanOut.model_validate(r).model_dump() for r in result.items],
+    return paginated([DeliveryChallanOut.model_validate(r).model_dump(mode='json') for r in result.items],
                      result.total, result.page, result.page_size, result.pages)
 
 @router.post("/delivery-challans", status_code=201, summary="Create delivery challan")
@@ -343,4 +344,4 @@ async def create_challan(payload: DeliveryChallanCreate, current: CurrentUserDep
             batch_no=item.batch_no, serial_no=item.serial_no,
         ))
     await db.flush()
-    return created(DeliveryChallanOut.model_validate(dc).model_dump(), "Delivery challan created.")
+    return created(DeliveryChallanOut.model_validate(dc).model_dump(mode='json'), "Delivery challan created.")

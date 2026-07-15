@@ -335,7 +335,7 @@ select.fi option{background:var(--bg2)}
         <select class="fi" style="width:130px" id="invTypeF" onchange="filterInvoices()"><option value="">All Types</option><option>GST Invoice</option><option>Tax Invoice</option><option>Proforma</option><option>Quotation</option></select>
       </div>
       <div class="card"><div class="tw">
-        <table><thead><tr><th>#</th><th>Invoice No</th><th>Date</th><th>Customer</th><th>Type</th><th>Taxable</th><th>GST</th><th>Total</th><th>Due</th><th>Status</th><th>Actions</th></tr></thead>
+        <table><thead><tr><th>#</th><th>Invoice No</th><th>Date</th><th>Customer</th><th>Type</th><th>Taxable Amount</th><th>GST</th><th>Total</th><th>Due</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody id="invBody"></tbody></table>
       </div></div>
     </div>
@@ -1152,21 +1152,30 @@ async function apiFetch(path, opts = {}) {
 //  Your FastAPI may wrap data in {data:…}, {items:…}, etc.
 //  These helpers unwrap consistently.
 // ============================================================
-function unwrapList(result, ...keys) {
-  if (Array.isArray(result)) return result;
-  for (const k of keys) if (result[k] !== undefined) return Array.isArray(result[k]) ? result[k] : [];
-  return [];
+function unwrapList(result) {
+    if (Array.isArray(result)) return result;
+
+    if (Array.isArray(result?.data?.items))
+        return result.data.items;
+
+    if (Array.isArray(result?.items))
+        return result.items;
+
+    if (Array.isArray(result?.data))
+        return result.data;
+
+    return [];
 }
 
 // Normalise one invoice object from API → internal schema
 function normInvoice(inv) {
   return {
     id:         inv.id,
-    no:         inv.invoice_number  || inv.number       || inv.no        || '—',
+    no:         inv.invoice_number  || inv.invoice_no || inv.number       || inv.no        || '—',
     date:       inv.invoice_date    || inv.date          || '',
     due:        inv.due_date        || inv.due           || '',
-    customer:   inv.customer_name   || inv.customer      || '—',
-    custGst:    inv.customer_gstin  || inv.gstin         || inv.custGst   || '',
+    customer:   inv.billing_name   || inv.customer_name   || inv.customer    || '',
+    custGst:    inv.billing_gstin    || inv.customer_gstin  || inv.gstin       || '',
     custMobile: inv.customer_phone  || inv.phone         || inv.custMobile|| '',
     custAddr:   inv.billing_address || inv.custAddr      || '',
     custEmail:  inv.customer_email  || inv.email         || inv.custEmail || '',
@@ -1177,16 +1186,16 @@ function normInvoice(inv) {
     notes:      inv.notes           || '',
     items:      (inv.line_items     || inv.items         || []).map(it => ({
       prod:   it.product_name || it.description || it.prod || it.name || '',
-      qty:    it.quantity     || it.qty  || 1,
-      rate:   it.unit_price   || it.rate || 0,
-      disc:   it.discount_percent || it.disc || 0,
-      gst:    it.tax_rate     || it.gst_rate || it.gst  || 18,
-      amt:    it.amount       || it.amt  || 0,
+      qty:    Number(it.quantity     || it.qty  || 1),
+      rate:   Number(it.unit_price   || it.rate || 0),
+      disc:   Number(it.discount_pct || it.discount_percent || it.disc || 0),
+      gst:    Number(it.tax_rate     || it.gst_rate || it.gst  || 18),
+      amt:    Number(it.total_amount || it.amount       || it.amt  || 0),
       hsn:    it.hsn_code     || it.hsn  || '',
     })),
     subtotal: inv.subtotal          || inv.sub_total      || 0,
     discount: inv.total_discount    || inv.discount       || 0,
-    taxable:  inv.taxable_amount    || inv.taxable        || 0,
+    taxable :  inv.taxable_amount    || inv.taxable        || 0,
     cgst:     inv.cgst_amount       || inv.cgst           || 0,
     sgst:     inv.sgst_amount       || inv.sgst           || 0,
     igst:     inv.igst_amount       || inv.igst           || 0,
@@ -1576,9 +1585,12 @@ async function renderInvoices(list) {
     if (AUTH.apiOnline) {
       try {
         const result = await apiFetch('/billing/invoices?limit=200');
-        const raw    = unwrapList(result,'data','items','invoices','results');
+        const raw    = unwrapList(result);
         data = raw.map(normInvoice);
         INVOICES = data;
+        console.log(INVOICES);
+        QUOTES = INVOICES.filter(inv => (inv.type || '').toLowerCase() === "quotation");
+        renderQuotes();
       } catch (e) {
         data = INVOICES;
         console.warn('[API] invoices fallback:', e.message);
@@ -1591,7 +1603,7 @@ async function renderInvoices(list) {
   b.innerHTML = data.length ? data.map((inv,i) => {
     const sc = statusClass(inv.status);
     const dc = inv.status==='overdue' ? 'var(--red)' : inv.status==='pending' ? 'var(--orange)' : 'var(--text3)';
-    const gstTotal = (inv.cgst||0)+(inv.sgst||0)+(inv.igst||0);
+    const gstTotal = (Number(inv.cgst||0)+Number(inv.sgst||0)+Number(inv.igst||0)).toFixed(2);
     return `<tr style="cursor:pointer" onclick="openInvActions('${inv.id}')">
       <td>${i+1}</td>
       <td class="b mono">${inv.no}</td>
@@ -1702,14 +1714,14 @@ function viewInvoice(id) {
           <td style="color:#666">${i+1}</td>
           <td style="font-weight:600">${it.prod||'—'}</td>
           <td style="font-family:monospace;color:#888;font-size:10px">${it.hsn||'—'}</td>
-          <td>${it.qty||0}</td><td>₹${fmt(it.rate)}</td><td>${it.disc||0}%</td><td>${it.gst||18}%</td>
-          <td style="font-weight:700">₹${fmt(it.amt)}</td></tr>`).join('')}</tbody>
+          <td>${it.qty||0}</td><td>₹${fmt(Number(it.rate))}</td><td>${it.disc||0}%</td><td>${it.gst||18}%</td>
+          <td style="font-weight:700">₹${fmt(Number(it.amt || (it.qty * it.rate)))}</td></tr>`).join('')}</tbody>
       </table>
       <div style="display:flex;justify-content:flex-end">
         <div style="min-width:280px">
-          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Subtotal</span><span>₹${fmt(inv.subtotal)}</span></div>
-          ${inv.discount?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#d00"><span>Discount</span><span>-₹${fmt(inv.discount)}</span></div>`:''}
-          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Taxable Amount</span><span>₹${fmt(inv.taxable)}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Subtotal</span><span>₹${fmt(Number(inv.subtotal))}</span></div>
+          ${inv.discount?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#d00"><span>Discount</span><span>-₹${fmt(Number(inv.discount))}</span></div>`:''}
+          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Taxable Amount</span><span>₹${fmt(Number(inv.taxable))}</span></div>
           ${!isInter
             ?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>CGST</span><span>₹${fmt(inv.cgst)}</span></div>
                <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>SGST</span><span>₹${fmt(inv.sgst)}</span></div>`
@@ -1821,6 +1833,7 @@ async function finalizeInvoice() {
     const gstPct= parseInt(getVal('gst-'+n)) || 18;
     // Amount already includes GST (exclusive), calc net excluding GST
     const grossAmt = qty * rate * (1 - disc/100);
+    const products = PRODUCTS.find(p=>p.name===prod);
     lineItems.push({
       description: prod,
       quantity: qty,
@@ -1828,26 +1841,38 @@ async function finalizeInvoice() {
       discount_pct: disc,
       gst_rate: gstPct,
       amount: grossAmt,
-      hsn: PRODUCTS.find(p=>p.name===prod)?.hsn || '',
+      hsn_code: products?.hsn_code || '',
     });
   });
   if (!lineItems.length) { showToast('⚠️ Add at least one item','warn'); return; }
 
   // Aggregate totals
-  const subtotal   = lineItems.reduce((a,it)=>a+it.quantity*it.rate,0);
-  const discount   = lineItems.reduce((a,it)=>a+it.quantity*it.rate*(it.discount_pct/100),0);
-  const grossTotal = lineItems.reduce((a,it)=>a+it.amount,0);
+const subtotal = lineItems.reduce((a,it)=>a + (it.quantity * it.rate),0);
 
-  // Derive weighted avg GST to back-calculate taxable vs tax
-  const weightedGst = lineItems.reduce((a,it)=>a+it.amount*(it.gst_rate/100/(1+it.gst_rate/100)),0);
-  const taxableAmt  = grossTotal - weightedGst;
+const discount = lineItems.reduce(
+    (a,it)=>a + (it.quantity * it.rate * it.discount_pct / 100),
+    0
+);
 
-  const isInter  = getVal('supplyType')==='inter';
-  const cgst     = isInter ? 0 : Math.round(weightedGst/2*100)/100;
-  const sgst     = isInter ? 0 : Math.round(weightedGst/2*100)/100;
-  const igst     = isInter ? Math.round(weightedGst*100)/100 : 0;
-  const roundOff = Math.round(grossTotal) - grossTotal;
-  const grandTotal = Math.round(grossTotal);
+const taxableAmt = lineItems.reduce(
+    (a,it)=>a + it.amount,
+    0
+);
+
+const totalGST = lineItems.reduce(
+    (a,it)=>a + (it.amount * it.gst_rate / 100),
+    0
+);
+
+const isInter = getVal('supplyType') === 'inter';
+
+const cgst = isInter ? 0 : totalGST / 2;
+const sgst = isInter ? 0 : totalGST / 2;
+const igst = isInter ? totalGST : 0;
+
+const roundOff = 0;
+
+const grandTotal = taxableAmt + totalGST;
 
   // Payload — uses BOTH the API field names AND legacy aliases so it
   // works whether the backend returns/reads snake_case or the frontend alias.
@@ -1857,7 +1882,7 @@ async function finalizeInvoice() {
     invoice_date:         getVal('invDate'),
     due_date:             getVal('invDue'),
     invoice_type:         getVal('invType'),
-    place_of_supply:      getVal('invState'),
+    place_of_supply:      getVal('custState'),
     supply_type:          getVal('supplyType'),
     notes:                getVal('invNotes'),
     billing_name:         cust,
@@ -1865,7 +1890,7 @@ async function finalizeInvoice() {
     customer_phone:       getVal('custMobile'),
     billing_address:      getVal('custAddr'),
     customer_email:       getVal('custEmail'),
-    place_of_supply_code: getVal('custState'),
+    place_of_supply_code: getVal('invState'),
     items:           lineItems,
     subtotal:             Math.round(subtotal*100)/100,
     total_discount:       Math.round(discount*100)/100,
@@ -1929,18 +1954,70 @@ function saveDraft() {
 }
 
 function previewInvoice() {
-  const items=[];
-  document.querySelectorAll('[id^="item-"]').forEach(row=>{
-    const n=row.id.replace('item-','');
-    const prod=row.querySelector('select')?.value; if(!prod)return;
-    const qty=+getVal('qty-'+n)||1,rate=+getVal('rate-'+n)||0,disc=+getVal('disc-'+n)||0,gst=parseInt(getVal('gst-'+n))||18;
-    items.push({prod,qty,rate,disc,gst,amt:qty*rate*(1-disc/100),hsn:''});
+  const items = [];
+
+  document.querySelectorAll('[id^="item-"]').forEach(row => {
+    const n = row.id.replace('item-', '');
+
+    const prod = row.querySelector('select')?.value;
+    if (!prod) return;
+
+    const qty  = +getVal('qty-' + n) || 1;
+    const rate = +getVal('rate-' + n) || 0;
+    const disc = +getVal('disc-' + n) || 0;
+    const gst  = parseFloat(getVal('gst-' + n)) || 18;
+
+    const lineSubtotal = qty * rate;
+    const lineDiscount = lineSubtotal * disc / 100;
+    const lineTaxable  = lineSubtotal - lineDiscount;
+    const lineGST      = lineTaxable * gst / 100;
+    const lineTotal    = lineTaxable + lineGST;
+
+    items.push({
+      prod,
+      qty,
+      rate,
+      disc,
+      gst,
+      amt: lineTotal,
+      taxable: lineTaxable,
+      gstAmount: lineGST,
+      hsn: ''
+    });
   });
-  const grossTotal=items.reduce((a,i)=>a+i.amt,0);
-  const isInter=getVal('supplyType')==='inter';
-  const wGst=items.reduce((a,i)=>a+i.amt*(i.gst/100/(1+i.gst/100)),0);
-  const taxable=grossTotal-wGst;
-  const tmp={id:'_prev',no:getVal('invNo')||'DRAFT',date:getVal('invDate'),customer:getVal('custName')||'—',custGst:getVal('custGst'),custMobile:getVal('custMobile'),custAddr:getVal('custAddr'),custEmail:getVal('custEmail'),type:getVal('invType'),supply:isInter?'inter':'intra',notes:getVal('invNotes'),items,subtotal:Math.round(grossTotal),discount:0,taxable:Math.round(taxable),cgst:isInter?0:Math.round(wGst/2),sgst:isInter?0:Math.round(wGst/2),igst:isInter?Math.round(wGst):0,round:0,total:Math.round(grossTotal),due:getVal('invDue'),status:'draft'};
+
+  const subtotal = items.reduce((a,i)=>a + i.qty * i.rate,0);
+  const discount = items.reduce((a,i)=>a + (i.qty * i.rate * i.disc / 100),0);
+  const taxable = items.reduce((a,i)=>a + i.taxable,0);
+  const totalGST = items.reduce((a,i)=>a + i.gstAmount,0);
+
+  const isInter = getVal('supplyType') === 'inter';
+
+  const tmp = {
+    id:'_prev',
+    no:getVal('invNo') || 'DRAFT',
+    date:getVal('invDate'),
+    customer:getVal('custName') || '—',
+    custGst:getVal('custGst'),
+    custMobile:getVal('custMobile'),
+    custAddr:getVal('custAddr'),
+    custEmail:getVal('custEmail'),
+    type:getVal('invType'),
+    supply:isInter ? 'inter' : 'intra',
+    notes:getVal('invNotes'),
+    items,
+    subtotal,
+    discount,
+    taxable,
+    cgst:isInter ? 0 : totalGST / 2,
+    sgst:isInter ? 0 : totalGST / 2,
+    igst:isInter ? totalGST : 0,
+    round:0,
+    total:taxable + totalGST,
+    due:getVal('invDue'),
+    status:'draft'
+  };
+
   INVOICES.push(tmp);
   viewInvoice('_prev');
   INVOICES.pop();
@@ -2727,15 +2804,30 @@ function renderPO() {
 }
 
 function renderQuotes() {
-  const b=document.getElementById('quoteBody'); if(!b)return;
-  b.innerHTML=QUOTES.map(q=>`<tr>
-    <td class="b mono">${q.no}</td><td>${q.date}</td><td class="b">${q.customer}</td>
-    <td class="b">₹${q.amount.toLocaleString()}</td><td>${q.valid}</td>
-    <td><span class="sb ${q.status==='accepted'?'sp':q.status==='sent'?'spen':'sdr'}">${q.status}</span></td>
-    <td><div style="display:flex;gap:3px">
-      <button class="btn btn-o btn-sm" onclick="showToast('👁 Quote')">👁</button>
-      <button class="btn btn-p btn-sm" onclick="convertQuote('${q.no}','${q.customer}',${q.amount})">→ Invoice</button>
-    </div></td></tr>`).join('');
+    const b = document.getElementById('quoteBody');
+    if (!b) return;
+
+    b.innerHTML = QUOTES.map(q => `
+        <tr>
+            <td class="b mono">${q.no}</td>
+            <td>${fmtDate(q.date)}</td>
+            <td class="b">${q.customer}</td>
+            <td>₹${Number(q.total || q.taxable || 0).toLocaleString()}</td>
+            <td>${fmtDate(q.due)}</td>
+            <td><span class="sb">${q.status}</span></td>
+            <td>
+                <div style="display:flex;gap:3px">
+                    <button class="btn btn-o btn-sm"
+                        onclick="showToast('👁 Quote')">👁</button>
+
+                    <button class="btn btn-o btn-sm"
+                        onclick="convertQuote('${q.no}','${q.customer}',${q.total || 0})">
+                        ➜ Invoice
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
 }
 
 function convertQuote(no,cust,amt) {
@@ -3018,38 +3110,48 @@ function calcItem(n) {
 function removeItem(n) { document.getElementById('item-'+n)?.remove(); calcTotals(); }
 
 function calcTotals() {
-  let subtotalGross=0, discTotal=0;
-  document.querySelectorAll('[id^="item-"]').forEach(row=>{
-    const n=row.id.replace('item-','');
-    const qty=+getVal('qty-'+n)||0, rate=+getVal('rate-'+n)||0, disc=+getVal('disc-'+n)||0;
-    subtotalGross+=qty*rate; discTotal+=qty*rate*(disc/100);
-  });
-  const grossItems=subtotalGross-discTotal;
+  let subtotal = 0;
+  let discount = 0;
+  let taxable = 0;
+  let totalGST = 0;
 
-  // Weighted GST extraction
-  let wGst=0;
-  document.querySelectorAll('[id^="item-"]').forEach(row=>{
-    const n=row.id.replace('item-','');
-    const qty=+getVal('qty-'+n)||0, rate=+getVal('rate-'+n)||0, disc=+getVal('disc-'+n)||0;
-    const gstPct=parseFloat(getVal('gst-'+n))||18;
-    const itemAmt=qty*rate*(1-disc/100);
-    wGst+=itemAmt*(gstPct/100/(1+gstPct/100));
-  });
-  const taxableBase=grossItems-wGst;
-  const isInter=getVal('supplyType')==='inter';
-  const roundOff=Math.round(grossItems)-grossItems;
-  const total=Math.round(grossItems);
+  document.querySelectorAll('[id^="item-"]').forEach(row => {
+    const n = row.id.replace('item-', '');
 
-  setTxt('s_sub','₹'+(subtotalGross).toFixed(2));
-  setTxt('s_disc','-₹'+discTotal.toFixed(2));
-  setTxt('s_tax','₹'+taxableBase.toFixed(2));
-  setTxt('s_round','₹'+roundOff.toFixed(2));
-  setTxt('s_total','₹'+total.toLocaleString());
-  if (isInter) {
-    setTxt('s_igst','₹'+wGst.toFixed(2)); setTxt('s_cgst','₹0.00'); setTxt('s_sgst','₹0.00');
-  } else {
-    setTxt('s_cgst','₹'+(wGst/2).toFixed(2)); setTxt('s_sgst','₹'+(wGst/2).toFixed(2)); setTxt('s_igst','₹0.00');
-  }
+    const qty = +getVal('qty-' + n) || 0;
+    const rate = +getVal('rate-' + n) || 0;
+    const disc = +getVal('disc-' + n) || 0;
+    const gstPct = parseFloat(getVal('gst-' + n)) || 18;
+
+    const lineSubtotal = qty * rate;
+    const lineDiscount = lineSubtotal * disc / 100;
+    const lineTaxable = lineSubtotal - lineDiscount;
+    const lineGST = lineTaxable * gstPct / 100;
+
+    subtotal += lineSubtotal;
+    discount += lineDiscount;
+    taxable += lineTaxable;
+    totalGST += lineGST;
+  });
+
+  const isInter = getVal('supplyType') === 'inter';
+
+  const cgst = isInter ? 0 : totalGST / 2;
+  const sgst = isInter ? 0 : totalGST / 2;
+  const igst = isInter ? totalGST : 0;
+
+  const total = taxable + totalGST;
+  const roundOff = Math.round(total) - total;
+
+  setTxt('s_sub', '₹' + subtotal.toFixed(2));
+  setTxt('s_disc', '-₹' + discount.toFixed(2));
+  setTxt('s_tax', '₹' + taxable.toFixed(2));
+  setTxt('s_round', '₹' + roundOff.toFixed(2));
+  setTxt('s_total', '₹' + Math.round(total).toFixed(2));
+
+  setTxt('s_cgst', '₹' + cgst.toFixed(2));
+  setTxt('s_sgst', '₹' + sgst.toFixed(2));
+  setTxt('s_igst', '₹' + igst.toFixed(2));
 }
 
 // ============================================================

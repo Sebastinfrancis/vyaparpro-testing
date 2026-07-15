@@ -399,7 +399,7 @@ class Invoice(Base, UUIDMixin, TimestampMixin, GSTAmountMixin):
     cancel_reason: Mapped[Optional[str]] = mapped_column(Text)
     created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
 
-    items: Mapped[list["InvoiceItem"]] = relationship("InvoiceItem", back_populates="invoice", cascade="all, delete-orphan")
+    items: Mapped[list["InvoiceItem"]] = relationship("InvoiceItem", back_populates="invoice", cascade="all, delete-orphan", lazy = "selectin",)
     party: Mapped[Optional["Party"]] = relationship("Party", foreign_keys=[party_id])  # type: ignore
     job_order: Mapped[Optional["JobOrder"]] = relationship("JobOrder", foreign_keys=[jo_id])
     purchase_order: Mapped[Optional["PurchaseOrder"]] = relationship("PurchaseOrder", foreign_keys=[po_id])
