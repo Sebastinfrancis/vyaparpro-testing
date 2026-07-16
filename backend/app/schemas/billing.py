@@ -30,26 +30,26 @@ class BillingItemIn(APIModel):
 
 class BillingItemOut(APIModel):
     id: UUID
-    product_id: Optional[UUID]
+    product_id: Optional[UUID] = None
     description: str
-    hsn_code: Optional[str]
+    hsn_code: Optional[str] = None
     quantity: Decimal
     rate: Decimal
-    mrp: Optional[Decimal]
+    mrp: Optional[Decimal] = None
     discount_pct: Decimal
     discount_amount: Decimal
     taxable_amount: Decimal
     gst_rate: Decimal
-    cgst_rate: Decimal
-    sgst_rate: Decimal
-    igst_rate: Decimal
+    cgst_rate: Decimal = Decimal("0")
+    sgst_rate: Decimal = Decimal("0")
+    igst_rate: Decimal = Decimal("0")
     cgst_amount: Decimal
     sgst_amount: Decimal
     igst_amount: Decimal
     cess_amount: Decimal
     total_amount: Decimal
-    batch_no: Optional[str]
-    serial_no: Optional[str]
+    batch_no: Optional[str] = None
+    serial_no: Optional[str] = None
     display_order: int
 
 
@@ -315,6 +315,7 @@ class InvoiceOut(APIModel):
     invoice_date: date
     due_date: Optional[date]
     party_id: Optional[UUID]
+    against_invoice_id: Optional[UUID] = None 
     billing_name: str
     billing_gstin: Optional[str]
     billing_address: Optional[str]

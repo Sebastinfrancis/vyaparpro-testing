@@ -33,7 +33,7 @@ async def list_quotations(current: CurrentUserDep, db: DBDep, pg: PaginationDep,
     from app.schemas.billing import QuotationOut
     repo = QuotationRepository(db)
     result = await repo.search(current.company_id, q, status, from_date, to_date, pg.page, pg.page_size)
-    return paginated([QuotationOut.model_validate(r).model_dump() for r in result.items],
+    return paginated([QuotationOut.model_validate(r).model_dump(mode='json') for r in result.items],
                      result.total, result.page, result.page_size, result.pages)
 
 @router.post("/quotations", status_code=201, summary="Create quotation")
@@ -41,7 +41,7 @@ async def create_quotation(payload: QuotationCreate, current: CurrentUserDep, db
     from app.schemas.billing import QuotationOut
     svc = QuotationService(db)
     q = await svc.create(current.company_id, payload, current.user_id)
-    return created(QuotationOut.model_validate(q).model_dump(), "Quotation created.")
+    return created(QuotationOut.model_validate(q).model_dump(mode='json'), "Quotation created.")
 
 @router.get("/quotations/{quote_id}", summary="Get quotation")
 async def get_quotation(quote_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
@@ -52,14 +52,14 @@ async def get_quotation(quote_id: UUID, current: CurrentUserDep, db: DBDep) -> O
     if not q:
         from app.core.exceptions import NotFoundError
         raise NotFoundError("Quotation not found.")
-    return ok(QuotationOut.model_validate(q).model_dump())
+    return ok(QuotationOut.model_validate(q).model_dump(mode='json'))
 
 @router.post("/quotations/{quote_id}/convert-to-invoice", summary="Convert quotation to invoice")
 async def quotation_to_invoice(quote_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.schemas.billing import InvoiceOut
     svc = QuotationService(db)
     inv = await svc.convert_to_invoice(quote_id, current.company_id, current.user_id)
-    return created(InvoiceOut.model_validate(inv).model_dump(), "Converted to invoice.")
+    return created(InvoiceOut.model_validate(inv).model_dump(mode='json'), "Converted to invoice.")
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -74,7 +74,7 @@ async def list_job_orders(current: CurrentUserDep, db: DBDep, pg: PaginationDep,
     from app.schemas.billing import JobOrderOut
     repo = JobOrderRepository(db)
     result = await repo.search(current.company_id, q, status, from_date, to_date, pg.page, pg.page_size)
-    return paginated([JobOrderOut.model_validate(r).model_dump() for r in result.items],
+    return paginated([JobOrderOut.model_validate(r).model_dump(mode='json') for r in result.items],
                      result.total, result.page, result.page_size, result.pages)
 
 @router.post("/job-orders", status_code=201, summary="Create job order")
@@ -82,7 +82,7 @@ async def create_job_order(payload: JobOrderCreate, current: CurrentUserDep, db:
     from app.schemas.billing import JobOrderOut
     svc = JobOrderService(db)
     jo = await svc.create(current.company_id, payload, current.user_id)
-    return created(JobOrderOut.model_validate(jo).model_dump(), "Job order created.")
+    return created(JobOrderOut.model_validate(jo).model_dump(mode='json'), "Job order created.")
 
 @router.get("/job-orders/{jo_id}", summary="Get job order")
 async def get_job_order(jo_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
@@ -93,7 +93,7 @@ async def get_job_order(jo_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJS
     if not jo:
         from app.core.exceptions import NotFoundError
         raise NotFoundError("Job order not found.")
-    return ok(JobOrderOut.model_validate(jo).model_dump())
+    return ok(JobOrderOut.model_validate(jo).model_dump(mode='json'))
 
 @router.patch("/job-orders/{jo_id}", summary="Update job order")
 async def update_job_order(jo_id: UUID, payload: JobOrderUpdate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
@@ -144,7 +144,7 @@ async def get_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep) ->
     if not po:
         from app.core.exceptions import NotFoundError
         raise NotFoundError("Purchase order not found.")
-    return ok(PurchaseOrderOut.model_validate(po).model_dump())
+    return ok(PurchaseOrderOut.model_validate(po).model_dump(mode='json'))
 
 @router.post("/purchase-orders/{po_id}/approve", summary="Approve purchase order")
 async def approve_po(po_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:

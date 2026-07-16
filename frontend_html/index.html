@@ -360,7 +360,12 @@ select.fi option{background:var(--bg2)}
             <div style="font-size:12px;font-weight:700;margin-bottom:11px">Invoice Details</div>
             <div class="fr c3">
               <div class="fg"><label class="fl">Type</label>
-                <select class="fi" id="invType"><option>GST Invoice</option><option>Tax Invoice</option><option>Proforma Invoice</option><option>Quotation</option><option>Delivery Challan</option><option>Credit Note</option><option>Debit Note</option></select></div>
+                <select class="fi" id="invType" onchange="onInvTypeChange()"><option>GST Invoice</option><option>Tax Invoice</option><option>Proforma Invoice</option><option>Quotation</option><option>Delivery Challan</option><option>Credit Note</option><option>Debit Note</option></select></div>
+                  <div class="fr c3" id="againstInvRow" style="display:none">
+                    <div class="fg" style="grid-column:span 3"><label class="fl">Against Invoice</label>
+                      <select class="fi" id="againstInv" onchange="autofillAgainstInvoice()"><option value="">Select original invoice…</option></select>
+                    </div>
+                  </div>
               <div class="fg"><label class="fl">Invoice No</label><input class="fi" id="invNo" placeholder="INV-2469"/></div>
               <div class="fg"><label class="fl">Date</label><input type="date" class="fi" id="invDate"/></div>
             </div>
@@ -546,7 +551,7 @@ select.fi option{background:var(--bg2)}
       <div class="bc">Billing / <span>Returns & Credit Notes</span></div>
       <div class="sh" style="margin-top:8px">
         <div><div class="st">Returns & Credit / Debit Notes</div><div class="ss">Sales return, purchase return, credit notes</div></div>
-        <button class="btn btn-p btn-sm" onclick="openModal('retModal')">➕ New Return</button>
+        <button class="btn btn-p btn-sm" onclick="openReturnModal()">➕ New Return</button>
       </div>
       <div class="card"><div class="tw"><table>
         <thead><tr><th>Doc No</th><th>Date</th><th>Type</th><th>Against Invoice</th><th>Customer/Vendor</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
@@ -1029,12 +1034,13 @@ select.fi option{background:var(--bg2)}
   <div class="md md-sm">
     <div class="mh"><span class="mt2">New Return / Credit Note</span><button class="mc" onclick="closeModal('retModal')">✕</button></div>
     <div class="mb">
-      <div class="fg"><label class="fl">Document Type</label><select class="fi"><option>Sales Return</option><option>Purchase Return</option><option>Credit Note</option><option>Debit Note</option></select></div>
-      <div class="fg"><label class="fl">Against Invoice</label><input class="fi mono" placeholder="INV-2467"/></div>
-      <div class="fr c2"><div class="fg"><label class="fl">Customer / Vendor</label><input class="fi" placeholder="Kumar Electronics"/></div>
-        <div class="fg"><label class="fl">Date</label><input type="date" class="fi"/></div></div>
-      <div class="fg"><label class="fl">Amount (₹)</label><input class="fi" type="number" placeholder="5000"/></div>
-      <div class="fg"><label class="fl">Reason</label><textarea class="fi" rows="2" placeholder="Reason for return…"></textarea></div>
+      <div class="fg"><label class="fl">Document Type</label><select class="fi" id="retDocType"><option>Sales Return</option><option>Purchase Return</option><option>Credit Note</option><option>Debit Note</option></select></div>
+      <div class="fg"><label class="fl">Against Invoice</label><select class="fi mono" id="retAgainstInv" onchange="autofillReturnParty()"><option value="">Select original invoice…</option></select></div>
+      <div class="fg"><label class="fl">Product / Item</label><input class="fi" id="retItem" placeholder="e.g. Sony WH-1000XM5"/></div>
+      <div class="fr c2"><div class="fg"><label class="fl">Customer / Vendor</label><input class="fi" id="retParty" placeholder="Kumar Electronics"/></div>
+        <div class="fg"><label class="fl">Date</label><input type="date" class="fi" id="retDate"/></div></div>
+      <div class="fg"><label class="fl">Amount (₹)</label><input class="fi" type="number" id="retAmount" placeholder="5000"/></div>
+      <div class="fg"><label class="fl">Reason</label><textarea class="fi" id="retReason" rows="2" placeholder="Reason for return…"></textarea></div>
     </div>
     <div class="mf"><button class="btn btn-o" onclick="closeModal('retModal')">Cancel</button><button class="btn btn-p" onclick="saveReturn()">Save Return</button></div>
   </div>
@@ -1205,6 +1211,18 @@ function normInvoice(inv) {
   };
 }
 
+function normQuote(q) {
+  return {
+    id: q.id,
+    no: q.quote_no,
+    date: (q.quote_date || '').slice(0,10),
+    customer: q.billing_name,
+    amount: Number(q.total_amount || 0),
+    valid: (q.valid_until || '').slice(0,10),
+    status: q.status,
+  };
+}
+
 // Normalise one customer object from API → internal schema
 function normCustomer(c) {
   return {
@@ -1312,10 +1330,7 @@ const QUOTES=[
   {no:'QT-0027',date:'27 May 2026',customer:'Anil Electronics',amount:195000,valid:'27 Jun 2026',status:'draft'},
   {no:'QT-0026',date:'24 May 2026',customer:'Metro Traders',amount:320000,valid:'24 Jun 2026',status:'accepted'},
 ];
-const RETURNS=[
-  {no:'CN-0012',date:'30 May 2026',type:'Credit Note',against:'INV-2460',party:'Raj Computers',amount:5000,status:'processed'},
-  {no:'SR-0008',date:'28 May 2026',type:'Sales Return',against:'INV-2455',party:'Priya Mobiles',amount:2800,status:'pending'},
-];
+let RETURNS=[];
 const PAYMENTS_DATA=[
   {date:'01 Jun 2026',party:'Kumar Electronics',invoice:'INV-2468',method:'UPI',amount:42000,type:'received'},
   {date:'30 May 2026',party:'Priya Mobiles',invoice:'INV-2466',method:'Cash',amount:8746,type:'received'},
@@ -1655,6 +1670,28 @@ function renderDashInvoices(data) {
 
 function exportInvoices() { showToast('📤 Invoices exported to Excel'); }
 
+function onInvTypeChange() {
+  const type = getVal('invType');
+  const row = document.getElementById('againstInvRow');
+  const isReturn = type === 'Credit Note' || type === 'Debit Note';
+  row.style.display = isReturn ? '' : 'none';
+  if (isReturn) {
+    const sel = document.getElementById('againstInv');
+    sel.innerHTML = '<option value="">Select original invoice…</option>' +
+      INVOICES.map(inv => `<option value="${inv.id}">${inv.no} — ${inv.customer} — ₹${inv.total.toLocaleString()}</option>`).join('');
+  }
+}
+
+function autofillAgainstInvoice() {
+  const id = getVal('againstInv');
+  const inv = INVOICES.find(i => String(i.id) === String(id));
+  if (!inv) return;
+  document.getElementById('custName').value = inv.customer;
+  document.getElementById('custGstin').value = inv.custGst || '';
+  document.getElementById('custState').value = inv.custState || '27';
+  document.getElementById('billAddr').value = inv.custAddr || '';
+}
+
 // ============================================================
 //  INVOICE ACTIONS MODAL
 // ============================================================
@@ -1731,6 +1768,69 @@ function viewInvoice(id) {
         </div>
       </div>
       ${inv.notes?`<div style="margin-top:16px;padding:10px;background:#f8f8f8;border-radius:6px;font-size:11px;color:#666"><strong>Notes:</strong> ${inv.notes}</div>`:''}
+      <div style="margin-top:20px;text-align:center;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:12px">Thank you for your business! · VyaparPro ERP</div>
+    </div>`;
+  openModal('invPreviewModal');
+}
+
+// ============================================================
+//  VIEW QUOTATION (PREVIEW MODAL)
+// ============================================================
+async function viewQuote(id) {
+  let q;
+  try {
+    const r = await apiFetch(`/billing/quotations/${id}`);
+    q = r.data || r;
+  } catch (e) {
+    showToast('❌ Could not load quotation: ' + e.message);
+    return;
+  }
+  const isInter = q.supply_type === 'inter';
+  document.getElementById('prevTitle').textContent = 'Quotation — ' + q.quote_no;
+  document.getElementById('invPreviewBody').innerHTML = `
+    <div class="inv-preview">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+        <div>
+          <div style="font-size:22px;font-weight:800;color:#111">${CFG.COMPANY_NAME}</div>
+          <div style="font-size:11px;color:#555;margin-top:4px">GSTIN: ${CFG.COMPANY_GSTIN}</div>
+          <div style="font-size:11px;color:#555">Andheri East, Mumbai — 400069</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:18px;font-weight:800;color:#0099cc">QUOTATION</div>
+          <div style="font-size:13px;font-weight:700;margin-top:4px">${q.quote_no}</div>
+          <div style="font-size:11px;color:#555">Date: ${fmtDate(q.quote_date)}</div>
+          <div style="font-size:11px;color:#555">Valid Till: ${fmtDate(q.valid_until)}</div>
+        </div>
+      </div>
+      <div style="background:#f8f8f8;border-radius:8px;padding:14px;margin-bottom:20px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:6px">Bill To</div>
+        <div style="font-size:13px;font-weight:700">${q.billing_name}</div>
+        ${q.billing_gstin ? `<div style="font-size:11px;color:#555;font-family:monospace">GSTIN: ${q.billing_gstin}</div>` : ''}
+        <div style="font-size:11px;color:#555">${q.billing_address || ''}</div>
+      </div>
+      <table style="margin-bottom:16px">
+        <thead><tr><th style="width:5%">#</th><th style="width:35%">Product</th><th style="width:8%">HSN</th><th style="width:8%">Qty</th><th style="width:12%">Rate</th><th style="width:8%">Disc%</th><th style="width:8%">GST%</th><th style="width:16%">Amount</th></tr></thead>
+        <tbody>${(q.items || []).map((it, i) => `<tr>
+          <td style="color:#666">${i+1}</td>
+          <td style="font-weight:600">${it.description || '—'}</td>
+          <td style="font-family:monospace;color:#888;font-size:10px">${it.hsn_code || '—'}</td>
+          <td>${it.quantity || 0}</td><td>₹${fmt(Number(it.rate))}</td><td>${it.discount_pct || 0}%</td><td>${it.gst_rate || 18}%</td>
+          <td style="font-weight:700">₹${fmt(Number(it.total_amount))}</td></tr>`).join('')}</tbody>
+      </table>
+      <div style="display:flex;justify-content:flex-end">
+        <div style="min-width:280px">
+          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Subtotal</span><span>₹${fmt(Number(q.subtotal))}</span></div>
+          ${Number(q.discount_amount) ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#d00"><span>Discount</span><span>-₹${fmt(Number(q.discount_amount))}</span></div>` : ''}
+          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Taxable Amount</span><span>₹${fmt(Number(q.taxable_amount))}</span></div>
+          ${!isInter
+            ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>CGST</span><span>₹${fmt(Number(q.cgst_amount))}</span></div>
+               <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>SGST</span><span>₹${fmt(Number(q.sgst_amount))}</span></div>`
+            : `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>IGST</span><span>₹${fmt(Number(q.igst_amount))}</span></div>`}
+          <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:800;border-top:2px solid #333;margin-top:6px">
+            <span>TOTAL</span><span style="color:#0099cc">₹${fmt(Number(q.total_amount))}</span></div>
+        </div>
+      </div>
+      ${q.notes ? `<div style="margin-top:16px;padding:10px;background:#f8f8f8;border-radius:6px;font-size:11px;color:#666"><strong>Notes:</strong> ${q.notes}</div>` : ''}
       <div style="margin-top:20px;text-align:center;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:12px">Thank you for your business! · VyaparPro ERP</div>
     </div>`;
   openModal('invPreviewModal');
@@ -1904,6 +2004,53 @@ const grandTotal = taxableAmt + totalGST;
                             ? (INVOICES.find(i=>String(i.id)===String(editingInvId))?.status || 'pending')
                             : 'pending',
   };
+
+  const isQuote = getVal('invType') === 'Quotation';
+  if (isQuote) {
+    const quotePayload = {
+      quote_date: getVal('invDate'),
+      valid_until: getVal('invDue'),
+      billing_name: cust,
+      billing_gstin: getVal('custGst') || null,
+      billing_address: getVal('custAddr'),
+      place_of_supply: getVal('custState'),
+      supply_type: getVal('supplyType'),
+      notes: getVal('invNotes') || '',
+      items: lineItems,
+    };
+    try {
+      const r = AUTH.apiOnline
+        ? await apiFetch('/billing/quotations', { method: 'POST', body: JSON.stringify(quotePayload) })
+        : null;
+      showToast('✅ Quotation saved');
+      addAuditEntry('CREATE','Quotation','Created quotation — ₹'+grandTotal.toLocaleString());
+      setTimeout(() => nav('quotations', null), 600);
+    } catch (e) {
+      showToast('❌ ' + e.message);
+    }
+    return;
+  }
+
+  // ── Credit/Debit Note branch ──
+  const returnTypeMap = { 'Credit Note': 'credit_note', 'Debit Note': 'debit_note' };
+  const isReturn = returnTypeMap[getVal('invType')];
+  if (isReturn) {
+    const againstId = getVal('againstInv');
+    if (!againstId) { showToast('⚠️ Select the original invoice first','warn'); return; }
+    payload.invoice_type = isReturn;
+    payload.against_invoice_id = againstId;
+    try {
+      const r = AUTH.apiOnline
+        ? await apiFetch('/billing/invoices', { method: 'POST', body: JSON.stringify(payload) })
+        : null;
+      showToast('✅ ' + getVal('invType') + ' saved');
+      addAuditEntry('CREATE', getVal('invType'), 'Created against invoice '+againstId);
+      setTimeout(() => nav('returns', null), 600);
+    } catch (e) {
+      showToast('❌ ' + e.message);
+    }
+    return;
+  }
 
   let savedId = editingInvId;
   try {
@@ -2803,48 +2950,82 @@ function renderPO() {
     </div></td></tr>`).join('');
 }
 
-function renderQuotes() {
-    const b = document.getElementById('quoteBody');
-    if (!b) return;
-
-    b.innerHTML = QUOTES.map(q => `
-        <tr>
-            <td class="b mono">${q.no}</td>
-            <td>${fmtDate(q.date)}</td>
-            <td class="b">${q.customer}</td>
-            <td>₹${Number(q.total || q.taxable || 0).toLocaleString()}</td>
-            <td>${fmtDate(q.due)}</td>
-            <td><span class="sb">${q.status}</span></td>
-            <td>
-                <div style="display:flex;gap:3px">
-                    <button class="btn btn-o btn-sm"
-                        onclick="showToast('👁 Quote')">👁</button>
-
-                    <button class="btn btn-o btn-sm"
-                        onclick="convertQuote('${q.no}','${q.customer}',${q.total || 0})">
-                        ➜ Invoice
-                    </button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
+async function renderQuotes() {
+  const b = document.getElementById('quoteBody'); if (!b) return;
+  let data = QUOTES;
+  if (AUTH.apiOnline) {
+    try {
+      const r = await apiFetch('/billing/quotations?limit=200');
+      data = (r.data?.items || []).map(normQuote);
+      QUOTES = data;
+    } catch (e) { console.warn('[API] quotations fallback:', e.message); }
+  }
+  b.innerHTML = data.map(q => `<tr>
+    <td class="b mono">${q.no}</td><td>${q.date}</td><td class="b">${q.customer}</td>
+    <td class="b">₹${q.amount.toLocaleString()}</td><td>${q.valid}</td>
+    <td><span class="sb ${q.status==='accepted'?'sp':q.status==='sent'?'spen':'sdr'}">${q.status}</span></td>
+    <td><div style="display:flex;gap:3px">
+      <button class="btn btn-o btn-sm" onclick="viewQuote('${q.id}')">👁</button>
+      <button class="btn btn-p btn-sm" onclick="convertQuote('${q.id}')">→ Invoice</button>
+    </div></td></tr>`).join('');
 }
 
-function convertQuote(no,cust,amt) {
-  showToast('✅ Quote '+no+' converted to invoice for '+cust);
-  addAuditEntry('CONVERT','Quote','Converted '+no+' to invoice');
-  setTimeout(()=>nav('create',null),800);
+async function convertQuote(quoteId) {
+  try {
+    await apiFetch(`/billing/quotations/${quoteId}/convert-to-invoice`, { method: 'POST' });
+    showToast('✅ Converted to invoice');
+    addAuditEntry('CONVERT','Quote','Converted to invoice');
+    renderQuotes();
+  } catch (e) { showToast('❌ ' + e.message); }
 }
 
-function renderReturns() {
-  const b=document.getElementById('retBody'); if(!b)return;
-  b.innerHTML=RETURNS.map(r=>`<tr>
+async function renderReturns() {
+  const b = document.getElementById('retBody'); if (!b) return;
+  let data = RETURNS;
+  if (AUTH.apiOnline) {
+    try {
+      const r  = await apiFetch('/billing/invoices?limit=200&invoice_type=credit_note');
+      const r2 = await apiFetch('/billing/invoices?limit=200&invoice_type=debit_note');
+      const credit = r.data?.items || [];
+      const debit  = r2.data?.items || [];
+      const all = [...credit, ...debit];
+
+      // resolve against_invoice_id -> invoice_no
+      const againstIds = [...new Set(all.map(inv => inv.against_invoice_id).filter(Boolean))];
+      const againstMap = {};
+      await Promise.all(againstIds.map(async (aid) => {
+        try {
+          const res = await apiFetch(`/billing/invoices/${aid}`);
+          againstMap[aid] = res.data?.invoice_no || aid;
+        } catch (e) { againstMap[aid] = aid; }
+      }));
+
+      data = all.map(inv => ({
+        id: inv.id,
+        no: inv.invoice_no,
+        date: (inv.invoice_date||'').slice(0,10),
+        type: inv.invoice_type === 'credit_note' ? 'Credit Note' : 'Debit Note',
+        against: againstMap[inv.against_invoice_id] || '—',
+        party: inv.billing_name,
+        amount: Number(inv.total_amount||0),
+        status: inv.status,
+      }));
+      RETURNS = data;
+
+      // merge into INVOICES so the existing viewInvoice() modal can find these records
+      all.map(normInvoice).forEach(n => {
+        const idx = INVOICES.findIndex(x => String(x.id) === String(n.id));
+        if (idx >= 0) INVOICES[idx] = n; else INVOICES.push(n);
+      });
+    } catch (e) { console.warn('[API] returns fallback:', e.message); }
+  }
+  b.innerHTML = data.map(r => `<tr>
     <td class="b mono">${r.no}</td><td>${r.date}</td>
     <td><span class="chip cbl2">${r.type}</span></td>
     <td class="mono">${r.against}</td><td class="b">${r.party}</td>
     <td class="b">₹${r.amount.toLocaleString()}</td>
     <td><span class="sb ${r.status==='processed'?'sp':'spen'}">${r.status}</span></td>
-    <td><button class="btn btn-o btn-sm" onclick="showToast('👁 Return opened')">👁</button></td></tr>`).join('');
+    <td><button class="btn btn-o btn-sm" onclick="viewInvoice('${r.id}')">👁</button></td></tr>`).join('');
 }
 
 function renderPayments() {
@@ -3222,7 +3403,6 @@ function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); 
 function savePayment() { showToast('✅ Payment of ₹'+(parseInt(getVal('payAmt'))||0).toLocaleString()+' recorded'); closeModal('payModal'); addAuditEntry('CREATE','Payment','Recorded payment'); renderPayments(); }
 function saveLead()    { showToast('✅ Lead saved'); closeModal('leadModal'); addAuditEntry('CREATE','CRM','Added new lead'); renderCRM(); }
 function savePO()      { showToast('✅ Purchase order created'); closeModal('poModal'); addAuditEntry('CREATE','Purchase','Created new PO'); renderPO(); }
-function saveReturn()  { showToast('✅ Return saved'); closeModal('retModal'); addAuditEntry('CREATE','Returns','Created new return'); renderReturns(); }
 function saveJE()      { showToast('✅ Journal entry posted'); closeModal('jeModal'); addAuditEntry('CREATE','Accounting','Posted journal entry'); }
 function openQuote()   { showToast('💡 Tip: Create Invoice → Type = Quotation'); setTimeout(()=>nav('create',null),600); }
 function genIRN(no)    { showToast('⚡ IRN generated for '+no); addAuditEntry('CREATE','E-Invoice','Generated IRN for '+no); }
@@ -3230,6 +3410,74 @@ function genEWB()      { const inv=getVal('ewbInv'); showToast('🛣️ E-Way Bi
 function genUPI()      { const amt=getVal('upiAmt'),uid=getVal('upiId'); if(!amt){showToast('⚠️ Enter amount','warn');return;} document.getElementById('upiQR').style.display='block'; document.getElementById('upiIdShow').textContent=uid; showToast('📱 UPI QR generated for ₹'+parseInt(amt).toLocaleString()); }
 function showNotifs()  { const n=['⚠️ Metro Traders — ₹67,800 overdue','📦 Mi Router AX6000 critically low','📦 Samsung Galaxy A55 out of stock','✅ INV-2468 paid — Kumar Electronics']; showToast(n[Math.floor(Math.random()*n.length)]); }
 function exportInvoices() { showToast('📤 Invoices exported to Excel'); }
+
+function openReturnModal() {
+   const sel = document.getElementById('retAgainstInv');
+   if (sel) {
+     sel.innerHTML = '<option value="">Select original invoice…</option>' +
+       INVOICES.map(inv => `<option value="${inv.id}">${inv.no} — ${inv.customer} — ₹${inv.total.toLocaleString()}</option>`).join('');
+   }
+   document.getElementById('retParty').value = '';
+   document.getElementById('retAmount').value = '';
+   document.getElementById('retReason').value = '';
+   document.getElementById('retDate').value = new Date().toISOString().slice(0,10);
+   openModal('retModal');
+ }
+
+ function autofillReturnParty() {
+  const id = getVal('retAgainstInv');
+  const inv = INVOICES.find(i => String(i.id) === String(id));
+  if (!inv) return;
+  document.getElementById('retParty').value = inv.customer || '';
+  if (!getVal('retAmount')) document.getElementById('retAmount').value = inv.total || '';
+  if (!getVal('retItem') && inv.items?.length) {
+    document.getElementById('retItem').value = inv.items[0].prod || '';
+  }
+}
+
+ async function saveReturn() {
+   const docType = getVal('retDocType');
+   const againstId = getVal('retAgainstInv');
+   const party = getVal('retParty');
+   const date = getVal('retDate') || new Date().toISOString().slice(0,10);
+   const amount = parseFloat(getVal('retAmount')) || 0;
+   const reason = getVal('retReason');
+   const item = getVal('retItem');
+   const gstRate = parseFloat(getVal('retGstRate')) || 0;
+   const quantity = parseFloat(getVal('retQuantity')) || 1;
+
+   if (!againstId) { showToast('⚠️ Select the original invoice','warn'); return; }
+   if (!party.trim()) { showToast('⚠️ Enter customer / vendor name','warn'); return; }
+   if (amount <= 0) { showToast('⚠️ Enter a valid amount','warn'); return; }
+
+   const invoiceType = (docType === 'Purchase Return' || docType === 'Debit Note') ? 'debit_note' : 'credit_note';
+
+   const payload = {
+     invoice_type: invoiceType,
+     invoice_date: date,
+     against_invoice_id: againstId,
+     billing_name: party,
+     notes: reason || '',
+     items: [{
+       description: item || reason || docType,
+       quantity: quantity,
+       rate: amount,
+       gst_rate: gstRate,
+     }],
+   };
+
+   try {
+     if (AUTH.apiOnline) {
+       await apiFetch('/billing/invoices', { method: 'POST', body: JSON.stringify(payload) });
+     }
+     showToast('✅ ' + docType + ' saved');
+     addAuditEntry('CREATE','Returns','Created '+docType+' against '+(INVOICES.find(i=>String(i.id)===String(againstId))?.no||againstId));
+     closeModal('retModal');
+     await renderReturns();
+   } catch (e) {
+     showToast('❌ ' + e.message);
+   }
+ }
 
 // ============================================================
 //  TOAST
