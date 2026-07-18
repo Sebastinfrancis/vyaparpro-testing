@@ -153,7 +153,7 @@ class InvoiceRepository(BaseRepository[Invoice]):
                      from_date: date | None = None, to_date: date | None = None,
                      overdue_only: bool = False, page: int = 1, page_size: int = 20) -> Pagination:
         stmt = (select(Invoice).where(Invoice.company_id == company_id)
-                .options(selectinload(Invoice.party)))
+                .options(selectinload(Invoice.party), selectinload(Invoice.items)))
         if query:
             like = f"%{query}%"
             stmt = stmt.where(or_(Invoice.invoice_no.ilike(like),

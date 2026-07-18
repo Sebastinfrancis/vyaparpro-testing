@@ -227,6 +227,8 @@ class PurchaseOrderItem(Base, UUIDMixin):
     received_qty: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=Decimal("0"))
     jo_item_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("job_order_items.id"))
     display_order: Mapped[int] = mapped_column(SmallInteger, default=0)
+    cess_amount: Mapped[Decimal] = mapped_column(Numeric(15,2),default=Decimal("0"))
+    total_amount: Mapped[Decimal] = mapped_column(Numeric(15,2),default=Decimal("0"))
 
     po: Mapped["PurchaseOrder"] = relationship("PurchaseOrder", back_populates="items")
 

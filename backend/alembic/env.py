@@ -34,6 +34,7 @@ from app.db.models.inventory import (  # noqa: F401
     StockAdjustment, StockAdjustmentItem, StockTransfer, StockTransferItem,
     ProductBatch, SerialNumber, BarcodeLabel,
 )
+from app.db.models.crm import Lead  # noqa: F401
 
 config = context.config
 if config.config_file_name:

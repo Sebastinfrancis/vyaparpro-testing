@@ -102,7 +102,7 @@ async def update_job_order(jo_id: UUID, payload: JobOrderUpdate, current: Curren
     repo = JobOrderRepository(db)
     jo = await repo.get_or_raise(jo_id)
     updated = await repo.update(jo, payload.model_dump(exclude_unset=True, exclude={"items"}))
-    return ok(JobOrderOut.model_validate(updated).model_dump(), "Job order updated.")
+    return ok(JobOrderOut.model_validate(updated).model_dump(mode='json'), "Job order updated.")
 
 @router.post("/job-orders/{jo_id}/convert-to-invoice", summary="Convert job order to invoice")
 async def jo_to_invoice(jo_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
@@ -125,7 +125,7 @@ async def list_purchase_orders(current: CurrentUserDep, db: DBDep, pg: Paginatio
     from app.schemas.billing import PurchaseOrderOut
     repo = PurchaseOrderRepository(db)
     result = await repo.search(current.company_id, q, status, vendor_id, from_date, to_date, pg.page, pg.page_size)
-    return paginated([PurchaseOrderOut.model_validate(r).model_dump() for r in result.items],
+    return paginated([PurchaseOrderOut.model_validate(r).model_dump(mode='json') for r in result.items],
                      result.total, result.page, result.page_size, result.pages)
 
 @router.post("/purchase-orders", status_code=201, summary="Create purchase order")
@@ -133,7 +133,7 @@ async def create_purchase_order(payload: PurchaseOrderCreate, current: CurrentUs
     from app.schemas.billing import PurchaseOrderOut
     svc = PurchaseOrderService(db)
     po = await svc.create(current.company_id, payload, current.user_id)
-    return created(PurchaseOrderOut.model_validate(po).model_dump(), "Purchase order created.")
+    return created(PurchaseOrderOut.model_validate(po).model_dump(mode='json'), "Purchase order created.")
 
 @router.get("/purchase-orders/{po_id}", summary="Get purchase order")
 async def get_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
@@ -155,6 +155,28 @@ async def approve_po(po_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONR
     await repo.update(po, {"approval_status": "approved", "approved_by": current.user_id,
                            "approved_at": datetime.now(timezone.utc), "status": "sent"})
     return ok(message="Purchase order approved.")
+
+@router.patch("/purchase-orders/{po_id}", summary="Partially update purchase order (e.g. status)")
+async def patch_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep, payload: dict) -> ORJSONResponse:
+    from app.db.repositories.billing import PurchaseOrderRepository
+    from app.schemas.billing import PurchaseOrderOut
+    from fastapi import HTTPException
+    repo = PurchaseOrderRepository(db)
+    po = await repo.get_detail(po_id)
+    if not po:
+        raise HTTPException(status_code=404, detail="Purchase order not found")
+    allowed = {"status", "expected_delivery", "actual_delivery", "notes"}
+    await repo.update(po, {k: v for k, v in payload.items() if k in allowed})
+    updated = await repo.get_detail(po_id)
+    return ok(PurchaseOrderOut.model_validate(updated).model_dump(mode='json'), "Purchase order updated.")
+
+@router.delete("/purchase-orders/{po_id}", status_code=204, summary="Delete purchase order")
+async def delete_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep) -> Response:
+    from app.db.repositories.billing import PurchaseOrderRepository
+    repo = PurchaseOrderRepository(db)
+    po = await repo.get_or_raise(po_id)
+    await repo.delete(po)
+    return Response(status_code=204)
 
 
 # ═══════════════════════════════════════════════════════════════════

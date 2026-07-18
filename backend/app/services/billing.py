@@ -263,7 +263,7 @@ class PurchaseOrderService:
             "notes": payload.notes,
             "other_charges": payload.other_charges,
             "created_by": user_id,
-            "status": "draft",
+            "status": "open",
             "approval_status": "pending",
             **totals,
             "total_amount": total,

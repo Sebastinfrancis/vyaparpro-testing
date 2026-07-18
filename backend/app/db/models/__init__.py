@@ -421,3 +421,4 @@ from app.db.models.inventory import (  # noqa: F401, E402
     StockAdjustment, StockAdjustmentItem, StockTransfer, StockTransferItem,
     ProductBatch, SerialNumber, BarcodeLabel,
 )
+from app.db.models.crm import Lead  # noqa: F401, E402

@@ -24,7 +24,7 @@ from app.schemas import PartyContactCreate, PartyContactOut, PartyCreate, PartyO
 from app.services import PartyService
 from app.utils.responses import created, ok, paginated
 
-from sqlalchemy import select
+from sqlalchemy import select,text
 from sqlalchemy.orm import selectinload
 from app.db.models import Party
 
@@ -61,7 +61,30 @@ async def list_customers(
         page=pg.page,
         page_size=pg.page_size,
     )
-    items = [PartyOut.model_validate(p).model_dump(mode="json") for p in result.items]
+    party_ids = [p.id for p in result.items]
+    stats_by_party: dict[str, dict] = {}
+    if party_ids:
+        stmt = text("""
+            SELECT
+                party_id,
+                COALESCE(SUM(total_amount) FILTER (WHERE status NOT IN ('cancelled','void','draft')), 0) AS total_business,
+                COALESCE(SUM(total_amount - paid_amount) FILTER (WHERE status NOT IN ('paid','cancelled','void','draft')), 0) AS outstanding,
+                MAX(invoice_date) FILTER (WHERE status NOT IN ('cancelled','void','draft')) AS last_purchase
+            FROM invoices
+            WHERE company_id = :cid AND party_id = ANY(:pids)
+            GROUP BY party_id
+        """)
+        rows = (await db.execute(stmt, {"cid": str(current.company_id), "pids": [str(pid) for pid in party_ids]})).mappings().all()
+        stats_by_party = {str(r["party_id"]): dict(r) for r in rows}
+
+    items = []
+    for p in result.items:
+        item = PartyOut.model_validate(p).model_dump(mode="json")
+        stats = stats_by_party.get(str(p.id), {})
+        item["total_business"] = float(stats.get("total_business", 0))
+        item["outstanding_amount"] = float(stats.get("outstanding", 0))
+        item["last_purchase_date"] = stats.get("last_purchase").isoformat() if stats.get("last_purchase") else None
+        items.append(item)
     resp = {
         "success": True, "message": "OK",
         "data": {"items": items, "total": result.total,

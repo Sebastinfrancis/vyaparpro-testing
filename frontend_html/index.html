@@ -332,7 +332,21 @@ select.fi option{background:var(--bg2)}
       <div style="display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap">
         <input class="fi" style="width:220px" id="invSearch" placeholder="🔍 Search invoices…" oninput="filterInvoices()"/>
         <select class="fi" style="width:130px" id="invStatusF" onchange="filterInvoices()"><option value="">All Status</option><option>paid</option><option>pending</option><option>overdue</option><option>draft</option></select>
-        <select class="fi" style="width:130px" id="invTypeF" onchange="filterInvoices()"><option value="">All Types</option><option>GST Invoice</option><option>Tax Invoice</option><option>Proforma</option><option>Quotation</option></select>
+        <div style="position:relative;width:180px" id="invTypeFWrap">
+          <button type="button" class="fi" style="width:100%;text-align:left;cursor:pointer" id="invTypeFBtn" onclick="toggleTypeFilterMenu(event)">All Types</button>
+          <div id="invTypeFMenu" class="hidden" style="position:absolute;top:calc(100% + 4px);left:0;z-index:50;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:8px;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+            <label style="display:flex;align-items:center;gap:7px;padding:5px 4px;font-size:12px;cursor:pointer"><input type="checkbox" value="GST Invoice" onchange="filterInvoices()"/> GST Invoice</label>
+            <label style="display:flex;align-items:center;gap:7px;padding:5px 4px;font-size:12px;cursor:pointer"><input type="checkbox" value="Tax Invoice" onchange="filterInvoices()"/> Tax Invoice</label>
+            <label style="display:flex;align-items:center;gap:7px;padding:5px 4px;font-size:12px;cursor:pointer"><input type="checkbox" value="Credit Note" onchange="filterInvoices()"/> Credit Note</label>
+            <label style="display:flex;align-items:center;gap:7px;padding:5px 4px;font-size:12px;cursor:pointer"><input type="checkbox" value="Debit Note" onchange="filterInvoices()"/> Debit Note</label>
+          </div>
+        </div>
+        <select class="fi" style="width:170px" id="invSortF" onchange="filterInvoices()">
+          <option value="date_desc">Date: Newest First</option>
+          <option value="date_asc">Date: Oldest First</option>
+          <option value="no_asc">Invoice No: Ascending</option>
+          <option value="no_desc">Invoice No: Descending</option>
+        </select>
       </div>
       <div class="card"><div class="tw">
         <table><thead><tr><th>#</th><th>Invoice No</th><th>Date</th><th>Customer</th><th>Type</th><th>Taxable Amount</th><th>GST</th><th>Total</th><th>Due</th><th>Status</th><th>Actions</th></tr></thead>
@@ -455,20 +469,20 @@ select.fi option{background:var(--bg2)}
       <div class="bc">Parties / <span>Customers</span></div>
       <div class="sh" style="margin-top:8px">
         <div><div class="st">Customer Management</div><div class="ss">Outstanding, LTV, AI score, purchase history</div></div>
-        <button class="btn btn-p btn-sm" onclick="openModal('custModal')">➕ Add Customer</button>
+        <button class="btn btn-p btn-sm" onclick="openAddCust()">➕ Add Customer</button>
       </div>
       <div style="display:flex;gap:14px;margin-bottom:18px">
         <div class="sc bl" style="flex:1"><div class="slbl">Total</div><div class="sval bl" style="font-size:20px" id="custTotal">—</div></div>
-        <div class="sc gr" style="flex:1"><div class="slbl">Active (30d)</div><div class="sval gr" style="font-size:20px">—</div></div>
-        <div class="sc or" style="flex:1"><div class="slbl">Outstanding</div><div class="sval or" style="font-size:20px">—</div></div>
-        <div class="sc pu" style="flex:1"><div class="slbl">Avg LTV</div><div class="sval pu" style="font-size:20px">—</div></div>
+        <div class="sc gr" style="flex:1"><div class="slbl">Active (30d)</div><div class="sval gr" style="font-size:20px" id="custActive">—</div></div>
+        <div class="sc or" style="flex:1"><div class="slbl">Outstanding</div><div class="sval or" style="font-size:20px" id="custOutstanding">—</div></div>
+        <div class="sc pu" style="flex:1"><div class="slbl">Avg LTV</div><div class="sval pu" style="font-size:20px" id="custAvgLTV">—</div></div>
       </div>
       <div style="display:flex;gap:9px;margin-bottom:14px">
         <input class="fi" style="width:240px" id="custSearch" placeholder="🔍 Search customers…" oninput="filterCust()"/>
         <select class="fi" style="width:130px" id="custCityF" onchange="filterCust()"><option value="">All Cities</option><option>Mumbai</option><option>Pune</option><option>Delhi</option><option>Nashik</option></select>
       </div>
       <div class="card"><div class="tw"><table>
-        <thead><tr><th>Customer</th><th>GSTIN</th><th>Mobile</th><th>City</th><th>Total Business</th><th>Outstanding</th><th>Last Purchase</th><th>AI Score</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Customer</th><th>GSTIN</th><th>Mobile</th><th>City</th><th>Total Business</th><th>Outstanding</th><th>Last Purchase</th><th>Actions</th></tr></thead>
         <tbody id="custBody"></tbody>
       </table></div></div>
     </div>
@@ -496,17 +510,27 @@ select.fi option{background:var(--bg2)}
     <div class="page" id="page-crm">
       <div class="bc">Parties / <span>CRM</span></div>
       <div class="sh" style="margin-top:8px">
-        <div><div class="st">CRM — Leads & Pipeline</div><div class="ss">AI suggests next action & follow-up dates</div></div>
-        <button class="btn btn-p btn-sm" onclick="openModal('leadModal')">➕ Add Lead</button>
+        <div><div class="st">CRM — Leads & Pipeline</div><div class="ss">Customer relationship management</div></div>
+        <button class="btn btn-p btn-sm" onclick="openAddLead()">➕ Add Lead</button>
       </div>
       <div style="display:flex;gap:14px;margin-bottom:18px">
-        <div class="sc bl" style="flex:1"><div class="slbl">Total Leads</div><div class="sval bl" style="font-size:20px">34</div></div>
-        <div class="sc or" style="flex:1"><div class="slbl">Follow-Up Due</div><div class="sval or" style="font-size:20px">8</div></div>
-        <div class="sc gr" style="flex:1"><div class="slbl">Converted</div><div class="sval gr" style="font-size:20px">12</div></div>
-        <div class="sc pu" style="flex:1"><div class="slbl">Pipeline Value</div><div class="sval pu" style="font-size:20px">₹12.4L</div></div>
+        <div class="sc bl" style="flex:1"><div class="slbl">Total Leads</div><div class="sval bl" style="font-size:20px" id="crmTotal">—</div></div>
+        <div class="sc or" style="flex:1"><div class="slbl">Follow-Up Due</div><div class="sval or" style="font-size:20px" id="crmFollowDue">—</div></div>
+        <div class="sc gr" style="flex:1"><div class="slbl">Converted</div><div class="sval gr" style="font-size:20px" id="crmWon">—</div></div>
+        <div class="sc pu" style="flex:1"><div class="slbl">Pipeline Value</div><div class="sval pu" style="font-size:20px" id="crmPipeline">—</div></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        <input class="fi" id="crmSearch" placeholder="🔍 Search leads..." style="max-width:240px" oninput="filterCRM()"/>
+        <select class="fi" id="crmSort" style="max-width:180px" onchange="filterCRM()">
+          <option value="">Sort by...</option>
+          <option value="value_desc">Value: High → Low</option>
+          <option value="value_asc">Value: Low → High</option>
+          <option value="followup_asc">Follow-up: Soonest</option>
+          <option value="followup_desc">Follow-up: Latest</option>
+        </select>
       </div>
       <div class="card"><div class="tw"><table>
-        <thead><tr><th>Lead Name</th><th>Company</th><th>Mobile</th><th>Stage</th><th>Value</th><th>Follow-Up</th><th>AI Suggestion</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Lead Name</th><th>Company</th><th>Mobile</th><th>Stage</th><th>Value</th><th>Follow-Up</th><th>NOTES</th><th>Actions</th></tr></thead>
         <tbody id="crmBody"></tbody>
       </table></div></div>
     </div>
@@ -518,14 +542,32 @@ select.fi option{background:var(--bg2)}
         <div><div class="st">Purchase Management</div><div class="ss">Purchase orders, GRN, vendor bills, returns</div></div>
         <div style="display:flex;gap:7px">
           <button class="btn btn-o btn-sm" onclick="showToast('📷 OCR scanner ready — scan supplier bill')">📷 OCR Scan Bill</button>
-          <button class="btn btn-p btn-sm" onclick="openModal('poModal')">➕ New Purchase Order</button>
+          <button class="btn btn-p btn-sm" onclick="openNewPOModal()">➕ New Purchase Order</button>
         </div>
       </div>
       <div style="display:flex;gap:14px;margin-bottom:18px">
-        <div class="sc bl" style="flex:1"><div class="slbl">This Month</div><div class="sval bl" style="font-size:20px">₹12.4L</div></div>
-        <div class="sc or" style="flex:1"><div class="slbl">Pending Orders</div><div class="sval or" style="font-size:20px">6</div></div>
-        <div class="sc gr" style="flex:1"><div class="slbl">Received</div><div class="sval gr" style="font-size:20px">28</div></div>
-        <div class="sc pu" style="flex:1"><div class="slbl">Input ITC</div><div class="sval pu" style="font-size:20px">₹1.42L</div></div>
+        <div class="sc bl" style="flex:1"><div class="slbl">This Month</div><div class="sval bl" style="font-size:20px" id="poThisMonth">₹0</div></div>
+        <div class="sc or" style="flex:1"><div class="slbl">Pending Orders</div><div class="sval or" style="font-size:20px" id="poPending">0</div></div>
+        <div class="sc gr" style="flex:1"><div class="slbl">Received</div><div class="sval gr" style="font-size:20px" id="poReceived">0</div></div>
+        <div class="sc pu" style="flex:1"><div class="slbl">Input ITC</div><div class="sval pu" style="font-size:20px" id="poInputITC">₹0</div></div>
+      </div>
+      <div style="display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap">
+        <input class="fi" style="width:220px" id="poSearch" placeholder="🔍 Search PO no. or vendor…" oninput="filterPO()"/>
+        <select class="fi" style="width:170px" id="poSortF" onchange="filterPO()">
+          <option value="date_desc">Date: Newest First</option>
+          <option value="date_asc">Date: Oldest First</option>
+          <option value="no_asc">PO No: Ascending</option>
+          <option value="no_desc">PO No: Descending</option>
+        </select>
+        <div style="position:relative;width:180px" id="poStatusFWrap">
+          <button type="button" class="fi" style="width:100%;text-align:left;cursor:pointer" id="poStatusFBtn" onclick="togglePOStatusMenu(event)">All Status</button>
+          <div id="poStatusFMenu" class="hidden" style="position:absolute;top:calc(100% + 4px);left:0;z-index:50;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:8px;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+            <label style="display:flex;align-items:center;gap:7px;padding:5px 4px;font-size:12px;cursor:pointer"><input type="checkbox" value="open" onchange="filterPO()"/> Open</label>
+            <label style="display:flex;align-items:center;gap:7px;padding:5px 4px;font-size:12px;cursor:pointer"><input type="checkbox" value="partially_received" onchange="filterPO()"/> Partially Received</label>
+            <label style="display:flex;align-items:center;gap:7px;padding:5px 4px;font-size:12px;cursor:pointer"><input type="checkbox" value="received" onchange="filterPO()"/> Received</label>
+            <label style="display:flex;align-items:center;gap:7px;padding:5px 4px;font-size:12px;cursor:pointer"><input type="checkbox" value="cancelled" onchange="filterPO()"/> Cancelled</label>
+          </div>
+        </div>
       </div>
       <div class="card"><div class="tw"><table>
         <thead><tr><th>PO No</th><th>Date</th><th>Vendor</th><th>Amount</th><th>GST</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
@@ -933,12 +975,21 @@ select.fi option{background:var(--bg2)}
       <div class="fr c2"><div class="fg"><label class="fl">Business / Customer Name</label><input class="fi" id="cm_name" placeholder="Kumar Electronics"/></div>
         <div class="fg"><label class="fl">Contact Person</label><input class="fi" id="cm_contact" placeholder="Suresh Kumar"/></div></div>
       <div class="fr c2"><div class="fg"><label class="fl">GSTIN</label><input class="fi mono" id="cm_gstin" placeholder="27AABCK5678G1Z2"/></div>
-        <div class="fg"><label class="fl">Mobile</label><input class="fi" id="cm_mobile" placeholder="9876543210"/></div></div>
+        <div class="fg"><label class="fl">PAN</label><input class="fi mono" id="cm_pan" placeholder="AABCK5678G"/></div></div>
+      <div class="fr c2"><div class="fg"><label class="fl">Mobile</label><input class="fi" id="cm_mobile" placeholder="9876543210"/></div>
+        <div class="fg"><label class="fl">Alt. Mobile</label><input class="fi" id="cm_altmobile" placeholder="9876500000"/></div></div>
       <div class="fr c2"><div class="fg"><label class="fl">Email</label><input class="fi" id="cm_email" placeholder="kumar@email.com"/></div>
-        <div class="fg"><label class="fl">City</label><input class="fi" id="cm_city" placeholder="Mumbai"/></div></div>
+        <div class="fg"><label class="fl">Category</label><select class="fi" id="cm_category"><option value="">—</option><option>Retail</option><option>Wholesale</option><option>Distributor</option><option>Corporate</option></select></div></div>
       <div class="fg"><label class="fl">Full Address</label><textarea class="fi" rows="2" id="cm_addr" placeholder="Billing address…"></textarea></div>
+      <div class="fr c3"><div class="fg"><label class="fl">City</label><input class="fi" id="cm_city" placeholder="Mumbai"/></div>
+        <div class="fg"><label class="fl">State</label><input class="fi" id="cm_state" placeholder="Maharashtra"/></div>
+        <div class="fg"><label class="fl">State Code</label><input class="fi" id="cm_statecode" placeholder="27" maxlength="2"/></div></div>
+      <div class="fg" style="max-width:200px"><label class="fl">Pincode</label><input class="fi" id="cm_pincode" placeholder="400001"/></div>
       <div class="fr c2"><div class="fg"><label class="fl">Credit Limit (₹)</label><input class="fi" type="number" id="cm_credit" placeholder="100000"/></div>
-        <div class="fg"><label class="fl">Payment Terms</label><select class="fi" id="cm_terms"><option>Due on Receipt</option><option>Net 15</option><option>Net 30</option><option>Net 45</option></select></div></div>
+        <div class="fg"><label class="fl">Payment Terms</label><select class="fi" id="cm_terms"><option value="0">Due on Receipt</option><option value="15">Net 15</option><option value="30">Net 30</option><option value="45">Net 45</option></select></div></div>
+      <div class="fr c2"><div class="fg"><label class="fl">Opening Balance (₹)</label><input class="fi" type="number" id="cm_opening" placeholder="0"/></div>
+        <div class="fg"><label class="fl">Balance Type</label><select class="fi" id="cm_balancetype"><option value="Dr">Dr (They owe us)</option><option value="Cr">Cr (We owe them)</option></select></div></div>
+      <div class="fg"><label class="fl">Notes</label><textarea class="fi" rows="2" id="cm_notes" placeholder="Internal notes…"></textarea></div>
     </div>
     <div class="mf"><button class="btn btn-o" onclick="closeModal('custModal')">Cancel</button><button class="btn btn-p" onclick="saveCust()">Save Customer</button></div>
   </div>
@@ -985,33 +1036,51 @@ select.fi option{background:var(--bg2)}
 
 <div id="leadModal" class="mo hidden">
   <div class="md md-md">
-    <div class="mh"><span class="mt2">Add Lead / Opportunity</span><button class="mc" onclick="closeModal('leadModal')">✕</button></div>
+    <div class="mh" id="leadModalTitle"><span class="mt2">Add Lead / Opportunity</span><button class="mc" onclick="closeModal('leadModal')">✕</button></div>
     <div class="mb">
-      <div class="fr c2"><div class="fg"><label class="fl">Lead Name</label><input class="fi" placeholder="Deepak Traders"/></div>
-        <div class="fg"><label class="fl">Company</label><input class="fi" placeholder="Deepak Enterprises"/></div></div>
-      <div class="fr c2"><div class="fg"><label class="fl">Mobile</label><input class="fi" placeholder="9876543210"/></div>
-        <div class="fg"><label class="fl">Email</label><input class="fi" placeholder="deepak@email.com"/></div></div>
-      <div class="fr c3"><div class="fg"><label class="fl">Stage</label><select class="fi"><option>New</option><option>Contacted</option><option>Proposal</option><option>Negotiation</option><option>Won</option><option>Lost</option></select></div>
-        <div class="fg"><label class="fl">Value (₹)</label><input class="fi" type="number" placeholder="500000"/></div>
-        <div class="fg"><label class="fl">Follow-Up Date</label><input type="date" class="fi"/></div></div>
-      <div class="fg"><label class="fl">Notes</label><textarea class="fi" rows="2" placeholder="Lead notes…"></textarea></div>
+      <div class="fr c2"><div class="fg"><label class="fl">Lead Name</label><input class="fi" id="lm_name" placeholder="Deepak Traders"/></div>
+        <div class="fg"><label class="fl">Company</label><input class="fi" id="lm_company" placeholder="Deepak Enterprises"/></div></div>
+      <div class="fr c2"><div class="fg"><label class="fl">Mobile</label><input class="fi" id="lm_mobile" placeholder="9876543210"/></div>
+        <div class="fg"><label class="fl">Email</label><input class="fi" id="lm_email" placeholder="deepak@email.com"/></div></div>
+      <div class="fr c3"><div class="fg"><label class="fl">Stage</label><select class="fi" id="lm_stage"><option>New</option><option>Contacted</option><option>Proposal</option><option>Negotiation</option><option>Won</option><option>Lost</option></select></div>
+        <div class="fg"><label class="fl">Value (₹)</label><input class="fi" type="number" id="lm_value" placeholder="500000"/></div>
+        <div class="fg"><label class="fl">Follow-Up Date</label><input type="date" class="fi" id="lm_followup"/></div></div>
+      <div class="fg"><label class="fl">Notes</label><textarea class="fi" rows="2" id="lm_notes" placeholder="Lead notes…"></textarea></div>
     </div>
     <div class="mf"><button class="btn btn-o" onclick="closeModal('leadModal')">Cancel</button><button class="btn btn-p" onclick="saveLead()">Save Lead</button></div>
   </div>
 </div>
 
 <div id="poModal" class="mo hidden">
-  <div class="md md-md">
+  <div class="md md-lg">
     <div class="mh"><span class="mt2">New Purchase Order</span><button class="mc" onclick="closeModal('poModal')">✕</button></div>
     <div class="mb">
-      <div class="fr c2"><div class="fg"><label class="fl">PO Number</label><input class="fi" value="PO-0042"/></div>
-        <div class="fg"><label class="fl">Date</label><input type="date" class="fi"/></div></div>
-      <div class="fg"><label class="fl">Vendor</label><select class="fi"><option>Samsung India Pvt Ltd</option><option>LG Electronics India</option><option>Lenovo India</option><option>Xiaomi India</option></select></div>
-      <div class="fg"><label class="fl">Items (brief)</label><textarea class="fi" rows="2" placeholder="e.g. Samsung 55 QLED x5…"></textarea></div>
-      <div class="fr c2"><div class="fg"><label class="fl">Expected Delivery</label><input type="date" class="fi"/></div>
-        <div class="fg"><label class="fl">Payment Terms</label><select class="fi"><option>Net 30</option><option>Net 45</option><option>Advance</option></select></div></div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">PO Number</label><input class="fi mono" id="poNo" readonly/></div>
+        <div class="fg"><label class="fl">Date</label><input type="date" class="fi" id="poDate"/></div>
+      </div>
+      <div class="fg"><label class="fl">Vendor</label><select class="fi" id="poVendor"><option value="">Select vendor…</option></select></div>
+      <div class="card" style="margin:10px 0">
+        <div style="font-size:12px;font-weight:700;margin-bottom:10px">PO Items</div>
+        <div class="iih iir" style="padding:3px 0 7px"><span>Product / Description</span><span>Qty</span><span>Rate (₹)</span><span>Disc%</span><span>GST%</span><span>Amount</span><span></span></div>
+        <div id="poItems"></div>
+        <button class="btn btn-o btn-sm" style="margin-top:10px" onclick="addPOItem()">➕ Add Line Item</button>
+      </div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Expected Delivery</label><input type="date" class="fi" id="poExpDelivery"/></div>
+        <div class="fg"><label class="fl">Payment Terms</label><select class="fi" id="poPaymentTerms"><option>Net 30</option><option>Net 45</option><option>Advance</option></select></div>
+      </div>
+      <div class="fg"><label class="fl">Notes</label><textarea class="fi" rows="2" id="poNotes" placeholder="Special instructions…"></textarea></div>
+      <div style="text-align:right;font-size:13px;font-weight:700;margin-top:6px">Total: <span id="poGrandTotal" style="color:var(--accent)">₹0.00</span></div>
     </div>
     <div class="mf"><button class="btn btn-o" onclick="closeModal('poModal')">Cancel</button><button class="btn btn-p" onclick="savePO()">Create PO</button></div>
+  </div>
+</div>
+
+<div id="poActionsModal" class="mo hidden">
+  <div class="md md-sm">
+    <div class="mh"><span class="mt2">PO Status</span><button class="mc" onclick="closeModal('poActionsModal')">✕</button></div>
+    <div class="mb" id="poActionsContent"></div>
   </div>
 </div>
 
@@ -1035,11 +1104,15 @@ select.fi option{background:var(--bg2)}
     <div class="mh"><span class="mt2">New Return / Credit Note</span><button class="mc" onclick="closeModal('retModal')">✕</button></div>
     <div class="mb">
       <div class="fg"><label class="fl">Document Type</label><select class="fi" id="retDocType"><option>Sales Return</option><option>Purchase Return</option><option>Credit Note</option><option>Debit Note</option></select></div>
-      <div class="fg"><label class="fl">Against Invoice</label><select class="fi mono" id="retAgainstInv" onchange="autofillReturnParty()"><option value="">Select original invoice…</option></select></div>
-      <div class="fg"><label class="fl">Product / Item</label><input class="fi" id="retItem" placeholder="e.g. Sony WH-1000XM5"/></div>
+      <div class="fg"><label class="fl">Against Invoice</label><select class="fi mono" id="retAgainstInv" onchange="onRetInvoiceChange()"><option value="">Select original invoice…</option></select></div>
+      <div class="fg"><label class="fl">Product</label><select class="fi" id="retProduct" onchange="onRetProductChange()"><option value="">Select product…</option></select></div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Quantity</label><input class="fi" type="number" id="retQty" min="1" oninput="onRetQtyChange()"/></div>
+        <div class="fg"><label class="fl">Rate (₹)</label><input class="fi" type="number" id="retRate" readonly/></div>
+      </div>
       <div class="fr c2"><div class="fg"><label class="fl">Customer / Vendor</label><input class="fi" id="retParty" placeholder="Kumar Electronics"/></div>
         <div class="fg"><label class="fl">Date</label><input type="date" class="fi" id="retDate"/></div></div>
-      <div class="fg"><label class="fl">Amount (₹)</label><input class="fi" type="number" id="retAmount" placeholder="5000"/></div>
+      <div class="fg"><label class="fl">Amount (₹)</label><input class="fi" type="number" id="retAmount" readonly/></div>
       <div class="fg"><label class="fl">Reason</label><textarea class="fi" id="retReason" rows="2" placeholder="Reason for return…"></textarea></div>
     </div>
     <div class="mf"><button class="btn btn-o" onclick="closeModal('retModal')">Cancel</button><button class="btn btn-p" onclick="saveReturn()">Save Return</button></div>
@@ -1226,20 +1299,29 @@ function normQuote(q) {
 // Normalise one customer object from API → internal schema
 function normCustomer(c) {
   return {
-    id:          c.id,
-    name:        c.display_name     || c.legal_name  || c.name || '—',
-    gstin:       c.gstin_number     || c.gstin       || '',
-    mobile:      c.phone            || c.mobile      || '',
-    city:        c.billing_city     || c.city        || '',
-    email:       c.email            || '',
-    addr:        c.billing_address  || c.address     || '',
-    contact:     c.contact_person   || c.contact     || '',
-    credit:      c.credit_limit     || 0,
-    terms:       c.payment_terms    || 'Net 30',
-    total:       c.total_business   || c.lifetime_value || 0,
-    outstanding: c.outstanding_amount || c.outstanding || 0,
-    last:        c.last_purchase_date || '—',
-    score:       c.credit_score     || c.ai_score    || 0,
+    id:              c.id,
+    name:            c.display_name      || c.name || '—',
+    gstin:           c.gstin             || '',
+    pan:             c.pan               || '',
+    category:        c.party_category    || '',
+    mobile:          c.phone             || '',
+    altMobile:       c.alt_phone         || '',
+    city:            c.billing_city      || '',
+    state:           c.billing_state     || '',
+    stateCode:       c.billing_state_code|| '',
+    pincode:         c.billing_pincode   || '',
+    email:           c.email             || '',
+    addr:            c.billing_address   || '',
+    contact:         c.legal_name        || '',
+    credit:          c.credit_limit      || 0,
+    creditDays:      c.credit_days       ?? 30,
+    openingBalance:  c.opening_balance   || 0,
+    balanceType:     c.balance_type      || 'Dr',
+    notes:           c.notes             || '',
+    total:           c.total_business    || c.lifetime_value || 0,
+    outstanding:     c.outstanding_amount|| c.outstanding || 0,
+    last:            c.last_purchase_date|| '—',
+    score:           c.ai_score          || 0,
   };
 }
 
@@ -1279,6 +1361,21 @@ function normVendor(v) {
   };
 }
 
+function normLead(l) {
+  return {
+    id:        l.id,
+    name:      l.lead_name    || l.name    || '—',
+    company:   l.company_name || l.company || '',
+    mobile:    l.mobile       || '',
+    email:     l.email        || '',
+    stage:     l.stage        || 'New',
+    value:     Number(l.value || 0),
+    followup:  (l.follow_up_date || '—').slice(0,10),
+    ai:        l.ai_suggestion || 'No suggestion yet',
+    notes:     l.notes        || '',
+  };
+}
+
 // ============================================================
 //  LOCAL CACHE  (offline fallback demo data)
 // ============================================================
@@ -1315,12 +1412,12 @@ let VENDORS   = [
   {id:3,name:'Lenovo India',gstin:'07AAACL9012C1Z1',mobile:'9833003300',city:'Delhi',total:2400000,payable:65000,score:92},
   {id:4,name:'Xiaomi India',gstin:'29AAACX3456D1Z9',mobile:'9844004400',city:'Bengaluru',total:950000,payable:48000,score:79},
 ];
-const CRM_LEADS=[
+let CRM_LEADS=[
   {name:'Deepak Traders',company:'Deepak Enterprises',mobile:'9876501234',stage:'Proposal',value:500000,followup:'2026-06-05',ai:'Send product catalogue & quotation'},
   {name:'Ravi Distributors',company:'Ravi & Co',mobile:'9876503456',stage:'Negotiation',value:800000,followup:'2026-06-02',ai:'Offer 3% extra discount to close deal'},
   {name:'Neha Retail',company:'Neha Shop',mobile:'9876504567',stage:'New',value:150000,followup:'2026-06-07',ai:'Introduce yourself & understand needs'},
 ];
-const PO_DATA=[
+let PO_DATA=[
   {no:'PO-0041',date:'28 May 2026',vendor:'Samsung India',amount:225000,gst:40500,total:265500,status:'received'},
   {no:'PO-0040',date:'25 May 2026',vendor:'LG Electronics India',amount:180000,gst:32400,total:212400,status:'pending'},
   {no:'PO-0039',date:'22 May 2026',vendor:'Lenovo India',amount:160000,gst:28800,total:188800,status:'received'},
@@ -1644,15 +1741,68 @@ async function renderInvoices(list) {
   renderDashInvoices(data);
 }
 
+const TYPE_ALIASES = {
+  'GST Invoice': ['GST Invoice', 'gst_invoice'],
+  'Tax Invoice': ['Tax Invoice', 'tax_invoice'],
+  'Credit Note': ['Credit Note', 'credit_note'],
+  'Debit Note':  ['Debit Note', 'debit_note'],
+};
+
+function toggleTypeFilterMenu(e) {
+  e.stopPropagation();
+  document.getElementById('invTypeFMenu').classList.toggle('hidden');
+}
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('invTypeFWrap');
+  const menu = document.getElementById('invTypeFMenu');
+  if (wrap && menu && !wrap.contains(e.target)) menu.classList.add('hidden');
+});
+
+function getSelectedInvTypes() {
+  return Array.from(document.querySelectorAll('#invTypeFMenu input[type=checkbox]:checked')).map(cb => cb.value);
+}
+
+function matchesTypeFilter(inv, selected) {
+  if (!selected.length) return true;
+  return selected.some(s => (TYPE_ALIASES[s] || [s]).includes(inv.type));
+}
+
+function sortInvoices(list, sortBy) {
+  const arr = [...list];
+  switch (sortBy) {
+    case 'no_asc':
+      arr.sort((a, b) => a.no.localeCompare(b.no, undefined, { numeric: true }));
+      break;
+    case 'no_desc':
+      arr.sort((a, b) => b.no.localeCompare(a.no, undefined, { numeric: true }));
+      break;
+    case 'date_asc':
+      arr.sort((a, b) => new Date(a.date) - new Date(b.date));
+      break;
+    case 'date_desc':
+    default:
+      arr.sort((a, b) => new Date(b.date) - new Date(a.date));
+  }
+  return arr;
+}
+
 function filterInvoices() {
-  const q  = (document.getElementById('invSearch')?.value||'').toLowerCase();
-  const st = document.getElementById('invStatusF')?.value||'';
-  const ty = document.getElementById('invTypeF')?.value||'';
-  renderInvoices(INVOICES.filter(inv=>
+  const q  = (document.getElementById('invSearch')?.value || '').toLowerCase();
+  const st = document.getElementById('invStatusF')?.value || '';
+  const selectedTypes = getSelectedInvTypes();
+  const sortBy = document.getElementById('invSortF')?.value || 'date_desc';
+
+  const btn = document.getElementById('invTypeFBtn');
+  if (btn) btn.textContent = selectedTypes.length ? selectedTypes.join(', ') : 'All Types';
+
+  let filtered = INVOICES.filter(inv =>
     (!q  || inv.no.toLowerCase().includes(q) || inv.customer.toLowerCase().includes(q)) &&
-    (!st || inv.status===st) &&
-    (!ty || inv.type===ty)
-  ));
+    (!st || inv.status === st) &&
+    matchesTypeFilter(inv, selectedTypes)
+  );
+
+  filtered = sortInvoices(filtered, sortBy);
+  renderInvoices(filtered);
 }
 
 function renderDashInvoices(data) {
@@ -1699,6 +1849,16 @@ function openInvActions(id) {
   const inv = INVOICES.find(i=>String(i.id)===String(id));
   if (!inv) return;
   const sc = statusClass(inv.status);
+  const statuses = [
+    { key: 'pending',  label: 'Mark as Pending',  icon: '🕓', cls: 'btn-o'   },
+    { key: 'overdue',  label: 'Mark as Overdue',  icon: '⚠️', cls: 'btn-o'   },
+    { key: 'paid',     label: 'Mark as Paid',     icon: '✅', cls: 'btn-o'   },
+  ];
+  const statusButtons = statuses
+    .filter(s => s.key !== inv.status)
+    .map(s => `<button class="btn ${s.cls}" style="justify-content:center" onclick="setInvoiceStatus('${id}','${s.key}')">${s.icon} ${s.label}</button>`)
+    .join('');
+
   document.getElementById('invPickContent').innerHTML=`
     <div>
       <div style="font-size:13px;font-weight:700;margin-bottom:4px">${inv.no}</div>
@@ -1708,7 +1868,7 @@ function openInvActions(id) {
         <button class="btn btn-warn" style="justify-content:center" onclick="closeModal('invPickModal');loadInvoiceToEdit('${id}')">✏️ Edit Invoice</button>
         <button class="btn btn-o" style="justify-content:center" onclick="showToast('📄 PDF downloaded!');closeModal('invPickModal')">📄 Download PDF</button>
         <button class="btn btn-o" style="justify-content:center" onclick="showToast('📱 Sent via WhatsApp!');closeModal('invPickModal')">📱 Share WhatsApp</button>
-        <button class="btn btn-o" style="justify-content:center" onclick="markPaid('${id}')">✅ Mark as Paid</button>
+        ${statusButtons}
         <button class="btn btn-d" style="justify-content:center" onclick="closeModal('invPickModal');deleteInvoice('${id}')">🗑 Delete Invoice</button>
       </div>
     </div>`;
@@ -1887,16 +2047,16 @@ function cancelEdit() {
   nav('invoices',null);
 }
 
-async function markPaid(id) {
-  const inv=INVOICES.find(i=>String(i.id)===String(id));
+async function setInvoiceStatus(id, status) {
+  const inv = INVOICES.find(i => String(i.id) === String(id));
   if (AUTH.apiOnline) {
     try {
-      // PATCH /invoices/{id} — update status
-      await apiFetch(`/billing/invoices/${id}`,{ method:'PATCH', body:JSON.stringify({status:'paid'}) });
+      await apiFetch(`/billing/invoices/${id}`, { method:'PATCH', body: JSON.stringify({ status }) });
     } catch (_) {}
   }
-  if (inv) inv.status='paid';
-  showToast('✅ '+(inv?.no||'Invoice')+' marked as Paid');
+  if (inv) inv.status = status;
+  const labels = { paid: 'Paid', pending: 'Pending', overdue: 'Overdue', draft: 'Draft' };
+  showToast('✅ ' + (inv?.no || 'Invoice') + ' marked as ' + (labels[status] || status));
   closeModal('invPickModal');
   renderInvoices();
 }
@@ -2206,6 +2366,16 @@ async function renderCustomers(list) {
   }
 
   setTxt('custTotal', data.length);
+
+  const now = Date.now();
+  const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+  const activeCount = data.filter(c => c.last && c.last !== '—' && (now - new Date(c.last).getTime()) <= THIRTY_DAYS).length;
+  const totalOutstanding = data.reduce((s, c) => s + (c.outstanding || 0), 0);
+  const avgLTV = data.length ? data.reduce((s, c) => s + (c.total || 0), 0) / data.length : 0;
+
+  setTxt('custActive', activeCount);
+  setTxt('custOutstanding', '₹' + fmt(totalOutstanding));
+  setTxt('custAvgLTV', '₹' + fmt(avgLTV));
   b.innerHTML = data.length
     ? data.map(c => `<tr>
         <td class="b">${c.name}</td>
@@ -2216,21 +2386,13 @@ async function renderCustomers(list) {
         <td style="color:${(c.outstanding || 0) > 0 ? 'var(--orange)' : 'var(--text3)'}">₹${fmt(c.outstanding)}</td>
         <td>${c.last || '—'}</td>
         <td>
-          <div style="display:flex;align-items:center;gap:5px">
-            <div style="width:30px;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
-              <div style="height:100%;width:${c.score || 0}%;background:${(c.score || 0) > 80 ? 'var(--green)' : 'var(--orange)'}"></div>
-            </div>
-            <span style="font-size:11px;font-weight:700;color:${(c.score || 0) > 80 ? 'var(--green)' : 'var(--orange)'}">${c.score || '—'}</span>
-          </div>
-        </td>
-        <td>
           <div style="display:flex;gap:3px">
             <button class="btn btn-o btn-sm" onclick="editCust('${c.id}')">✏️</button>
             <button class="btn btn-d btn-sm" onclick="deleteCustomer('${c.id}')">🗑</button>
           </div>
         </td>
       </tr>`).join('')
-    : '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text3)">No customers found</td></tr>';
+    : '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">No customers found</td></tr>';
 }
 
 // ── filter ───────────────────────────────────────────────────
@@ -2250,11 +2412,12 @@ function openAddCust() {
   editingCustId = null;
   document.getElementById('custModalTitle').textContent = 'Add Customer';
 
-  // clear every field
-  ['cm_name','cm_contact','cm_gstin','cm_mobile','cm_email',
-   'cm_city','cm_addr','cm_credit','cm_terms'].forEach(id => setVal(id, ''));
+  ['cm_name','cm_contact','cm_gstin','cm_pan','cm_mobile','cm_altmobile','cm_email',
+   'cm_category','cm_city','cm_state','cm_statecode','cm_pincode','cm_addr',
+   'cm_credit','cm_opening','cm_notes'].forEach(id => setVal(id, ''));
 
-  setVal('cm_terms', 'Net 30');   // sensible default for new customer
+  setVal('cm_terms', '30');
+  setVal('cm_balancetype', 'Dr');
   openModal('custModal');
 }
 
@@ -2266,15 +2429,24 @@ function editCust(id) {
   editingCustId = id;
   document.getElementById('custModalTitle').textContent = 'Edit Customer';
 
-  setVal('cm_name',    c.name       || '');
-  setVal('cm_contact', c.contact    || '');
-  setVal('cm_gstin',   c.gstin      || '');
-  setVal('cm_mobile',  c.mobile     || '');
-  setVal('cm_email',   c.email      || '');
-  setVal('cm_city',    c.city       || '');
-  setVal('cm_addr',    c.addr       || '');
-  setVal('cm_credit',  c.credit     || '');
-  setVal('cm_terms',   c.terms      || 'Net 30');
+  setVal('cm_name',        c.name        || '');
+  setVal('cm_contact',     c.contact     || '');
+  setVal('cm_gstin',       c.gstin       || '');
+  setVal('cm_pan',         c.pan         || '');
+  setVal('cm_mobile',      c.mobile      || '');
+  setVal('cm_altmobile',   c.altMobile   || '');
+  setVal('cm_email',       c.email       || '');
+  setVal('cm_category',    c.category    || '');
+  setVal('cm_city',        c.city        || '');
+  setVal('cm_state',       c.state       || '');
+  setVal('cm_statecode',   c.stateCode   || '');
+  setVal('cm_pincode',     c.pincode     || '');
+  setVal('cm_addr',        c.addr        || '');
+  setVal('cm_credit',      c.credit      || '');
+  setVal('cm_terms',       String(c.creditDays ?? 30));
+  setVal('cm_opening',     c.openingBalance || '');
+  setVal('cm_balancetype', c.balanceType || 'Dr');
+  setVal('cm_notes',       c.notes       || '');
 
   openModal('custModal');
 }
@@ -2285,33 +2457,50 @@ async function saveCust() {
   if (!name.trim()) { showToast('⚠️ Customer name required', 'warn'); return; }
 
   const payload = {
-    display_name:    name,
-    legal_name:      getVal('cm_contact') || '',   // contact person / legal name
-    gstin:    getVal('cm_gstin')   || '',
-    phone:           getVal('cm_mobile')  || '',
-    email:           getVal('cm_email')   || undefined,
-    billing_city:    getVal('cm_city')    || '',
-    billing_address: getVal('cm_addr')    || '',
-    party_type:      'customer',
-    credit_limit:    parseFloat(getVal('cm_credit')) || 0,
-    payment_terms:   getVal('cm_terms')   || 'Net 30',
+    display_name:       name,
+    legal_name:          getVal('cm_contact')    || undefined,
+    gstin:                getVal('cm_gstin')      || undefined,
+    pan:                  getVal('cm_pan')        || undefined,
+    party_category:       getVal('cm_category')   || undefined,
+    phone:                getVal('cm_mobile')     || undefined,
+    alt_phone:            getVal('cm_altmobile')  || undefined,
+    email:                getVal('cm_email')      || undefined,
+    billing_city:         getVal('cm_city')       || undefined,
+    billing_state:        getVal('cm_state')      || undefined,
+    billing_state_code:   getVal('cm_statecode')  || undefined,
+    billing_pincode:      getVal('cm_pincode')    || undefined,
+    billing_address:      getVal('cm_addr')       || undefined,
+    party_type:           'customer',
+    credit_limit:         parseFloat(getVal('cm_credit'))  || 0,
+    credit_days:          parseInt(getVal('cm_terms'), 10) || 0,
+    opening_balance:      parseFloat(getVal('cm_opening')) || 0,
+    balance_type:         getVal('cm_balancetype') || 'Dr',
+    notes:                getVal('cm_notes')       || undefined,
   };
 
-  // ── local representation (normalised for the table) ─────────
   const localShape = {
     name,
-    contact:     payload.legal_name,
-    gstin:       payload.gstin,
-    mobile:      payload.phone,
-    email:       payload.email || '',
-    city:        payload.billing_city,
-    addr:        payload.billing_address,
-    credit:      payload.credit_limit,
-    terms:       payload.payment_terms,
-    total:       0,
-    outstanding: 0,
-    last:        '—',
-    score:       0,
+    contact:         payload.legal_name || '',
+    gstin:           payload.gstin || '',
+    pan:             payload.pan || '',
+    category:        payload.party_category || '',
+    mobile:          payload.phone || '',
+    altMobile:       payload.alt_phone || '',
+    email:           payload.email || '',
+    city:            payload.billing_city || '',
+    state:           payload.billing_state || '',
+    stateCode:       payload.billing_state_code || '',
+    pincode:         payload.billing_pincode || '',
+    addr:            payload.billing_address || '',
+    credit:          payload.credit_limit,
+    creditDays:      payload.credit_days,
+    openingBalance:  payload.opening_balance,
+    balanceType:     payload.balance_type,
+    notes:           payload.notes || '',
+    total:           0,
+    outstanding:     0,
+    last:            '—',
+    score:           0,
   };
 
   try {
@@ -2923,31 +3112,435 @@ function renderForecastBars() {
 // ============================================================
 //  OTHER MODULE RENDERS (CRM, PO, Quotes, Returns, etc.)
 // ============================================================
-function renderCRM() {
-  const b=document.getElementById('crmBody'); if(!b)return;
+let editingLeadId = null;
+
+async function renderCRM(list) {
+  const b = document.getElementById('crmBody');
+  if (!b) return;
+  b.innerHTML = loadingRow(8);
+
+  let data = list;
+  if (data === undefined || data === null) {
+    if (AUTH.apiOnline) {
+      try {
+        const r = await apiFetch('/crm/leads?limit=200');
+        data = (r.data?.items || []).map(normLead);
+        CRM_LEADS = data;
+      } catch (e) {
+        data = CRM_LEADS;
+        console.warn('[API] crm leads fallback:', e.message);
+      }
+    } else {
+      data = CRM_LEADS;
+    }
+  }
+
   const stageColor={New:'cbl2',Contacted:'cor',Proposal:'cor',Negotiation:'crd',Won:'cgr',Lost:'sdr'};
-  b.innerHTML=CRM_LEADS.map(l=>`<tr>
+  const followDue = data.filter(l => l.followup && l.followup !== '—').length;
+  const won = data.filter(l => l.stage === 'Won').length;
+  const pipeline = data.reduce((s,l)=>s+(l.value||0),0);
+  setTxt('crmTotal', data.length);
+  setTxt('crmFollowDue', followDue);
+  setTxt('crmWon', won);
+  setTxt('crmPipeline', '₹' + (pipeline/100000).toFixed(1) + 'L');
+
+  b.innerHTML = data.length ? data.map(l=>`<tr>
     <td class="b">${l.name}</td><td>${l.company}</td><td>${l.mobile}</td>
     <td><span class="chip ${stageColor[l.stage]||'cbl2'}">${l.stage}</span></td>
-    <td class="b" style="color:var(--green)">₹${(l.value/1000).toFixed(0)}K</td>
+    <td class="b" style="color:var(--green)">₹${Number(l.value).toLocaleString('en-IN')}</td>
     <td style="color:${l.followup==='—'?'var(--text3)':'var(--orange)'}">${l.followup}</td>
-    <td style="font-size:11px;color:var(--text2)">💡 ${l.ai}</td>
+    <td style="font-size:12px;color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${l.notes||''}">${l.notes||'—'}</td>
     <td><div style="display:flex;gap:3px">
-      <button class="btn btn-o btn-sm" onclick="showToast('📞 Calling')">📞</button>
-      <button class="btn btn-o btn-sm" onclick="showToast('📝 Notes opened')">📝</button>
-    </div></td></tr>`).join('');
+      <button class="btn btn-o btn-sm" onclick="editLead('${l.id}')">✏️</button>
+      <button class="btn btn-d btn-sm" onclick="deleteLead('${l.id}')">🗑</button>
+    </div></td></tr>`).join('')
+    : '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">No leads found</td></tr>';
 }
 
-function renderPO() {
-  const b=document.getElementById('poBody'); if(!b)return;
-  b.innerHTML=PO_DATA.map(p=>`<tr>
-    <td class="b mono">${p.no}</td><td>${p.date}</td><td class="b">${p.vendor}</td>
-    <td>₹${p.amount.toLocaleString()}</td><td>₹${p.gst.toLocaleString()}</td><td class="b">₹${p.total.toLocaleString()}</td>
-    <td><span class="sb ${p.status==='received'?'sp':'spen'}">${p.status}</span></td>
-    <td><div style="display:flex;gap:3px">
-      <button class="btn btn-o btn-sm" onclick="showToast('👁 ${p.no}')">👁</button>
-      <button class="btn btn-o btn-sm" onclick="showToast('✅ GRN created')">✅ GRN</button>
-    </div></td></tr>`).join('');
+function filterCRM() {
+  const q = (document.getElementById('crmSearch')?.value || '').toLowerCase().trim();
+  const sortBy = document.getElementById('crmSort')?.value || '';
+
+  let data = CRM_LEADS.filter(l =>
+    !q ||
+    (l.name||'').toLowerCase().includes(q) ||
+    (l.company||'').toLowerCase().includes(q) ||
+    (l.mobile||'').includes(q) ||
+    (l.email||'').toLowerCase().includes(q)
+  );
+
+  if (sortBy === 'value_desc') data = [...data].sort((a,b) => (b.value||0) - (a.value||0));
+  if (sortBy === 'value_asc')  data = [...data].sort((a,b) => (a.value||0) - (b.value||0));
+  if (sortBy === 'followup_asc' || sortBy === 'followup_desc') {
+    data = [...data].sort((a,b) => {
+      const da = a.followup === '—' ? null : new Date(a.followup);
+      const db = b.followup === '—' ? null : new Date(b.followup);
+      if (!da && !db) return 0;
+      if (!da) return 1;   // leads with no date sink to bottom
+      if (!db) return -1;
+      return sortBy === 'followup_asc' ? da - db : db - da;
+    });
+  }
+
+  renderCRM(data);
+}
+
+// ============================================================
+//  PURCHASE ORDERS
+// ============================================================
+let poItemCounter = 0;
+
+function normPO(p) {
+  return {
+    id: p.id,
+    no: p.po_no || '—',
+    date: p.po_date || '',
+    vendorId: p.vendor_id || '',
+    vendor: '',   // resolved separately from VENDORS
+    expectedDelivery: p.expected_delivery || '',
+    items: (p.items || []).map(it => ({
+      prod: it.description || '',
+      qty: Number(it.quantity || 0),
+      rate: Number(it.rate || 0),
+      disc: Number(it.discount_pct || 0),
+      gst: Number(it.gst_rate || 18),
+      hsn: it.hsn_code || '',
+      amt: Number(it.amount || (it.quantity * it.rate) || 0),
+    })),
+    subtotal: Number(p.subtotal || 0),
+    taxable: Number(p.taxable_amount || 0),
+    cgst: Number(p.cgst_amount || 0),
+    sgst: Number(p.sgst_amount || 0),
+    igst: Number(p.igst_amount || 0),
+    total: Number(p.total_amount || 0),
+    status: p.status || 'draft',
+    approvalStatus: p.approval_status || 'pending',
+    notes: p.notes || '',
+  };
+}
+
+async function renderPO(list) {
+  const b = document.getElementById('poBody'); if (!b) return;
+  b.innerHTML = loadingRow(8);
+
+  let data = list;
+  if (!data) {
+    if (AUTH.apiOnline) {
+      try {
+        if (!VENDORS.length) await renderVendors();
+        const result = await apiFetch('/billing/purchase-orders?limit=200');
+        data = unwrapList(result).map(normPO);
+        data.forEach(p => {
+          const v = VENDORS.find(v => String(v.id) === String(p.vendorId));
+          p.vendor = v?.name || '—';
+        });
+        PO_DATA = data;
+      } catch (e) {
+        data = PO_DATA;
+        console.warn('[API] purchase orders fallback:', e.message);
+      }
+    } else {
+      data = PO_DATA;
+    }
+  }
+
+  b.innerHTML = data.length ? data.map(p => {
+    const gstTotal = p.cgst + p.sgst + p.igst;
+    return `<tr>
+      <td class="b mono">${p.no}</td><td>${fmtDate(p.date)}</td><td class="b">${p.vendor}</td>
+      <td>₹${fmt(p.taxable)}</td><td>₹${fmt(gstTotal)}</td><td class="b">₹${fmt(p.total)}</td>
+      <td><span class="sb ${poStatusClass(p.status)}">${(p.status||'').replace('_',' ')}</span></td>
+      <td><div style="display:flex;gap:3px">
+        <button class="btn btn-o btn-sm" onclick="viewPO('${p.id}')" title="View">👁</button>
+        <button class="btn btn-o btn-sm" onclick="openPOActions('${p.id}')" title="Change Status">🔄</button>
+      </div></td></tr>`;
+  }).join('') : '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">No purchase orders found</td></tr>';
+  updatePOStats(data);
+}
+
+function fmtLakh(n) {
+  n = Number(n) || 0;
+  return n >= 100000 ? '₹' + (n/100000).toFixed(2) + 'L' : '₹' + fmt(n);
+}
+
+function updatePOStats(data) {
+  const now = new Date();
+  const thisMonthTotal = data
+    .filter(p => {
+      const d = new Date(p.date);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    })
+    .reduce((sum, p) => sum + (p.total || 0), 0);
+
+  const pendingCount  = data.filter(p => !['received','cancelled'].includes(p.status)).length;
+  const receivedCount = data.filter(p => p.status === 'received').length;
+  const inputITC       = data.reduce((sum, p) => sum + (p.cgst||0) + (p.sgst||0) + (p.igst||0), 0);
+
+  const el = id => document.getElementById(id);
+  if (el('poThisMonth')) el('poThisMonth').textContent = fmtLakh(thisMonthTotal);
+  if (el('poPending'))   el('poPending').textContent   = pendingCount;
+  if (el('poReceived'))  el('poReceived').textContent  = receivedCount;
+  if (el('poInputITC'))  el('poInputITC').textContent  = fmtLakh(inputITC);
+}
+
+async function openNewPOModal() {
+  if (!VENDORS.length) await renderVendors();
+  const vendorSel = document.getElementById('poVendor');
+  vendorSel.innerHTML = '<option value="">Select vendor…</option>' +
+    VENDORS.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+
+  setVal('poNo', 'PO-' + String((PO_DATA?.length || 0) + 1).padStart(4, '0'));
+  setVal('poDate', new Date().toISOString().slice(0,10));
+  setVal('poExpDelivery', '');
+  setVal('poNotes', '');
+  document.getElementById('poItems').innerHTML = '';
+  poItemCounter = 0;
+  addPOItem();
+  calcPOTotals();
+  openModal('poModal');
+}
+
+function addPOItem() {
+  poItemCounter++;
+  const n = poItemCounter;
+  const prodOpts = ['<option value="">Select product…</option>',
+    ...PRODUCTS.map(p => `<option value="${p.name}" data-id="${p.id}" data-price="${p.pp}" data-gst="${p.gst}" data-hsn="${p.hsn}">${p.name}</option>`)
+  ].join('');
+  const row = document.createElement('div'); row.className = 'iir'; row.id = 'po-item-' + n;
+  row.innerHTML = `
+    <select class="fi" style="padding:6px 7px;font-size:11px" onchange="poItemPicked(this,${n})">${prodOpts}</select>
+    <input type="number" class="fi" style="padding:6px 7px;font-size:11px" value="1" id="po-qty-${n}" oninput="calcPOItem(${n})" min="1"/>
+    <input type="number" class="fi" style="padding:6px 7px;font-size:11px" placeholder="0" id="po-rate-${n}" oninput="calcPOItem(${n})"/>
+    <input type="number" class="fi" style="padding:6px 7px;font-size:11px" value="0" id="po-disc-${n}" oninput="calcPOItem(${n})" min="0" max="100"/>
+    <input type="text" class="fi mono" style="padding:6px 7px;font-size:11px;background:var(--bg)" id="po-gst-${n}" readonly value="18%"/>
+    <input type="text" class="fi" style="padding:6px 7px;font-size:11px;background:var(--bg);font-weight:700;color:var(--green)" id="po-amt-${n}" readonly value="₹0.00"/>
+    <button style="background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--red);cursor:pointer;padding:5px 8px;font-size:12px" onclick="removePOItem(${n})">✕</button>`;
+  document.getElementById('poItems').appendChild(row);
+  calcPOTotals();
+}
+
+function poItemPicked(sel, n) {
+  const opt = sel.options[sel.selectedIndex];
+  if (opt.dataset.price) {
+    setVal('po-rate-'+n, opt.dataset.price);
+    setVal('po-gst-'+n, (opt.dataset.gst || 18) + '%');
+  }
+  calcPOItem(n);
+}
+
+function calcPOItem(n) {
+  const qty = +getVal('po-qty-'+n) || 0, rate = +getVal('po-rate-'+n) || 0, disc = +getVal('po-disc-'+n) || 0;
+  const amt = qty * rate * (1 - disc/100);
+  const el = document.getElementById('po-amt-'+n); if (el) el.value = '₹' + amt.toFixed(2);
+  calcPOTotals();
+}
+
+function removePOItem(n) { document.getElementById('po-item-'+n)?.remove(); calcPOTotals(); }
+
+function calcPOTotals() {
+  let taxable = 0, totalGST = 0;
+  document.querySelectorAll('[id^="po-item-"]').forEach(row => {
+    const n = row.id.replace('po-item-', '');
+    const qty = +getVal('po-qty-'+n) || 0, rate = +getVal('po-rate-'+n) || 0, disc = +getVal('po-disc-'+n) || 0;
+    const gstPct = parseFloat(getVal('po-gst-'+n)) || 18;
+    const lineTaxable = qty * rate * (1 - disc/100);
+    taxable += lineTaxable;
+    totalGST += lineTaxable * gstPct / 100;
+  });
+  const grandTotal = taxable + totalGST;
+  const el = document.getElementById('poGrandTotal'); if (el) el.textContent = '₹' + grandTotal.toFixed(2);
+  return { taxable, totalGST, grandTotal };
+}
+
+async function savePO() {
+  const vendorId = getVal('poVendor');
+  if (!vendorId) { showToast('⚠️ Select a vendor','warn'); return; }
+
+  const items = [];
+  document.querySelectorAll('[id^="po-item-"]').forEach(row => {
+    const n = row.id.replace('po-item-', '');
+    const sel = row.querySelector('select');
+    const desc = sel?.value; if (!desc) return;
+    const prod = PRODUCTS.find(p => p.name === desc);
+    items.push({
+      product_id: prod?.id || null,
+      description: desc,
+      hsn_code: prod?.hsn || '',
+      quantity: +getVal('po-qty-'+n) || 1,
+      rate: +getVal('po-rate-'+n) || 0,
+      discount_pct: +getVal('po-disc-'+n) || 0,
+      gst_rate: parseFloat(getVal('po-gst-'+n)) || 18,
+    });
+  });
+  if (!items.length) { showToast('⚠️ Add at least one item','warn'); return; }
+
+  const payload = {
+    po_date: getVal('poDate') || new Date().toISOString().slice(0,10),
+    vendor_id: vendorId,
+    expected_delivery: getVal('poExpDelivery') || null,
+    payment_terms: getVal('poPaymentTerms'),
+    notes: getVal('poNotes') || '',
+    items,
+  };
+
+  try {
+    if (AUTH.apiOnline) {
+      await apiFetch('/billing/purchase-orders', { method: 'POST', body: JSON.stringify(payload) });
+    }
+    showToast('✅ Purchase order created');
+    addAuditEntry('CREATE','Purchase','Created new PO');
+    closeModal('poModal');
+    await renderPO();
+  } catch (e) {
+    showToast('❌ ' + e.message);
+  }
+}
+
+function viewPO(id) {
+  const p = PO_DATA.find(x => String(x.id) === String(id));
+  if (!p) return;
+  document.getElementById('prevTitle').textContent = 'Purchase Order — ' + p.no;
+  document.getElementById('invPreviewBody').innerHTML = `
+    <div class="inv-preview">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+        <div>
+          <div style="font-size:22px;font-weight:800;color:#111">${CFG.COMPANY_NAME}</div>
+          <div style="font-size:11px;color:#555;margin-top:4px">GSTIN: ${CFG.COMPANY_GSTIN}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:18px;font-weight:800;color:#0099cc">PURCHASE ORDER</div>
+          <div style="font-size:13px;font-weight:700;margin-top:4px">${p.no}</div>
+          <div style="font-size:11px;color:#555">Date: ${fmtDate(p.date)}</div>
+          <div style="font-size:11px;color:#555">Expected: ${fmtDate(p.expectedDelivery) || '—'}</div>
+        </div>
+      </div>
+      <div style="background:#f8f8f8;border-radius:8px;padding:14px;margin-bottom:20px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:6px">Vendor</div>
+        <div style="font-size:13px;font-weight:700">${p.vendor}</div>
+      </div>
+      <table style="margin-bottom:16px">
+        <thead><tr><th style="width:5%">#</th><th style="width:35%">Product</th><th style="width:8%">HSN</th><th style="width:8%">Qty</th><th style="width:12%">Rate</th><th style="width:8%">Disc%</th><th style="width:8%">GST%</th><th style="width:16%">Amount</th></tr></thead>
+        <tbody>${p.items.map((it,i)=>`<tr>
+          <td style="color:#666">${i+1}</td>
+          <td style="font-weight:600">${it.prod}</td>
+          <td style="font-family:monospace;color:#888;font-size:10px">${it.hsn||'—'}</td>
+          <td>${it.qty}</td><td>₹${fmt(it.rate)}</td><td>${it.disc}%</td><td>${it.gst}%</td>
+          <td style="font-weight:700">₹${fmt(it.amt)}</td></tr>`).join('')}</tbody>
+      </table>
+      <div style="display:flex;justify-content:flex-end">
+        <div style="min-width:280px">
+          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Taxable Amount</span><span>₹${fmt(p.taxable)}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>CGST</span><span>₹${fmt(p.cgst)}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>SGST</span><span>₹${fmt(p.sgst)}</span></div>
+          ${p.igst ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>IGST</span><span>₹${fmt(p.igst)}</span></div>` : ''}
+          <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:800;border-top:2px solid #333;margin-top:6px">
+            <span>TOTAL</span><span style="color:#0099cc">₹${fmt(p.total)}</span></div>
+        </div>
+      </div>
+      ${p.notes ? `<div style="margin-top:16px;padding:10px;background:#f8f8f8;border-radius:6px;font-size:11px;color:#666"><strong>Notes:</strong> ${p.notes}</div>` : ''}
+    </div>`;
+  openModal('invPreviewModal');
+}
+
+function poStatusClass(s) {
+  return s === 'received' ? 'sp' : s === 'partially_received' ? 'spen' : s === 'cancelled' ? 'sov' : 'sdr';
+}
+
+function openPOActions(id) {
+  const p = PO_DATA.find(x => String(x.id) === String(id));
+  if (!p) return;
+  const statuses = [
+    { key: 'open',               label: 'Mark as Open',               icon: '📂' },
+    { key: 'partially_received', label: 'Mark as Partially Received', icon: '📦' },
+    { key: 'received',           label: 'Mark as Received',           icon: '✅' },
+    { key: 'cancelled',          label: 'Mark as Cancelled',          icon: '🚫' },
+  ];
+  const statusButtons = statuses
+    .filter(s => s.key !== p.status)
+    .map(s => `<button class="btn btn-o" style="justify-content:center;width:100%;margin-bottom:8px" onclick="setPOStatus('${id}','${s.key}')">${s.icon} ${s.label}</button>`)
+    .join('');
+
+  document.getElementById('poActionsContent').innerHTML = `
+    <div style="font-size:13px;font-weight:700;margin-bottom:4px">${p.no}</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:16px">${p.vendor} · ₹${fmt(p.total)} · <span class="sb ${poStatusClass(p.status)}">${(p.status||'').replace('_',' ')}</span></div>
+    <div style="display:flex;flex-direction:column">
+      ${statusButtons}
+      <button class="btn btn-d" style="justify-content:center;width:100%" onclick="closeModal('poActionsModal');deletePO('${id}')">🗑 Delete PO</button>
+    </div>`;
+  openModal('poActionsModal');
+}
+
+async function setPOStatus(id, status) {
+  const p = PO_DATA.find(x => String(x.id) === String(id));
+  if (AUTH.apiOnline) {
+    try { await apiFetch(`/billing/purchase-orders/${id}`, { method:'PATCH', body: JSON.stringify({ status }) }); } catch (_) {}
+  }
+  if (p) p.status = status;
+  const labels = { open:'Open', partially_received:'Partially Received', received:'Received', cancelled:'Cancelled' };
+  showToast('✅ ' + (p?.no || 'PO') + ' marked as ' + (labels[status] || status));
+  closeModal('poActionsModal');
+  renderPO();
+}
+
+async function deletePO(id) {
+  const p = PO_DATA.find(x => String(x.id) === String(id));
+  if (!confirm('Delete ' + (p?.no || 'this PO') + '? This cannot be undone.')) return;
+  if (AUTH.apiOnline) {
+    try { await apiFetch(`/billing/purchase-orders/${id}`, { method:'DELETE' }); } catch (_) {}
+  }
+  PO_DATA = PO_DATA.filter(x => String(x.id) !== String(id));
+  addAuditEntry('DELETE','Purchase','Deleted '+(p?.no||id));
+  showToast('🗑 Purchase order deleted');
+  renderPO();
+}
+
+function sortPOs(list, sortBy) {
+  const arr = [...list];
+  switch (sortBy) {
+    case 'no_asc':
+      arr.sort((a, b) => a.no.localeCompare(b.no, undefined, { numeric: true }));
+      break;
+    case 'no_desc':
+      arr.sort((a, b) => b.no.localeCompare(a.no, undefined, { numeric: true }));
+      break;
+    case 'date_asc':
+      arr.sort((a, b) => new Date(a.date) - new Date(b.date));
+      break;
+    case 'date_desc':
+    default:
+      arr.sort((a, b) => new Date(b.date) - new Date(a.date));
+  }
+  return arr;
+}
+
+function filterPO() {
+  const q = (document.getElementById('poSearch')?.value || '').toLowerCase();
+  const sortBy = document.getElementById('poSortF')?.value || 'date_desc';
+  const selectedStatuses = getSelectedPOStatuses();
+  const labels = { open:'Open', partially_received:'Partially Received', received:'Received', cancelled:'Cancelled' };
+
+  const btn = document.getElementById('poStatusFBtn');
+  if (btn) btn.textContent = selectedStatuses.length ? selectedStatuses.map(s => labels[s]||s).join(', ') : 'All Status';
+
+  let filtered = PO_DATA.filter(p =>
+    (!q || (p.no || '').toLowerCase().includes(q) || (p.vendor || '').toLowerCase().includes(q)) &&
+    (!selectedStatuses.length || selectedStatuses.includes(p.status))
+  );
+  filtered = sortPOs(filtered, sortBy);
+  renderPO(filtered);
+}
+
+function togglePOStatusMenu(e) {
+  e.stopPropagation();
+  document.getElementById('poStatusFMenu').classList.toggle('hidden');
+}
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('poStatusFWrap');
+  const menu = document.getElementById('poStatusFMenu');
+  if (wrap && menu && !wrap.contains(e.target)) menu.classList.add('hidden');
+});
+function getSelectedPOStatuses() {
+  return Array.from(document.querySelectorAll('#poStatusFMenu input[type=checkbox]:checked')).map(cb => cb.value);
 }
 
 async function renderQuotes() {
@@ -3401,8 +3994,6 @@ function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); 
 //  OTHER MODAL SAVE HANDLERS
 // ============================================================
 function savePayment() { showToast('✅ Payment of ₹'+(parseInt(getVal('payAmt'))||0).toLocaleString()+' recorded'); closeModal('payModal'); addAuditEntry('CREATE','Payment','Recorded payment'); renderPayments(); }
-function saveLead()    { showToast('✅ Lead saved'); closeModal('leadModal'); addAuditEntry('CREATE','CRM','Added new lead'); renderCRM(); }
-function savePO()      { showToast('✅ Purchase order created'); closeModal('poModal'); addAuditEntry('CREATE','Purchase','Created new PO'); renderPO(); }
 function saveJE()      { showToast('✅ Journal entry posted'); closeModal('jeModal'); addAuditEntry('CREATE','Accounting','Posted journal entry'); }
 function openQuote()   { showToast('💡 Tip: Create Invoice → Type = Quotation'); setTimeout(()=>nav('create',null),600); }
 function genIRN(no)    { showToast('⚡ IRN generated for '+no); addAuditEntry('CREATE','E-Invoice','Generated IRN for '+no); }
@@ -3424,60 +4015,190 @@ function openReturnModal() {
    openModal('retModal');
  }
 
- function autofillReturnParty() {
+ function onRetInvoiceChange() {
   const id = getVal('retAgainstInv');
   const inv = INVOICES.find(i => String(i.id) === String(id));
+  const prodSel = document.getElementById('retProduct');
+  prodSel.innerHTML = '<option value="">Select product…</option>';
+  ['retQty','retRate','retAmount'].forEach(f => document.getElementById(f).value = '');
   if (!inv) return;
   document.getElementById('retParty').value = inv.customer || '';
-  if (!getVal('retAmount')) document.getElementById('retAmount').value = inv.total || '';
-  if (!getVal('retItem') && inv.items?.length) {
-    document.getElementById('retItem').value = inv.items[0].prod || '';
+  (inv.items || []).forEach((it, idx) => {
+    prodSel.innerHTML += `<option value="${idx}">${it.prod || 'Item '+(idx+1)} (max qty: ${it.qty}, ₹${it.rate})</option>`;
+  });
+}
+
+function onRetProductChange() {
+  const inv = INVOICES.find(i => String(i.id) === String(getVal('retAgainstInv')));
+  const item = inv?.items?.[getVal('retProduct')];
+  if (!item) return;
+  document.getElementById('retQty').max = item.qty;
+  document.getElementById('retQty').value = item.qty;
+  document.getElementById('retRate').value = item.rate;
+  updateRetAmount();
+}
+
+function onRetQtyChange() {
+  const inv = INVOICES.find(i => String(i.id) === String(getVal('retAgainstInv')));
+  const item = inv?.items?.[getVal('retProduct')];
+  let qty = parseFloat(getVal('retQty')) || 0;
+  if (item && qty > item.qty) {
+    qty = item.qty;
+    document.getElementById('retQty').value = qty;
+    showToast('⚠️ Max returnable quantity is ' + item.qty, 'warn');
   }
+  updateRetAmount();
+}
+
+function updateRetAmount() {
+  const qty = parseFloat(getVal('retQty')) || 0;
+  const rate = parseFloat(getVal('retRate')) || 0;
+  document.getElementById('retAmount').value = (qty * rate).toFixed(2);
 }
 
  async function saveReturn() {
-   const docType = getVal('retDocType');
-   const againstId = getVal('retAgainstInv');
-   const party = getVal('retParty');
-   const date = getVal('retDate') || new Date().toISOString().slice(0,10);
-   const amount = parseFloat(getVal('retAmount')) || 0;
-   const reason = getVal('retReason');
-   const item = getVal('retItem');
-   const gstRate = parseFloat(getVal('retGstRate')) || 0;
-   const quantity = parseFloat(getVal('retQuantity')) || 1;
+  const docType   = getVal('retDocType');
+  const againstId = getVal('retAgainstInv');
+  const prodIdx   = getVal('retProduct');
+  const party     = getVal('retParty');
+  const date      = getVal('retDate') || new Date().toISOString().slice(0,10);
+  const qty       = parseFloat(getVal('retQty')) || 0;
+  const rate      = parseFloat(getVal('retRate')) || 0;
+  const reason    = getVal('retReason');
 
-   if (!againstId) { showToast('⚠️ Select the original invoice','warn'); return; }
-   if (!party.trim()) { showToast('⚠️ Enter customer / vendor name','warn'); return; }
-   if (amount <= 0) { showToast('⚠️ Enter a valid amount','warn'); return; }
+  if (!againstId)      { showToast('⚠️ Select the original invoice','warn'); return; }
+  if (prodIdx === '')  { showToast('⚠️ Select a product','warn'); return; }
+  if (!party.trim())   { showToast('⚠️ Enter customer / vendor name','warn'); return; }
+  if (qty <= 0)        { showToast('⚠️ Enter a valid quantity','warn'); return; }
 
-   const invoiceType = (docType === 'Purchase Return' || docType === 'Debit Note') ? 'debit_note' : 'credit_note';
+  const inv  = INVOICES.find(i => String(i.id) === String(againstId));
+  const item = inv?.items?.[prodIdx];
+  const invoiceType = (docType === 'Purchase Return' || docType === 'Debit Note') ? 'debit_note' : 'credit_note';
 
-   const payload = {
-     invoice_type: invoiceType,
-     invoice_date: date,
-     against_invoice_id: againstId,
-     billing_name: party,
-     notes: reason || '',
-     items: [{
-       description: item || reason || docType,
-       quantity: quantity,
-       rate: amount,
-       gst_rate: gstRate,
-     }],
-   };
+  const payload = {
+    invoice_type: invoiceType,
+    invoice_date: date,
+    against_invoice_id: againstId,
+    billing_name: party,
+    supply_type: inv?.supply || 'intra',
+    place_of_supply: inv?.custState || '27',
+    notes: reason || '',
+    items: [{
+      description: item?.prod || docType,
+      hsn_code: item?.hsn || '',
+      quantity: qty,
+      rate: rate,
+      gst_rate: item?.gst ?? 18,
+    }],
+  };
 
-   try {
-     if (AUTH.apiOnline) {
-       await apiFetch('/billing/invoices', { method: 'POST', body: JSON.stringify(payload) });
-     }
-     showToast('✅ ' + docType + ' saved');
-     addAuditEntry('CREATE','Returns','Created '+docType+' against '+(INVOICES.find(i=>String(i.id)===String(againstId))?.no||againstId));
-     closeModal('retModal');
-     await renderReturns();
-   } catch (e) {
-     showToast('❌ ' + e.message);
-   }
- }
+  try {
+    if (AUTH.apiOnline) {
+      await apiFetch('/billing/invoices', { method: 'POST', body: JSON.stringify(payload) });
+    }
+    showToast('✅ ' + docType + ' saved');
+    closeModal('retModal');
+    await renderReturns();
+  } catch (e) {
+    showToast('❌ ' + e.message);
+  }
+}
+
+//=============================================================
+//CRM LEAD
+//=============================================================
+function openAddLead() {
+  editingLeadId = null;
+  document.getElementById('leadModalTitle').textContent = 'Add Lead / Opportunity';
+  const modal = document.getElementById('leadModal');
+  modal.querySelectorAll('input, textarea').forEach(el => el.value = '');
+  modal.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+  openModal('leadModal');
+}
+
+function editLead(id) {
+  const l = CRM_LEADS.find(x => String(x.id) === String(id));
+  if (!l) return;
+  editingLeadId = id;
+  document.getElementById('leadModalTitle').textContent = 'Edit Lead / Opportunity';
+  setVal('lm_name', l.name || '');
+  setVal('lm_company', l.company || '');
+  setVal('lm_mobile', l.mobile || '');
+  setVal('lm_email', l.email || '');
+  setVal('lm_stage', l.stage || 'New');
+  setVal('lm_value', l.value || '');
+  setVal('lm_followup', l.followup !== '—' ? l.followup : '');
+  setVal('lm_notes', l.notes || '');
+  openModal('leadModal');
+}
+
+async function saveLead() {
+  const name = getVal('lm_name');
+  if (!name.trim()) { showToast('⚠️ Lead name required', 'warn'); return; }
+
+  const payload = {
+    lead_name:      name,
+    company_name:   getVal('lm_company') || '',
+    mobile:         getVal('lm_mobile')  || '',
+    email:          getVal('lm_email')   || undefined,
+    stage:          getVal('lm_stage')   || 'New',
+    value:          parseFloat(getVal('lm_value')) || 0,
+    follow_up_date: getVal('lm_followup') || undefined,
+    notes:          getVal('lm_notes')   || '',
+  };
+
+  const localShape = {
+    name, company: payload.company_name, mobile: payload.mobile,
+    email: payload.email || '', stage: payload.stage, value: payload.value,
+    followup: payload.follow_up_date || '—', ai: 'No suggestion yet', notes: payload.notes,
+  };
+
+  try {
+    if (AUTH.apiOnline) {
+      if (editingLeadId) {
+        await apiFetch(`/crm/leads/${editingLeadId}`, { method: 'PATCH', body: JSON.stringify(payload) });
+        const idx = CRM_LEADS.findIndex(l => String(l.id) === String(editingLeadId));
+        if (idx >= 0) CRM_LEADS[idx] = { ...CRM_LEADS[idx], ...localShape };
+        addAuditEntry('EDIT', 'CRM', 'Updated lead: ' + name);
+      } else {
+        const res = await apiFetch('/crm/leads', { method: 'POST', body: JSON.stringify(payload) });
+        const serverRecord = normLead(res.data || res);
+        CRM_LEADS.push({ ...localShape, ...serverRecord });
+        addAuditEntry('CREATE', 'CRM', 'Added new lead: ' + name);
+      }
+    } else {
+      if (editingLeadId) {
+        const idx = CRM_LEADS.findIndex(l => String(l.id) === String(editingLeadId));
+        if (idx >= 0) CRM_LEADS[idx] = { ...CRM_LEADS[idx], ...localShape };
+      } else {
+        CRM_LEADS.push({ id: Date.now(), ...localShape });
+      }
+    }
+    showToast('✅ Lead saved');
+  } catch (e) {
+    showToast('✅ Lead saved (offline)');
+    if (editingLeadId) {
+      const idx = CRM_LEADS.findIndex(l => String(l.id) === String(editingLeadId));
+      if (idx >= 0) CRM_LEADS[idx] = { ...CRM_LEADS[idx], ...localShape };
+    } else {
+      CRM_LEADS.push({ id: Date.now(), ...localShape });
+    }
+  }
+
+  editingLeadId = null;
+  closeModal('leadModal');
+  renderCRM(CRM_LEADS);
+}
+
+async function deleteLead(id) {
+  if (!confirm('Delete this lead?')) return;
+  if (AUTH.apiOnline) {
+    try { await apiFetch(`/crm/leads/${id}`, { method: 'DELETE' }); } catch (_) {}
+  }
+  CRM_LEADS = CRM_LEADS.filter(l => String(l.id) !== String(id));
+  showToast('🗑 Lead deleted');
+  renderCRM(CRM_LEADS);
+}
 
 // ============================================================
 //  TOAST
