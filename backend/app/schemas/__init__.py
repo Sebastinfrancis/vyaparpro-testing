@@ -191,6 +191,8 @@ class CompanyUpdate(APIModel):
     trade_name: Optional[str] = None
     gstin: Optional[str] = None
     pan: Optional[str] = None
+    business_type: Optional[str] = None
+    state_code: Optional[str] = None
     reg_address: Optional[str] = None
     email: Optional[EmailStr] = None
     phone: Optional[str] = None

@@ -22,6 +22,8 @@ from app.schemas.billing import (
     PurchaseOrderCreate, QuotationCreate,
 )
 from app.utils.gst_calculator import GSTCalculator
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 
 def _calc_items(items_in: list[Any], supply_type: str):
@@ -290,6 +292,54 @@ class PurchaseOrderService:
             ))
         await self.session.flush()
         return await self.repo.get_detail(po.id)
+    
+    async def receive(self, po_id: UUID, company_id: UUID, user_id: UUID,
+                       received_items: list[dict] | None = None) -> PurchaseOrder:
+        """Mark goods received against a PO and add the qty to stock. Defaults to full receipt."""
+        po = await self.repo.get_detail(po_id)
+        if not po:
+            raise NotFoundError("Purchase order not found.")
+        if po.status in ("received", "cancelled", "closed"):
+            raise BusinessError("Purchase order already received or closed.")
+
+        wh_id = po.deliver_to_warehouse_id
+        if not wh_id:
+            from app.db.repositories.inventory import WarehouseRepository
+            default_wh = await WarehouseRepository(self.session).get_default(company_id)
+            wh_id = default_wh.id if default_wh else None
+        if not wh_id:
+            raise BusinessError("No delivery warehouse set on this PO and no default warehouse configured.")
+
+        from app.services.inventory import InventoryService
+        inv_svc = InventoryService(self.session)
+        override = {str(r["item_id"]): Decimal(str(r["qty"])) for r in (received_items or [])}
+
+        for item in po.items:
+            if not item.product_id:
+                continue
+            remaining = item.quantity - item.received_qty
+            qty = override.get(str(item.id), remaining)
+            if qty <= 0:
+                continue
+            if qty > remaining:
+                raise BusinessError(
+                    f"Cannot receive {qty} of '{item.description}' — only {remaining} pending."
+                )
+            await inv_svc.record_movement(
+                company_id=company_id, product_id=item.product_id, warehouse_id=wh_id,
+                movement_type="purchase", quantity=qty, cost_price=item.rate,
+                ref_type="purchase_order", ref_id=po.id, ref_no=po.po_no,
+                narration=f"Goods received against PO {po.po_no}", user_id=user_id,
+            )
+            item.received_qty = item.received_qty + qty
+
+        all_received = all(it.received_qty >= it.quantity for it in po.items if it.product_id)
+        await self.repo.update(po, {
+            "status": "received" if all_received else "partially_received",
+            "actual_delivery": date.today(),
+        })
+        await self.session.flush()
+        return await self.repo.get_detail(po_id)
 
 
 class InvoiceService:
@@ -297,6 +347,11 @@ class InvoiceService:
         self.repo = InvoiceRepository(session)
         self.seq = DocumentSequenceRepository(session)
         self.session = session
+
+    async def _default_warehouse_id(self, company_id: UUID):
+        from app.db.repositories.inventory import WarehouseRepository
+        wh = await WarehouseRepository(self.session).get_default(company_id)
+        return wh.id if wh else None
 
     async def create(self, company_id: UUID, payload: InvoiceCreate, user_id: UUID) -> Invoice:
         lines, totals = _calc_items(payload.items, payload.supply_type)
@@ -394,6 +449,35 @@ class InvoiceService:
             "finalized_at": datetime.now(timezone.utc),
             "finalized_by": user_id,
         })
+
+        try:
+            from app.services.inventory import InventoryService
+            inv_svc = InventoryService(self.session)
+            result = await self.session.execute(
+                select(Invoice).where(Invoice.id == inv.id).options(selectinload(Invoice.items))
+            )
+            inv_loaded = result.scalar_one()
+            default_wh = None
+            for item in inv_loaded.items:
+                if not item.product_id:
+                    continue
+                wh_id = item.warehouse_id or inv.warehouse_id
+                if not wh_id:
+                    default_wh = default_wh or await self._default_warehouse_id(company_id)
+                    wh_id = default_wh
+                if not wh_id:
+                    continue  # no warehouse anywhere — skip rather than crash finalize
+                await inv_svc.record_movement(
+                    company_id=company_id, product_id=item.product_id, warehouse_id=wh_id,
+                    movement_type="sale", quantity=-item.quantity,
+                    ref_type="invoice", ref_id=inv.id, ref_no=inv.invoice_no,
+                    narration=f"Sale via invoice {inv.invoice_no}", user_id=user_id,
+                )
+        except Exception as e:
+            import traceback
+            print("STOCK DEDUCTION FAILED:", e)
+            traceback.print_exc() 
+
         # Trigger auto-accounting
         try:
             from app.services.accounting import AutoAccountingService
@@ -416,6 +500,32 @@ class InvoiceService:
             raise BusinessError("Invoice is already cancelled.")
         if inv.paid_amount > 0:
             raise BusinessError("Cannot cancel a partially/fully paid invoice.")
+        if inv.status != "draft":
+            try:
+                from app.services.inventory import InventoryService
+                inv_svc = InventoryService(self.session)
+                result = await self.session.execute(
+                    select(Invoice).where(Invoice.id == inv.id).options(selectinload(Invoice.items))
+                )
+                inv_loaded = result.scalar_one()
+                default_wh = None
+                for item in inv_loaded.items:
+                    if not item.product_id:
+                        continue
+                    wh_id = item.warehouse_id or inv.warehouse_id
+                    if not wh_id:
+                        default_wh = default_wh or await self._default_warehouse_id(company_id)
+                        wh_id = default_wh
+                    if not wh_id:
+                        continue
+                    await inv_svc.record_movement(
+                        company_id=company_id, product_id=item.product_id, warehouse_id=wh_id,
+                        movement_type="sale_reversal", quantity=item.quantity,
+                        ref_type="invoice", ref_id=inv.id, ref_no=inv.invoice_no,
+                        narration=f"Invoice {inv.invoice_no} cancelled", user_id=user_id,
+                    )
+            except Exception:
+                pass
         return await self.repo.update(inv, {
             "status": "cancelled",
             "cancelled_at": datetime.now(timezone.utc),
@@ -489,6 +599,74 @@ class InvoiceService:
             notes=inv.notes or "",
         )
         return generate_invoice_pdf(data)
+    
+    async def update(self, invoice_id: UUID, company_id: UUID, payload: InvoiceUpdate, user_id: UUID) -> Invoice:
+        result = await self.session.execute(
+            select(Invoice).where(Invoice.id == invoice_id).options(selectinload(Invoice.items))
+        )
+        inv = result.scalar_one_or_none()
+        if not inv:
+            raise NotFoundError("Invoice not found.")
+        if inv.company_id != company_id:
+            from app.core.exceptions import PermissionDeniedError
+            raise PermissionDeniedError()
+
+        data = payload.model_dump(exclude_unset=True, exclude={"items"})
+
+        if inv.status == "draft":
+            # Draft invoices: everything the payload sent is fair game
+            update_fields = data
+            if payload.items is not None:
+                lines, totals = _calc_items(payload.items, payload.supply_type or inv.supply_type)
+                from decimal import ROUND_HALF_UP
+                raw_total = (totals["taxable_amount"] + totals["cgst_amount"] + totals["sgst_amount"] +
+                             totals["igst_amount"] + totals["cess_amount"] +
+                             (payload.other_charges if payload.other_charges is not None else inv.other_charges) -
+                             (payload.tds_amount if payload.tds_amount is not None else inv.tds_amount) +
+                             (payload.tcs_amount if payload.tcs_amount is not None else inv.tcs_amount))
+                rounded = raw_total.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+                round_off = rounded - raw_total + (payload.round_off if payload.round_off is not None else Decimal("0"))
+
+                # Replace line items entirely
+                for old_item in list(inv.items):
+                    inv.items.remove(old_item)   # detach from the in-memory collection first
+                    await self.session.delete(old_item)
+                await self.session.flush()
+
+                for line in lines:
+                    item = payload.items[line.line_no - 1]
+                    is_igst = (payload.supply_type or inv.supply_type) == "inter"
+                    self.session.add(InvoiceItem(
+                        invoice_id=inv.id,
+                        product_id=item.product_id,
+                        description=item.description,
+                        hsn_code=item.hsn_code,
+                        quantity=item.quantity,
+                        rate=item.rate,
+                        discount_pct=item.discount_pct,
+                        gst_rate=item.gst_rate,
+                        cgst_rate=Decimal("0") if is_igst else item.gst_rate / 2,
+                        sgst_rate=Decimal("0") if is_igst else item.gst_rate / 2,
+                        igst_rate=item.gst_rate if is_igst else Decimal("0"),
+                        taxable_amount=line.taxable_amount,
+                        cgst_amount=line.cgst_amount,
+                        sgst_amount=line.sgst_amount,
+                        igst_amount=line.igst_amount,
+                        cess_amount=line.cess_amount,
+                        total_amount=line.total_amount,
+                    ))
+
+                update_fields.update({
+                    "round_off": round_off,
+                    "total_amount": rounded,
+                    **totals,
+                })
+        else:
+            # Anything not a draft — keep today's narrow, safe whitelist
+            allowed = {"due_date", "notes"}
+            update_fields = {k: v for k, v in data.items() if k in allowed}
+
+        return await self.repo.update(inv, update_fields)
 
 
 class PaymentService:

@@ -17,6 +17,7 @@ from app.services.billing import (
     PaymentService, PurchaseOrderService, QuotationService,
 )
 from app.utils.responses import created, ok, paginated
+from app.schemas.billing import EInvoiceRecordIn
 
 router = APIRouter()
 
@@ -156,6 +157,15 @@ async def approve_po(po_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONR
                            "approved_at": datetime.now(timezone.utc), "status": "sent"})
     return ok(message="Purchase order approved.")
 
+@router.post("/purchase-orders/{po_id}/receive", summary="Receive goods against a PO (updates stock)")
+async def receive_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep,
+                                  payload: dict | None = None) -> ORJSONResponse:
+    from app.schemas.billing import PurchaseOrderOut
+    svc = PurchaseOrderService(db)
+    items = (payload or {}).get("items")  # optional partial receipt: [{"item_id": "...", "qty": 5}, ...]
+    po = await svc.receive(po_id, current.company_id, current.user_id, items)
+    return ok(PurchaseOrderOut.model_validate(po).model_dump(mode='json'), "Goods received; stock updated.")
+
 @router.patch("/purchase-orders/{po_id}", summary="Partially update purchase order (e.g. status)")
 async def patch_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep, payload: dict) -> ORJSONResponse:
     from app.db.repositories.billing import PurchaseOrderRepository
@@ -165,7 +175,7 @@ async def patch_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep, 
     po = await repo.get_detail(po_id)
     if not po:
         raise HTTPException(status_code=404, detail="Purchase order not found")
-    allowed = {"status", "expected_delivery", "actual_delivery", "notes"}
+    allowed = {"status", "expected_delivery", "actual_delivery", "notes", "paid_amount"}
     await repo.update(po, {k: v for k, v in payload.items() if k in allowed})
     updated = await repo.get_detail(po_id)
     return ok(PurchaseOrderOut.model_validate(updated).model_dump(mode='json'), "Purchase order updated.")
@@ -227,13 +237,11 @@ async def get_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> O
         raise NotFoundError("Invoice not found.")
     return ok(InvoiceOut.model_validate(inv).model_dump(mode='json'))
 
-@router.put("/invoices/{invoice_id}", summary="Update invoice (draft only)")
+@router.put("/invoices/{invoice_id}", summary="Update invoice (full edit if draft, limited fields otherwise)")
 async def update_invoice(invoice_id: UUID, payload: InvoiceUpdate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
-    from app.db.repositories.billing import InvoiceRepository
     from app.schemas.billing import InvoiceOut
-    repo = InvoiceRepository(db)
-    inv = await repo.get_or_raise(invoice_id)
-    updated = await repo.update(inv, payload.model_dump(exclude_unset=True, exclude={"items"}))
+    svc = InvoiceService(db)
+    updated = await svc.update(invoice_id, current.company_id, payload, current.user_id)
     return ok(InvoiceOut.model_validate(updated).model_dump(mode='json'), "Invoice updated.")
 
 @router.patch("/invoices/{invoice_id}", summary="Partially update invoice (e.g. status)")
@@ -367,3 +375,61 @@ async def create_challan(payload: DeliveryChallanCreate, current: CurrentUserDep
         ))
     await db.flush()
     return created(DeliveryChallanOut.model_validate(dc).model_dump(mode='json'), "Delivery challan created.")
+
+
+from app.schemas.billing import EInvoiceRecordIn
+
+@router.post("/invoices/{invoice_id}/einvoice", summary="Record a manually-generated IRN for this invoice")
+async def record_einvoice(invoice_id: UUID, payload: EInvoiceRecordIn, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
+    from app.db.repositories.billing import InvoiceRepository
+    from app.db.models.billing import EInvoiceLog
+
+    repo = InvoiceRepository(db)
+    inv = await repo.get_or_raise(invoice_id)
+
+    updated = await repo.update(inv, {
+        "irn": payload.irn,
+        "ack_no": payload.ack_no,
+        "ack_date": payload.ack_date,
+        "qr_code_data": payload.qr_code_data,
+        "ewb_no": payload.ewb_no,
+        "ewb_valid_till": payload.ewb_valid_till,
+    })
+
+    db.add(EInvoiceLog(
+        company_id=current.company_id,
+        invoice_id=invoice_id,
+        invoice_no=inv.invoice_no,
+        irn=payload.irn,
+        ack_no=payload.ack_no,
+        ack_date=payload.ack_date,
+        qr_code=payload.qr_code_data,
+        status="recorded_manual",
+    ))
+    await db.flush()
+
+    return ok(InvoiceOut.model_validate(updated).model_dump(mode="json"), "IRN recorded.")
+
+
+@router.delete("/invoices/{invoice_id}/einvoice", summary="Clear/cancel the recorded IRN for this invoice")
+async def cancel_einvoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
+    from app.db.repositories.billing import InvoiceRepository
+    from app.db.models.billing import EInvoiceLog
+
+    repo = InvoiceRepository(db)
+    inv = await repo.get_or_raise(invoice_id)
+
+    updated = await repo.update(inv, {
+        "irn": None, "ack_no": None, "ack_date": None,
+        "qr_code_data": None, "ewb_no": None, "ewb_valid_till": None,
+    })
+
+    db.add(EInvoiceLog(
+        company_id=current.company_id,
+        invoice_id=invoice_id,
+        invoice_no=inv.invoice_no,
+        status="cancelled_manual",
+    ))
+    await db.flush()
+
+    return ok(InvoiceOut.model_validate(updated).model_dump(mode="json"), "IRN cleared.")

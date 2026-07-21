@@ -16,6 +16,7 @@ from app.db.repositories.inventory import (
 from app.schemas.inventory import (
     StockAdjustmentCreate, StockTransferCreate, WarehouseCreate, WarehouseUpdate,
 )
+from app.db.models import Product
 
 
 class WarehouseService:
@@ -68,7 +69,19 @@ class InventoryService:
             batch_no=batch_no or "", serial_no=serial_no or "",
             qty_delta=quantity, cost_price=cost_price, expiry_date=expiry_date,
         )
+        product = await self.session.get(Product, product_id)
+        if product and product.track_inventory and not product.is_service:
+            product.current_stock = (product.current_stock or 0) + int(quantity)
+        
         await self.session.flush()
+
+        try:
+            from app.api.v1.dependencies import get_redis, CacheService
+            redis = await get_redis()
+            cache = CacheService(redis)
+            await cache.delete_pattern(f"products:{company_id}:*")
+        except Exception:
+            pass
 
     async def create_adjustment(self, company_id: UUID, payload: StockAdjustmentCreate, user_id: UUID):
         from app.db.repositories.billing import DocumentSequenceRepository

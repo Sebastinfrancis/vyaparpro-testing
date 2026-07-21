@@ -479,7 +479,15 @@ select.fi option{background:var(--bg2)}
       </div>
       <div style="display:flex;gap:9px;margin-bottom:14px">
         <input class="fi" style="width:240px" id="custSearch" placeholder="🔍 Search customers…" oninput="filterCust()"/>
-        <select class="fi" style="width:130px" id="custCityF" onchange="filterCust()"><option value="">All Cities</option><option>Mumbai</option><option>Pune</option><option>Delhi</option><option>Nashik</option></select>
+        <select class="fi" style="width:190px" id="custSort" onchange="filterCust()">
+          <option value="">Sort by...</option>
+          <option value="business_desc">Total Business: High → Low</option>
+          <option value="business_asc">Total Business: Low → High</option>
+          <option value="outstanding_desc">Outstanding: High → Low</option>
+          <option value="outstanding_asc">Outstanding: Low → High</option>
+          <option value="purchase_desc">Last Purchase: Latest</option>
+          <option value="purchase_asc">Last Purchase: Oldest</option>
+        </select>
       </div>
       <div class="card"><div class="tw"><table>
         <thead><tr><th>Customer</th><th>GSTIN</th><th>Mobile</th><th>City</th><th>Total Business</th><th>Outstanding</th><th>Last Purchase</th><th>Actions</th></tr></thead>
@@ -496,12 +504,24 @@ select.fi option{background:var(--bg2)}
       </div>
       <div style="display:flex;gap:14px;margin-bottom:18px">
         <div class="sc bl" style="flex:1"><div class="slbl">Total Vendors</div><div class="sval bl" style="font-size:20px" id="vendTotal">—</div></div>
-        <div class="sc or" style="flex:1"><div class="slbl">Payable</div><div class="sval or" style="font-size:20px">—</div></div>
-        <div class="sc gr" style="flex:1"><div class="slbl">Active</div><div class="sval gr" style="font-size:20px">—</div></div>
-        <div class="sc pu" style="flex:1"><div class="slbl">Orders (Month)</div><div class="sval pu" style="font-size:20px">—</div></div>
+        <div class="sc pu" style="flex:1"><div class="slbl">Total Purchases</div><div class="sval pu" style="font-size:20px" id="vendTotalPurchases">—</div></div>
+        <div class="sc or" style="flex:1"><div class="slbl">Payable</div><div class="sval or" style="font-size:20px" id="vendPayable">—</div></div>
+        <div class="sc gr" style="flex:1"><div class="slbl">Active</div><div class="sval gr" style="font-size:20px" id="vendActive">—</div></div>
+      </div>
+      <div style="display:flex;gap:9px;margin-bottom:14px">
+        <input class="fi" style="width:240px" id="vendSearch" placeholder="🔍 Search vendors…" oninput="filterVend()"/>
+        <select class="fi" style="width:190px" id="vendSort" onchange="filterVend()">
+          <option value="">Sort by...</option>
+          <option value="business_desc">Total Purchases: High → Low</option>
+          <option value="business_asc">Total Purchases: Low → High</option>
+          <option value="payable_desc">Payable: High → Low</option>
+          <option value="payable_asc">Payable: Low → High</option>
+          <option value="purchase_desc">Last Purchase: Latest</option>
+          <option value="purchase_asc">Last Purchase: Oldest</option>
+        </select>
       </div>
       <div class="card"><div class="tw"><table>
-        <thead><tr><th>Vendor</th><th>GSTIN</th><th>Mobile</th><th>City</th><th>Total Purchases</th><th>Payable</th><th>AI Score</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Vendor</th><th>GSTIN</th><th>Mobile</th><th>City</th><th>Total Purchases</th><th>Payable</th><th>Actions</th></tr></thead>
         <tbody id="vendBody"></tbody>
       </table></div></div>
     </div>
@@ -851,23 +871,20 @@ select.fi option{background:var(--bg2)}
         <div>
           <div class="card" style="margin-bottom:14px">
             <div style="font-size:13px;font-weight:700;margin-bottom:14px">🏢 Company Profile</div>
-            <div class="fg"><label class="fl">Business Name</label><input class="fi" value="Sharma Electronics"/></div>
-            <div class="fg"><label class="fl">GSTIN</label><input class="fi mono" value="27AABCS1234F1Z5"/></div>
+            <div class="fg"><label class="fl">Business Name</label><input class="fi" id="setLegalName"/></div>
+            <div class="fg"><label class="fl">GSTIN</label><input class="fi mono" id="setGstin"/></div>
             <div class="fr c2">
-              <div class="fg"><label class="fl">State</label><select class="fi"><option>27 - Maharashtra</option></select></div>
-              <div class="fg"><label class="fl">Business Type</label><select class="fi"><option>Retailer</option><option>Wholesaler</option><option>Manufacturer</option></select></div>
+              <div class="fg"><label class="fl">State</label><select class="fi" id="setStateCode"><option value="27">27 - Maharashtra</option></select></div>
+              <div class="fg"><label class="fl">Business Type</label><select class="fi" id="setBizType"><option value="retailer">Retailer</option><option value="wholesaler">Wholesaler</option><option value="manufacturer">Manufacturer</option></select></div>
             </div>
-            <div class="fg"><label class="fl">Invoice Prefix</label><input class="fi" value="INV-"/></div>
-            <button class="btn btn-p btn-sm" onclick="showToast('✅ Settings saved!')">Save Changes</button>
+            <div class="fg"><label class="fl">Invoice Prefix</label><input class="fi" id="setInvoicePrefix"/></div>
+            <button class="btn btn-p btn-sm" onclick="saveCompanySettings()">Save Changes</button>
           </div>
           <div class="card">
             <div style="font-size:13px;font-weight:700;margin-bottom:14px">👤 User & Role Management</div>
             <div class="tw"><table>
               <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
-              <tbody>
-                <tr><td class="b">Rajesh Sharma</td><td><span class="chip crd">Owner</span></td><td><span class="sb sp">Active</span></td><td><button class="btn btn-o btn-sm">Edit</button></td></tr>
-                <tr><td class="b">Priya Sharma</td><td><span class="chip cor">Accountant</span></td><td><span class="sb sp">Active</span></td><td><button class="btn btn-o btn-sm">Edit</button></td></tr>
-              </tbody>
+              <tbody id="settingsUsersBody"></tbody>
             </table></div>
           </div>
         </div>
@@ -1084,6 +1101,24 @@ select.fi option{background:var(--bg2)}
   </div>
 </div>
 
+<div id="poReceiveModal" class="mo hidden">
+  <div class="md md-lg">
+    <div class="mh"><span class="mt2">Receive Goods</span><button class="mc" onclick="closeModal('poReceiveModal')">✕</button></div>
+    <div class="mb">
+      <div id="poReceiveInfo" style="font-size:12px;color:var(--text3);margin-bottom:10px"></div>
+      <div class="card">
+        <div style="font-size:12px;font-weight:700;margin-bottom:10px">Items to Receive</div>
+        <div class="iih iir" style="padding:3px 0 7px"><span>Product</span><span>Ordered</span><span>Already Rcvd</span><span>Pending</span><span>Receive Now</span></div>
+        <div id="poReceiveItems"></div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-o" onclick="closeModal('poReceiveModal')">Cancel</button>
+      <button class="btn btn-p" onclick="submitPartialReceive()">✅ Confirm Receipt</button>
+    </div>
+  </div>
+</div>
+
 <div id="payModal" class="mo hidden">
   <div class="md md-sm">
     <div class="mh"><span class="mt2">Record Payment</span><button class="mc" onclick="closeModal('payModal')">✕</button></div>
@@ -1250,6 +1285,11 @@ function unwrapList(result) {
 function normInvoice(inv) {
   return {
     id:         inv.id,
+    party_id:   inv.party_id || null,
+    irn:        inv.irn            || '',
+    ackNo:      inv.ack_no         || '',
+    ewbNo:      inv.ewb_no         || '',
+    qrCode:     inv.qr_code_data   || '',
     no:         inv.invoice_number  || inv.invoice_no || inv.number       || inv.no        || '—',
     date:       inv.invoice_date    || inv.date          || '',
     due:        inv.due_date        || inv.due           || '',
@@ -1653,6 +1693,7 @@ function triggerModuleRefresh(id) {
     einvoice:    renderEInvoice,
     accounting:  renderAccounting,
     ai:          initAI,
+    settings:    renderSettings,
   }[id] || (() => {}))();
 }
 
@@ -2020,6 +2061,7 @@ async function loadInvoiceToEdit(id) {
   });
   setVal('custName',inv.customer); setVal('custGst',inv.custGst); setVal('custMobile',inv.custMobile);
   setVal('custAddr',inv.custAddr); setVal('custEmail',inv.custEmail); setVal('custState',inv.custState);
+  selectedCustomerId = inv.party_id || null;
   document.getElementById('invoiceItems').innerHTML='';
   itemCounter=0;
   (inv.items||[]).forEach(it=>{
@@ -2036,11 +2078,33 @@ async function loadInvoiceToEdit(id) {
     calcItem(n);
   });
   calcTotals();
+  setInvoiceEditRestrictions(inv.status !== 'draft');
   addAuditEntry('EDIT_START','Invoice','Opened '+inv.no+' for editing');
+}
+
+function setInvoiceEditRestrictions(isEditMode) {
+  // isEditMode = true means "this invoice is NOT a draft" — lock fields the backend
+  // now only accepts for draft invoices (see InvoiceService.update()).
+  const lockedFields = ['invNo','invDate','invType','invState','supplyType','custGst','custMobile','custEmail','custState'];
+  lockedFields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = isEditMode;
+  });
+
+  // Line items can only be replaced while the invoice is still a draft.
+  document.querySelectorAll('[id^="item-"] input, [id^="item-"] select, [id^="item-"] button').forEach(el => {
+    el.disabled = isEditMode;
+  });
+  const addItemBtn = document.querySelector('button[onclick="addItem()"]');
+  if (addItemBtn) addItemBtn.disabled = isEditMode;
+
+  document.getElementById('invoiceItems')?.parentElement?.classList.toggle('locked-section', isEditMode);
 }
 
 function cancelEdit() {
   editingInvId=null;
+  selectedCustomerId = null;
+  setInvoiceEditRestrictions(false);
   document.getElementById('editBanner').classList.add('hidden');
   document.getElementById('invFormTitle').textContent='Create GST Invoice';
   document.getElementById('invFormBc').innerHTML='Billing / <span>New Invoice</span>';
@@ -2095,6 +2159,7 @@ async function finalizeInvoice() {
     const grossAmt = qty * rate * (1 - disc/100);
     const products = PRODUCTS.find(p=>p.name===prod);
     lineItems.push({
+      product_id: products?.id || null,
       description: prod,
       quantity: qty,
       rate: rate,
@@ -2142,6 +2207,7 @@ const grandTotal = taxableAmt + totalGST;
     invoice_date:         getVal('invDate'),
     due_date:             getVal('invDue'),
     invoice_type:         getVal('invType'),
+    party_id:             selectedCustomerId || undefined,
     place_of_supply:      getVal('custState'),
     supply_type:          getVal('supplyType'),
     notes:                getVal('invNotes'),
@@ -2226,12 +2292,22 @@ const grandTotal = taxableAmt + totalGST;
       // CREATE — POST /billing/invoices
       const r = AUTH.apiOnline ? await apiFetch('/billing/invoices',{method:'POST',body:JSON.stringify(payload)}) : null;
       const newId = r?.id || r?.data?.id || Date.now();
+      savedId = newId;
+
+      // NEW — the invoice is created as a draft; finalize it so stock actually gets deducted
+      if (AUTH.apiOnline && newId) {
+        try {
+          await apiFetch(`/billing/invoices/${newId}/finalize`, { method: 'POST' });
+        } catch (e) {
+          showToast('⚠️ Invoice saved as draft — could not finalize: ' + e.message, 'warn');
+        }
+      }
+
       const newInv = normInvoice({ ...payload, id: newId });
       INVOICES.unshift(newInv);
-      savedId = newId;
       nextInvNo++;
       addAuditEntry('CREATE','Invoice','Created '+payload.invoice_number+' — ₹'+grandTotal.toLocaleString());
-      showToast('✅ Invoice '+payload.invoice_number+' created!');
+      showToast('✅ Invoice '+payload.invoice_number+' created & finalized!');
     }
   } catch (e) {
     // Offline fallback — persist to local cache
@@ -2255,9 +2331,94 @@ const grandTotal = taxableAmt + totalGST;
   setTimeout(()=>nav('invoices',null),600);
 }
 
-function saveDraft() {
-  addAuditEntry('DRAFT','Invoice','Saved draft for '+getVal('custName'));
-  showToast('💾 Draft saved');
+async function saveDraft() {
+  const cust = getVal('custName');
+  if (!cust.trim()) { showToast('⚠️ Please enter customer name','warn'); return; }
+
+  const lineItems = [];
+  document.querySelectorAll('[id^="item-"]').forEach(row => {
+    const n = row.id.replace('item-', '');
+    const sel = row.querySelector('select');
+    const prod = sel?.value; if (!prod) return;
+    const qty    = +getVal('qty-'+n)  || 1;
+    const rate   = +getVal('rate-'+n) || 0;
+    const disc   = +getVal('disc-'+n) || 0;
+    const gstPct = parseInt(getVal('gst-'+n)) || 18;
+    const grossAmt = qty * rate * (1 - disc/100);
+    const products = PRODUCTS.find(p=>p.name===prod);
+    lineItems.push({
+      product_id: products?.id || null,
+      description: prod,
+      quantity: qty,
+      rate: rate,
+      discount_pct: disc,
+      gst_rate: gstPct,
+      amount: grossAmt,
+      hsn_code: products?.hsn_code || '',
+    });
+  });
+  if (!lineItems.length) { showToast('⚠️ Add at least one item before saving a draft','warn'); return; }
+
+  const subtotal   = lineItems.reduce((a,it)=>a + (it.quantity * it.rate), 0);
+  const discount   = lineItems.reduce((a,it)=>a + (it.quantity * it.rate * it.discount_pct / 100), 0);
+  const taxableAmt = lineItems.reduce((a,it)=>a + it.amount, 0);
+  const totalGST   = lineItems.reduce((a,it)=>a + (it.amount * it.gst_rate / 100), 0);
+  const isInter    = getVal('supplyType') === 'inter';
+  const cgst = isInter ? 0 : totalGST / 2;
+  const sgst = isInter ? 0 : totalGST / 2;
+  const igst = isInter ? totalGST : 0;
+  const grandTotal = taxableAmt + totalGST;
+
+  const payload = {
+    invoice_number:       getVal('invNo'),
+    invoice_date:         getVal('invDate'),
+    due_date:             getVal('invDue'),
+    invoice_type:         getVal('invType'),
+    party_id:             selectedCustomerId || undefined,
+    place_of_supply:      getVal('custState'),
+    supply_type:          getVal('supplyType'),
+    notes:                getVal('invNotes'),
+    billing_name:         cust,
+    customer_gstin:       getVal('custGst'),
+    customer_phone:       getVal('custMobile'),
+    billing_address:      getVal('custAddr'),
+    customer_email:       getVal('custEmail'),
+    place_of_supply_code: getVal('invState'),
+    items:                lineItems,
+    subtotal:             Math.round(subtotal*100)/100,
+    total_discount:       Math.round(discount*100)/100,
+    taxable_amount:       Math.round(taxableAmt*100)/100,
+    cgst_amount:          cgst,
+    sgst_amount:          sgst,
+    igst_amount:          igst,
+    round_off:            0,
+    total_amount:         grandTotal,
+    status:               'draft',
+  };
+
+  try {
+    if (editingInvId !== null) {
+      // Already exists (either a real draft, or was opened for edit) — update it
+      const r = AUTH.apiOnline ? await apiFetch(`/billing/invoices/${editingInvId}`, {method:'PUT', body: JSON.stringify(payload)}) : null;
+      const updated = normInvoice({ ...payload, id: editingInvId, ...(r?.data||r||{}) });
+      const idx = INVOICES.findIndex(i=>String(i.id)===String(editingInvId));
+      if (idx>=0) INVOICES[idx]=updated; else INVOICES.unshift(updated);
+    } else {
+      // First save — create it, then remember the id so re-clicking Save Draft updates instead of duplicating
+      const r = AUTH.apiOnline ? await apiFetch('/billing/invoices', {method:'POST', body: JSON.stringify(payload)}) : null;
+      const newId = r?.id || r?.data?.id || Date.now();
+      editingInvId = newId;
+      const newInv = normInvoice({ ...payload, id: newId });
+      INVOICES.unshift(newInv);
+      nextInvNo++;
+    }
+    addAuditEntry('DRAFT','Invoice','Saved draft for '+cust);
+    showToast('💾 Draft saved');
+    renderInvoices();
+    initNewInvoice();
+  } catch (e) {
+    showToast('❌ Could not save draft: ' + e.message);
+  }
 }
 
 function previewInvoice() {
@@ -2330,12 +2491,17 @@ function previewInvoice() {
   INVOICES.pop();
 }
 
+let selectedCustomerId = null;
+
 function autofillCustomer(name) {
   const c=CUSTOMERS.find(x=>x.name===name);
   if (c) {
+    selectedCustomerId = c.id;
     setVal('custGst',c.gstin||''); setVal('custMobile',c.mobile||'');
     setVal('custAddr',c.addr||''); setVal('custEmail',c.email||'');
     setVal('custState',(c.gstin||'27').substring(0,2)||'27');
+  } else {
+    selectedCustomerId = null;  // typed a name that doesn't match any saved customer
   }
 }
 
@@ -2397,14 +2563,29 @@ async function renderCustomers(list) {
 
 // ── filter ───────────────────────────────────────────────────
 function filterCust() {
-  const q    = (document.getElementById('custSearch')?.value || '').toLowerCase();
-  const city = document.getElementById('custCityF')?.value || '';
-  renderCustomers(
-    CUSTOMERS.filter(c =>
-      (!q    || (c.name || '').toLowerCase().includes(q) || (c.mobile || '').includes(q)) &&
-      (!city || c.city === city)
-    )
+  const q      = (document.getElementById('custSearch')?.value || '').toLowerCase();
+  const sortBy = document.getElementById('custSort')?.value || '';
+
+  let data = CUSTOMERS.filter(c =>
+    !q || (c.name || '').toLowerCase().includes(q) || (c.mobile || '').includes(q)
   );
+
+  if (sortBy === 'business_desc')     data = [...data].sort((a,b) => (b.total || 0) - (a.total || 0));
+  if (sortBy === 'business_asc')      data = [...data].sort((a,b) => (a.total || 0) - (b.total || 0));
+  if (sortBy === 'outstanding_desc')  data = [...data].sort((a,b) => (b.outstanding || 0) - (a.outstanding || 0));
+  if (sortBy === 'outstanding_asc')   data = [...data].sort((a,b) => (a.outstanding || 0) - (b.outstanding || 0));
+  if (sortBy === 'purchase_desc' || sortBy === 'purchase_asc') {
+    data = [...data].sort((a,b) => {
+      const da = a.last && a.last !== '—' ? new Date(a.last) : null;
+      const db = b.last && b.last !== '—' ? new Date(b.last) : null;
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return sortBy === 'purchase_asc' ? da - db : db - da;
+    });
+  }
+
+  renderCustomers(data);
 }
 
 // ── open "Add Customer" modal with empty fields ──────────────
@@ -2590,7 +2771,7 @@ function normVendor(v) {
   return {
     id:          v.id,
     name:        v.display_name      || v.legal_name   || v.name || '—',
-    gstin:       v.gstin_number      || v.gstin        || '',
+    gstin:       v.gstin             || '',
     mobile:      v.phone             || v.mobile       || '',
     city:        v.billing_city      || v.city         || '',
     email:       v.email             || '',
@@ -2598,10 +2779,9 @@ function normVendor(v) {
     contact:     v.contact_person    || v.contact      || '',
     credit:      v.credit_limit      || 0,
     terms:       v.payment_terms     || 'Net 30',
-    total:       v.total_business    || v.lifetime_value || 0,
-    payable:     v.outstanding_amount || v.payable     || 0,
+    total:       v.total_business    || 0,
+    payable:     v.outstanding_amount || 0,
     last:        v.last_purchase_date || '—',
-    score:       v.reliability_score || v.ai_score     || 0,
   };
 }
 
@@ -2628,6 +2808,18 @@ async function renderVendors(list) {
   }
 
   setTxt('vendTotal', data.length);
+
+  setTxt('vendTotal', data.length);
+
+  const now = Date.now();
+  const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+  const activeCount = data.filter(v => v.last && v.last !== '—' && (now - new Date(v.last).getTime()) <= THIRTY_DAYS).length;
+  const totalPurchases = data.reduce((s, v) => s + (v.total || 0), 0);
+  const totalPayable = data.reduce((s, v) => s + (v.payable || 0), 0);
+  setTxt('vendTotalPurchases', '₹' + fmt(totalPurchases));
+  setTxt('vendPayable', '₹' + fmt(totalPayable));
+  setTxt('vendActive', activeCount);
+
   b.innerHTML = data.length
     ? data.map(v => `<tr>
         <td class="b">${v.name}</td>
@@ -2637,33 +2829,40 @@ async function renderVendors(list) {
         <td class="b" style="color:var(--green)">₹${fmt(v.total)}</td>
         <td style="color:var(--orange);font-weight:600">₹${fmt(v.payable)}</td>
         <td>
-          <div style="display:flex;align-items:center;gap:5px">
-            <div style="width:30px;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
-              <div style="height:100%;width:${v.score || 0}%;background:${(v.score || 0) > 85 ? 'var(--green)' : 'var(--orange)'}"></div>
-            </div>
-            <span style="font-size:11px;font-weight:700;color:${(v.score || 0) > 85 ? 'var(--green)' : 'var(--orange)'}">${v.score || '—'}</span>
-          </div>
-        </td>
-        <td>
           <div style="display:flex;gap:3px">
             <button class="btn btn-o btn-sm" onclick="editVend('${v.id}')">✏️</button>
             <button class="btn btn-d btn-sm" onclick="deleteVendor('${v.id}')">🗑</button>
           </div>
         </td>
       </tr>`).join('')
-    : '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">No vendors found</td></tr>';
+    : '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">No vendors found</td></tr>';
 }
 
 // ── filter ───────────────────────────────────────────────────
 function filterVend() {
-  const q    = (document.getElementById('vendSearch')?.value || '').toLowerCase();
-  const city = document.getElementById('vendCityF')?.value || '';
-  renderVendors(
-    VENDORS.filter(v =>
-      (!q    || (v.name || '').toLowerCase().includes(q) || (v.mobile || '').includes(q)) &&
-      (!city || v.city === city)
-    )
+  const q      = (document.getElementById('vendSearch')?.value || '').toLowerCase();
+  const sortBy = document.getElementById('vendSort')?.value || '';
+
+  let data = VENDORS.filter(v =>
+    !q || (v.name || '').toLowerCase().includes(q) || (v.mobile || '').includes(q)
   );
+
+  if (sortBy === 'business_desc') data = [...data].sort((a,b) => (b.total || 0) - (a.total || 0));
+  if (sortBy === 'business_asc')  data = [...data].sort((a,b) => (a.total || 0) - (b.total || 0));
+  if (sortBy === 'payable_desc')  data = [...data].sort((a,b) => (b.payable || 0) - (a.payable || 0));
+  if (sortBy === 'payable_asc')   data = [...data].sort((a,b) => (a.payable || 0) - (b.payable || 0));
+  if (sortBy === 'purchase_desc' || sortBy === 'purchase_asc') {
+    data = [...data].sort((a,b) => {
+      const da = a.last && a.last !== '—' ? new Date(a.last) : null;
+      const db = b.last && b.last !== '—' ? new Date(b.last) : null;
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return sortBy === 'purchase_asc' ? da - db : db - da;
+    });
+  }
+
+  renderVendors(data);
 }
 
 // ── open "Add Vendor" modal with empty fields ────────────────
@@ -3199,8 +3398,11 @@ function normPO(p) {
     vendor: '',   // resolved separately from VENDORS
     expectedDelivery: p.expected_delivery || '',
     items: (p.items || []).map(it => ({
+      id: it.id,
+      productId: it.product_id || null,
       prod: it.description || '',
       qty: Number(it.quantity || 0),
+      receivedQty: Number(it.received_qty || 0),
       rate: Number(it.rate || 0),
       disc: Number(it.discount_pct || 0),
       gst: Number(it.gst_rate || 18),
@@ -3213,6 +3415,7 @@ function normPO(p) {
     sgst: Number(p.sgst_amount || 0),
     igst: Number(p.igst_amount || 0),
     total: Number(p.total_amount || 0),
+    paidAmount: Number(p.paid_amount || 0),
     status: p.status || 'draft',
     approvalStatus: p.approval_status || 'pending',
     notes: p.notes || '',
@@ -3250,11 +3453,12 @@ async function renderPO(list) {
       <td class="b mono">${p.no}</td><td>${fmtDate(p.date)}</td><td class="b">${p.vendor}</td>
       <td>₹${fmt(p.taxable)}</td><td>₹${fmt(gstTotal)}</td><td class="b">₹${fmt(p.total)}</td>
       <td><span class="sb ${poStatusClass(p.status)}">${(p.status||'').replace('_',' ')}</span></td>
+      <td><span class="sb ${p.paidAmount >= p.total ? 'sp' : p.paidAmount > 0 ? 'spen' : 'sov'}">${p.paidAmount >= p.total ? 'PAID' : p.paidAmount > 0 ? 'PARTIALLY PAID' : 'UNPAID'}</span></td>
       <td><div style="display:flex;gap:3px">
         <button class="btn btn-o btn-sm" onclick="viewPO('${p.id}')" title="View">👁</button>
         <button class="btn btn-o btn-sm" onclick="openPOActions('${p.id}')" title="Change Status">🔄</button>
       </div></td></tr>`;
-  }).join('') : '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">No purchase orders found</td></tr>';
+  }).join('') : '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text3)">No purchase orders found</td></tr>';
   updatePOStats(data);
 }
 
@@ -3450,21 +3654,25 @@ function openPOActions(id) {
   const p = PO_DATA.find(x => String(x.id) === String(id));
   if (!p) return;
   const statuses = [
-    { key: 'open',               label: 'Mark as Open',               icon: '📂' },
-    { key: 'partially_received', label: 'Mark as Partially Received', icon: '📦' },
-    { key: 'received',           label: 'Mark as Received',           icon: '✅' },
-    { key: 'cancelled',          label: 'Mark as Cancelled',          icon: '🚫' },
+    { key: 'open',      label: 'Mark as Open',      icon: '📂' },
+    { key: 'cancelled', label: 'Mark as Cancelled', icon: '🚫' },
   ];
   const statusButtons = statuses
     .filter(s => s.key !== p.status)
     .map(s => `<button class="btn btn-o" style="justify-content:center;width:100%;margin-bottom:8px" onclick="setPOStatus('${id}','${s.key}')">${s.icon} ${s.label}</button>`)
     .join('');
+  const receiveButton = (p.status !== 'received')
+    ? `<button class="btn btn-p" style="justify-content:center;width:100%;margin-bottom:8px" onclick="closeModal('poActionsModal');receivePO('${id}')">📦 Received All Goods</button>
+       <button class="btn btn-o" style="justify-content:center;width:100%;margin-bottom:8px" onclick="closeModal('poActionsModal');openReceiveModal('${id}')">📥 Partial Goods Received</button>`
+    : '';
 
   document.getElementById('poActionsContent').innerHTML = `
     <div style="font-size:13px;font-weight:700;margin-bottom:4px">${p.no}</div>
     <div style="font-size:11px;color:var(--text3);margin-bottom:16px">${p.vendor} · ₹${fmt(p.total)} · <span class="sb ${poStatusClass(p.status)}">${(p.status||'').replace('_',' ')}</span></div>
     <div style="display:flex;flex-direction:column">
+      ${receiveButton}
       ${statusButtons}
+      <button class="btn btn-p" style="justify-content:center;width:100%;margin-bottom:8px" onclick="closeModal('poActionsModal');recordPOPayment('${id}')">💰 Record Payment</button>
       <button class="btn btn-d" style="justify-content:center;width:100%" onclick="closeModal('poActionsModal');deletePO('${id}')">🗑 Delete PO</button>
     </div>`;
   openModal('poActionsModal');
@@ -3480,6 +3688,102 @@ async function setPOStatus(id, status) {
   showToast('✅ ' + (p?.no || 'PO') + ' marked as ' + (labels[status] || status));
   closeModal('poActionsModal');
   renderPO();
+}
+
+async function receivePO(id) {
+  const p = PO_DATA.find(x => String(x.id) === String(id));
+  if (!p) return;
+  if (AUTH.apiOnline) {
+    try {
+      const result = await apiFetch(`/billing/purchase-orders/${id}/receive`, { method: 'POST', body: JSON.stringify({}) });
+      const updated = unwrapList ? (result?.data || result) : result; // adjust to however your apiFetch unwraps single objects
+      if (updated?.status) p.status = updated.status;
+    } catch (e) {
+      showToast('❌ Could not receive goods: ' + e.message);
+      return;
+    }
+  } else {
+    p.status = 'received';
+  }
+  showToast('✅ Goods received — stock updated');
+  addAuditEntry('UPDATE','Purchase','Received goods for '+(p.no||id));
+  await renderPO();
+  if (typeof renderProducts === 'function') renderProducts(); // refresh Products & Stock screen if it's already loaded
+}
+
+function openReceiveModal(id) {
+  const p = PO_DATA.find(x => String(x.id) === String(id));
+  if (!p) return;
+
+  const pending = p.items.filter(it => it.productId && (it.qty - it.receivedQty) > 0);
+  if (!pending.length) { showToast('⚠️ Nothing left to receive on this PO', 'warn'); return; }
+
+  document.getElementById('poReceiveInfo').textContent = `${p.no} · ${p.vendor}`;
+  document.getElementById('poReceiveItems').innerHTML = pending.map((it, i) => {
+    const remaining = it.qty - it.receivedQty;
+    return `<div class="iir" id="recv-row-${i}" data-item-id="${it.id}" data-max="${remaining}">
+      <span>${it.prod}</span>
+      <span>${it.qty}</span>
+      <span>${it.receivedQty}</span>
+      <span>${remaining}</span>
+      <input type="number" class="fi" style="padding:6px 7px;font-size:11px" id="recv-qty-${i}" value="${remaining}" min="0" max="${remaining}"/>
+    </div>`;
+  }).join('');
+  document.getElementById('poReceiveItems').dataset.count = pending.length;
+
+  openModal('poReceiveModal');
+  openReceiveModal._currentId = id; // stash for submit
+}
+
+async function submitPartialReceive() {
+  const id = openReceiveModal._currentId;
+  const p = PO_DATA.find(x => String(x.id) === String(id));
+  if (!p) return;
+
+  const count = +document.getElementById('poReceiveItems').dataset.count || 0;
+  const items = [];
+  for (let i = 0; i < count; i++) {
+    const row = document.getElementById('recv-row-' + i);
+    const qty = +getVal('recv-qty-' + i) || 0;
+    const max = +row.dataset.max || 0;
+    if (qty <= 0) continue;
+    if (qty > max) { showToast('⚠️ Quantity exceeds pending amount for one item', 'warn'); return; }
+    items.push({ item_id: row.dataset.itemId, qty });
+  }
+  if (!items.length) { showToast('⚠️ Enter at least one quantity to receive', 'warn'); return; }
+
+  try {
+    if (AUTH.apiOnline) {
+      await apiFetch(`/billing/purchase-orders/${id}/receive`, { method: 'POST', body: JSON.stringify({ items }) });
+    }
+    showToast('✅ Goods received — stock updated');
+    addAuditEntry('UPDATE', 'Purchase', 'Partially received goods for ' + (p.no || id));
+    closeModal('poReceiveModal');
+    await renderPO();
+    if (typeof renderInventory === 'function') renderInventory();
+  } catch (e) {
+    showToast('❌ Could not receive goods: ' + e.message);
+  }
+}
+
+async function recordPOPayment(id) {
+  const p = PO_DATA.find(x => String(x.id) === String(id));
+  if (!p) return;
+  const outstanding = p.total - (p.paidAmount || 0);
+  const input = prompt(`${p.no} — Total ₹${fmt(p.total)}, Outstanding ₹${fmt(outstanding)}\n\nEnter amount paid:`, outstanding.toFixed(2));
+  if (input === null) return;
+  const amount = parseFloat(input);
+  if (isNaN(amount) || amount <= 0) { showToast('⚠️ Enter a valid amount','warn'); return; }
+
+  const newPaid = Math.min((p.paidAmount || 0) + amount, p.total);
+  if (AUTH.apiOnline) {
+    try {
+      await apiFetch(`/billing/purchase-orders/${id}`, { method:'PATCH', body: JSON.stringify({ paid_amount: newPaid }) });
+    } catch (e) { showToast('⚠️ Could not save payment','warn'); return; }
+  }
+  p.paidAmount = newPaid;
+  showToast(newPaid >= p.total ? '✅ Marked as fully paid' : '✅ Payment recorded');
+  renderPO(PO_DATA);
 }
 
 async function deletePO(id) {
@@ -3654,6 +3958,7 @@ async function renderBranches(list) {
     }
   }
 
+
   g.innerHTML=data.map(b=>`<div class="card chov">
     <div style="font-size:22px;margin-bottom:8px">🏢</div>
     <div style="font-size:13px;font-weight:700;margin-bottom:4px">${b.name}</div>
@@ -3801,8 +4106,10 @@ function renderEInvoice() {
   el.innerHTML=INVOICES.filter(i=>i.type==='GST Invoice'&&i.custGst).slice(0,5).map(inv=>`
     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:var(--r2);margin-bottom:8px">
       <div><div style="font-size:12px;font-weight:600">${inv.no}</div>
-        <div style="font-size:10px;color:var(--text3)">${inv.customer} · ₹${fmt(inv.total)}</div></div>
-      ${inv.status==='paid'?`<span class="sb sp">IRN Generated</span>`:`<button class="btn btn-p btn-sm" onclick="genIRN('${inv.no}')">Generate IRN</button>`}
+        <div style="font-size:10px;color:var(--text3)">${inv.customer} · ₹${fmt(inv.total)}${inv.irn ? ' · IRN: '+inv.irn.slice(0,10)+'…' : ''}</div></div>
+      ${inv.irn
+        ? `<div style="display:flex;gap:6px;align-items:center"><span class="sb sp">IRN Generated</span><button class="btn btn-o btn-sm" onclick="cancelIRN('${inv.id}')">Clear</button></div>`
+        : `<button class="btn btn-p btn-sm" onclick="genIRN('${inv.id}')">Record IRN</button>`}
     </div>`).join('');
 }
 
@@ -3845,9 +4152,11 @@ function initNewInvoice() {
   setVal('invNo','INV-'+nextInvNo); setVal('invDate',today); setVal('invDue',due);
   setVal('invType','GST Invoice'); setVal('invState','27 - Maharashtra'); setVal('supplyType','intra'); setVal('invNotes','');
   ['custName','custGst','custMobile','custAddr','custEmail','custState'].forEach(id=>setVal(id,''));
+  selectedCustomerId = null;
   document.getElementById('invoiceItems').innerHTML=''; itemCounter=0;
   addItem(); addItem();
   refreshCustomerDatalist();
+  setInvoiceEditRestrictions(false);
   calcTotals();
 }
 
@@ -3938,6 +4247,77 @@ function switchTab(btn,ns,id) {
   document.getElementById(`${ns}-${id}`)?.classList.remove('hidden');
 }
 
+//=============================================================
+//  SETTINGS
+//=============================================================
+
+async function renderSettings() {
+  // ---- Company profile ----
+  if (AUTH.apiOnline) {
+    try {
+      const r = await apiFetch(`/companies/${CFG.COMPANY_ID}`);
+      const c = r?.data || r;
+      setVal('setLegalName', c.legal_name || '');
+      setVal('setGstin', c.gstin || '');
+      setVal('setStateCode', c.state_code || '27');
+      setVal('setBizType', c.business_type || 'retailer');
+      setVal('setInvoicePrefix', c.invoice_prefix || 'INV-');
+    } catch (e) { console.warn('[Settings] company load failed:', e.message); }
+  }
+
+  // ---- Users & roles ----
+  const body = document.getElementById('settingsUsersBody');
+  if (!body) return;
+  if (!AUTH.apiOnline) {
+    body.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text3)">Connect to API to manage users</td></tr>`;
+    return;
+  }
+  try {
+    const r = await apiFetch('/users?limit=100');
+    const users = r?.data || r?.items || [];
+    body.innerHTML = users.map(u => `
+      <tr>
+        <td class="b">${u.full_name}</td>
+        <td><span class="chip crd">${u.role?.name || '—'}</span></td>
+        <td><span class="sb ${u.is_active ? 'sp' : 'so'}">${u.is_active ? 'Active' : 'Inactive'}</span></td>
+        <td><button class="btn btn-o btn-sm" onclick="toggleUserActive('${u.id}', ${u.is_active})">
+          ${u.is_active ? 'Deactivate' : 'Activate'}
+        </button></td>
+      </tr>`).join('') || `<tr><td colspan="4" style="text-align:center">No users found</td></tr>`;
+  } catch (e) {
+    body.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text3)">Could not load users</td></tr>`;
+  }
+}
+
+async function saveCompanySettings() {
+  const payload = {
+    legal_name: getVal('setLegalName'),
+    gstin: getVal('setGstin'),
+    state_code: getVal('setStateCode'),
+    business_type: getVal('setBizType'),
+    invoice_prefix: getVal('setInvoicePrefix'),
+  };
+  try {
+    if (AUTH.apiOnline) {
+      await apiFetch(`/companies/${CFG.COMPANY_ID}`, { method: 'PATCH', body: JSON.stringify(payload) });
+    }
+    showToast('✅ Settings saved!');
+    addAuditEntry('UPDATE', 'Settings', 'Updated company profile');
+  } catch (e) {
+    showToast('❌ ' + e.message);
+  }
+}
+
+async function toggleUserActive(id, currentlyActive) {
+  try {
+    await apiFetch(`/users/${id}`, { method: 'PATCH', body: JSON.stringify({ is_active: !currentlyActive }) });
+    showToast(currentlyActive ? '✅ User deactivated' : '✅ User activated');
+    renderSettings();
+  } catch (e) {
+    showToast('❌ ' + e.message);
+  }
+}
+
 // ============================================================
 //  AI ASSISTANT
 // ============================================================
@@ -3996,7 +4376,6 @@ function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); 
 function savePayment() { showToast('✅ Payment of ₹'+(parseInt(getVal('payAmt'))||0).toLocaleString()+' recorded'); closeModal('payModal'); addAuditEntry('CREATE','Payment','Recorded payment'); renderPayments(); }
 function saveJE()      { showToast('✅ Journal entry posted'); closeModal('jeModal'); addAuditEntry('CREATE','Accounting','Posted journal entry'); }
 function openQuote()   { showToast('💡 Tip: Create Invoice → Type = Quotation'); setTimeout(()=>nav('create',null),600); }
-function genIRN(no)    { showToast('⚡ IRN generated for '+no); addAuditEntry('CREATE','E-Invoice','Generated IRN for '+no); }
 function genEWB()      { const inv=getVal('ewbInv'); showToast('🛣️ E-Way Bill generated for '+inv); addAuditEntry('CREATE','E-Way Bill','Generated EWB for '+inv); }
 function genUPI()      { const amt=getVal('upiAmt'),uid=getVal('upiId'); if(!amt){showToast('⚠️ Enter amount','warn');return;} document.getElementById('upiQR').style.display='block'; document.getElementById('upiIdShow').textContent=uid; showToast('📱 UPI QR generated for ₹'+parseInt(amt).toLocaleString()); }
 function showNotifs()  { const n=['⚠️ Metro Traders — ₹67,800 overdue','📦 Mi Router AX6000 critically low','📦 Samsung Galaxy A55 out of stock','✅ INV-2468 paid — Kumar Electronics']; showToast(n[Math.floor(Math.random()*n.length)]); }
@@ -4079,6 +4458,7 @@ function updateRetAmount() {
     invoice_type: invoiceType,
     invoice_date: date,
     against_invoice_id: againstId,
+    party_id: inv?.party_id || undefined,
     billing_name: party,
     supply_type: inv?.supply || 'intra',
     place_of_supply: inv?.custState || '27',
@@ -4198,6 +4578,49 @@ async function deleteLead(id) {
   CRM_LEADS = CRM_LEADS.filter(l => String(l.id) !== String(id));
   showToast('🗑 Lead deleted');
   renderCRM(CRM_LEADS);
+}
+
+//===========================================================
+//GENIRN
+//===========================================================
+async function genIRN(id) {
+  const inv = INVOICES.find(x => String(x.id) === String(id));
+  if (!inv) return;
+
+  const irn = prompt(`Paste the IRN for ${inv.no} (generated via the govt portal / your GSP tool):`);
+  if (!irn) return;
+  const ackNo = prompt('Ack No (optional):') || undefined;
+  const ewbNo = prompt('E-Way Bill No (optional):') || undefined;
+
+  const payload = { irn, ack_no: ackNo, ack_date: ackNo ? new Date().toISOString() : undefined, ewb_no: ewbNo };
+
+  try {
+    if (AUTH.apiOnline) {
+      await apiFetch(`/billing/invoices/${id}/einvoice`, { method: 'POST', body: JSON.stringify(payload) });
+    }
+    inv.irn = irn; inv.ackNo = ackNo || ''; inv.ewbNo = ewbNo || '';
+    showToast('⚡ IRN recorded for ' + inv.no);
+    addAuditEntry('CREATE', 'E-Invoice', 'Recorded IRN for ' + inv.no);
+    renderEInvoice();
+  } catch (e) {
+    showToast('⚠️ Could not save IRN', 'warn');
+  }
+}
+
+async function cancelIRN(id) {
+  const inv = INVOICES.find(x => String(x.id) === String(id));
+  if (!inv || !confirm(`Clear the recorded IRN for ${inv.no}?`)) return;
+  try {
+    if (AUTH.apiOnline) {
+      await apiFetch(`/billing/invoices/${id}/einvoice`, { method: 'DELETE' });
+    }
+    inv.irn = ''; inv.ackNo = ''; inv.ewbNo = '';
+    showToast('IRN cleared');
+    addAuditEntry('DELETE', 'E-Invoice', 'Cleared IRN for ' + inv.no);
+    renderEInvoice();
+  } catch (e) {
+    showToast('⚠️ Could not clear IRN', 'warn');
+  }
 }
 
 // ============================================================

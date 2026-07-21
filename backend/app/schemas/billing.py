@@ -6,6 +6,7 @@ from typing import Any, Optional
 from uuid import UUID
 from pydantic import Field, model_validator
 from app.schemas import APIModel
+from datetime import datetime
 
 
 class BillingItemIn(APIModel):
@@ -34,6 +35,7 @@ class BillingItemOut(APIModel):
     description: str
     hsn_code: Optional[str] = None
     quantity: Decimal
+    received_qty: Decimal = Decimal("0")
     rate: Decimal
     mrp: Optional[Decimal] = None
     discount_pct: Decimal
@@ -197,6 +199,24 @@ class PurchaseOrderUpdate(APIModel):
     notes: Optional[str] = None
     items: Optional[list[BillingItemIn]] = None
 
+class PurchaseOrderItemOut(APIModel):
+    id: UUID
+    product_id: Optional[UUID] = None
+    description: str
+    hsn_code: Optional[str] = None
+    quantity: Decimal
+    rate: Decimal
+    discount_pct: Decimal
+    discount_amount: Decimal
+    taxable_amount: Decimal
+    gst_rate: Decimal
+    cgst_amount: Decimal
+    sgst_amount: Decimal
+    igst_amount: Decimal
+    amount: Decimal
+    received_qty: Decimal
+    display_order: int
+
 
 class PurchaseOrderOut(APIModel):
     id: UUID
@@ -220,7 +240,7 @@ class PurchaseOrderOut(APIModel):
     approval_status: str
     notes: Optional[str]
     created_at: datetime
-    items: list[BillingItemOut] = []
+    items: list[PurchaseOrderItemOut] = []
 
 
 # ── Delivery Challan ─────────────────────────────────────────────
@@ -296,10 +316,30 @@ class InvoiceCreate(APIModel):
 
 
 class InvoiceUpdate(APIModel):
+    # Always editable regardless of status
     due_date: Optional[date] = None
-    billing_name: Optional[str] = None
-    billing_address: Optional[str] = None
     notes: Optional[str] = None
+
+    # Only applied by the service when the invoice is still a draft
+    invoice_date: Optional[date] = None
+    invoice_type: Optional[str] = None
+    party_id: Optional[UUID] = None
+    billing_name: Optional[str] = None
+    billing_gstin: Optional[str] = None
+    billing_address: Optional[str] = None
+    billing_state_code: Optional[str] = None
+    shipping_name: Optional[str] = None
+    shipping_address: Optional[str] = None
+    contact_phone: Optional[str] = None
+    contact_email: Optional[str] = None
+    place_of_supply: Optional[str] = None
+    supply_type: Optional[str] = None
+    payment_terms: Optional[str] = None
+    terms_conditions: Optional[str] = None
+    other_charges: Optional[Decimal] = None
+    tds_amount: Optional[Decimal] = None
+    tcs_amount: Optional[Decimal] = None
+    round_off: Optional[Decimal] = None
     items: Optional[list[BillingItemIn]] = None
 
 
@@ -389,3 +429,11 @@ class PaymentOut(APIModel):
     narration: Optional[str]
     status: str
     created_at: datetime
+
+class EInvoiceRecordIn(APIModel):
+    irn: str = Field(min_length=10, max_length=64)
+    ack_no: Optional[str] = None
+    ack_date: Optional[datetime] = None
+    qr_code_data: Optional[str] = None
+    ewb_no: Optional[str] = None
+    ewb_valid_till: Optional[datetime] = None

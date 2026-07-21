@@ -67,8 +67,18 @@ async def list_customers(
         stmt = text("""
             SELECT
                 party_id,
-                COALESCE(SUM(total_amount) FILTER (WHERE status NOT IN ('cancelled','void','draft')), 0) AS total_business,
-                COALESCE(SUM(total_amount - paid_amount) FILTER (WHERE status NOT IN ('paid','cancelled','void','draft')), 0) AS outstanding,
+                COALESCE(SUM(
+                    CASE
+                        WHEN invoice_type = 'credit_note' THEN -total_amount
+                        ELSE total_amount
+                    END
+                ) FILTER (WHERE status NOT IN ('cancelled','void','draft')), 0) AS total_business,
+                COALESCE(SUM(
+                    CASE
+                        WHEN invoice_type = 'credit_note' THEN -(total_amount - paid_amount)
+                        ELSE (total_amount - paid_amount)
+                    END
+                ) FILTER (WHERE status NOT IN ('paid','cancelled','void','draft')), 0) AS outstanding,
                 MAX(invoice_date) FILTER (WHERE status NOT IN ('cancelled','void','draft')) AS last_purchase
             FROM invoices
             WHERE company_id = :cid AND party_id = ANY(:pids)
