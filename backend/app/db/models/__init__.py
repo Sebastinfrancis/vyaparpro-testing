@@ -225,7 +225,7 @@ class Party(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
     billing_address: Mapped[Optional[str]] = mapped_column(Text)
     billing_city: Mapped[Optional[str]] = mapped_column(String(80))
     billing_state: Mapped[Optional[str]] = mapped_column(String(80))
-    billing_state_code: Mapped[Optional[str]] = mapped_column(String(2))
+    billing_state_code: Mapped[Optional[str]] = mapped_column(String(30))
     billing_pincode: Mapped[Optional[str]] = mapped_column(String(10))
     shipping_address: Mapped[Optional[str]] = mapped_column(Text)
     credit_limit: Mapped[Decimal] = mapped_column(Numeric(15, 2), default=Decimal("0"))

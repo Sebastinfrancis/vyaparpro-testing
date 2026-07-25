@@ -287,7 +287,9 @@ class PurchaseOrderService:
                 cgst_amount=line.cgst_amount,
                 sgst_amount=line.sgst_amount,
                 igst_amount=line.igst_amount,
+                cess_amount=line.cess_amount,
                 amount=line.total_amount,
+                total_amount=line.total_amount,
                 display_order=item.display_order,
             ))
         await self.session.flush()
@@ -313,18 +315,28 @@ class PurchaseOrderService:
         from app.services.inventory import InventoryService
         inv_svc = InventoryService(self.session)
         override = {str(r["item_id"]): Decimal(str(r["qty"])) for r in (received_items or [])}
+        is_partial_request = received_items is not None
+
+        total_taxable = Decimal("0")
+        total_cgst = Decimal("0")
+        total_sgst = Decimal("0")
+        total_igst = Decimal("0")
+        total_value = Decimal("0")
 
         for item in po.items:
             if not item.product_id:
                 continue
-            remaining = item.quantity - item.received_qty
-            qty = override.get(str(item.id), remaining)
+            if is_partial_request:
+                # A partial-receive request was made explicitly — any item NOT
+                # listed means the user entered 0 for it, so default to 0, not
+                # "receive everything remaining."
+                qty = override.get(str(item.id), Decimal("0"))
+            else:
+                # No item list at all (the "Receive All Goods" button) — every
+                # item defaults to its full remaining quantity, as before.
+                qty = item.quantity - item.received_qty
             if qty <= 0:
                 continue
-            if qty > remaining:
-                raise BusinessError(
-                    f"Cannot receive {qty} of '{item.description}' — only {remaining} pending."
-                )
             await inv_svc.record_movement(
                 company_id=company_id, product_id=item.product_id, warehouse_id=wh_id,
                 movement_type="purchase", quantity=qty, cost_price=item.rate,
@@ -332,6 +344,27 @@ class PurchaseOrderService:
                 narration=f"Goods received against PO {po.po_no}", user_id=user_id,
             )
             item.received_qty = item.received_qty + qty
+
+            # NEW — accumulate only the VALUE of what was actually received this call,
+            # prorated from the line's full-quantity totals (partial receipt safe)
+            proportion = qty / item.quantity if item.quantity else Decimal("0")
+            total_taxable += item.taxable_amount * proportion
+            total_cgst    += item.cgst_amount * proportion
+            total_sgst    += item.sgst_amount * proportion
+            total_igst    += item.igst_amount * proportion
+            total_value   += item.total_amount * proportion
+
+        # NEW — post to Ledger & Books: Dr Purchase + Dr GST Input, Cr Sundry Creditors
+        if total_taxable > 0:
+            from app.services.accounting import AutoAccountingService
+            auto = AutoAccountingService(self.session)
+            await auto.on_purchase_bill_created(
+                company_id=company_id, bill_id=po.id, bill_no=po.po_no,
+                bill_date=date.today(), vendor_id=po.vendor_id,
+                taxable_amount=total_taxable, cgst_amount=total_cgst,
+                sgst_amount=total_sgst, igst_amount=total_igst,
+                total_amount=total_value, user_id=user_id,
+            )
 
         all_received = all(it.received_qty >= it.quantity for it in po.items if it.product_id)
         await self.repo.update(po, {

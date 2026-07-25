@@ -694,7 +694,7 @@ select.fi option{background:var(--bg2)}
       <div class="bc">Accounts / <span>Books</span></div>
       <div class="sh" style="margin-top:8px">
         <div><div class="st">Accounting & Ledger</div><div class="ss">Double-entry bookkeeping, P&L, Balance Sheet</div></div>
-        <button class="btn btn-o btn-sm" onclick="openModal('jeModal')">➕ Journal Entry</button>
+        <button class="btn btn-o btn-sm" onclick="openJEModal()">➕ Journal Entry</button>
       </div>
       <div class="tabr">
         <button class="tabb active" onclick="switchTab(this,'acc','pl')">P&L</button>
@@ -704,57 +704,46 @@ select.fi option{background:var(--bg2)}
         <button class="tabb" onclick="switchTab(this,'acc','bank')">Bank Book</button>
       </div>
       <div id="acc-pl"><div class="card">
-        <div style="font-size:13px;font-weight:700;margin-bottom:3px">Profit & Loss — Apr 1 to Jun 1, 2026</div>
-        <div style="font-size:10px;color:var(--text3);margin-bottom:18px">Q1 FY 2026-27</div>
-        <div style="max-width:580px">
-          <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px">INCOME</div>
-          <div class="tr"><span>Sales Revenue</span><span style="color:var(--green)">₹18,46,500</span></div>
-          <div class="tr"><span>Other Income</span><span style="color:var(--green)">₹12,000</span></div>
-          <div class="tr" style="font-weight:700"><span>Gross Income</span><span style="color:var(--green)">₹18,58,500</span></div>
-          <div class="div"></div>
-          <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px">COST OF GOODS SOLD</div>
-          <div class="tr"><span>Opening Stock</span><span>₹8,20,000</span></div>
-          <div class="tr"><span>Purchases</span><span>₹12,40,000</span></div>
-          <div class="tr"><span>Less: Closing Stock</span><span style="color:var(--red)">-₹9,80,000</span></div>
-          <div class="tr" style="font-weight:700"><span>COGS</span><span style="color:var(--red)">₹10,80,000</span></div>
-          <div class="div"></div>
-          <div class="tr" style="font-weight:800;font-size:14px"><span>Gross Profit</span><span style="color:var(--green)">₹7,78,500</span></div>
-          <div class="div"></div>
-          <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px">EXPENSES</div>
-          <div class="tr"><span>Salaries & Wages</span><span>₹2,40,000</span></div>
-          <div class="tr"><span>Rent</span><span>₹60,000</span></div>
-          <div class="tr"><span>Electricity</span><span>₹18,000</span></div>
-          <div class="tr"><span>Marketing & Ads</span><span>₹42,100</span></div>
-          <div class="tr" style="font-weight:700"><span>Total Expenses</span><span style="color:var(--red)">₹3,60,100</span></div>
-          <div class="div"></div>
-          <div class="tr fin"><span>NET PROFIT</span><span style="color:var(--green)">₹4,18,400</span></div>
+        <div class="sh" style="margin-bottom:14px">
+          <div><div style="font-size:13px;font-weight:700">Profit & Loss</div><div style="font-size:10px;color:var(--text3)" id="plSubtitle"></div></div>
+          <div style="display:flex;gap:8px;align-items:flex-end">
+            <div class="fg" style="margin:0"><label class="fl">From</label><input type="date" class="fi" id="plFrom"/></div>
+            <div class="fg" style="margin:0"><label class="fl">To</label><input type="date" class="fi" id="plTo"/></div>
+            <button class="btn btn-o btn-sm" onclick="loadPL()">🔄 Refresh</button>
+          </div>
+        </div>
+        <div style="max-width:580px" id="plBody">
+          <div style="text-align:center;color:var(--text3);padding:30px 0">Loading…</div>
         </div>
       </div></div>
       <div id="acc-bs" class="hidden"><div class="card">
-        <div style="font-size:13px;font-weight:700;margin-bottom:18px">Balance Sheet as on June 1, 2026</div>
-        <div class="g2">
-          <div>
-            <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:7px">ASSETS</div>
-            <div class="tr"><span>Cash & Bank</span><span style="color:var(--green)">₹3,42,000</span></div>
-            <div class="tr"><span>Accounts Receivable</span><span style="color:var(--green)">₹3,24,800</span></div>
-            <div class="tr"><span>Inventory (Closing)</span><span style="color:var(--green)">₹9,80,000</span></div>
-            <div class="tr"><span>Fixed Assets</span><span style="color:var(--green)">₹8,50,000</span></div>
-            <div class="tr" style="font-weight:700"><span>Total Assets</span><span style="color:var(--accent)">₹24,96,800</span></div>
-          </div>
-          <div>
-            <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:7px">LIABILITIES & EQUITY</div>
-            <div class="tr"><span>Accounts Payable</span><span style="color:var(--red)">₹4,80,000</span></div>
-            <div class="tr"><span>GST Payable</span><span style="color:var(--red)">₹1,36,466</span></div>
-            <div class="tr"><span>Loans</span><span style="color:var(--red)">₹5,00,000</span></div>
-            <div class="tr"><span>Owner's Capital</span><span style="color:var(--green)">₹13,80,334</span></div>
-            <div class="tr" style="font-weight:700"><span>Total L + E</span><span style="color:var(--accent)">₹24,96,800</span></div>
+        <div class="sh" style="margin-bottom:14px">
+          <div><div style="font-size:13px;font-weight:700">Balance Sheet</div><div style="font-size:10px;color:var(--text3)" id="bsSubtitle"></div></div>
+          <div style="display:flex;gap:8px;align-items:flex-end">
+            <div class="fg" style="margin:0"><label class="fl">As on</label><input type="date" class="fi" id="bsAsOf"/></div>
+            <button class="btn btn-o btn-sm" onclick="loadBS()">🔄 Refresh</button>
           </div>
         </div>
+        <div class="g2" id="bsBody">
+          <div style="text-align:center;color:var(--text3);padding:30px 0;grid-column:1/-1">Loading…</div>
+        </div>
       </div></div>
-      <div id="acc-ledger" class="hidden"><div class="card"><div class="tw"><table>
-        <thead><tr><th>Date</th><th>Account</th><th>Narration</th><th>Debit</th><th>Credit</th><th>Balance</th></tr></thead>
-        <tbody id="ledgerBody"></tbody>
-      </table></div></div></div>
+      <div id="acc-ledger" class="hidden"><div class="card">
+        <div class="sh" style="margin-bottom:14px">
+          <div><div style="font-size:13px;font-weight:700">Account Ledger</div><div style="font-size:10px;color:var(--text3)" id="ledgerSubtitle"></div></div>
+          <div style="display:flex;gap:8px;align-items:flex-end">
+            <div class="fg" style="margin:0;min-width:200px"><label class="fl">Account</label>
+              <select class="fi" id="ledgerAccountSelect" onchange="loadLedger()"><option value="">Select account…</option></select></div>
+            <div class="fg" style="margin:0"><label class="fl">From</label><input type="date" class="fi" id="ledgerFrom" onchange="loadLedger()"/></div>
+            <div class="fg" style="margin:0"><label class="fl">To</label><input type="date" class="fi" id="ledgerTo" onchange="loadLedger()"/></div>
+          </div>
+        </div>
+        <div class="tw"><table>
+          <thead><tr><th>Date</th><th>Voucher</th><th>Narration</th><th>Debit</th><th>Credit</th><th>Balance</th></tr></thead>
+          <tbody id="ledgerBody"><tr><td colspan="6" style="text-align:center;color:var(--text3)">Select an account above</td></tr></tbody>
+        </table></div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text3)" id="ledgerSummary"></div>
+      </div></div>
       <div id="acc-cashbook" class="hidden"><div class="card"><div class="tw"><table>
         <thead><tr><th>Date</th><th>Narration</th><th>Receipt</th><th>Payment</th><th>Balance</th></tr></thead>
         <tbody id="cashBody"></tbody>
@@ -871,12 +860,65 @@ select.fi option{background:var(--bg2)}
         <div>
           <div class="card" style="margin-bottom:14px">
             <div style="font-size:13px;font-weight:700;margin-bottom:14px">🏢 Company Profile</div>
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+              <img id="setLogoPreview" src="" style="width:56px;height:56px;border-radius:10px;object-fit:cover;background:var(--bg3);display:none"/>
+              <div id="setLogoPlaceholder" style="width:56px;height:56px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:22px">🏢</div>
+              <div>
+                <input type="file" id="setLogoFile" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="uploadCompanyLogo(this)"/>
+                <button class="btn btn-o btn-sm" onclick="document.getElementById('setLogoFile').click()">Upload Logo</button>
+                <div style="font-size:10px;color:var(--text3);margin-top:4px">PNG/JPEG/WebP, max 2MB</div>
+              </div>
+            </div>
             <div class="fg"><label class="fl">Business Name</label><input class="fi" id="setLegalName"/></div>
+            <div class="fg"><label class="fl">Trade Name</label><input class="fi" id="setTradeName"/></div>
             <div class="fg"><label class="fl">GSTIN</label><input class="fi mono" id="setGstin"/></div>
+            <div class="fg"><label class="fl">PAN</label><input class="fi mono" id="setPan"/></div>
             <div class="fr c2">
-              <div class="fg"><label class="fl">State</label><select class="fi" id="setStateCode"><option value="27">27 - Maharashtra</option></select></div>
+              <div class="fg"><label class="fl">State</label><select class="fi" id="setStateCode">
+                <option value="01">01 - Jammu & Kashmir</option>
+                <option value="02">02 - Himachal Pradesh</option>
+                <option value="03">03 - Punjab</option>
+                <option value="04">04 - Chandigarh</option>
+                <option value="05">05 - Uttarakhand</option>
+                <option value="06">06 - Haryana</option>
+                <option value="07">07 - Delhi</option>
+                <option value="08">08 - Rajasthan</option>
+                <option value="09">09 - Uttar Pradesh</option>
+                <option value="10">10 - Bihar</option>
+                <option value="11">11 - Sikkim</option>
+                <option value="12">12 - Arunachal Pradesh</option>
+                <option value="13">13 - Nagaland</option>
+                <option value="14">14 - Manipur</option>
+                <option value="15">15 - Mizoram</option>
+                <option value="16">16 - Tripura</option>
+                <option value="17">17 - Meghalaya</option>
+                <option value="18">18 - Assam</option>
+                <option value="19">19 - West Bengal</option>
+                <option value="20">20 - Jharkhand</option>
+                <option value="21">21 - Odisha</option>
+                <option value="22">22 - Chhattisgarh</option>
+                <option value="23">23 - Madhya Pradesh</option>
+                <option value="24">24 - Gujarat</option>
+                <option value="26">26 - Dadra & Nagar Haveli and Daman & Diu</option>
+                <option value="27">27 - Maharashtra</option>
+                <option value="29">29 - Karnataka</option>
+                <option value="30">30 - Goa</option>
+                <option value="31">31 - Lakshadweep</option>
+                <option value="32">32 - Kerala</option>
+                <option value="33">33 - Tamil Nadu</option>
+                <option value="34">34 - Puducherry</option>
+                <option value="35">35 - Andaman & Nicobar Islands</option>
+                <option value="36">36 - Telangana</option>
+                <option value="37">37 - Andhra Pradesh</option>
+                <option value="38">38 - Ladakh</option>
+              </select></div>
               <div class="fg"><label class="fl">Business Type</label><select class="fi" id="setBizType"><option value="retailer">Retailer</option><option value="wholesaler">Wholesaler</option><option value="manufacturer">Manufacturer</option></select></div>
             </div>
+            <div class="fr c2">
+              <div class="fg"><label class="fl">Email</label><input class="fi" id="setEmail" type="email"/></div>
+              <div class="fg"><label class="fl">Phone</label><input class="fi" id="setPhone"/></div>
+            </div>
+            <div class="fg"><label class="fl">Registered Address</label><textarea class="fi" id="setAddress" rows="2"></textarea></div>
             <div class="fg"><label class="fl">Invoice Prefix</label><input class="fi" id="setInvoicePrefix"/></div>
             <button class="btn btn-p btn-sm" onclick="saveCompanySettings()">Save Changes</button>
           </div>
@@ -893,11 +935,11 @@ select.fi option{background:var(--bg2)}
             <div style="font-size:13px;font-weight:700;margin-bottom:14px">🔐 Security</div>
             <div style="display:flex;flex-direction:column;gap:9px">
               <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
-                <div><div style="font-size:12px;font-weight:600">Two-Factor Auth (TOTP)</div><div style="font-size:10px;color:var(--text3)">Google Authenticator / SMS OTP</div></div><span class="chip cgr">Enabled</span></div>
+                <div><div style="font-size:12px;font-weight:600">Two-Factor Auth (TOTP)</div><div style="font-size:10px;color:var(--text3)">Google Authenticator / SMS OTP</div></div><span class="chip cgr" id="sec_two_factor_enabled" style="cursor:pointer">Enabled</span></div>
               <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
-                <div><div style="font-size:12px;font-weight:600">Auto Cloud Backup</div><div style="font-size:10px;color:var(--text3)">Daily 2 AM → AWS S3 encrypted</div></div><span class="chip cgr">Active</span></div>
+                <div><div style="font-size:12px;font-weight:600">Auto Cloud Backup</div><div style="font-size:10px;color:var(--text3)">Daily 2 AM → AWS S3 encrypted</div></div><span class="chip cgr" id="sec_auto_backup_enabled" style="cursor:pointer">Active</span></div>
               <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
-                <div><div style="font-size:12px;font-weight:600">Data Encryption (AES-256)</div><div style="font-size:10px;color:var(--text3)">At rest & in transit</div></div><span class="chip cgr">Active</span></div>
+                <div><div style="font-size:12px;font-weight:600">Data Encryption (AES-256)</div><div style="font-size:10px;color:var(--text3)">At rest & in transit</div></div><span class="chip cgr" id="sec_data_encryption_enabled" style="cursor:pointer">Active</span></div>
             </div>
           </div>
         </div>
@@ -1193,12 +1235,11 @@ select.fi option{background:var(--bg2)}
   <div class="md md-sm">
     <div class="mh"><span class="mt2">Manual Journal Entry</span><button class="mc" onclick="closeModal('jeModal')">✕</button></div>
     <div class="mb">
-      <div class="fr c2"><div class="fg"><label class="fl">Date</label><input type="date" class="fi"/></div>
-        <div class="fg"><label class="fl">Voucher No</label><input class="fi" value="JV-0084"/></div></div>
-      <div class="fg"><label class="fl">Debit Account</label><select class="fi"><option>Cash A/c</option><option>Bank A/c</option><option>Sales A/c</option><option>Purchase A/c</option><option>Salary Expense</option></select></div>
-      <div class="fg"><label class="fl">Credit Account</label><select class="fi"><option>Sales A/c</option><option>Cash A/c</option><option>Bank A/c</option><option>Capital A/c</option></select></div>
-      <div class="fg"><label class="fl">Amount (₹)</label><input class="fi" type="number" placeholder="10000"/></div>
-      <div class="fg"><label class="fl">Narration</label><input class="fi" placeholder="Being amount received for invoice INV-2468"/></div>
+      <div class="fg"><label class="fl">Date</label><input type="date" class="fi" id="jeDate"/></div>
+      <div class="fg"><label class="fl">Debit Account</label><select class="fi" id="jeDrAccount"></select></div>
+      <div class="fg"><label class="fl">Credit Account</label><select class="fi" id="jeCrAccount"></select></div>
+      <div class="fg"><label class="fl">Amount (₹)</label><input class="fi" type="number" id="jeAmount" placeholder="10000"/></div>
+      <div class="fg"><label class="fl">Narration</label><input class="fi" id="jeNarration" placeholder="Being amount received for invoice INV-2468"/></div>
     </div>
     <div class="mf"><button class="btn btn-o" onclick="closeModal('jeModal')">Cancel</button><button class="btn btn-p" onclick="saveJE()">Post Entry</button></div>
   </div>
@@ -1231,8 +1272,9 @@ const CFG = {
 // ============================================================
 let AUTH = { token: null, user: null, apiOnline: false };
 
-function getHeaders() {
-  const h = { 'Content-Type': 'application/json' };
+function getHeaders(isFormData = false) {
+  const h = {};
+  if (!isFormData) h['Content-Type'] = 'application/json';
   if (AUTH.token) h['Authorization'] = 'Bearer ' + AUTH.token;
   return h;
 }
@@ -1243,7 +1285,7 @@ function getHeaders() {
 // ============================================================
 async function apiFetch(path, opts = {}) {
   const res = await fetch(CFG.API_BASE + path, {
-    headers: getHeaders(),
+    headers: getHeaders(opts.body instanceof FormData),
     ...opts,
   });
   if (res.status === 401) {
@@ -1295,9 +1337,9 @@ function normInvoice(inv) {
     due:        inv.due_date        || inv.due           || '',
     customer:   inv.billing_name   || inv.customer_name   || inv.customer    || '',
     custGst:    inv.billing_gstin    || inv.customer_gstin  || inv.gstin       || '',
-    custMobile: inv.customer_phone  || inv.phone         || inv.custMobile|| '',
+    custMobile: inv.contact_phone   || inv.phone,
     custAddr:   inv.billing_address || inv.custAddr      || '',
-    custEmail:  inv.customer_email  || inv.email         || inv.custEmail || '',
+    custEmail:  inv.contact_email   || inv.email,
     custState:  inv.place_of_supply_code || inv.custState|| '27',
     type:       inv.invoice_type    || inv.type          || 'GST Invoice',
     state:      inv.place_of_supply || inv.state         || '27 - Maharashtra',
@@ -1499,11 +1541,6 @@ function normBranch(b) {
     value:     b.value ?? b.stock_value   ?? 0,
   };
 }
-const LEDGER_DATA=[
-  {date:'01 Jun 2026',account:'Sales A/c',narr:'INV-2468 Kumar Electronics',dr:'',cr:'35,593',bal:'18,46,500'},
-  {date:'01 Jun 2026',account:'Output GST A/c',narr:'GST on INV-2468',dr:'',cr:'6,407',bal:'2,78,766'},
-  {date:'01 Jun 2026',account:'Accounts Receivable',narr:'INV-2468 — payment received',dr:'42,000',cr:'',bal:'3,24,800'},
-];
 let AUDIT_LOG=[
   {ts:'01 Jun 2026 09:42:18',user:'Rajesh Sharma',action:'CREATE',module:'Invoice',detail:'Created INV-2468 for Kumar Electronics — ₹42,000',ip:'192.168.1.10'},
   {ts:'01 Jun 2026 09:40:05',user:'Rajesh Sharma',action:'LOGIN',module:'Auth',detail:'Successful login from Chrome browser',ip:'192.168.1.10'},
@@ -1890,15 +1927,19 @@ function openInvActions(id) {
   const inv = INVOICES.find(i=>String(i.id)===String(id));
   if (!inv) return;
   const sc = statusClass(inv.status);
+  const isDraft = inv.status === 'draft';
   const statuses = [
     { key: 'pending',  label: 'Mark as Pending',  icon: '🕓', cls: 'btn-o'   },
     { key: 'overdue',  label: 'Mark as Overdue',  icon: '⚠️', cls: 'btn-o'   },
     { key: 'paid',     label: 'Mark as Paid',     icon: '✅', cls: 'btn-o'   },
   ];
-  const statusButtons = statuses
+  const statusButtons = isDraft ? '' : statuses
     .filter(s => s.key !== inv.status)
     .map(s => `<button class="btn ${s.cls}" style="justify-content:center" onclick="setInvoiceStatus('${id}','${s.key}')">${s.icon} ${s.label}</button>`)
     .join('');
+  const finalizeButton = isDraft
+    ? `<button class="btn btn-p" style="justify-content:center" onclick="finalizeDraftInvoice('${id}')">✅ Convert to Invoice (Finalize)</button>`
+    : '';
 
   document.getElementById('invPickContent').innerHTML=`
     <div>
@@ -1909,6 +1950,7 @@ function openInvActions(id) {
         <button class="btn btn-warn" style="justify-content:center" onclick="closeModal('invPickModal');loadInvoiceToEdit('${id}')">✏️ Edit Invoice</button>
         <button class="btn btn-o" style="justify-content:center" onclick="showToast('📄 PDF downloaded!');closeModal('invPickModal')">📄 Download PDF</button>
         <button class="btn btn-o" style="justify-content:center" onclick="showToast('📱 Sent via WhatsApp!');closeModal('invPickModal')">📱 Share WhatsApp</button>
+        ${finalizeButton}
         ${statusButtons}
         <button class="btn btn-d" style="justify-content:center" onclick="closeModal('invPickModal');deleteInvoice('${id}')">🗑 Delete Invoice</button>
       </div>
@@ -2125,6 +2167,27 @@ async function setInvoiceStatus(id, status) {
   renderInvoices();
 }
 
+async function finalizeDraftInvoice(id) {
+  const inv = INVOICES.find(i => String(i.id) === String(id));
+  if (!inv) return;
+  try {
+    if (AUTH.apiOnline) {
+      const r = await apiFetch(`/billing/invoices/${id}/finalize`, { method: 'POST' });
+      const updated = r?.data || r;
+      if (updated?.status) inv.status = updated.status;
+    } else {
+      inv.status = 'pending';
+    }
+    showToast('✅ ' + (inv.no || 'Invoice') + ' finalized — stock & customer stats updated');
+    closeModal('invPickModal');
+    await renderInvoices();
+    if (typeof renderInventory === 'function') renderInventory();
+    if (typeof renderCustomers === 'function') renderCustomers();
+  } catch (e) {
+    showToast('❌ Could not finalize: ' + e.message);
+  }
+}
+
 async function deleteInvoice(id) {
   const inv=INVOICES.find(i=>String(i.id)===String(id));
   if (!confirm('Delete '+(inv?.no||'this invoice')+'? This cannot be undone.')) return;
@@ -2212,11 +2275,11 @@ const grandTotal = taxableAmt + totalGST;
     supply_type:          getVal('supplyType'),
     notes:                getVal('invNotes'),
     billing_name:         cust,
-    customer_gstin:       getVal('custGst'),
-    customer_phone:       getVal('custMobile'),
+    billing_gstin:       getVal('custGst'),
+    contact_phone:       getVal('custMobile'),
     billing_address:      getVal('custAddr'),
-    customer_email:       getVal('custEmail'),
-    place_of_supply_code: getVal('invState'),
+    contact_email:       getVal('custEmail'),
+    billing_state_code: getVal('invState'),
     items:           lineItems,
     subtotal:             Math.round(subtotal*100)/100,
     total_discount:       Math.round(discount*100)/100,
@@ -3308,6 +3371,212 @@ function renderForecastBars() {
   fb.innerHTML=`<div style="display:flex;align-items:flex-end;gap:9px;height:70px">${ms.map((m,i)=>{const h=Math.round(vs[i]/mx*60)+10,fc=i>=3;return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="font-size:9px;color:${fc?'var(--accent)':'var(--text3)'};font-weight:600">₹${(vs[i]/100).toFixed(1)}L</div><div style="width:100%;height:${h}px;border-radius:3px 3px 0 0;background:${fc?'linear-gradient(180deg,rgba(0,212,255,.45),rgba(0,212,255,.15))':'rgba(0,212,255,.25)'}"></div><div style="font-size:9px;color:var(--text3)">${m}</div></div>`;}).join('')}</div>`;
 }
 
+
+//===========================================================
+// ACCOUNTING
+//===========================================================
+let ACCOUNTS = [];
+
+async function loadAccountsIfNeeded() {
+  if (ACCOUNTS.length || !AUTH.apiOnline) return;
+  try {
+    const r = await apiFetch('/accounting/accounts?page_size=200');
+    ACCOUNTS = r?.data?.items || r?.items || [];
+  } catch (e) {
+    ACCOUNTS = [];
+  }
+}
+
+function populateAccountDropdowns() {
+  const opts = ACCOUNTS.map(a => `<option value="${a.id}">${a.account_code} — ${a.account_name}</option>`).join('');
+  const ledgerSel = document.getElementById('ledgerAccountSelect');
+  if (ledgerSel) ledgerSel.innerHTML = '<option value="">Select account…</option>' + opts;
+  const dr = document.getElementById('jeDrAccount');
+  const cr = document.getElementById('jeCrAccount');
+  if (dr) dr.innerHTML = opts;
+  if (cr) cr.innerHTML = opts;
+}
+
+function fmtINR(n) {
+  return '₹' + (Number(n) || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+}
+
+async function renderAccounting() {
+  await loadAccountsIfNeeded();
+  populateAccountDropdowns();
+
+  const today = new Date().toISOString().slice(0, 10);
+  const monthStart = today.slice(0, 8) + '01';
+  if (document.getElementById('plFrom') && !getVal('plFrom')) setVal('plFrom', monthStart);
+  if (document.getElementById('plTo')   && !getVal('plTo'))   setVal('plTo', today);
+  if (document.getElementById('bsAsOf') && !getVal('bsAsOf')) setVal('bsAsOf', today);
+
+  await Promise.all([loadPL(), loadBS(), loadCashbook(), loadBankbook()]);
+}
+
+async function loadPL() {
+  const body = document.getElementById('plBody');
+  if (!body) return;
+  const from = getVal('plFrom'), to = getVal('plTo');
+  const sub = document.getElementById('plSubtitle'); if (sub) sub.textContent = from && to ? `${from} to ${to}` : '';
+  if (!AUTH.apiOnline) { body.innerHTML = '<div style="color:var(--text3)">Offline — connect to view live P&L</div>'; return; }
+  try {
+    const r = await apiFetch(`/accounting/reports/profit-and-loss?from_date=${from}&to_date=${to}`);
+    const d = r?.data || r;
+    const incomeGroup  = (d.rows || []).find(x => x.label === 'Income');
+    const expenseGroup = (d.rows || []).find(x => x.label === 'Expenses');
+    const incomeRows  = (incomeGroup?.children  || []).map(c => `<div class="tr"><span>${c.label}</span><span style="color:var(--green)">${fmtINR(c.amount)}</span></div>`).join('');
+    const expenseRows = (expenseGroup?.children || []).map(c => `<div class="tr"><span>${c.label}</span><span style="color:var(--red)">${fmtINR(c.amount)}</span></div>`).join('');
+    body.innerHTML = `
+      <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px">INCOME</div>
+      ${incomeRows || '<div class="tr"><span style="color:var(--text3)">No income entries in this period</span><span></span></div>'}
+      <div class="tr" style="font-weight:700"><span>Total Income</span><span style="color:var(--green)">${fmtINR(incomeGroup?.amount || 0)}</span></div>
+      <div class="div"></div>
+      <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px">EXPENSES</div>
+      ${expenseRows || '<div class="tr"><span style="color:var(--text3)">No expense entries in this period</span><span></span></div>'}
+      <div class="tr" style="font-weight:700"><span>Total Expenses</span><span style="color:var(--red)">${fmtINR(expenseGroup?.amount || 0)}</span></div>
+      <div class="div"></div>
+      <div class="tr" style="font-weight:800;font-size:13px"><span>Gross Profit</span><span style="color:${d.gross_profit >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtINR(d.gross_profit)}</span></div>
+      <div class="tr fin"><span>NET PROFIT</span><span style="color:${d.net_profit >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtINR(d.net_profit)}</span></div>
+    `;
+  } catch (e) {
+    body.innerHTML = `<div style="color:var(--red)">Could not load P&L: ${e.message}</div>`;
+  }
+}
+
+async function loadBS() {
+  const body = document.getElementById('bsBody');
+  if (!body) return;
+  const asOf = getVal('bsAsOf');
+  const sub = document.getElementById('bsSubtitle'); if (sub) sub.textContent = asOf ? `as on ${asOf}` : '';
+  if (!AUTH.apiOnline) { body.innerHTML = '<div style="color:var(--text3)">Offline — connect to view live Balance Sheet</div>'; return; }
+  try {
+    const r = await apiFetch(`/accounting/reports/balance-sheet?as_of_date=${asOf}`);
+    const d = r?.data || r;
+    const assetRows = (d.assets || []).map(a => `<div class="tr"><span>${a.label}</span><span style="color:var(--green)">${fmtINR(a.amount)}</span></div>`).join('');
+    const liabRows  = (d.liabilities || []).map(l => `<div class="tr"><span>${l.label}</span><span style="color:${l.amount >= 0 ? 'var(--red)' : 'var(--green)'}">${fmtINR(l.amount)}</span></div>`).join('');
+    body.innerHTML = `
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:7px">ASSETS</div>
+        ${assetRows || '<div class="tr"><span style="color:var(--text3)">No asset balances</span><span></span></div>'}
+        <div class="tr" style="font-weight:700"><span>Total Assets</span><span style="color:var(--accent)">${fmtINR(d.total_assets)}</span></div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:7px">LIABILITIES & EQUITY</div>
+        ${liabRows || '<div class="tr"><span style="color:var(--text3)">No liability/equity balances</span><span></span></div>'}
+        <div class="tr" style="font-weight:700"><span>Total L + E</span><span style="color:var(--accent)">${fmtINR(d.total_liabilities)}</span></div>
+      </div>
+    `;
+  } catch (e) {
+    body.innerHTML = `<div style="color:var(--red)">Could not load Balance Sheet: ${e.message}</div>`;
+  }
+}
+
+async function loadLedger() {
+  const tbody = document.getElementById('ledgerBody');
+  const acctId = getVal('ledgerAccountSelect');
+  if (!tbody) return;
+  if (!acctId) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text3)">Select an account above</td></tr>`;
+    const sum = document.getElementById('ledgerSummary'); if (sum) sum.textContent = '';
+    return;
+  }
+  const from = getVal('ledgerFrom'), to = getVal('ledgerTo');
+  let q = `/accounting/accounts/${acctId}/ledger?page_size=100`;
+  if (from) q += `&from_date=${from}`;
+  if (to)   q += `&to_date=${to}`;
+  try {
+    const r = await apiFetch(q);
+    const d = r?.data || r;
+    tbody.innerHTML = (d.entries || []).map(e => `<tr><td>${e.txn_date}</td><td class="b">${e.jv_no}</td><td>${e.narration || '—'}</td>
+      <td style="color:var(--accent)">${e.debit_amount > 0 ? fmtINR(e.debit_amount) : '—'}</td>
+      <td style="color:var(--green)">${e.credit_amount > 0 ? fmtINR(e.credit_amount) : '—'}</td>
+      <td class="b">${fmtINR(e.running_balance)} ${e.balance_type}</td></tr>`).join('')
+      || `<tr><td colspan="6" style="text-align:center;color:var(--text3)">No entries in this range</td></tr>`;
+    document.getElementById('ledgerSubtitle').textContent = `${d.account_code} — ${d.account_name}`;
+    document.getElementById('ledgerSummary').textContent =
+      `Opening: ${fmtINR(d.opening_balance)} ${d.opening_balance_type}  ·  Closing: ${fmtINR(d.closing_balance)} ${d.closing_balance_type}`;
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="6" style="color:var(--red)">Could not load ledger: ${e.message}</td></tr>`;
+  }
+}
+
+async function loadCashbook() {
+  const tbody = document.getElementById('cashBody');
+  if (!tbody) return;
+  try {
+    const r = await apiFetch('/accounting/reports/cashbook?page_size=100');
+    const items = r?.data?.items || r?.items || [];
+    tbody.innerHTML = items.map(e => `<tr><td>${e.txn_date}</td><td>${e.account_name} — ${e.narration || ''}</td>
+      <td style="color:var(--green)">${e.debit_amount > 0 ? fmtINR(e.debit_amount) : '—'}</td>
+      <td style="color:var(--red)">${e.credit_amount > 0 ? fmtINR(e.credit_amount) : '—'}</td>
+      <td class="b">${fmtINR(e.running_balance)} ${e.balance_type}</td></tr>`).join('')
+      || `<tr><td colspan="5" style="text-align:center;color:var(--text3)">No cash transactions yet</td></tr>`;
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="5" style="color:var(--red)">Could not load cash book: ${e.message}</td></tr>`;
+  }
+}
+
+async function loadBankbook() {
+  const tbody = document.getElementById('bankBody');
+  if (!tbody) return;
+  try {
+    const r = await apiFetch('/accounting/reports/bankbook?page_size=100');
+    const items = r?.data?.items || r?.items || [];
+    tbody.innerHTML = items.map(e => `<tr><td>${e.txn_date}</td><td>${e.account_name} — ${e.narration || ''}</td>
+      <td style="color:var(--accent)">${e.debit_amount > 0 ? fmtINR(e.debit_amount) : '—'}</td>
+      <td style="color:var(--green)">${e.credit_amount > 0 ? fmtINR(e.credit_amount) : '—'}</td>
+      <td class="b">${fmtINR(e.running_balance)} ${e.balance_type}</td></tr>`).join('')
+      || `<tr><td colspan="5" style="text-align:center;color:var(--text3)">No bank transactions yet</td></tr>`;
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="5" style="color:var(--red)">Could not load bank book: ${e.message}</td></tr>`;
+  }
+}
+
+function openJEModal() {
+  populateAccountDropdowns();
+  setVal('jeDate', new Date().toISOString().slice(0, 10));
+  setVal('jeAmount', '');
+  setVal('jeNarration', '');
+  openModal('jeModal');
+}
+
+async function saveJE() {
+  const drAcct = getVal('jeDrAccount');
+  const crAcct = getVal('jeCrAccount');
+  const amount = +getVal('jeAmount') || 0;
+  const narration = getVal('jeNarration');
+  const jvDate = getVal('jeDate') || new Date().toISOString().slice(0, 10);
+
+  if (!drAcct || !crAcct) { showToast('⚠️ Select both debit and credit accounts', 'warn'); return; }
+  if (drAcct === crAcct)  { showToast('⚠️ Debit and credit accounts must be different', 'warn'); return; }
+  if (amount <= 0)        { showToast('⚠️ Enter a valid amount', 'warn'); return; }
+
+  const payload = {
+    jv_type: 'journal',
+    jv_date: jvDate,
+    narration: narration,
+    entries: [
+      { account_id: drAcct, debit_amount: amount, credit_amount: 0, narration: narration },
+      { account_id: crAcct, debit_amount: 0, credit_amount: amount, narration: narration },
+    ],
+  };
+
+  try {
+    if (AUTH.apiOnline) {
+      const r = await apiFetch('/accounting/vouchers', { method: 'POST', body: JSON.stringify(payload) });
+      const jv = r?.data || r;
+      await apiFetch(`/accounting/vouchers/${jv.id}/post`, { method: 'POST' });
+    }
+    showToast('✅ Journal entry posted');
+    closeModal('jeModal');
+    addAuditEntry('CREATE', 'Accounting', 'Posted journal entry — ₹' + amount);
+    await renderAccounting();
+  } catch (e) {
+    showToast('❌ Could not post journal entry: ' + e.message);
+  }
+}
+
 // ============================================================
 //  OTHER MODULE RENDERS (CRM, PO, Quotes, Returns, etc.)
 // ============================================================
@@ -4113,18 +4382,6 @@ function renderEInvoice() {
     </div>`).join('');
 }
 
-function renderAccounting() {
-  const lb=document.getElementById('ledgerBody');
-  if (lb) lb.innerHTML=LEDGER_DATA.map(l=>`<tr><td>${l.date}</td><td class="b">${l.account}</td><td>${l.narr}</td>
-    <td style="color:var(--accent)">${l.dr||'—'}</td><td style="color:var(--green)">${l.cr||'—'}</td>
-    <td class="b">₹${l.bal}</td></tr>`).join('');
-  const cb=document.getElementById('cashBody');
-  if (cb) cb.innerHTML=`<tr><td>01 Jun</td><td>INV-2466 — Priya Mobiles</td><td style="color:var(--green)">8,746</td><td>—</td><td class="b">3,42,000</td></tr>
-    <tr><td>31 May</td><td>Salary paid</td><td>—</td><td style="color:var(--red)">80,000</td><td class="b">3,33,254</td></tr>`;
-  const bb=document.getElementById('bankBody');
-  if (bb) bb.innerHTML=`<tr><td>01 Jun</td><td>NEFT — Kumar Electronics</td><td>—</td><td style="color:var(--green)">42,000</td><td class="b">8,24,000</td></tr>
-    <tr><td>28 May</td><td>PO-0041 Samsung India</td><td style="color:var(--red)">265,500</td><td>—</td><td class="b">7,82,000</td></tr>`;
-}
 
 function renderAuditLog() {
   const b=document.getElementById('auditBody'); if(!b)return;
@@ -4251,21 +4508,51 @@ function switchTab(btn,ns,id) {
 //  SETTINGS
 //=============================================================
 
+let ROLES_CACHE = [];
+
 async function renderSettings() {
   // ---- Company profile ----
+  let company = {};
   if (AUTH.apiOnline) {
     try {
       const r = await apiFetch(`/companies/${CFG.COMPANY_ID}`);
-      const c = r?.data || r;
-      setVal('setLegalName', c.legal_name || '');
-      setVal('setGstin', c.gstin || '');
-      setVal('setStateCode', c.state_code || '27');
-      setVal('setBizType', c.business_type || 'retailer');
-      setVal('setInvoicePrefix', c.invoice_prefix || 'INV-');
+      company = r?.data || r || {};
+      setVal('setLegalName', company.legal_name || '');
+      setVal('setTradeName', company.trade_name || '');
+      setVal('setGstin', company.gstin || '');
+      setVal('setPan', company.pan || '');
+      setVal('setStateCode', company.state_code || '27');
+      setVal('setBizType', company.business_type || 'retailer');
+      setVal('setEmail', company.email || '');
+      setVal('setPhone', company.phone || '');
+      setVal('setAddress', company.reg_address || '');
+      setVal('setInvoicePrefix', company.invoice_prefix || 'INV-');
+
+      const img = document.getElementById('setLogoPreview');
+      const ph  = document.getElementById('setLogoPlaceholder');
+      if (company.logo_url) {
+        img.src = CFG.API_BASE.replace('/api/v1','') + company.logo_url;
+        img.style.display = 'block';
+        ph.style.display = 'none';
+      } else {
+        img.style.display = 'none';
+        ph.style.display = 'flex';
+      }
+
+      // ---- Security toggles, stored in company.settings JSON ----
+      const s = company.settings || {};
+      paintSecurityToggle('two_factor_enabled', s.two_factor_enabled !== false); // default ON
+      paintSecurityToggle('auto_backup_enabled', s.auto_backup_enabled !== false);
+      paintSecurityToggle('data_encryption_enabled', s.data_encryption_enabled !== false);
     } catch (e) { console.warn('[Settings] company load failed:', e.message); }
+
+    try {
+      const rr = await apiFetch('/roles');
+      ROLES_CACHE = rr?.data || rr || [];
+    } catch (e) { console.warn('[Settings] roles load failed:', e.message); }
   }
 
-  // ---- Users & roles ----
+  // ---- Users & roles table ----
   const body = document.getElementById('settingsUsersBody');
   if (!body) return;
   if (!AUTH.apiOnline) {
@@ -4278,7 +4565,11 @@ async function renderSettings() {
     body.innerHTML = users.map(u => `
       <tr>
         <td class="b">${u.full_name}</td>
-        <td><span class="chip crd">${u.role?.name || '—'}</span></td>
+        <td>
+          <select class="fi" style="padding:4px 8px;font-size:12px" onchange="changeUserRole('${u.id}', this.value)">
+            ${ROLES_CACHE.map(r => `<option value="${r.id}" ${String(r.id)===String(u.role_id)?'selected':''}>${r.role_name}</option>`).join('')}
+          </select>
+        </td>
         <td><span class="sb ${u.is_active ? 'sp' : 'so'}">${u.is_active ? 'Active' : 'Inactive'}</span></td>
         <td><button class="btn btn-o btn-sm" onclick="toggleUserActive('${u.id}', ${u.is_active})">
           ${u.is_active ? 'Deactivate' : 'Activate'}
@@ -4289,12 +4580,25 @@ async function renderSettings() {
   }
 }
 
+function paintSecurityToggle(key, enabled) {
+  const el = document.getElementById('sec_' + key);
+  if (!el) return;
+  el.textContent = enabled ? 'Active' : 'Disabled';
+  el.className = 'chip ' + (enabled ? 'cgr' : 'cor');
+  el.onclick = () => toggleSecuritySetting(key, enabled);
+}
+
 async function saveCompanySettings() {
   const payload = {
     legal_name: getVal('setLegalName'),
+    trade_name: getVal('setTradeName'),
     gstin: getVal('setGstin'),
+    pan: getVal('setPan'),
     state_code: getVal('setStateCode'),
     business_type: getVal('setBizType'),
+    email: getVal('setEmail'),
+    phone: getVal('setPhone'),
+    reg_address: getVal('setAddress'),
     invoice_prefix: getVal('setInvoicePrefix'),
   };
   try {
@@ -4308,11 +4612,54 @@ async function saveCompanySettings() {
   }
 }
 
+async function uploadCompanyLogo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { showToast('⚠️ Logo must be under 2MB', 'warn'); return; }
+  const form = new FormData();
+  form.append('file', file);
+  try {
+    const r = await apiFetch(`/companies/${CFG.COMPANY_ID}/logo`, { method: 'POST', body: form });
+    const logoUrl = (r?.data || r)?.logo_url;
+    const img = document.getElementById('setLogoPreview');
+    const ph  = document.getElementById('setLogoPlaceholder');
+    img.src = CFG.API_BASE.replace('/api/v1','') + logoUrl + '?t=' + Date.now();
+    img.style.display = 'block';
+    ph.style.display = 'none';
+    showToast('✅ Logo uploaded');
+  } catch (e) {
+    showToast('❌ ' + e.message);
+  }
+}
+
+async function changeUserRole(userId, roleId) {
+  try {
+    await apiFetch(`/users/${userId}`, { method: 'PATCH', body: JSON.stringify({ role_id: roleId }) });
+    showToast('✅ Role updated');
+  } catch (e) {
+    showToast('❌ ' + e.message);
+    renderSettings();
+  }
+}
+
 async function toggleUserActive(id, currentlyActive) {
   try {
     await apiFetch(`/users/${id}`, { method: 'PATCH', body: JSON.stringify({ is_active: !currentlyActive }) });
     showToast(currentlyActive ? '✅ User deactivated' : '✅ User activated');
     renderSettings();
+  } catch (e) {
+    showToast('❌ ' + e.message);
+  }
+}
+
+async function toggleSecuritySetting(key, currentlyEnabled) {
+  try {
+    const r = await apiFetch(`/companies/${CFG.COMPANY_ID}`);
+    const company = r?.data || r;
+    const settings = { ...(company.settings || {}), [key]: !currentlyEnabled };
+    await apiFetch(`/companies/${CFG.COMPANY_ID}`, { method: 'PATCH', body: JSON.stringify({ settings }) });
+    paintSecurityToggle(key, !currentlyEnabled);
+    showToast('✅ Updated');
   } catch (e) {
     showToast('❌ ' + e.message);
   }
@@ -4374,7 +4721,6 @@ function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); 
 //  OTHER MODAL SAVE HANDLERS
 // ============================================================
 function savePayment() { showToast('✅ Payment of ₹'+(parseInt(getVal('payAmt'))||0).toLocaleString()+' recorded'); closeModal('payModal'); addAuditEntry('CREATE','Payment','Recorded payment'); renderPayments(); }
-function saveJE()      { showToast('✅ Journal entry posted'); closeModal('jeModal'); addAuditEntry('CREATE','Accounting','Posted journal entry'); }
 function openQuote()   { showToast('💡 Tip: Create Invoice → Type = Quotation'); setTimeout(()=>nav('create',null),600); }
 function genEWB()      { const inv=getVal('ewbInv'); showToast('🛣️ E-Way Bill generated for '+inv); addAuditEntry('CREATE','E-Way Bill','Generated EWB for '+inv); }
 function genUPI()      { const amt=getVal('upiAmt'),uid=getVal('upiId'); if(!amt){showToast('⚠️ Enter amount','warn');return;} document.getElementById('upiQR').style.display='block'; document.getElementById('upiIdShow').textContent=uid; showToast('📱 UPI QR generated for ₹'+parseInt(amt).toLocaleString()); }

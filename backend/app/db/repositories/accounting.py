@@ -139,12 +139,13 @@ class JournalVoucherRepository(BaseRepository[JournalVoucher]):
             select(JournalVoucher)
             .where(JournalVoucher.id == jv_id)
             .options(
-                selectinload(JournalVoucher.entries).selectinload(JournalEntry.account)
+                selectinload(JournalVoucher.entries)
+                .selectinload(JournalEntry.account)
+                .selectinload(Account.group)
             )
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
-
     async def search(
         self,
         company_id: UUID,
@@ -159,7 +160,11 @@ class JournalVoucherRepository(BaseRepository[JournalVoucher]):
         stmt = (
             select(JournalVoucher)
             .where(JournalVoucher.company_id == company_id)
-            .options(selectinload(JournalVoucher.entries))
+            .options(
+                selectinload(JournalVoucher.entries)
+                .selectinload(JournalEntry.account)
+                .selectinload(Account.group)
+            )
         )
         if jv_type:
             stmt = stmt.where(JournalVoucher.jv_type == jv_type)
@@ -211,11 +216,12 @@ class AccountLedgerRepository(BaseRepository[AccountLedger]):
     ) -> Pagination:
         stmt = (
             select(AccountLedger)
+            .join(JournalVoucher, JournalVoucher.id == AccountLedger.jv_id)
             .where(
                 AccountLedger.company_id == company_id,
                 AccountLedger.account_id == account_id,
             )
-            .order_by(AccountLedger.txn_date.asc(), AccountLedger.id.asc())
+            .order_by(AccountLedger.txn_date.asc(), JournalVoucher.created_at.asc())
         )
         if from_date:
             stmt = stmt.where(AccountLedger.txn_date >= from_date)
@@ -237,11 +243,12 @@ class AccountLedgerRepository(BaseRepository[AccountLedger]):
         )
         stmt = (
             select(AccountLedger)
+            .join(JournalVoucher, JournalVoucher.id == AccountLedger.jv_id)
             .where(
                 AccountLedger.company_id == company_id,
                 AccountLedger.account_id.in_(cash_accts),
             )
-            .order_by(AccountLedger.txn_date.asc())
+            .order_by(AccountLedger.txn_date.asc(), JournalVoucher.created_at.asc())
         )
         if from_date:
             stmt = stmt.where(AccountLedger.txn_date >= from_date)
@@ -263,12 +270,13 @@ class AccountLedgerRepository(BaseRepository[AccountLedger]):
         )
         stmt = (
             select(AccountLedger)
+            .join(JournalVoucher, JournalVoucher.id == AccountLedger.jv_id)
             .where(
                 AccountLedger.company_id == company_id,
                 AccountLedger.account_id.in_(bank_accts) if not account_id
                 else AccountLedger.account_id == account_id,
             )
-            .order_by(AccountLedger.txn_date.asc())
+            .order_by(AccountLedger.txn_date.asc(), JournalVoucher.created_at.asc())
         )
         if from_date:
             stmt = stmt.where(AccountLedger.txn_date >= from_date)

@@ -34,7 +34,7 @@ from app.db.repositories.accounting import (
 from app.schemas.accounting import (
     AccountCreate, AccountGroupCreate, AccountUpdate,
     ContraVoucherCreate, FinancialYearCreate,
-    JournalVoucherCreate, PaymentVoucherCreate,
+    JournalVoucherCreate, LedgerEntryOut, LedgerOut, PaymentVoucherCreate,
     ReceiptVoucherCreate, TrialBalanceOut, TrialBalanceRow,
     ProfitLossOut, PLRow, BalanceSheetOut, BalanceSheetRow,
     GSTReturnOut, GSTR1Row, GSTR3BRow,
@@ -121,6 +121,65 @@ class ChartOfAccountsService:
         account.balance_type = btype       # type: ignore[attr-defined]
         return account
 
+    async def get_ledger(
+        self, account_id: UUID, company_id: UUID,
+        from_date: date | None, to_date: date | None,
+        page: int, page_size: int,
+    ) -> LedgerOut:
+        account = await self.repo.get_or_raise(account_id)
+        if account.company_id != company_id:
+            raise PermissionDeniedError()
+
+        ledger_repo = AccountLedgerRepository(self.repo.session)
+
+        # Opening balance = the account's base opening balance, adjusted for
+        # every ledger entry that happened strictly before the from_date filter
+        opening = account.opening_balance if account.opening_balance_type == "Dr" else -account.opening_balance
+        if from_date:
+            prior_stmt = select(
+                func.coalesce(func.sum(AccountLedger.debit_amount), 0),
+                func.coalesce(func.sum(AccountLedger.credit_amount), 0),
+            ).where(
+                AccountLedger.company_id == company_id,
+                AccountLedger.account_id == account_id,
+                AccountLedger.txn_date < from_date,
+            )
+            prior_dr, prior_cr = (await self.repo.session.execute(prior_stmt)).one()
+            opening += Decimal(prior_dr) - Decimal(prior_cr)
+
+        # Period totals — computed across the FULL date range, not just the current page
+        period_stmt = select(
+            func.coalesce(func.sum(AccountLedger.debit_amount), 0),
+            func.coalesce(func.sum(AccountLedger.credit_amount), 0),
+        ).where(
+            AccountLedger.company_id == company_id,
+            AccountLedger.account_id == account_id,
+        )
+        if from_date:
+            period_stmt = period_stmt.where(AccountLedger.txn_date >= from_date)
+        if to_date:
+            period_stmt = period_stmt.where(AccountLedger.txn_date <= to_date)
+        period_dr, period_cr = (await self.repo.session.execute(period_stmt)).one()
+        period_dr, period_cr = Decimal(period_dr), Decimal(period_cr)
+
+        closing = opening + period_dr - period_cr
+
+        result = await ledger_repo.get_ledger(company_id, account_id, from_date, to_date, page, page_size)
+
+        return LedgerOut(
+            account_id=account.id,
+            account_code=account.account_code,
+            account_name=account.account_name,
+            opening_balance=abs(opening),
+            opening_balance_type="Dr" if opening >= 0 else "Cr",
+            total_debit=period_dr,
+            total_credit=period_cr,
+            closing_balance=abs(closing),
+            closing_balance_type="Dr" if closing >= 0 else "Cr",
+            entries=[LedgerEntryOut.model_validate(e) for e in result.items],
+            total=result.total, page=result.page, page_size=result.page_size, pages=result.pages,
+        )
+
     async def seed_default_accounts(self, company_id: UUID, user_id: UUID) -> None:
         """
         Seed system Chart of Accounts for a new company.
@@ -199,11 +258,6 @@ class ChartOfAccountsService:
                     "is_system": True,
                     "created_by": user_id,
                 })
-
-    # Store group_repo for seed_default_accounts to use
-    @property
-    def group_repo(self) -> AccountGroupRepository:
-        return AccountGroupRepository(self.repo.session)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -295,19 +349,22 @@ class JournalVoucherService:
             # Get last running balance for this account
             last = await self.session.execute(
                 select(AccountLedger)
+                .join(JournalVoucher, JournalVoucher.id == AccountLedger.jv_id)
                 .where(AccountLedger.account_id == entry.account_id,
                        AccountLedger.company_id == company_id)
-                .order_by(AccountLedger.txn_date.desc(), AccountLedger.id.desc())
+                .order_by(AccountLedger.txn_date.desc(), JournalVoucher.created_at.desc())
                 .limit(1)
             )
             last_row = last.scalar_one_or_none()
             prev_balance = last_row.running_balance if last_row else Decimal("0")
             prev_type = last_row.balance_type if last_row else "Dr"
 
-            # Net movement
+            # Use one consistent signed convention: positive = Dr, negative = Cr
+            prev_signed = prev_balance if prev_type == "Dr" else -prev_balance
             net = entry.debit_amount - entry.credit_amount
-            new_balance = prev_balance + net if prev_type == "Dr" else prev_balance - net
-            balance_type = "Dr" if new_balance >= 0 else "Cr"
+            new_signed = prev_signed + net
+            balance_type = "Dr" if new_signed >= 0 else "Cr"
+            new_balance = abs(new_signed)
 
             self.session.add(AccountLedger(
                 company_id=company_id,
@@ -463,12 +520,20 @@ class AutoAccountingService:
         self.jv_svc = JournalVoucherService(session)
         self.acct_repo = AccountRepository(session)
 
-    async def _get_system_account(self, company_id: UUID, account_type: str) -> Account:
+    async def _get_system_account(self, company_id: UUID, account_type: str, name_contains: str | None = None) -> Account:
         accounts = await self.acct_repo.get_by_type(company_id, account_type)
         if not accounts:
             raise BusinessError(
                 f"No '{account_type}' account found. "
                 "Please seed the chart of accounts first."
+            )
+        if name_contains:
+            matched = [a for a in accounts if name_contains.lower() in a.account_name.lower()]
+            if matched:
+                return matched[0]
+            raise BusinessError(
+                f"No '{account_type}' account matching '{name_contains}' found among: "
+                + ", ".join(a.account_name for a in accounts)
             )
         return accounts[0]
 
@@ -491,9 +556,9 @@ class AutoAccountingService:
         from app.schemas.accounting import JournalEntryLine, JournalVoucherCreate
         debtor = await self._get_system_account(company_id, "receivable")
         sales  = await self._get_system_account(company_id, "income")
-        cgst_o = await self._get_system_account(company_id, "gst_output")
-        sgst_o = await self._get_system_account(company_id, "gst_output")
-        igst_o = await self._get_system_account(company_id, "gst_output")
+        cgst_o = await self._get_system_account(company_id, "gst_output", "CGST")
+        sgst_o = await self._get_system_account(company_id, "gst_output", "SGST")
+        igst_o = await self._get_system_account(company_id, "gst_output", "IGST")
 
         entries = [
             JournalEntryLine(account_id=debtor.id, debit_amount=total_amount, party_id=party_id),
@@ -569,9 +634,9 @@ class AutoAccountingService:
         """Dr Purchase + Dr GST Input, Cr Creditor."""
         purchase  = await self._get_system_account(company_id, "expense")
         creditor  = await self._get_system_account(company_id, "payable")
-        cgst_i = await self._get_system_account(company_id, "gst_input")
-        sgst_i = await self._get_system_account(company_id, "gst_input")
-        igst_i = await self._get_system_account(company_id, "gst_input")
+        cgst_i = await self._get_system_account(company_id, "gst_input", "CGST")
+        sgst_i = await self._get_system_account(company_id, "gst_input", "SGST")
+        igst_i = await self._get_system_account(company_id, "gst_input", "IGST")
         from app.schemas.accounting import JournalEntryLine, JournalVoucherCreate
         entries = [
             JournalEntryLine(account_id=purchase.id, debit_amount=taxable_amount),
@@ -660,6 +725,12 @@ class AccountingReportService:
             o = open_map.get(acct.id, {})
             o_dr = Decimal(str(o.get("open_dr", 0)))
             o_cr = Decimal(str(o.get("open_cr", 0)))
+            # NEW — fold in the account's base opening balance (set at account
+            # creation, representing balance before any ledger postings existed)
+            if acct.opening_balance_type == "Dr":
+                o_dr += acct.opening_balance
+            else:
+                o_cr += acct.opening_balance
             p_dr = Decimal(str(p.get("period_dr", 0)))
             p_cr = Decimal(str(p.get("period_cr", 0)))
             c_dr = o_dr + p_dr
@@ -756,15 +827,18 @@ class AccountingReportService:
     async def balance_sheet(self, company_id: UUID, as_of_date: date) -> BalanceSheetOut:
         """Compute Balance Sheet as of a given date."""
         stmt = text("""
-            SELECT a.account_name, a.account_code, a.account_type,
-                   ag.nature,
-                   COALESCE(SUM(al.debit_amount - al.credit_amount), 0) AS net_dr
-            FROM account_ledger al
-            JOIN accounts a ON a.id = al.account_id
+            SELECT a.id, a.account_name, a.account_code, a.account_type,
+                   a.opening_balance, a.opening_balance_type, ag.nature,
+                   COALESCE(SUM(al.debit_amount - al.credit_amount)
+                            FILTER (WHERE al.txn_date <= :as_of), 0) AS ledger_net_dr
+            FROM accounts a
             JOIN account_groups ag ON ag.id = a.group_id
-            WHERE al.company_id = :cid AND al.txn_date <= :as_of
+            LEFT JOIN account_ledger al
+                   ON al.account_id = a.id AND al.company_id = a.company_id
+            WHERE a.company_id = :cid AND a.is_active = true
               AND ag.nature IN ('asset','liability','equity')
-            GROUP BY a.account_name, a.account_code, a.account_type, ag.nature
+            GROUP BY a.id, a.account_name, a.account_code, a.account_type,
+                     a.opening_balance, a.opening_balance_type, ag.nature
             ORDER BY ag.nature, a.account_code
         """)
         rows_raw = (await self.session.execute(
@@ -777,14 +851,33 @@ class AccountingReportService:
         total_liabilities = Decimal("0")
 
         for r in rows_raw:
-            net = Decimal(str(r["net_dr"]))
-            row = BalanceSheetRow(label=r["account_name"], amount=abs(net))
+            ledger_net = Decimal(str(r["ledger_net_dr"]))
+            opening = r["opening_balance"] if r["opening_balance_type"] == "Dr" else -r["opening_balance"]
+            net = opening + ledger_net  # signed: positive = Dr, negative = Cr
+            if net == 0:
+                continue
             if r["nature"] == "asset":
-                assets.append(row)
-                total_assets += abs(net)
+                # Assets normally carry a Dr balance — report the signed value directly,
+                # so an abnormal Cr balance (e.g. an overdrawn bank account) correctly
+                # REDUCES total assets instead of being added as if it were positive.
+                assets.append(BalanceSheetRow(label=r["account_name"], amount=net))
+                total_assets += net
             else:
-                liabilities.append(row)
-                total_liabilities += abs(net)
+                # Liabilities/Equity normally carry a Cr balance (negative in this
+                # convention) — flip sign so a normal liability displays as positive.
+                liabilities.append(BalanceSheetRow(label=r["account_name"], amount=-net))
+                total_liabilities += -net
+
+        # NEW — fold in accumulated (not-yet-closed) Net Profit as a synthetic
+        # equity line. Without this, an interim Balance Sheet can never actually
+        # balance against the P&L — this mirrors how real accounting software
+        # (e.g. Tally) shows a running "Profit & Loss A/c" line under
+        # Liabilities & Equity until a formal year-end closing entry is passed.
+        pl = await self.profit_and_loss(company_id, date(1900, 1, 1), as_of_date)
+        if pl.net_profit != 0:
+            label = "Profit & Loss A/c (Current Year)" if pl.net_profit >= 0 else "Accumulated Loss"
+            liabilities.append(BalanceSheetRow(label=label, amount=pl.net_profit))
+            total_liabilities += pl.net_profit
 
         net_worth = total_assets - total_liabilities
         return BalanceSheetOut(

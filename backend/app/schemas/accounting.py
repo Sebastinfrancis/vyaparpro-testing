@@ -194,6 +194,7 @@ class JournalVoucherOut(APIModel):
 
 class LedgerEntryOut(APIModel):
     id: UUID
+    account_id: UUID
     txn_date: date
     jv_no: str
     jv_type: str

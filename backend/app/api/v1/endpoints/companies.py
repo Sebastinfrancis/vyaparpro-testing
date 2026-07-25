@@ -146,9 +146,20 @@ async def upload_logo(
     if file.content_type not in ("image/jpeg", "image/png", "image/webp"):
         from app.core.exceptions import ValidationError
         raise ValidationError("Only JPEG, PNG, or WebP images are accepted.")
-    # In production: upload to S3, store URL in company.logo_url
-    # For now, return a placeholder
-    logo_url = f"/static/logos/{company_id}.png"
+    import os
+    from pathlib import Path
+
+    ext = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}[file.content_type]
+    static_dir = Path("app/static/logos")
+    static_dir.mkdir(parents=True, exist_ok=True)
+    dest = static_dir / f"{company_id}.{ext}"
+    contents = await file.read()
+    if len(contents) > 2 * 1024 * 1024:
+        from app.core.exceptions import ValidationError
+        raise ValidationError("Logo must be under 2MB.")
+    with open(dest, "wb") as f:
+        f.write(contents)
+    logo_url = f"/static/logos/{company_id}.{ext}"
     from app.db.repositories import CompanyRepository
     repo = CompanyRepository(db)
     company = await repo.get_or_raise(company_id)

@@ -27,6 +27,9 @@ from app.middleware.audit import AuditMiddleware
 from app.middleware.request_id import RequestIDMiddleware
 from app.middleware.timing import TimingMiddleware
 
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+
 # ── Route imports ────────────────────────────────────────────────────────────
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.users import router as users_router
@@ -41,6 +44,7 @@ from app.api.v1.endpoints.products import router as products_router
 from app.api.v1.endpoints.master import router as master_router
 from app.api.v1.endpoints.billing import router as billing_router 
 from app.api.v1.endpoints.crm import router as crm_router
+from app.api.v1.endpoints.accounting import router as accounting_router
 
 log = get_logger(__name__)
 
@@ -104,6 +108,9 @@ def create_app() -> FastAPI:
         expose_headers=["X-Request-ID", "X-Response-Time"],
     )
     app.add_middleware(GZipMiddleware, minimum_size=1024)
+    static_dir = Path("app/static")
+    static_dir.mkdir(parents=True, exist_ok=True)
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
     app.state.limiter = limiter
     app.add_middleware(SlowAPIMiddleware)
 
@@ -128,6 +135,8 @@ def create_app() -> FastAPI:
     app.include_router(master_router,      prefix=f"{prefix}/master",      tags=["Master Data"])
     app.include_router(billing_router,     prefix=f"{prefix}/billing",     tags=["Billing"])
     app.include_router(crm_router, prefix=f"{prefix}/crm/leads", tags=["CRM"])
+    app.include_router(accounting_router, prefix=f"{prefix}/accounting", tags=["Accounting"])
+    
 
     # ── Health / readiness probes ─────────────────────────────────────
     @app.get("/health", include_in_schema=False)

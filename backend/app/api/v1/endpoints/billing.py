@@ -12,6 +12,7 @@ from app.schemas.billing import (
     JobOrderCreate, JobOrderUpdate, PaymentCreate,
     PurchaseOrderCreate, QuotationCreate,
 )
+from app.schemas.billing import InvoiceOut
 from app.services.billing import (
     DeliveryChallanRepository, InvoiceService, JobOrderService,
     PaymentService, PurchaseOrderService, QuotationService,
@@ -250,6 +251,8 @@ async def patch_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep, pa
     from app.schemas.billing import InvoiceOut
     repo = InvoiceRepository(db)
     inv = await repo.get_or_raise(invoice_id)
+    if inv.status == "draft" and payload.get("status") and payload["status"] != "draft":
+        raise BusinessError("Use the finalize endpoint to convert a draft invoice — it also updates stock and accounting.")
     allowed = {"status", "due_date", "notes"}
     updated = await repo.update(inv, {k: v for k, v in payload.items() if k in allowed})
     return ok(InvoiceOut.model_validate(updated).model_dump(mode='json'), "Invoice updated.")
