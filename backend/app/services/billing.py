@@ -747,4 +747,22 @@ class PaymentService:
                 await self.inv_repo.update(inv, {"paid_amount": new_paid, "status": new_status})
             remaining -= alloc_amt
         await self.session.flush()
+
+        # NEW — post to Ledger & Books, direction depends on payment_type
+        if payload.party_id:
+            from app.services.accounting import AutoAccountingService
+            auto = AutoAccountingService(self.session)
+            if payload.payment_type == "receipt":
+                await auto.on_payment_received(
+                    company_id=company_id, payment_id=payment.id, payment_no=pay_no,
+                    payment_date=payload.payment_date, party_id=payload.party_id,
+                    amount=payload.amount, payment_method=payload.payment_method, user_id=user_id,
+                )
+            elif payload.payment_type == "payment":
+                await auto.on_payment_made(
+                    company_id=company_id, payment_id=payment.id, payment_no=pay_no,
+                    payment_date=payload.payment_date, party_id=payload.party_id,
+                    amount=payload.amount, payment_method=payload.payment_method, user_id=user_id,
+                )
+
         return payment

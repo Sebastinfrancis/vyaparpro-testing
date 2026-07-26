@@ -274,7 +274,7 @@ class JournalVoucherService:
     async def _next_jv_no(self, company_id: UUID, jv_type: str) -> str:
         prefix_map = {
             "payment": "PV", "receipt": "RV", "contra": "CV",
-            "journal": "JV", "purchase": "PV", "sale": "SV",
+            "journal": "JV", "purchase": "PB", "sale": "SV",
             "debit_note": "DN", "credit_note": "CN",
             "opening": "OB", "closing": "CB", "depreciation": "DEP",
         }
@@ -612,6 +612,37 @@ class AutoAccountingService:
             entries=[
                 JournalEntryLine(account_id=cash_bank.id, debit_amount=amount),
                 JournalEntryLine(account_id=debtor.id, credit_amount=amount, party_id=party_id),
+            ],
+        )
+        jv = await self.jv_svc.create(company_id, payload, user_id)
+        return await self.jv_svc.post(jv.id, company_id, user_id)
+
+    async def on_payment_made(
+        self,
+        company_id: UUID,
+        payment_id: UUID,
+        payment_no: str,
+        payment_date: date,
+        party_id: UUID,
+        amount: Decimal,
+        payment_method: str,
+        user_id: UUID,
+    ) -> JournalVoucher:
+        """Dr Creditor, Cr Cash/Bank — the reverse of on_payment_received."""
+        account_type = "bank" if payment_method != "cash" else "cash"
+        cash_bank = await self._get_system_account(company_id, account_type)
+        creditor  = await self._get_system_account(company_id, "payable")
+        from app.schemas.accounting import JournalEntryLine, JournalVoucherCreate
+        payload = JournalVoucherCreate(
+            jv_type="payment",
+            jv_date=payment_date,
+            narration=f"Payment {payment_no}",
+            ref_type="payment",
+            ref_id=payment_id,
+            ref_no=payment_no,
+            entries=[
+                JournalEntryLine(account_id=creditor.id, debit_amount=amount, party_id=party_id),
+                JournalEntryLine(account_id=cash_bank.id, credit_amount=amount),
             ],
         )
         jv = await self.jv_svc.create(company_id, payload, user_id)

@@ -390,14 +390,8 @@ async def record_einvoice(invoice_id: UUID, payload: EInvoiceRecordIn, current: 
     repo = InvoiceRepository(db)
     inv = await repo.get_or_raise(invoice_id)
 
-    updated = await repo.update(inv, {
-        "irn": payload.irn,
-        "ack_no": payload.ack_no,
-        "ack_date": payload.ack_date,
-        "qr_code_data": payload.qr_code_data,
-        "ewb_no": payload.ewb_no,
-        "ewb_valid_till": payload.ewb_valid_till,
-    })
+    update_data = payload.model_dump(exclude_unset=True)
+    updated = await repo.update(inv, update_data)
 
     db.add(EInvoiceLog(
         company_id=current.company_id,

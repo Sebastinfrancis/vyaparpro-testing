@@ -51,6 +51,7 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./app:/app/app
+      - ./alembic:/app/alembic
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
       db:

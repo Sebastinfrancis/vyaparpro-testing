@@ -375,6 +375,8 @@ class InvoiceOut(APIModel):
     ack_no: Optional[str]
     ewb_no: Optional[str]
     qr_code_data: Optional[str]
+    transporter_id: Optional[str] = None
+    vehicle_no: Optional[str] = None
     currency: str
     subtotal: Decimal
     discount_amount: Decimal
@@ -431,9 +433,11 @@ class PaymentOut(APIModel):
     created_at: datetime
 
 class EInvoiceRecordIn(APIModel):
-    irn: str = Field(min_length=10, max_length=64)
+    irn: Optional[str] = Field(None, min_length=10, max_length=64)
     ack_no: Optional[str] = None
     ack_date: Optional[datetime] = None
     qr_code_data: Optional[str] = None
     ewb_no: Optional[str] = None
     ewb_valid_till: Optional[datetime] = None
+    transporter_id: Optional[str] = None
+    vehicle_no: Optional[str] = None

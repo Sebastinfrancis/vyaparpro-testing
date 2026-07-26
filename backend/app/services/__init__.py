@@ -503,6 +503,7 @@ class ProductService:
             raise PermissionDeniedError()
     
         update_data = payload.model_dump(exclude_unset=True)
+        updated = await repo.update(inv, update_data)
     
         # explicitly include current_stock if sent
         if payload.current_stock is not None:

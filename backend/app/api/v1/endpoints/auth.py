@@ -181,14 +181,5 @@ async def me(current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
 
     repo = UserRepository(db)
     user = await repo.get_with_role(current.user_id)
-
-    print("ROLE:", user.role)
-
-    if user.role:
-        print("PERMISSIONS COUNT:", len(user.role.permissions))
-
-    print("USEROUT START")
     data = UserOut.model_validate(user).model_dump(mode="json")
-    print("USEROUT SUCCESS")
-
     return ok(data=data)

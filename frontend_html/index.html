@@ -669,13 +669,17 @@ select.fi option{background:var(--bg2)}
         <div class="card">
           <div style="font-size:13px;font-weight:700;margin-bottom:14px">🛣️ E-Way Bill</div>
           <div class="fg"><label class="fl">Invoice No</label><input class="fi" id="ewbInv" placeholder="INV-2468"/></div>
-          <div class="fg"><label class="fl">Transporter ID</label><input class="fi" placeholder="12AABCT1234A1Z3" class="mono"/></div>
+          <div class="fg"><label class="fl">Transporter ID</label><input class="fi mono" id="ewbTransporter" placeholder="12AABCT1234A1Z3"/></div>
           <div class="fr c2">
-            <div class="fg"><label class="fl">Vehicle No</label><input class="fi" placeholder="MH01AB1234"/></div>
-            <div class="fg"><label class="fl">Distance (km)</label><input class="fi" type="number" placeholder="120"/></div>
+            <div class="fg"><label class="fl">Vehicle No</label><input class="fi" id="ewbVehicle" placeholder="MH01AB1234"/></div>
+            <div class="fg"><label class="fl">Distance (km)</label><input class="fi" type="number" id="ewbDistance" placeholder="120"/></div>
           </div>
           <button class="btn btn-p" style="width:100%;justify-content:center" onclick="genEWB()">Generate E-Way Bill</button>
         </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:14px">🛣️ Recent E-Way Bills</div>
+        <div id="ewbList"></div>
       </div>
     </div>
 
@@ -759,7 +763,7 @@ select.fi option{background:var(--bg2)}
       <div class="bc">Accounts / <span>Payments</span></div>
       <div class="sh" style="margin-top:8px">
         <div><div class="st">Payment Management</div><div class="ss">UPI, Razorpay, bank transfer, cash</div></div>
-        <button class="btn btn-p btn-sm" onclick="openModal('payModal')">➕ Record Payment</button>
+        <button class="btn btn-p btn-sm" onclick="openPayModal()">➕ Record Payment</button>
       </div>
       <div class="g2" style="margin-bottom:18px">
         <div class="card">
@@ -923,7 +927,10 @@ select.fi option{background:var(--bg2)}
             <button class="btn btn-p btn-sm" onclick="saveCompanySettings()">Save Changes</button>
           </div>
           <div class="card">
-            <div style="font-size:13px;font-weight:700;margin-bottom:14px">👤 User & Role Management</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <div style="font-size:13px;font-weight:700">👤 User & Role Management</div>
+              <button class="btn btn-p btn-sm" onclick="openAddUserModal()">➕ Add User</button>
+            </div>
             <div class="tw"><table>
               <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody id="settingsUsersBody"></tbody>
@@ -943,6 +950,17 @@ select.fi option{background:var(--bg2)}
             </div>
           </div>
         </div>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div style="font-size:13px;font-weight:700">🔑 Roles & Permissions</div>
+          <button class="btn btn-p btn-sm" onclick="openRoleModal()">➕ Create Role</button>
+        </div>
+        <div class="tw"><table>
+          <thead><tr><th>Role</th><th>Level</th><th>Description</th><th>Permissions</th><th>Actions</th></tr></thead>
+          <tbody id="settingsRolesBody"></tbody>
+        </table></div>
       </div>
     </div>
 
@@ -1093,6 +1111,38 @@ select.fi option{background:var(--bg2)}
   </div>
 </div>
 
+<div id="roleModal" class="mo hidden">
+  <div class="md md-lg">
+    <div class="mh"><span class="mt2" id="roleModalTitle">Create Role</span><button class="mc" onclick="closeModal('roleModal')">✕</button></div>
+    <div class="mb">
+      <input type="hidden" id="rm_id"/>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Role Name</label><input class="fi" id="rm_name" placeholder="e.g. Cashier"/></div>
+        <div class="fg"><label class="fl">Level (1 = highest authority)</label><input class="fi" type="number" id="rm_level" min="1" max="10" value="5"/></div>
+      </div>
+      <div class="fg"><label class="fl">Description</label><textarea class="fi" id="rm_desc" rows="2" placeholder="What this role is for…"></textarea></div>
+      <div class="fg"><label class="fl">Permissions</label>
+        <div id="rm_permGrid" style="display:flex;flex-direction:column;gap:10px;max-height:340px;overflow-y:auto;padding:4px"></div>
+      </div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('roleModal')">Cancel</button><button class="btn btn-p" onclick="saveRole()">Save Role</button></div>
+  </div>
+</div>
+
+<div id="addUserModal" class="mo hidden">
+  <div class="md md-md">
+    <div class="mh"><span class="mt2">Add User</span><button class="mc" onclick="closeModal('addUserModal')">✕</button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl">Full Name</label><input class="fi" id="au_name" placeholder="Murali Krishnan"/></div>
+      <div class="fr c2"><div class="fg"><label class="fl">Email</label><input class="fi" id="au_email" placeholder="murali@company.com"/></div>
+        <div class="fg"><label class="fl">Phone</label><input class="fi" id="au_phone" placeholder="9876543210"/></div></div>
+      <div class="fg"><label class="fl">Temporary Password</label><input class="fi" type="text" id="au_password" placeholder="Min. 8 characters"/></div>
+      <div class="fg"><label class="fl">Role</label><select class="fi" id="au_role"></select></div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('addUserModal')">Cancel</button><button class="btn btn-p" onclick="saveNewUser()">Create User</button></div>
+  </div>
+</div>
+
 <div id="leadModal" class="mo hidden">
   <div class="md md-md">
     <div class="mh" id="leadModalTitle"><span class="mt2">Add Lead / Opportunity</span><button class="mc" onclick="closeModal('leadModal')">✕</button></div>
@@ -1165,12 +1215,31 @@ select.fi option{background:var(--bg2)}
   <div class="md md-sm">
     <div class="mh"><span class="mt2">Record Payment</span><button class="mc" onclick="closeModal('payModal')">✕</button></div>
     <div class="mb">
-      <div class="fg"><label class="fl">Party (Customer/Vendor)</label><input class="fi" placeholder="Kumar Electronics"/></div>
-      <div class="fg"><label class="fl">Against Invoice</label><input class="fi mono" placeholder="INV-2467"/></div>
+      <div class="fg"><label class="fl">Type</label>
+        <select class="fi" id="payType" onchange="onPayTypeChange()">
+          <option value="receipt">Receipt — Customer paid us</option>
+          <option value="payment">Payment — We paid a vendor</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl" id="payPartyLabel">Customer</label>
+        <select class="fi" id="payParty" onchange="onPayPartyChange()"><option value="">Select customer…</option></select>
+      </div>
+      <div class="fg"><label class="fl">Against Invoice / PO (optional)</label>
+        <select class="fi mono" id="payAgainst"><option value="">Not linked to a specific document</option></select>
+      </div>
       <div class="fr c2"><div class="fg"><label class="fl">Amount (₹)</label><input class="fi" type="number" id="payAmt" placeholder="18500"/></div>
-        <div class="fg"><label class="fl">Date</label><input type="date" class="fi"/></div></div>
-      <div class="fg"><label class="fl">Payment Method</label><select class="fi"><option>UPI</option><option>Cash</option><option>Bank Transfer / NEFT</option><option>Cheque</option><option>Razorpay</option></select></div>
-      <div class="fg"><label class="fl">Reference / UTR</label><input class="fi mono" placeholder="UTR12345678"/></div>
+        <div class="fg"><label class="fl">Date</label><input type="date" class="fi" id="payDate"/></div></div>
+      <div class="fg"><label class="fl">Payment Method</label>
+        <select class="fi" id="payMethod">
+          <option value="upi">UPI</option>
+          <option value="cash">Cash</option>
+          <option value="bank_transfer">Bank Transfer / NEFT</option>
+          <option value="cheque">Cheque</option>
+          <option value="card">Razorpay / Card</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Reference / UTR</label><input class="fi mono" id="payRef" placeholder="UTR12345678"/></div>
+      <div class="fg"><label class="fl">Narration</label><input class="fi" id="payNarration" placeholder="Optional note"/></div>
     </div>
     <div class="mf"><button class="btn btn-o" onclick="closeModal('payModal')">Cancel</button><button class="btn btn-p" onclick="savePayment()">Record Payment</button></div>
   </div>
@@ -1331,6 +1400,8 @@ function normInvoice(inv) {
     irn:        inv.irn            || '',
     ackNo:      inv.ack_no         || '',
     ewbNo:      inv.ewb_no         || '',
+    transporterId: inv.transporter_id  || '',
+    vehicleNo:     inv.vehicle_no      || '',
     qrCode:     inv.qr_code_data   || '',
     no:         inv.invoice_number  || inv.invoice_no || inv.number       || inv.no        || '—',
     date:       inv.invoice_date    || inv.date          || '',
@@ -1362,6 +1433,7 @@ function normInvoice(inv) {
     igst:     inv.igst_amount       || inv.igst           || 0,
     round:    inv.round_off         || inv.round          || 0,
     total:    inv.total_amount      || inv.grand_total    || inv.total || 0,
+    paid:     inv.paid_amount       || 0,
     status:   inv.status            || 'draft',
   };
 }
@@ -1510,7 +1582,7 @@ const QUOTES=[
   {no:'QT-0026',date:'24 May 2026',customer:'Metro Traders',amount:320000,valid:'24 Jun 2026',status:'accepted'},
 ];
 let RETURNS=[];
-const PAYMENTS_DATA=[
+let PAYMENTS_DATA=[
   {date:'01 Jun 2026',party:'Kumar Electronics',invoice:'INV-2468',method:'UPI',amount:42000,type:'received'},
   {date:'30 May 2026',party:'Priya Mobiles',invoice:'INV-2466',method:'Cash',amount:8746,type:'received'},
   {date:'29 May 2026',party:'Gupta Brothers',invoice:'INV-2463',method:'Bank Transfer',amount:128000,type:'received'},
@@ -1606,18 +1678,14 @@ async function doLogin() {
     if (token){
       AUTH.token = token;
       AUTH.apiOnline = true;
-      // Try to read user info from token payload
+      sessionStorage.setItem('vyaparpro_token', AUTH.token);
       try {
-        const userData = result?.data?.user;
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        AUTH.user = {
-          name: userData?.full_name || payload.full_name || payload.sub || user,
-          role: userData?.role || payload.role || 'User'
-        };
+        const me = await apiFetch('/auth/me');
+        const u = me?.data || me;
+        AUTH.user = { name: u.full_name || user, role: u.role?.role_name || 'Staff' };
       } catch (_) {
         AUTH.user = { name: user, role: 'User' };
       }
-      sessionStorage.setItem('vyaparpro_token', AUTH.token);
       bootApp();
       return;
     }
@@ -1635,6 +1703,16 @@ async function doLogin() {
   }
 }
 
+async function syncSidebarCompany() {
+  if (!AUTH.apiOnline) return;
+  try {
+    const r = await apiFetch(`/companies/${CFG.COMPANY_ID}`);
+    const c = r?.data || r;
+    document.getElementById('coSelName').textContent  = '🏢 ' + (c.trade_name || c.legal_name || 'Company');
+    document.getElementById('coSelGstin').textContent = c.gstin || '';
+  } catch (e) { console.warn('[Sidebar] company sync failed:', e.message); }
+}
+
 function bootApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('app').style.display         = 'flex';
@@ -1646,6 +1724,7 @@ function bootApp() {
   document.getElementById('userRole').textContent     = u.role  || 'Staff';
   const firstName = (u.name || '').split(' ')[0] || 'there';
   document.getElementById('dashGreetName').textContent = firstName;
+  syncSidebarCompany();
   // Live indicator
   setLiveStatus(AUTH.apiOnline);
   addAuditEntry('LOGIN', 'Auth', 'Signed in as ' + (u.name || 'User') + (AUTH.apiOnline ? ' (API online)' : ' (Demo mode)'));
@@ -1711,6 +1790,7 @@ function nav(id, el) {
   });
   if (id === 'create' && editingInvId === null) initNewInvoice();
   triggerModuleRefresh(id);
+  document.querySelector('.content').scrollTop = 0;
 }
 
 function triggerModuleRefresh(id) {
@@ -1727,7 +1807,7 @@ function triggerModuleRefresh(id) {
     payments:    renderPayments,
     auditlog:    renderAuditLog,
     branches:    renderBranches,
-    einvoice:    renderEInvoice,
+    einvoice:    () => { renderEInvoice(); renderEWBList(); },
     accounting:  renderAccounting,
     ai:          initAI,
     settings:    renderSettings,
@@ -4194,18 +4274,162 @@ async function renderReturns() {
     <td><button class="btn btn-o btn-sm" onclick="viewInvoice('${r.id}')">👁</button></td></tr>`).join('');
 }
 
-function renderPayments() {
-  const pm=document.getElementById('payMethods'); if(!pm)return;
-  pm.innerHTML=[{m:'UPI (PhonePe/GPay)',v:842000,pct:45},{m:'Bank Transfer / NEFT',v:620000,pct:33},{m:'Cash',v:280000,pct:15},{m:'Razorpay / Card',v:104500,pct:7}]
-    .map(x=>`<div style="padding:10px;background:var(--bg3);border-radius:var(--r2)">
-      <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:12px;font-weight:600">${x.m}</span><span style="font-size:12px;color:var(--green);font-weight:700">₹${(x.v/1000).toFixed(0)}K</span></div>
-      <div class="prog"><div class="pb" style="width:${x.pct}%;background:linear-gradient(90deg,var(--accent),var(--green))"></div></div></div>`).join('');
-  const pb=document.getElementById('payBody'); if(!pb)return;
-  pb.innerHTML=PAYMENTS_DATA.map(p=>`<tr>
-    <td>${p.date}</td><td class="b">${p.party}</td><td class="mono">${p.invoice}</td>
-    <td><span class="chip ${p.method==='Cash'?'cor':p.method.includes('UPI')?'cgr':'cbl2'}">${p.method}</span></td>
+async function loadPaymentsIfNeeded() {
+  if (!AUTH.apiOnline) return PAYMENTS_DATA;
+  try {
+    const r = await apiFetch('/billing/payments?page_size=100');
+    const items = r?.data?.items || r?.items || [];
+    return items.map(p => ({
+      id: p.id,
+      date: (p.payment_date || '').slice(0,10),
+      partyId: p.party_id,
+      party: resolvePartyName(p.payment_type, p.party_id),
+      method: p.payment_method,
+      amount: Number(p.amount || 0),
+      type: p.payment_type === 'receipt' ? 'received' : 'paid',
+      ref: p.bank_ref_no || p.upi_ref_no || p.cheque_no || p.narration || '—',
+    }));
+  } catch (e) {
+    console.warn('[API] payments fallback:', e.message);
+    return PAYMENTS_DATA;
+  }
+}
+
+function resolvePartyName(paymentType, partyId) {
+  if (!partyId) return '—';
+  const list = paymentType === 'receipt' ? CUSTOMERS : VENDORS;
+  const found = list.find(x => String(x.id) === String(partyId));
+  return found ? found.name : '—';
+}
+
+async function renderPayments() {
+  const data = await loadPaymentsIfNeeded();
+  PAYMENTS_DATA = data;
+
+  const methodTotals = {};
+  data.forEach(p => {
+    if (p.type !== 'received') return;
+    methodTotals[p.method] = (methodTotals[p.method] || 0) + p.amount;
+  });
+  const methodLabels = { upi: 'UPI (PhonePe/GPay)', cash: 'Cash', bank_transfer: 'Bank Transfer / NEFT', cheque: 'Cheque', card: 'Razorpay / Card' };
+  const totalReceived = Object.values(methodTotals).reduce((a,b) => a+b, 0) || 1;
+
+  const pm = document.getElementById('payMethods');
+  if (pm) {
+    const rows = Object.entries(methodTotals);
+    pm.innerHTML = rows.length ? rows.map(([method, v]) => {
+      const pct = Math.round((v / totalReceived) * 100);
+      return `<div style="padding:10px;background:var(--bg3);border-radius:var(--r2)">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:12px;font-weight:600">${methodLabels[method] || method}</span><span style="font-size:12px;color:var(--green);font-weight:700">₹${(v/1000).toFixed(0)}K</span></div>
+        <div class="prog"><div class="pb" style="width:${pct}%;background:linear-gradient(90deg,var(--accent),var(--green))"></div></div></div>`;
+    }).join('') : `<div style="color:var(--text3);font-size:12px">No payments recorded yet</div>`;
+  }
+
+  const pb = document.getElementById('payBody');
+  if (!pb) return;
+  pb.innerHTML = data.map(p => `<tr>
+    <td>${p.date}</td><td class="b">${p.party}</td><td class="mono">${p.ref}</td>
+    <td><span class="chip ${p.method==='cash'?'cor':p.method==='upi'?'cgr':'cbl2'}">${methodLabels[p.method] || p.method}</span></td>
     <td class="b" style="color:${p.type==='received'?'var(--green)':'var(--red)'}">₹${p.amount.toLocaleString()}</td>
-    <td><span class="sb ${p.type==='received'?'sp':'sov'}">${p.type}</span></td></tr>`).join('');
+    <td><span class="sb ${p.type==='received'?'sp':'sov'}">${p.type}</span></td></tr>`).join('')
+    || `<tr><td colspan="6" style="text-align:center;color:var(--text3)">No payments recorded yet</td></tr>`;
+}
+
+function openPayModal() {
+  setVal('payDate', new Date().toISOString().slice(0,10));
+  setVal('payAmt', '');
+  setVal('payRef', '');
+  setVal('payNarration', '');
+  document.getElementById('payType').value = 'receipt';
+  onPayTypeChange();
+  openModal('payModal');
+}
+
+function onPayTypeChange() {
+  const type = getVal('payType');
+  const isReceipt = type === 'receipt';
+  document.getElementById('payPartyLabel').textContent = isReceipt ? 'Customer' : 'Vendor';
+  const list = isReceipt ? CUSTOMERS : VENDORS;
+  const partySel = document.getElementById('payParty');
+  partySel.innerHTML = `<option value="">Select ${isReceipt ? 'customer' : 'vendor'}…</option>`
+    + list.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
+  document.getElementById('payAgainst').innerHTML = `<option value="">Not linked to a specific document</option>`;
+}
+
+function onPayPartyChange() {
+  const type = getVal('payType');
+  const partyId = getVal('payParty');
+  const againstSel = document.getElementById('payAgainst');
+  if (!partyId) { againstSel.innerHTML = `<option value="">Not linked to a specific document</option>`; return; }
+
+  if (type === 'receipt') {
+    const pending = INVOICES.filter(i => String(i.party_id) === String(partyId) && (i.total - i.paid) > 0.01);
+    againstSel.innerHTML = `<option value="">Not linked to a specific invoice</option>`
+      + pending.map(i => `<option value="${i.id}" data-remaining="${i.total - i.paid}">${i.no} — ₹${(i.total - i.paid).toLocaleString()} pending</option>`).join('');
+  } else {
+    const pending = PO_DATA.filter(p => String(p.vendorId) === String(partyId) && (p.total - p.paidAmount) > 0.01);
+    againstSel.innerHTML = `<option value="">Not linked to a specific PO</option>`
+      + pending.map(p => `<option value="${p.id}" data-remaining="${p.total - p.paidAmount}">${p.no} — ₹${(p.total - p.paidAmount).toLocaleString()} pending</option>`).join('');
+  }
+}
+
+async function savePayment() {
+  const type = getVal('payType');
+  const partyId = getVal('payParty');
+  const againstId = getVal('payAgainst');
+  const amount = +getVal('payAmt') || 0;
+  const method = getVal('payMethod');
+  const ref = getVal('payRef');
+  const narration = getVal('payNarration');
+  const payDate = getVal('payDate') || new Date().toISOString().slice(0,10);
+
+  if (!partyId) { showToast('⚠️ Select a ' + (type === 'receipt' ? 'customer' : 'vendor'), 'warn'); return; }
+  if (amount <= 0) { showToast('⚠️ Enter a valid amount', 'warn'); return; }
+
+  // NEW — PaymentAllocation only supports linking to an Invoice, never a PO
+  // (no po_id column, and invoice_id has a strict FK to the invoices table).
+  // So only build an allocation for receipts; vendor payments update the PO separately below.
+  const allocations = (type === 'receipt' && againstId) ? [{ invoice_id: againstId, amount: amount }] : [];
+
+  const payload = {
+    payment_type: type,
+    payment_date: payDate,
+    party_id: partyId,
+    amount: amount,
+    payment_method: method,
+    bank_ref_no: method === 'bank_transfer' ? ref : undefined,
+    upi_ref_no: method === 'upi' ? ref : undefined,
+    cheque_no: method === 'cheque' ? ref : undefined,
+    narration: narration,
+    allocations: allocations,
+  };
+
+  try {
+    if (AUTH.apiOnline) {
+      await apiFetch('/billing/payments', { method: 'POST', body: JSON.stringify(payload) });
+
+      // NEW — vendor payment: separately update the PO's own paid_amount,
+      // mirroring what recordPOPayment() already does for that field.
+      if (type === 'payment' && againstId) {
+        const po = PO_DATA.find(x => String(x.id) === String(againstId));
+        if (po) {
+          const newPaid = Math.min((po.paidAmount || 0) + amount, po.total);
+          await apiFetch(`/billing/purchase-orders/${againstId}`, {
+            method: 'PATCH', body: JSON.stringify({ paid_amount: newPaid }),
+          });
+          po.paidAmount = newPaid;
+        }
+      }
+    }
+    showToast('✅ Payment of ₹' + amount.toLocaleString() + ' recorded');
+    closeModal('payModal');
+    addAuditEntry('CREATE', 'Payment', 'Recorded ' + type + ' of ₹' + amount.toLocaleString());
+    await renderPayments();
+    if (type === 'receipt' && typeof renderInvoices === 'function') await renderInvoices();
+    if (type === 'payment' && typeof renderPO === 'function') await renderPO();
+  } catch (e) {
+    showToast('❌ Could not record payment: ' + e.message);
+  }
 }
 
 async function renderBranches(list) {
@@ -4382,6 +4606,17 @@ function renderEInvoice() {
     </div>`).join('');
 }
 
+function renderEWBList() {
+  const el = document.getElementById('ewbList'); if (!el) return;
+  const withEwb = INVOICES.filter(i => i.ewbNo).slice(0, 5);
+  el.innerHTML = withEwb.length ? withEwb.map(inv => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:var(--r2);margin-bottom:8px">
+      <div><div style="font-size:12px;font-weight:600">${inv.no}</div>
+        <div style="font-size:10px;color:var(--text3)">${inv.customer} · EWB: ${inv.ewbNo}${inv.vehicleNo ? ' · '+inv.vehicleNo : ''}</div></div>
+      <span class="sb sp">Active</span>
+    </div>`).join('') : '<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px">No e-way bills recorded yet</div>';
+}
+
 
 function renderAuditLog() {
   const b=document.getElementById('auditBody'); if(!b)return;
@@ -4549,6 +4784,7 @@ async function renderSettings() {
     try {
       const rr = await apiFetch('/roles');
       ROLES_CACHE = rr?.data || rr || [];
+      renderRolesTable();
     } catch (e) { console.warn('[Settings] roles load failed:', e.message); }
   }
 
@@ -4560,8 +4796,11 @@ async function renderSettings() {
     return;
   }
   try {
-    const r = await apiFetch('/users?limit=100');
-    const users = r?.data || r?.items || [];
+    const r = await apiFetch('/users?limit=100&active_only=false');
+    const users = r?.data?.items || r?.items || [];
+    document.getElementById('au_role').innerHTML =
+      ROLES_CACHE.map(r => `<option value="${r.id}">${r.role_name}</option>`).join('');
+
     body.innerHTML = users.map(u => `
       <tr>
         <td class="b">${u.full_name}</td>
@@ -4571,9 +4810,12 @@ async function renderSettings() {
           </select>
         </td>
         <td><span class="sb ${u.is_active ? 'sp' : 'so'}">${u.is_active ? 'Active' : 'Inactive'}</span></td>
-        <td><button class="btn btn-o btn-sm" onclick="toggleUserActive('${u.id}', ${u.is_active})">
-          ${u.is_active ? 'Deactivate' : 'Activate'}
-        </button></td>
+        <td style="display:flex;gap:6px">
+          <button class="btn btn-o btn-sm" onclick="toggleUserActive('${u.id}', ${u.is_active})">
+            ${u.is_active ? 'Deactivate' : 'Activate'}
+          </button>
+          <button class="btn btn-o btn-sm" onclick="resetUserPassword('${u.id}', '${u.email}')">Reset Password</button>
+        </td>
       </tr>`).join('') || `<tr><td colspan="4" style="text-align:center">No users found</td></tr>`;
   } catch (e) {
     body.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text3)">Could not load users</td></tr>`;
@@ -4607,6 +4849,7 @@ async function saveCompanySettings() {
     }
     showToast('✅ Settings saved!');
     addAuditEntry('UPDATE', 'Settings', 'Updated company profile');
+    syncSidebarCompany();
   } catch (e) {
     showToast('❌ ' + e.message);
   }
@@ -4627,6 +4870,176 @@ async function uploadCompanyLogo(input) {
     img.style.display = 'block';
     ph.style.display = 'none';
     showToast('✅ Logo uploaded');
+  } catch (e) {
+    showToast('❌ ' + e.message);
+  }
+}
+
+function openAddUserModal() {
+  setVal('au_name', ''); setVal('au_email', ''); setVal('au_phone', ''); setVal('au_password', '');
+  openModal('addUserModal');
+}
+
+async function saveNewUser() {
+  const payload = {
+    full_name: getVal('au_name'),
+    email: getVal('au_email'),
+    phone: getVal('au_phone'),
+    password: getVal('au_password'),
+    role_id: getVal('au_role'),
+  };
+  if (!payload.full_name || !payload.email || !payload.password || !payload.role_id) {
+    showToast('⚠️ Fill in name, email, password and role', 'warn'); return;
+  }
+  if (payload.password.length < 8) {
+    showToast('⚠️ Password must be at least 8 characters', 'warn'); return;
+  }
+  try {
+    await apiFetch('/users', { method: 'POST', body: JSON.stringify(payload) });
+    showToast('✅ User created');
+    closeModal('addUserModal');
+    renderSettings();
+  } catch (e) {
+    showToast('❌ ' + e.message);
+  }
+}
+
+async function resetUserPassword(id, email) {
+  const newPass = prompt(`Set a new temporary password for ${email} (min. 8 characters):`);
+  if (!newPass) return;
+  if (newPass.length < 8) { showToast('⚠️ Password must be at least 8 characters', 'warn'); return; }
+  try {
+    const r1 = await apiFetch(`/users/${id}/force-reset-password`, { method: 'POST' });
+    const resetToken = (r1?.data || r1)?.reset_token;
+    await apiFetch('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token: resetToken, new_password: newPass, confirm_password: newPass }),
+    });
+    showToast('✅ Password reset. Share it with the user securely.');
+  } catch (e) {
+    showToast('❌ ' + e.message);
+  }
+}
+
+let PERMISSIONS_CACHE = [];
+
+function renderRolesTable() {
+  const body = document.getElementById('settingsRolesBody');
+  if (!body) return;
+  body.innerHTML = ROLES_CACHE.map(r => `
+    <tr>
+      <td class="b">${r.role_name} ${r.is_system_role ? '<span title="System role — protected" style="margin-left:4px">🔒</span>' : ''}</td>
+      <td>${r.role_level}</td>
+      <td style="color:var(--text3);font-size:12px">${r.description || '—'}</td>
+      <td>${(r.permissions || []).length} granted</td>
+      <td style="display:flex;gap:6px">
+        <button class="btn btn-o btn-sm" onclick="openRoleModal('${r.id}')" ${r.is_system_role ? 'disabled title="System role cannot be edited"' : ''}>Edit</button>
+        <button class="btn btn-o btn-sm" onclick="cloneRole('${r.id}')" title="Start a new custom role with these permissions pre-filled">Clone</button>
+        <button class="btn btn-o btn-sm" onclick="deleteRoleConfirm('${r.id}', ${r.is_system_role})" ${r.is_system_role ? 'disabled' : ''}>Delete</button>
+      </td>
+    </tr>`).join('') || `<tr><td colspan="5" style="text-align:center">No roles found</td></tr>`;
+}
+
+async function ensurePermissionsCache() {
+  if (PERMISSIONS_CACHE.length) return;
+  try {
+    const r = await apiFetch('/permissions');
+    PERMISSIONS_CACHE = r?.data || r || [];
+  } catch (e) { console.warn('[Roles] permissions load failed:', e.message); }
+}
+
+function renderPermissionGrid(selectedIds) {
+  const grid = document.getElementById('rm_permGrid');
+  const modules = {};
+  PERMISSIONS_CACHE.forEach(p => { (modules[p.module] = modules[p.module] || []).push(p); });
+
+  grid.innerHTML = Object.keys(modules).sort().map(mod => {
+    const perms = modules[mod];
+    const allChecked = perms.every(p => selectedIds.has(p.id));
+    return `
+      <div style="border:1px solid var(--border);border-radius:var(--r2);padding:10px">
+        <label style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:12px;text-transform:capitalize;margin-bottom:8px;cursor:pointer">
+          <input type="checkbox" ${allChecked ? 'checked' : ''} onchange="toggleModuleAll('${mod}', this.checked)"/> ${mod}
+        </label>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;padding-left:22px">
+          ${perms.map(p => `
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer" title="${p.description || ''}">
+              <input type="checkbox" class="perm-cb" data-module="${mod}" value="${p.id}" ${selectedIds.has(p.id) ? 'checked' : ''}/> ${p.action}
+            </label>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleModuleAll(mod, checked) {
+  document.querySelectorAll(`.perm-cb[data-module="${mod}"]`).forEach(cb => cb.checked = checked);
+}
+
+async function openRoleModal(roleId, cloneFrom) {
+  await ensurePermissionsCache();
+  setVal('rm_id', roleId || '');
+  setVal('rm_name', ''); setVal('rm_level', '5'); setVal('rm_desc', '');
+  document.getElementById('roleModalTitle').textContent = roleId ? 'Edit Role' : 'Create Role';
+
+  let selected = new Set();
+  const sourceId = roleId || cloneFrom;
+  if (sourceId) {
+    try {
+      const r = await apiFetch(`/roles/${sourceId}`);
+      const role = r?.data || r;
+      setVal('rm_name', cloneFrom ? `${role.role_name} (Copy)` : role.role_name);
+      setVal('rm_level', role.role_level);
+      setVal('rm_desc', role.description || '');
+      selected = new Set((role.permissions || []).map(p => p.id));
+    } catch (e) {
+      showToast('❌ ' + e.message); return;
+    }
+  }
+  renderPermissionGrid(selected);
+  openModal('roleModal');
+}
+
+function cloneRole(roleId) {
+  openRoleModal(null, roleId);
+}
+
+async function saveRole() {
+  const roleId = getVal('rm_id');
+  const permission_ids = [...document.querySelectorAll('.perm-cb:checked')].map(cb => cb.value);
+  const payload = {
+    role_name: getVal('rm_name'),
+    role_level: parseInt(getVal('rm_level')) || 5,
+    description: getVal('rm_desc'),
+    permission_ids,
+  };
+  if (!payload.role_name) { showToast('⚠️ Enter a role name', 'warn'); return; }
+
+  try {
+    if (roleId) {
+      await apiFetch(`/roles/${roleId}`, { method: 'PATCH', body: JSON.stringify(payload) });
+      showToast('✅ Role updated');
+    } else {
+      await apiFetch('/roles', { method: 'POST', body: JSON.stringify(payload) });
+      showToast('✅ Role created');
+    }
+    closeModal('roleModal');
+    const rr = await apiFetch('/roles');
+    ROLES_CACHE = rr?.data || rr || [];
+    renderRolesTable();
+  } catch (e) {
+    showToast('❌ ' + e.message);
+  }
+}
+
+async function deleteRoleConfirm(id, isSystem) {
+  if (isSystem) { showToast('⚠️ System roles cannot be deleted', 'warn'); return; }
+  if (!confirm('Delete this role? Users assigned to it will need to be reassigned first.')) return;
+  try {
+    await apiFetch(`/roles/${id}`, { method: 'DELETE' });
+    showToast('✅ Role deleted');
+    const rr = await apiFetch('/roles');
+    ROLES_CACHE = rr?.data || rr || [];
+    renderRolesTable();
   } catch (e) {
     showToast('❌ ' + e.message);
   }
@@ -4720,12 +5133,42 @@ function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); 
 // ============================================================
 //  OTHER MODAL SAVE HANDLERS
 // ============================================================
-function savePayment() { showToast('✅ Payment of ₹'+(parseInt(getVal('payAmt'))||0).toLocaleString()+' recorded'); closeModal('payModal'); addAuditEntry('CREATE','Payment','Recorded payment'); renderPayments(); }
 function openQuote()   { showToast('💡 Tip: Create Invoice → Type = Quotation'); setTimeout(()=>nav('create',null),600); }
-function genEWB()      { const inv=getVal('ewbInv'); showToast('🛣️ E-Way Bill generated for '+inv); addAuditEntry('CREATE','E-Way Bill','Generated EWB for '+inv); }
 function genUPI()      { const amt=getVal('upiAmt'),uid=getVal('upiId'); if(!amt){showToast('⚠️ Enter amount','warn');return;} document.getElementById('upiQR').style.display='block'; document.getElementById('upiIdShow').textContent=uid; showToast('📱 UPI QR generated for ₹'+parseInt(amt).toLocaleString()); }
 function showNotifs()  { const n=['⚠️ Metro Traders — ₹67,800 overdue','📦 Mi Router AX6000 critically low','📦 Samsung Galaxy A55 out of stock','✅ INV-2468 paid — Kumar Electronics']; showToast(n[Math.floor(Math.random()*n.length)]); }
 function exportInvoices() { showToast('📤 Invoices exported to Excel'); }
+
+async function genEWB() {
+  const invNo = getVal('ewbInv');
+  const inv = INVOICES.find(x => x.no === invNo);
+  if (!inv) { showToast('⚠️ Invoice not found — check the invoice number','warn'); return; }
+
+  const ewbNo = prompt(`Paste the E-Way Bill number for ${inv.no} (generated via the govt EWB portal):`);
+  if (!ewbNo) return;
+
+  const distance = parseFloat(getVal('ewbDistance')) || 0;
+  const validDays = Math.max(1, Math.ceil(distance / 200));  // standard EWB rule: 1 day per 200km, min 1 day
+  const validTill = new Date(Date.now() + validDays * 86400000).toISOString();
+
+  try {
+    if (AUTH.apiOnline) {
+      await apiFetch(`/billing/invoices/${inv.id}/einvoice`, {
+        method: 'POST',
+        body: JSON.stringify({ ewb_no: ewbNo, ewb_valid_till: validTill, transporter_id: getVal('ewbTransporter') || undefined, vehicle_no: getVal('ewbVehicle') || undefined, })
+      });
+    }
+    inv.ewbNo = ewbNo;
+    inv.transporterId = getVal('ewbTransporter');
+    inv.vehicleNo = getVal('ewbVehicle');
+    showToast('🛣️ E-Way Bill recorded for ' + inv.no + ' — valid ' + validDays + ' day(s)');
+    addAuditEntry('CREATE', 'E-Way Bill', 'Recorded EWB ' + ewbNo + ' for ' + inv.no);
+
+    ['ewbInv','ewbTransporter','ewbVehicle','ewbDistance'].forEach(id => setVal(id, ''));
+    renderEWBList();
+  } catch (e) {
+    showToast('⚠️ Could not save E-Way Bill', 'warn');
+  }
+}
 
 function openReturnModal() {
    const sel = document.getElementById('retAgainstInv');
@@ -5003,11 +5446,20 @@ window.onload = async () => {
   const saved=sessionStorage.getItem('vyaparpro_token');
   if (saved) {
     AUTH.token=saved; AUTH.apiOnline=ok;
-    try {
-      const payload=JSON.parse(atob(saved.split('.')[1]));
-      AUTH.user={ name:payload.name||payload.full_name||payload.sub||'User', role:payload.role||'User' };
-    } catch(_) { AUTH.user={ name:'User', role:'User' }; }
-    bootApp();
+    if (ok) {
+      try {
+        const me = await apiFetch('/auth/me');
+        const u = me?.data || me;
+        AUTH.user = { name: u.full_name || 'User', role: u.role?.role_name || 'Staff' };
+        bootApp();
+      } catch (_) {
+        sessionStorage.removeItem('vyaparpro_token');
+        AUTH = { token: null, user: null, apiOnline: ok };
+      }
+    } else {
+      AUTH.user = { name: 'User', role: 'Offline' };
+      bootApp();
+    }
   }
 
   // Global keyboard shortcuts
