@@ -7,6 +7,9 @@ RUN pip install --no-cache-dir poetry==1.8.2
 COPY pyproject.toml poetry.lock* ./
 RUN poetry config virtualenvs.create false \
  && poetry install --no-interaction --no-ansi --no-root --without dev
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends fonts-noto-core && \
+    rm -rf /var/lib/apt/lists/*
 
 # ── Stage 2: Runtime ─────────────────────────────────────────────────────────
 FROM python:3.11-slim AS runtime

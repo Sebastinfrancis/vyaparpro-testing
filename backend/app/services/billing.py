@@ -74,6 +74,34 @@ class QuotationService:
         self.seq = DocumentSequenceRepository(session)
         self.session = session
 
+    async def get_pdf_data(self, quote_id: UUID, company_id: UUID) -> bytes:
+        from app.utils.pdf_generator import PDFDocumentData, generate_invoice_pdf
+        from app.db.repositories import CompanyRepository
+        q = await self.repo.get_detail(quote_id)
+        if not q:
+            raise NotFoundError("Quotation not found.")
+        company = await CompanyRepository(self.session).get(company_id)
+        items_data = [{
+            "line_no": i + 1, "description": it.description, "hsn_code": it.hsn_code or "",
+            "quantity": str(it.quantity), "rate": it.rate, "discount_amount": it.discount_amount,
+            "taxable_amount": it.taxable_amount, "gst_rate": it.gst_rate,
+            "cgst_amount": it.cgst_amount, "sgst_amount": it.sgst_amount, "igst_amount": it.igst_amount,
+            "total_amount": it.total_amount,
+        } for i, it in enumerate(q.items)]
+        data = PDFDocumentData(
+            doc_type="quotation", doc_no=q.quote_no, doc_date=q.quote_date, due_date=q.valid_till,
+            company_name=company.legal_name if company else "", company_gstin=(company.gstin or "") if company else "",
+            company_address=(company.reg_address or "") if company else "",
+            company_phone=(company.phone or "") if company else "", company_email=(company.email or "") if company else "",
+            party_name=q.billing_name, party_gstin=q.billing_gstin or "", party_address=q.billing_address or "",
+            place_of_supply=q.place_of_supply, supply_type=q.supply_type, items=items_data,
+            subtotal=q.subtotal, discount_amount=q.discount_amount, taxable_amount=q.taxable_amount,
+            cgst_amount=q.cgst_amount, sgst_amount=q.sgst_amount, igst_amount=q.igst_amount,
+            cess_amount=q.cess_amount, round_off=q.round_off, total_amount=q.total_amount,
+            notes=q.notes or "",
+        )
+        return generate_invoice_pdf(data)
+
     async def create(self, company_id: UUID, payload: QuotationCreate, user_id: UUID) -> Quotation:
         lines, totals = _calc_items(payload.items, payload.supply_type)
         total = totals["taxable_amount"] + totals["cgst_amount"] + totals["sgst_amount"] + totals["igst_amount"] + totals["cess_amount"] + payload.other_charges - payload.tds_amount
@@ -245,6 +273,34 @@ class PurchaseOrderService:
         self.seq = DocumentSequenceRepository(session)
         self.session = session
 
+    async def get_pdf_data(self, po_id: UUID, company_id: UUID) -> bytes:
+        from app.utils.pdf_generator import PDFDocumentData, generate_invoice_pdf
+        from app.db.repositories import CompanyRepository, PartyRepository
+        po = await self.repo.get_detail(po_id)
+        if not po:
+            raise NotFoundError("Purchase order not found.")
+        company = await CompanyRepository(self.session).get(company_id)
+        vendor = await PartyRepository(self.session).get(po.vendor_id) if po.vendor_id else None
+        items_data = [{
+            "line_no": i + 1, "description": it.description, "hsn_code": it.hsn_code or "",
+            "quantity": str(it.quantity), "rate": it.rate, "discount_amount": it.discount_amount,
+            "taxable_amount": it.taxable_amount, "gst_rate": it.gst_rate,
+            "cgst_amount": it.cgst_amount, "sgst_amount": it.sgst_amount, "igst_amount": it.igst_amount,
+            "total_amount": it.amount,
+        } for i, it in enumerate(po.items)]
+        data = PDFDocumentData(
+            doc_type="po", doc_no=po.po_no, doc_date=po.po_date,
+            company_name=company.legal_name if company else "", company_gstin=(company.gstin or "") if company else "",
+            company_address=(company.reg_address or "") if company else "",
+            company_phone=(company.phone or "") if company else "", company_email=(company.email or "") if company else "",
+            party_name=vendor.display_name if vendor else "", party_gstin=(vendor.gstin or "") if vendor else "",
+            party_address=(vendor.billing_address or "") if vendor else "",
+            items=items_data, subtotal=po.subtotal, taxable_amount=po.taxable_amount,
+            cgst_amount=po.cgst_amount, sgst_amount=po.sgst_amount, igst_amount=po.igst_amount,
+            total_amount=po.total_amount, notes=po.notes or "",
+        )
+        return generate_invoice_pdf(data)
+
     async def create(self, company_id: UUID, payload: PurchaseOrderCreate, user_id: UUID) -> PurchaseOrder:
         lines, totals = _calc_items(payload.items, "intra")
         total = totals["taxable_amount"] + totals["cgst_amount"] + totals["sgst_amount"] + totals["igst_amount"] + totals["cess_amount"] + payload.other_charges
@@ -374,6 +430,133 @@ class PurchaseOrderService:
         await self.session.flush()
         return await self.repo.get_detail(po_id)
 
+    async def return_goods(self, po_id: UUID, company_id: UUID, user_id: UUID,
+                            returned_items: list[dict]) -> PurchaseOrder:
+        po = await self.repo.get_detail(po_id)
+        if not po:
+            raise NotFoundError("Purchase order not found.")
+
+        wh_id = po.deliver_to_warehouse_id
+        if not wh_id:
+            from app.db.repositories.inventory import WarehouseRepository
+            default_wh = await WarehouseRepository(self.session).get_default(company_id)
+            wh_id = default_wh.id if default_wh else None
+        if not wh_id:
+            raise BusinessError("No delivery warehouse set on this PO and no default warehouse configured.")
+
+        override = {str(r["item_id"]): Decimal(str(r["qty"])) for r in returned_items}
+        items_by_id = {str(it.id): it for it in po.items}
+
+        for item_id, qty in override.items():
+            item = items_by_id.get(item_id)
+            if not item:
+                raise BusinessError(f"Item {item_id} does not belong to this purchase order.")
+            if qty < 0:
+                raise BusinessError("Returned quantity cannot be negative.")
+            returnable = item.received_qty - item.returned_qty
+            if qty > returnable:
+                raise BusinessError(
+                    f"Cannot return {qty} of '{item.description}' — only {returnable} available to return."
+                )
+
+        total_taxable = Decimal("0")
+        total_cgst = Decimal("0")
+        total_sgst = Decimal("0")
+        total_igst = Decimal("0")
+        total_value = Decimal("0")
+        lines_to_move = []
+
+        for item_id, qty in override.items():
+            if qty <= 0:
+                continue
+            item = items_by_id[item_id]
+            if not item.product_id:
+                continue
+            lines_to_move.append((item, qty))
+            item.returned_qty = item.returned_qty + qty
+
+            proportion = qty / item.quantity if item.quantity else Decimal("0")
+            total_taxable += item.taxable_amount * proportion
+            total_cgst    += item.cgst_amount * proportion
+            total_sgst    += item.sgst_amount * proportion
+            total_igst    += item.igst_amount * proportion
+            total_value   += item.total_amount * proportion
+
+        if not lines_to_move:
+            raise BusinessError("Nothing to return.")
+
+        # Post the ledger entry FIRST so every stock movement below can be tagged
+        # with this exact voucher's id — that's what makes a later, precise
+        # "undo just this return" possible.
+        from app.services.accounting import AutoAccountingService
+        auto = AutoAccountingService(self.session)
+        jv = await auto.on_purchase_return_created(
+            company_id=company_id, return_ref_id=po.id, return_ref_no=po.po_no,
+            return_date=date.today(), vendor_id=po.vendor_id,
+            taxable_amount=total_taxable, cgst_amount=total_cgst,
+            sgst_amount=total_sgst, igst_amount=total_igst,
+            total_amount=total_value, user_id=user_id,
+        )
+
+        from app.services.inventory import InventoryService
+        inv_svc = InventoryService(self.session)
+        for item, qty in lines_to_move:
+            await inv_svc.record_movement(
+                company_id=company_id, product_id=item.product_id, warehouse_id=wh_id,
+                movement_type="purchase_return", quantity=-qty, cost_price=item.rate,
+                ref_type="purchase_return_voucher", ref_id=jv.id, ref_no=jv.jv_no,
+                narration=f"Goods returned against PO {po.po_no}", user_id=user_id,
+            )
+
+        await self.session.flush()
+        return await self.repo.get_detail(po_id)
+
+    async def delete_return(self, po_id: UUID, jv_id: UUID, company_id: UUID, user_id: UUID) -> PurchaseOrder:
+        """Undo one specific past purchase return: restores stock, rolls back returned_qty, reverses its ledger entry."""
+        po = await self.repo.get_detail(po_id)
+        if not po:
+            raise NotFoundError("Purchase order not found.")
+
+        from app.db.models.accounting import JournalVoucher
+        jv = await self.session.get(JournalVoucher, jv_id)
+        if not jv or jv.company_id != company_id or jv.ref_type != "purchase_order" or str(jv.ref_id) != str(po_id):
+            raise NotFoundError("Purchase return voucher not found for this PO.")
+        if jv.is_reversed:
+            raise BusinessError("This return has already been reversed.")
+
+        from app.db.models.inventory import StockMovement
+        result = await self.session.execute(
+            select(StockMovement).where(
+                StockMovement.ref_type == "purchase_return_voucher",
+                StockMovement.ref_id == jv_id,
+            )
+        )
+        movements = result.scalars().all()
+        if not movements:
+            raise BusinessError("Could not find the stock movements for this return — it may predate this feature.")
+
+        from app.services.inventory import InventoryService
+        inv_svc = InventoryService(self.session)
+        items_by_product = {str(it.product_id): it for it in po.items if it.product_id}
+
+        for m in movements:
+            await inv_svc.record_movement(
+                company_id=company_id, product_id=m.product_id, warehouse_id=m.warehouse_id,
+                movement_type="purchase_return_undo", quantity=-m.quantity,  # m.quantity was negative
+                ref_type="purchase_order", ref_id=po.id, ref_no=po.po_no,
+                narration=f"Reversed return against PO {po.po_no}", user_id=user_id,
+            )
+            item = items_by_product.get(str(m.product_id))
+            if item:
+                item.returned_qty = max(Decimal("0"), item.returned_qty + m.quantity)
+
+        from app.services.accounting import JournalVoucherService
+        jv_svc = JournalVoucherService(self.session)
+        await jv_svc.reverse(jv_id, company_id, user_id)
+
+        await self.session.flush()
+        return await self.repo.get_detail(po_id)
+
 
 class InvoiceService:
     def __init__(self, session: AsyncSession) -> None:
@@ -500,11 +683,17 @@ class InvoiceService:
                     wh_id = default_wh
                 if not wh_id:
                     continue  # no warehouse anywhere — skip rather than crash finalize
+
+                # NEW — a credit note (Sales Return) is goods coming BACK, so stock
+                # goes UP, not down. Everything else (normal sales) behaves as before.
+                is_return = inv.invoice_type == "credit_note"
                 await inv_svc.record_movement(
                     company_id=company_id, product_id=item.product_id, warehouse_id=wh_id,
-                    movement_type="sale", quantity=-item.quantity,
+                    movement_type="sale_return" if is_return else "sale",
+                    quantity=item.quantity if is_return else -item.quantity,
                     ref_type="invoice", ref_id=inv.id, ref_no=inv.invoice_no,
-                    narration=f"Sale via invoice {inv.invoice_no}", user_id=user_id,
+                    narration=f"Sales return via {inv.invoice_no}" if is_return else f"Sale via invoice {inv.invoice_no}",
+                    user_id=user_id,
                 )
         except Exception as e:
             import traceback
@@ -522,6 +711,7 @@ class InvoiceService:
                 cgst_amount=inv.cgst_amount, sgst_amount=inv.sgst_amount,
                 igst_amount=inv.igst_amount, total_amount=inv.total_amount,
                 supply_type=inv.supply_type, user_id=user_id,
+                invoice_type=inv.invoice_type,
             )
         except Exception:
             pass  # Accounting optional at this stage
@@ -551,14 +741,40 @@ class InvoiceService:
                         wh_id = default_wh
                     if not wh_id:
                         continue
-                    await inv_svc.record_movement(
-                        company_id=company_id, product_id=item.product_id, warehouse_id=wh_id,
-                        movement_type="sale_reversal", quantity=item.quantity,
-                        ref_type="invoice", ref_id=inv.id, ref_no=inv.invoice_no,
-                        narration=f"Invoice {inv.invoice_no} cancelled", user_id=user_id,
+                    is_return = inv.invoice_type == "credit_note"
+                await inv_svc.record_movement(
+                    company_id=company_id, product_id=item.product_id, warehouse_id=wh_id,
+                    movement_type="sale_reversal",
+                    quantity=-item.quantity if is_return else item.quantity,
+                    ref_type="invoice", ref_id=inv.id, ref_no=inv.invoice_no,
+                    narration=f"{'Credit note' if is_return else 'Invoice'} {inv.invoice_no} cancelled",
+                    user_id=user_id,
+                )
+            except Exception as e:
+                import traceback
+                print("STOCK REVERSAL ON CANCEL FAILED:", e)
+                traceback.print_exc()
+
+            # NEW — also reverse the associated journal voucher, not just stock
+            try:
+                from app.db.models.accounting import JournalVoucher
+                from app.services.accounting import JournalVoucherService
+                jv_result = await self.session.execute(
+                    select(JournalVoucher).where(
+                        JournalVoucher.company_id == company_id,
+                        JournalVoucher.ref_type == "invoice",
+                        JournalVoucher.ref_id == inv.id,
+                        JournalVoucher.is_reversed == False,
                     )
-            except Exception:
-                pass
+                )
+                jv = jv_result.scalars().first()
+                if jv and jv.is_posted:
+                    jv_svc = JournalVoucherService(self.session)
+                    await jv_svc.reverse(jv.id, company_id, user_id)
+            except Exception as e:
+                import traceback
+                print("JV REVERSAL ON CANCEL FAILED:", e)
+                traceback.print_exc()
         return await self.repo.update(inv, {
             "status": "cancelled",
             "cancelled_at": datetime.now(timezone.utc),
@@ -598,7 +814,7 @@ class InvoiceService:
             for i, it in enumerate(inv.items)
         ]
         data = PDFDocumentData(
-            doc_type="invoice",
+            doc_type=inv.invoice_type if inv.invoice_type in ("credit_note", "debit_note") else "invoice",
             doc_no=inv.invoice_no,
             doc_date=inv.invoice_date,
             due_date=inv.due_date,
@@ -612,7 +828,13 @@ class InvoiceService:
             party_address=inv.billing_address or "",
             po_no=inv.po_no,
             po_date=inv.po_date,
+            status=inv.status,
             jo_no=inv.jo_no,
+            company_pan=company.pan if company else "",
+            eway_bill_no=inv.ewb_no or "",
+            transporter_id=inv.transporter_id or "",
+            vehicle_no=inv.vehicle_no or "",
+            upi_id=(company.settings or {}).get("upi_id", "") if company else "",
             place_of_supply=inv.place_of_supply,
             supply_type=inv.supply_type,
             items=items_data,

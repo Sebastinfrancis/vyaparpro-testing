@@ -215,6 +215,7 @@ class PurchaseOrderItemOut(APIModel):
     igst_amount: Decimal
     amount: Decimal
     received_qty: Decimal
+    returned_qty: Decimal
     display_order: int
 
 
@@ -304,6 +305,8 @@ class InvoiceCreate(APIModel):
     supply_type: str = "intra"
     reverse_charge: bool = False
     currency: str = "INR"
+    is_export: bool = False
+    export_type: Optional[str] = None
     warehouse_id: Optional[UUID] = None
     payment_terms: Optional[str] = None
     notes: Optional[str] = None
@@ -378,6 +381,8 @@ class InvoiceOut(APIModel):
     transporter_id: Optional[str] = None
     vehicle_no: Optional[str] = None
     currency: str
+    is_export: bool = False
+    export_type: Optional[str] = None
     subtotal: Decimal
     discount_amount: Decimal
     taxable_amount: Decimal

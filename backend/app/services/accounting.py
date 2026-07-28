@@ -551,33 +551,49 @@ class AutoAccountingService:
         total_amount: Decimal,
         supply_type: str,
         user_id: UUID,
+        invoice_type: str = "tax_invoice",
     ) -> JournalVoucher:
-        """Dr Debtor, Cr Sales + Cr GST Output."""
+        """
+        Normal sale: Dr Debtor, Cr Sales + Cr GST Output.
+        Credit note (Sales Return): the exact reverse — Cr Debtor, Dr Sales Returns + Dr GST Output.
+        """
         from app.schemas.accounting import JournalEntryLine, JournalVoucherCreate
+
+        is_return = invoice_type == "credit_note"
+
         debtor = await self._get_system_account(company_id, "receivable")
-        sales  = await self._get_system_account(company_id, "income")
+        sales  = (await self._get_system_account(company_id, "income", "Returns")) if is_return \
+                 else (await self._get_system_account(company_id, "income"))
         cgst_o = await self._get_system_account(company_id, "gst_output", "CGST")
         sgst_o = await self._get_system_account(company_id, "gst_output", "SGST")
         igst_o = await self._get_system_account(company_id, "gst_output", "IGST")
 
-        entries = [
-            JournalEntryLine(account_id=debtor.id, debit_amount=total_amount, party_id=party_id),
-            JournalEntryLine(account_id=sales.id,  credit_amount=taxable_amount),
-        ]
+        if is_return:
+            entries = [
+                JournalEntryLine(account_id=debtor.id, credit_amount=total_amount, party_id=party_id),
+                JournalEntryLine(account_id=sales.id,  debit_amount=taxable_amount),
+            ]
+        else:
+            entries = [
+                JournalEntryLine(account_id=debtor.id, debit_amount=total_amount, party_id=party_id),
+                JournalEntryLine(account_id=sales.id,  credit_amount=taxable_amount),
+            ]
+
         is_igst = supply_type == "inter" and igst_amount > 0
+        gst_side = "debit_amount" if is_return else "credit_amount"
         if is_igst:
             if igst_amount > 0:
-                entries.append(JournalEntryLine(account_id=igst_o.id, credit_amount=igst_amount))
+                entries.append(JournalEntryLine(account_id=igst_o.id, **{gst_side: igst_amount}))
         else:
             if cgst_amount > 0:
-                entries.append(JournalEntryLine(account_id=cgst_o.id, credit_amount=cgst_amount))
+                entries.append(JournalEntryLine(account_id=cgst_o.id, **{gst_side: cgst_amount}))
             if sgst_amount > 0:
-                entries.append(JournalEntryLine(account_id=sgst_o.id, credit_amount=sgst_amount))
+                entries.append(JournalEntryLine(account_id=sgst_o.id, **{gst_side: sgst_amount}))
 
         payload = JournalVoucherCreate(
-            jv_type="sale",
+            jv_type="credit_note" if is_return else "sale",
             jv_date=invoice_date,
-            narration=f"Sales Invoice {invoice_no}",
+            narration=f"{'Sales Return' if is_return else 'Sales Invoice'} {invoice_no}",
             ref_type="invoice",
             ref_id=invoice_id,
             ref_no=invoice_no,
@@ -687,6 +703,52 @@ class AutoAccountingService:
             ref_type="purchase_bill",
             ref_id=bill_id,
             ref_no=bill_no,
+            entries=entries,
+        )
+        jv = await self.jv_svc.create(company_id, payload, user_id)
+        return await self.jv_svc.post(jv.id, company_id, user_id)
+
+    async def on_purchase_return_created(
+        self,
+        company_id: UUID,
+        return_ref_id: UUID,
+        return_ref_no: str,
+        return_date: date,
+        vendor_id: UUID,
+        taxable_amount: Decimal,
+        cgst_amount: Decimal,
+        sgst_amount: Decimal,
+        igst_amount: Decimal,
+        total_amount: Decimal,
+        user_id: UUID,
+    ) -> JournalVoucher:
+        """Dr Creditor, Cr Purchase Returns + Cr GST Input — the reverse of on_purchase_bill_created."""
+        from app.schemas.accounting import JournalEntryLine, JournalVoucherCreate
+        creditor  = await self._get_system_account(company_id, "payable")
+        purchase_r = await self._get_system_account(company_id, "expense", "Returns")
+        cgst_i = await self._get_system_account(company_id, "gst_input", "CGST")
+        sgst_i = await self._get_system_account(company_id, "gst_input", "SGST")
+        igst_i = await self._get_system_account(company_id, "gst_input", "IGST")
+
+        entries = [
+            JournalEntryLine(account_id=creditor.id, debit_amount=total_amount, party_id=vendor_id),
+            JournalEntryLine(account_id=purchase_r.id, credit_amount=taxable_amount),
+        ]
+        if igst_amount > 0:
+            entries.append(JournalEntryLine(account_id=igst_i.id, credit_amount=igst_amount))
+        else:
+            if cgst_amount > 0:
+                entries.append(JournalEntryLine(account_id=cgst_i.id, credit_amount=cgst_amount))
+            if sgst_amount > 0:
+                entries.append(JournalEntryLine(account_id=sgst_i.id, credit_amount=sgst_amount))
+
+        payload = JournalVoucherCreate(
+            jv_type="debit_note",
+            jv_date=return_date,
+            narration=f"Purchase Return {return_ref_no}",
+            ref_type="purchase_order",
+            ref_id=return_ref_id,
+            ref_no=return_ref_no,
             entries=entries,
         )
         jv = await self.jv_svc.create(company_id, payload, user_id)

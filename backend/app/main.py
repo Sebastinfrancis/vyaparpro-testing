@@ -45,6 +45,8 @@ from app.api.v1.endpoints.master import router as master_router
 from app.api.v1.endpoints.billing import router as billing_router 
 from app.api.v1.endpoints.crm import router as crm_router
 from app.api.v1.endpoints.accounting import router as accounting_router
+from app.api.v1.endpoints.reports import router as reports_router
+from app.api.v1.endpoints.gst import router as gst_router
 
 log = get_logger(__name__)
 
@@ -136,6 +138,8 @@ def create_app() -> FastAPI:
     app.include_router(billing_router,     prefix=f"{prefix}/billing",     tags=["Billing"])
     app.include_router(crm_router, prefix=f"{prefix}/crm/leads", tags=["CRM"])
     app.include_router(accounting_router, prefix=f"{prefix}/accounting", tags=["Accounting"])
+    app.include_router(reports_router, prefix=f"{prefix}/reports", tags=["Reports"])
+    app.include_router(gst_router, prefix=f"{prefix}/gst", tags=["GST"])
     
 
     # ── Health / readiness probes ─────────────────────────────────────

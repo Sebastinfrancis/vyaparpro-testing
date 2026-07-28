@@ -167,6 +167,16 @@ async def receive_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep
     po = await svc.receive(po_id, current.company_id, current.user_id, items)
     return ok(PurchaseOrderOut.model_validate(po).model_dump(mode='json'), "Goods received; stock updated.")
 
+@router.post("/purchase-orders/{po_id}/return", summary="Return previously-received goods to the vendor")
+async def return_po_goods(po_id: UUID, current: CurrentUserDep, db: DBDep, payload: dict) -> ORJSONResponse:
+    from app.schemas.billing import PurchaseOrderOut
+    svc = PurchaseOrderService(db)
+    items = payload.get("items", [])
+    if not items:
+        raise BusinessError("Specify at least one item and quantity to return.")
+    po = await svc.return_goods(po_id, current.company_id, current.user_id, items)
+    return ok(PurchaseOrderOut.model_validate(po).model_dump(mode='json'), "Goods returned; stock and books updated.")
+
 @router.patch("/purchase-orders/{po_id}", summary="Partially update purchase order (e.g. status)")
 async def patch_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep, payload: dict) -> ORJSONResponse:
     from app.db.repositories.billing import PurchaseOrderRepository
@@ -189,6 +199,12 @@ async def delete_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep)
     await repo.delete(po)
     return Response(status_code=204)
 
+@router.post("/purchase-orders/{po_id}/return/{jv_id}/undo", summary="Reverse one specific past purchase return")
+async def undo_po_return(po_id: UUID, jv_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
+    from app.schemas.billing import PurchaseOrderOut
+    svc = PurchaseOrderService(db)
+    po = await svc.delete_return(po_id, jv_id, current.company_id, current.user_id)
+    return ok(PurchaseOrderOut.model_validate(po).model_dump(mode='json'), "Return reversed — stock and books restored.")
 
 # ═══════════════════════════════════════════════════════════════════
 # INVOICES
@@ -430,3 +446,19 @@ async def cancel_einvoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) 
     await db.flush()
 
     return ok(InvoiceOut.model_validate(updated).model_dump(mode="json"), "IRN cleared.")
+
+
+@router.get("/quotations/{quote_id}/pdf", summary="Download quotation as PDF")
+async def download_quotation_pdf(quote_id: UUID, current: CurrentUserDep, db: DBDep) -> Response:
+    svc = QuotationService(db)
+    pdf_bytes = await svc.get_pdf_data(quote_id, current.company_id)
+    return Response(content=pdf_bytes, media_type="application/pdf",
+                     headers={"Content-Disposition": f'attachment; filename="quotation-{quote_id}.pdf"'})
+
+
+@router.get("/purchase-orders/{po_id}/pdf", summary="Download purchase order as PDF")
+async def download_po_pdf(po_id: UUID, current: CurrentUserDep, db: DBDep) -> Response:
+    svc = PurchaseOrderService(db)
+    pdf_bytes = await svc.get_pdf_data(po_id, current.company_id)
+    return Response(content=pdf_bytes, media_type="application/pdf",
+                     headers={"Content-Disposition": f'attachment; filename="po-{po_id}.pdf"'})

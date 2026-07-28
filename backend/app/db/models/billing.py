@@ -225,6 +225,7 @@ class PurchaseOrderItem(Base, UUIDMixin):
     igst_amount: Mapped[Decimal] = mapped_column(Numeric(15, 2), default=Decimal("0"))
     amount: Mapped[Decimal] = mapped_column(Numeric(15, 2), default=Decimal("0"))
     received_qty: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=Decimal("0"))
+    returned_qty: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=Decimal("0"))
     jo_item_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("job_order_items.id"))
     display_order: Mapped[int] = mapped_column(SmallInteger, default=0)
     cess_amount: Mapped[Decimal] = mapped_column(Numeric(15,2),default=Decimal("0"))
@@ -402,6 +403,8 @@ class Invoice(Base, UUIDMixin, TimestampMixin, GSTAmountMixin):
     cancelled_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     cancel_reason: Mapped[Optional[str]] = mapped_column(Text)
     created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    is_export: Mapped[bool] = mapped_column(Boolean, default=False)
+    export_type: Mapped[Optional[str]] = mapped_column(String(10))  # 'WPAY' or 'WOPAY'
 
     items: Mapped[list["InvoiceItem"]] = relationship("InvoiceItem", back_populates="invoice", cascade="all, delete-orphan", lazy = "selectin",)
     party: Mapped[Optional["Party"]] = relationship("Party", foreign_keys=[party_id])  # type: ignore

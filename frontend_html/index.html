@@ -389,6 +389,10 @@ select.fi option{background:var(--bg2)}
                 <select class="fi" id="invState"><option>27 - Maharashtra</option><option>07 - Delhi</option><option>29 - Karnataka</option><option>33 - Tamil Nadu</option><option>09 - UP</option><option>06 - Haryana</option></select></div>
               <div class="fg"><label class="fl">Supply Type</label>
                 <select class="fi" id="supplyType" onchange="calcTotals()"><option value="intra">Intra-State (CGST+SGST)</option><option value="inter">Inter-State (IGST)</option></select></div>
+              <div class="fg"><label class="fl"><input type="checkbox" id="invIsExport" onchange="toggleExportType()"/> Export Invoice</label></div>
+              <div class="fg hidden" id="exportTypeWrap"><label class="fl">Export Type</label>
+                <select class="fi" id="invExportType"><option value="WPAY">With Payment of Tax</option><option value="WOPAY">Without Payment (LUT/Bond)</option></select>
+              </div>
             </div>
             <div class="fg"><label class="fl">Notes / Terms</label><textarea class="fi" rows="2" id="invNotes" placeholder="Payment terms, delivery notes…"></textarea></div>
           </div>
@@ -627,7 +631,7 @@ select.fi option{background:var(--bg2)}
       <div class="sh" style="margin-top:8px">
         <div><div class="st">GST Compliance Center</div><div class="ss">GSTR-1, GSTR-3B, E-Invoice, HSN summary</div></div>
         <div style="display:flex;gap:7px">
-          <select class="fi" style="width:130px"><option>June 2026</option><option>May 2026</option><option>April 2026</option></select>
+          <select class="fi" style="width:130px" id="gstMonth" onchange="loadGSTData()"></select>
           <button class="btn btn-p btn-sm" onclick="showToast('📤 GST JSON exported')">📤 Export JSON</button>
         </div>
       </div>
@@ -796,11 +800,11 @@ select.fi option{background:var(--bg2)}
       <div class="bc">Reports / <span>Analytics</span></div>
       <div class="sh" style="margin-top:8px"><div><div class="st">Reports & Analytics</div><div class="ss">PDF, Excel, CSV export</div></div></div>
       <div class="g3" style="margin-bottom:18px">
-        <div class="card chov" onclick="showToast('📊 Sales report generated')"><div style="font-size:26px;margin-bottom:7px">📊</div><div style="font-size:13px;font-weight:700">Sales Report</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Invoices, revenue by customer/product</div></div>
-        <div class="card chov" onclick="showToast('🛒 Purchase report generated')"><div style="font-size:26px;margin-bottom:7px">🛒</div><div style="font-size:13px;font-weight:700">Purchase Report</div><div style="font-size:11px;color:var(--text3);margin-top:3px">All purchases by vendor</div></div>
-        <div class="card chov" onclick="showToast('📦 Inventory report generated')"><div style="font-size:26px;margin-bottom:7px">📦</div><div style="font-size:13px;font-weight:700">Inventory Report</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Stock movement, valuation, expiry</div></div>
+        <div class="card chov" onclick="openReport('sales')"><div style="font-size:26px;margin-bottom:7px">📊</div><div style="font-size:13px;font-weight:700">Sales Report</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Invoices, revenue by customer/product</div></div>
+        <div class="card chov" onclick="openReport('purchases')"><div style="font-size:26px;margin-bottom:7px">🛒</div><div style="font-size:13px;font-weight:700">Purchase Report</div><div style="font-size:11px;color:var(--text3);margin-top:3px">All purchases by vendor</div></div>
+        <div class="card chov" onclick="openReport('inventory')"><div style="font-size:26px;margin-bottom:7px">📦</div><div style="font-size:13px;font-weight:700">Inventory Report</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Stock movement, valuation, expiry</div></div>
         <div class="card chov" onclick="nav('gst',null)"><div style="font-size:26px;margin-bottom:7px">🇮🇳</div><div style="font-size:13px;font-weight:700">GST Reports</div><div style="font-size:11px;color:var(--text3);margin-top:3px">GSTR-1, GSTR-3B, HSN</div></div>
-        <div class="card chov" onclick="showToast('👥 Customer report generated')"><div style="font-size:26px;margin-bottom:7px">👥</div><div style="font-size:13px;font-weight:700">Customer Report</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Outstanding, LTV, purchase history</div></div>
+        <div class="card chov" onclick="openReport('customers')"><div style="font-size:26px;margin-bottom:7px">👥</div><div style="font-size:13px;font-weight:700">Customer Report</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Outstanding, LTV, purchase history</div></div>
         <div class="card chov" onclick="nav('accounting',null)"><div style="font-size:26px;margin-bottom:7px">📒</div><div style="font-size:13px;font-weight:700">P&L / Balance Sheet</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Full financial statements</div></div>
       </div>
     </div>
@@ -1246,20 +1250,41 @@ select.fi option{background:var(--bg2)}
 </div>
 
 <div id="retModal" class="mo hidden">
-  <div class="md md-sm">
+  <div class="md md-lg">
     <div class="mh"><span class="mt2">New Return / Credit Note</span><button class="mc" onclick="closeModal('retModal')">✕</button></div>
     <div class="mb">
-      <div class="fg"><label class="fl">Document Type</label><select class="fi" id="retDocType"><option>Sales Return</option><option>Purchase Return</option><option>Credit Note</option><option>Debit Note</option></select></div>
-      <div class="fg"><label class="fl">Against Invoice</label><select class="fi mono" id="retAgainstInv" onchange="onRetInvoiceChange()"><option value="">Select original invoice…</option></select></div>
-      <div class="fg"><label class="fl">Product</label><select class="fi" id="retProduct" onchange="onRetProductChange()"><option value="">Select product…</option></select></div>
-      <div class="fr c2">
-        <div class="fg"><label class="fl">Quantity</label><input class="fi" type="number" id="retQty" min="1" oninput="onRetQtyChange()"/></div>
-        <div class="fg"><label class="fl">Rate (₹)</label><input class="fi" type="number" id="retRate" readonly/></div>
+      <div class="fg"><label class="fl">Document Type</label>
+        <select class="fi" id="retDocType" onchange="onRetDocTypeChange()">
+          <option value="sales_return">Sales Return / Credit Note (to a customer)</option>
+          <option value="purchase_return">Purchase Return / Debit Note (to a vendor)</option>
+        </select>
       </div>
-      <div class="fr c2"><div class="fg"><label class="fl">Customer / Vendor</label><input class="fi" id="retParty" placeholder="Kumar Electronics"/></div>
-        <div class="fg"><label class="fl">Date</label><input type="date" class="fi" id="retDate"/></div></div>
-      <div class="fg"><label class="fl">Amount (₹)</label><input class="fi" type="number" id="retAmount" readonly/></div>
-      <div class="fg"><label class="fl">Reason</label><textarea class="fi" id="retReason" rows="2" placeholder="Reason for return…"></textarea></div>
+
+      <div id="retSalesSection">
+        <div class="fg"><label class="fl">Against Invoice</label><select class="fi mono" id="retAgainstInv" onchange="onRetInvoiceChange()"><option value="">Select original invoice…</option></select></div>
+        <div class="fg"><label class="fl">Product</label><select class="fi" id="retProduct" onchange="onRetProductChange()"><option value="">Select product…</option></select></div>
+        <div class="fr c2">
+          <div class="fg"><label class="fl">Quantity</label><input class="fi" type="number" id="retQty" min="1" oninput="onRetQtyChange()"/></div>
+          <div class="fg"><label class="fl">Rate (₹)</label><input class="fi" type="number" id="retRate" readonly/></div>
+        </div>
+        <div class="fr c2"><div class="fg"><label class="fl">Customer</label><input class="fi" id="retParty" readonly/></div>
+          <div class="fg"><label class="fl">Date</label><input type="date" class="fi" id="retDate"/></div></div>
+        <div class="fg"><label class="fl">Amount (₹)</label><input class="fi" type="number" id="retAmount" readonly/></div>
+        <div class="fg"><label class="fl">Reason</label><textarea class="fi" id="retReason" rows="2" placeholder="Reason for return…"></textarea></div>
+      </div>
+
+      <div id="retPurchaseSection" class="hidden">
+        <div class="fg"><label class="fl">Against Purchase Order</label>
+          <select class="fi mono" id="retAgainstPO" onchange="onRetPOChange()"><option value="">Select purchase order…</option></select></div>
+        <div class="fg"><label class="fl">Vendor</label><input class="fi" id="retPOVendor" readonly/></div>
+        <div class="card" style="margin-top:8px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:10px">Items to Return</div>
+          <div class="iih iir" style="padding:3px 0 7px"><span>Product</span><span>Received</span><span>Already Rtn'd</span><span>Returnable</span><span>Return Now</span></div>
+          <div id="retPOItems"></div>
+        </div>
+        <div class="fg" style="margin-top:8px"><label class="fl">Date</label><input type="date" class="fi" id="retPODate"/></div>
+        <div class="fg"><label class="fl">Reason</label><textarea class="fi" id="retPOReason" rows="2" placeholder="Reason for return…"></textarea></div>
+      </div>
     </div>
     <div class="mf"><button class="btn btn-o" onclick="closeModal('retModal')">Cancel</button><button class="btn btn-p" onclick="saveReturn()">Save Return</button></div>
   </div>
@@ -1311,6 +1336,25 @@ select.fi option{background:var(--bg2)}
       <div class="fg"><label class="fl">Narration</label><input class="fi" id="jeNarration" placeholder="Being amount received for invoice INV-2468"/></div>
     </div>
     <div class="mf"><button class="btn btn-o" onclick="closeModal('jeModal')">Cancel</button><button class="btn btn-p" onclick="saveJE()">Post Entry</button></div>
+  </div>
+</div>
+
+<div id="reportModal" class="mo hidden">
+  <div class="md" style="max-width:900px">
+    <div class="mh"><span class="mt2" id="reportModalTitle">Report</span><button class="mc" onclick="closeModal('reportModal')">✕</button></div>
+    <div class="mb">
+      <div id="reportDateFilter" class="fr c2" style="margin-bottom:14px">
+        <div class="fg"><label class="fl">From</label><input type="date" class="fi" id="reportFrom"/></div>
+        <div class="fg"><label class="fl">To</label><input type="date" class="fi" id="reportTo"/></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="btn btn-p btn-sm" onclick="generateReport()">🔄 Generate</button>
+        <button class="btn btn-o btn-sm" onclick="exportReportCSV()">⬇ Export CSV</button>
+        <button class="btn btn-o btn-sm" onclick="exportReportPDF()">📄 Export PDF</button>
+      </div>
+      <div id="reportSummary" style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap"></div>
+      <div id="reportTables"></div>
+    </div>
   </div>
 </div>
 
@@ -1392,6 +1436,14 @@ function unwrapList(result) {
     return [];
 }
 
+function computeInvoiceStatus(rawStatus, dueDate) {
+  const settled = ['paid', 'cancelled', 'draft'];
+  if (settled.includes(rawStatus) || !dueDate) return rawStatus;
+  const due = new Date(dueDate);
+  const today = new Date(); today.setHours(0,0,0,0);
+  return due < today ? 'overdue' : rawStatus;
+}
+
 // Normalise one invoice object from API → internal schema
 function normInvoice(inv) {
   return {
@@ -1417,6 +1469,7 @@ function normInvoice(inv) {
     supply:     inv.supply_type     || inv.supply        || 'intra',
     notes:      inv.notes           || '',
     items:      (inv.line_items     || inv.items         || []).map(it => ({
+      productId: it.product_id || null,
       prod:   it.product_name || it.description || it.prod || it.name || '',
       qty:    Number(it.quantity     || it.qty  || 1),
       rate:   Number(it.unit_price   || it.rate || 0),
@@ -1434,7 +1487,7 @@ function normInvoice(inv) {
     round:    inv.round_off         || inv.round          || 0,
     total:    inv.total_amount      || inv.grand_total    || inv.total || 0,
     paid:     inv.paid_amount       || 0,
-    status:   inv.status            || 'draft',
+    status:   computeInvoiceStatus(inv.status || 'draft', inv.due_date || inv.due),
   };
 }
 
@@ -1806,6 +1859,7 @@ function triggerModuleRefresh(id) {
     returns:     renderReturns,
     payments:    renderPayments,
     auditlog:    renderAuditLog,
+    gst: loadGSTData,
     branches:    renderBranches,
     einvoice:    () => { renderEInvoice(); renderEWBList(); },
     accounting:  renderAccounting,
@@ -1840,6 +1894,173 @@ async function preloadRefData() {
 function refreshCustomerDatalist() {
   const dl = document.getElementById('custDL');
   if (dl) dl.innerHTML = CUSTOMERS.map(c=>`<option value="${c.name}">`).join('');
+}
+
+//=============================================================
+//REPORTS
+//=============================================================
+let currentReportType = null;
+let currentReportData = null;
+
+function openReport(type) {
+  currentReportType = type;
+  currentReportData = null;
+  const titles = { sales:'📊 Sales Report', purchases:'🛒 Purchase Report', inventory:'📦 Inventory Report', customers:'👥 Customer Report' };
+  document.getElementById('reportModalTitle').textContent = titles[type];
+  document.getElementById('reportDateFilter').style.display = (type === 'sales' || type === 'purchases') ? 'grid' : 'none';
+  const today = new Date().toISOString().slice(0,10);
+  const monthStart = new Date().toISOString().slice(0,8) + '01';
+  setVal('reportFrom', monthStart); setVal('reportTo', today);
+  document.getElementById('reportSummary').innerHTML = '';
+  document.getElementById('reportTables').innerHTML = '';
+  openModal('reportModal');
+  generateReport();
+}
+
+async function generateReport() {
+  const type = currentReportType;
+  const summaryEl = document.getElementById('reportSummary');
+  const tablesEl = document.getElementById('reportTables');
+  summaryEl.innerHTML = '<div style="color:var(--text3);font-size:12px">Loading…</div>';
+  tablesEl.innerHTML = '';
+
+  let url = `/reports/${type}`;
+  if (type === 'sales' || type === 'purchases') {
+    url += `?date_from=${getVal('reportFrom')}&date_to=${getVal('reportTo')}`;
+  }
+
+  try {
+    const r = await apiFetch(url);
+    currentReportData = r.data;
+    renderReportResults(type, r.data);
+  } catch (e) {
+    summaryEl.innerHTML = '<div style="color:var(--red)">⚠️ Could not load report: ' + e.message + '</div>';
+  }
+}
+
+function reportSummaryCard(label, value, color) {
+  return `<div class="sc ${color}" style="flex:1;min-width:140px"><div class="slbl">${label}</div><div class="sval ${color}" style="font-size:18px">${value}</div></div>`;
+}
+
+function reportTable(title, headers, rows) {
+  if (!rows.length) return `<div style="margin-bottom:16px"><div style="font-size:12px;font-weight:700;margin-bottom:8px">${title}</div><div style="font-size:12px;color:var(--text3)">No data for this period</div></div>`;
+  return `<div style="margin-bottom:16px"><div style="font-size:12px;font-weight:700;margin-bottom:8px">${title}</div>
+    <div class="tw"><table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+    <tbody>${rows}</tbody></table></div></div>`;
+}
+
+function renderReportResults(type, data) {
+  const summaryEl = document.getElementById('reportSummary');
+  const tablesEl = document.getElementById('reportTables');
+
+  if (type === 'sales') {
+    const s = data.summary;
+    summaryEl.innerHTML = reportSummaryCard('Invoices', s.invoice_count, 'bl')
+      + reportSummaryCard('Revenue', '₹'+fmt(s.total_revenue), 'gr')
+      + reportSummaryCard('Tax Collected', '₹'+fmt(s.total_tax), 'pu');
+    tablesEl.innerHTML =
+      reportTable('Top Customers', ['Customer','Invoices','Total'],
+        data.by_customer.map(c=>`<tr><td>${c.customer_name||'—'}</td><td>${c.invoice_count}</td><td class="b" style="color:var(--green)">₹${fmt(c.total)}</td></tr>`).join(''))
+      + reportTable('Top Products', ['Product','Qty Sold','Revenue'],
+        data.by_product.map(p=>`<tr><td>${p.product_name||'—'}</td><td>${Number(p.qty_sold).toFixed(0)}</td><td class="b" style="color:var(--green)">₹${fmt(p.revenue)}</td></tr>`).join(''));
+
+  } else if (type === 'purchases') {
+    const s = data.summary;
+    summaryEl.innerHTML = reportSummaryCard('Purchase Orders', s.po_count, 'bl')
+      + reportSummaryCard('Total Purchases', '₹'+fmt(s.total_purchases), 'or')
+      + reportSummaryCard('Payable', '₹'+fmt(s.total_payable), 'pu');
+    tablesEl.innerHTML =
+      reportTable('Top Vendors', ['Vendor','POs','Total'],
+        data.by_vendor.map(v=>`<tr><td>${v.vendor_name||'—'}</td><td>${v.po_count}</td><td class="b">₹${fmt(v.total)}</td></tr>`).join(''))
+      + reportTable('Top Products Purchased', ['Product','Qty','Amount'],
+        data.by_product.map(p=>`<tr><td>${p.product_name||'—'}</td><td>${Number(p.qty_purchased).toFixed(0)}</td><td class="b">₹${fmt(p.amount)}</td></tr>`).join(''));
+
+  } else if (type === 'inventory') {
+    const s = data.summary;
+    summaryEl.innerHTML = reportSummaryCard('Products', s.total_products, 'bl')
+      + reportSummaryCard('Stock Value', '₹'+fmt(s.stock_value), 'gr')
+      + reportSummaryCard('Low Stock', s.low_stock_count, 'or')
+      + reportSummaryCard('Out of Stock', s.out_of_stock_count, 'or');
+    tablesEl.innerHTML = reportTable('Stock Detail', ['Product','Code','Stock','Reorder Level','Value','Status'],
+      data.items.map(i=>`<tr><td>${i.product_name}</td><td class="mono">${i.product_code}</td><td>${i.current_stock}</td><td>${i.reorder_level}</td><td>₹${fmt(i.stock_value)}</td><td><span class="sb ${i.stock_status==='OK'?'sp':'sov'}">${i.stock_status}</span></td></tr>`).join(''));
+
+  } else if (type === 'customers') {
+    const s = data.summary;
+    summaryEl.innerHTML = reportSummaryCard('Customers', s.total_customers, 'bl')
+      + reportSummaryCard('Total Revenue', '₹'+fmt(s.total_revenue), 'gr')
+      + reportSummaryCard('Total Outstanding', '₹'+fmt(s.total_outstanding), 'or');
+    tablesEl.innerHTML = reportTable('Customer Breakdown', ['Customer','City','Invoices','Total Business','Outstanding','Last Purchase'],
+      data.customers.map(c=>`<tr><td>${c.name}</td><td>${c.city||'—'}</td><td>${c.invoice_count}</td><td class="b" style="color:var(--green)">₹${fmt(c.total_business)}</td><td style="color:var(--orange)">₹${fmt(c.outstanding)}</td><td>${c.last_purchase||'—'}</td></tr>`).join(''));
+  }
+}
+
+function exportReportCSV() {
+  if (!currentReportData) { showToast('⚠️ Generate the report first','warn'); return; }
+  const rows = [];
+  const type = currentReportType;
+  if (type === 'sales') {
+    rows.push(['Customer','Invoices','Total']);
+    currentReportData.by_customer.forEach(c => rows.push([c.customer_name, c.invoice_count, c.total]));
+  } else if (type === 'purchases') {
+    rows.push(['Vendor','POs','Total']);
+    currentReportData.by_vendor.forEach(v => rows.push([v.vendor_name, v.po_count, v.total]));
+  } else if (type === 'inventory') {
+    rows.push(['Product','Code','Stock','Reorder Level','Value','Status']);
+    currentReportData.items.forEach(i => rows.push([i.product_name, i.product_code, i.current_stock, i.reorder_level, i.stock_value, i.stock_status]));
+  } else if (type === 'customers') {
+    rows.push(['Customer','City','Invoices','Total Business','Outstanding','Last Purchase']);
+    currentReportData.customers.forEach(c => rows.push([c.name, c.city, c.invoice_count, c.total_business, c.outstanding, c.last_purchase]));
+  }
+  const csv = rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${currentReportType}_report_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  showToast('⬇ CSV exported');
+}
+
+async function exportReportPDF() {
+  if (!currentReportType) return;
+  let path = `/reports/${currentReportType}?as_pdf=true`;
+  if (currentReportType === 'sales' || currentReportType === 'purchases') {
+    path += `&date_from=${getVal('reportFrom')}&date_to=${getVal('reportTo')}`;
+  }
+
+  try {
+    showToast('⏳ Generating PDF…');
+    const res = await fetch(`${CFG.API_BASE}${path}`, {
+      headers: { 'Authorization': `Bearer ${AUTH.token}` }
+    });
+    if (!res.ok) throw new Error('Server returned ' + res.status);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentReportType}_report_${new Date().toISOString().slice(0,10)}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('📄 PDF downloaded');
+  } catch (e) {
+    showToast('⚠️ Could not generate PDF: ' + e.message, 'warn');
+  }
+}
+
+async function downloadDocPDF(type, id) {
+  if (!id) { showToast('⚠️ Save the document first','warn'); return; }
+  try {
+    const res = await fetch(`${CFG.API_BASE}/billing/${type}/${id}/pdf`, {
+      headers: { 'Authorization': `Bearer ${AUTH.token}` }
+    });
+    if (!res.ok) throw new Error('Server returned ' + res.status);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${type}-${id}.pdf`; a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    showToast('⚠️ Could not generate PDF: ' + e.message, 'warn');
+  }
 }
 
 // ============================================================
@@ -2000,6 +2221,35 @@ function autofillAgainstInvoice() {
   document.getElementById('billAddr').value = inv.custAddr || '';
 }
 
+function toggleExportType() {
+  document.getElementById('exportTypeWrap').classList.toggle('hidden', !document.getElementById('invIsExport').checked);
+}
+
+async function fileGSTR3B() {
+  const month = getVal('gstMonth');
+  if (!confirm(`File GSTR-3B for ${month}? This locks the period's figures as a permanent filed record.`)) return;
+  try {
+    const r = await apiFetch(`/gst/gstr3b/file?month=${month}`, { method: 'POST' });
+    showToast('🔒 ' + r.message);
+    loadFiledReturns();
+  } catch (e) {
+    showToast('⚠️ ' + e.message, 'warn');
+  }
+}
+
+async function loadFiledReturns() {
+  const el = document.getElementById('gstFiledHistory'); if (!el) return;
+  try {
+    const r = await apiFetch('/gst/filed-returns');
+    const rows = r.data.returns.map(x => `<tr><td>${x.return_type}</td><td>${x.period_from} to ${x.period_to}</td>
+      <td>₹${fmt(x.total_tax_payable)}</td><td><span class="sb ${x.status==='filed'?'sp':'sov'}">${x.status.toUpperCase()}</span></td>
+      <td>${x.filed_at ? new Date(x.filed_at).toLocaleDateString() : '—'}</td></tr>`).join('');
+    el.innerHTML = `<div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:10px">Filed Returns History</div>
+      <table><thead><tr><th>Type</th><th>Period</th><th>Tax Payable</th><th>Status</th><th>Filed On</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:var(--text3)">No returns filed yet</td></tr>'}</tbody></table></div>`;
+  } catch (e) { /* silent */ }
+}
+
 // ============================================================
 //  INVOICE ACTIONS MODAL
 // ============================================================
@@ -2010,8 +2260,6 @@ function openInvActions(id) {
   const isDraft = inv.status === 'draft';
   const statuses = [
     { key: 'pending',  label: 'Mark as Pending',  icon: '🕓', cls: 'btn-o'   },
-    { key: 'overdue',  label: 'Mark as Overdue',  icon: '⚠️', cls: 'btn-o'   },
-    { key: 'paid',     label: 'Mark as Paid',     icon: '✅', cls: 'btn-o'   },
   ];
   const statusButtons = isDraft ? '' : statuses
     .filter(s => s.key !== inv.status)
@@ -2019,6 +2267,9 @@ function openInvActions(id) {
     .join('');
   const finalizeButton = isDraft
     ? `<button class="btn btn-p" style="justify-content:center" onclick="finalizeDraftInvoice('${id}')">✅ Convert to Invoice (Finalize)</button>`
+    : '';
+  const recordPaymentButton = (!isDraft && inv.status !== 'paid')
+    ? `<button class="btn btn-p" style="justify-content:center" onclick="closeModal('invPickModal');recordInvoicePayment('${id}')">💰 Record Payment</button>`
     : '';
 
   document.getElementById('invPickContent').innerHTML=`
@@ -2028,9 +2279,10 @@ function openInvActions(id) {
       <div style="display:flex;flex-direction:column;gap:8px">
         <button class="btn btn-p" style="justify-content:center" onclick="closeModal('invPickModal');viewInvoice('${id}')">👁 View Invoice</button>
         <button class="btn btn-warn" style="justify-content:center" onclick="closeModal('invPickModal');loadInvoiceToEdit('${id}')">✏️ Edit Invoice</button>
-        <button class="btn btn-o" style="justify-content:center" onclick="showToast('📄 PDF downloaded!');closeModal('invPickModal')">📄 Download PDF</button>
+        <button class="btn btn-o" style="justify-content:center" onclick="downloadDocPDF('invoices', editingInvId)">📄 Download PDF</button>
         <button class="btn btn-o" style="justify-content:center" onclick="showToast('📱 Sent via WhatsApp!');closeModal('invPickModal')">📱 Share WhatsApp</button>
         ${finalizeButton}
+        ${recordPaymentButton}
         ${statusButtons}
         <button class="btn btn-d" style="justify-content:center" onclick="closeModal('invPickModal');deleteInvoice('${id}')">🗑 Delete Invoice</button>
       </div>
@@ -2353,6 +2605,8 @@ const grandTotal = taxableAmt + totalGST;
     party_id:             selectedCustomerId || undefined,
     place_of_supply:      getVal('custState'),
     supply_type:          getVal('supplyType'),
+    is_export: document.getElementById('invIsExport')?.checked || false,
+    export_type: document.getElementById('invIsExport')?.checked ? getVal('invExportType') : undefined,
     notes:                getVal('invNotes'),
     billing_name:         cust,
     billing_gstin:       getVal('custGst'),
@@ -2729,6 +2983,123 @@ function filterCust() {
   }
 
   renderCustomers(data);
+}
+
+//=============================================================
+//  GST 
+//=============================================================
+function populateGSTMonths() {
+  const sel = document.getElementById('gstMonth');
+  if (!sel || sel.options.length) return;
+  const now = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const value = d.toISOString().slice(0, 7);
+    const label = d.toLocaleString('default', { month: 'long', year: 'numeric' });
+    sel.innerHTML += `<option value="${value}">${label}</option>`;
+  }
+}
+
+async function loadGSTData() {
+  populateGSTMonths();
+  const month = getVal('gstMonth') || new Date().toISOString().slice(0, 7);
+  try {
+    const [summary, gstr1, gstr3b, hsn, itc] = await Promise.all([
+      apiFetch(`/gst/summary?month=${month}`),
+      apiFetch(`/gst/gstr1?month=${month}`),
+      apiFetch(`/gst/gstr3b?month=${month}`),
+      apiFetch(`/gst/hsn-summary?month=${month}`),
+      apiFetch(`/gst/itc-ledger?month=${month}`),
+    ]);
+    renderGSTSummary(summary.data);
+    renderGSTR1(gstr1.data);
+    renderGSTR3B(gstr3b.data);
+    renderHSNSummary(hsn.data);
+    renderITCLedger(itc.data);
+    loadFiledReturns();
+  } catch (e) {
+    showToast('⚠️ Could not load GST data: ' + e.message, 'warn');
+  }
+}
+
+function renderGSTSummary(d) {
+  const el = document.getElementById('gst-summary'); if (!el) return;
+  const rateRows = d.rate_wise.map(r => `<tr><td><span class="chip cbl2">${r.gst_rate}%</span></td>
+    <td>₹${fmt(r.taxable)}</td><td>₹${fmt(r.cgst)}</td><td>₹${fmt(r.sgst)}</td><td>₹${fmt(r.igst)}</td><td>₹${fmt(r.total_tax)}</td></tr>`).join('');
+  const totalTax = d.rate_wise.reduce((s, r) => s + r.total_tax, 0);
+  el.innerHTML = `<div class="g3" style="margin-bottom:18px">
+      <div class="card"><div class="slbl">Sales (Taxable)</div><div class="sval bl" style="font-size:20px;margin-top:7px">₹${fmt(d.sales_taxable)}</div></div>
+      <div class="card"><div class="slbl">Output GST</div><div class="sval gr" style="font-size:20px;margin-top:7px">₹${fmt(d.output_gst)}</div></div>
+      <div class="card"><div class="slbl">Input Tax Credit</div><div class="sval or" style="font-size:20px;margin-top:7px">₹${fmt(d.input_tax_credit)}</div></div>
+    </div>
+    <div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:14px">GST Rate-wise Breakup</div>
+      <table><thead><tr><th>Rate</th><th>Taxable</th><th>CGST</th><th>SGST</th><th>IGST</th><th>Total Tax</th></tr></thead>
+      <tbody>${rateRows || '<tr><td colspan="6" style="text-align:center;color:var(--text3)">No data for this period</td></tr>'}
+      <tr style="font-weight:700"><td>TOTAL</td><td>₹${fmt(d.sales_taxable)}</td><td colspan="3"></td><td>₹${fmt(totalTax)}</td></tr>
+      </tbody></table></div>`;
+}
+
+function renderGSTR1(d) {
+  const el = document.getElementById('gst-gstr1'); if (!el) return;
+  const b2bRows = d.b2b.map(r => `<tr><td>${r.invoice_no}</td><td>${r.invoice_date}</td><td>${r.billing_name}</td><td class="mono">${r.billing_gstin}</td><td>₹${fmt(r.taxable_amount)}</td><td>₹${fmt(r.total_amount)}</td></tr>`).join('');
+  const b2cRows = d.b2c.map(r => `<tr><td>${r.category}</td><td>${r.invoice_count}</td><td>₹${fmt(r.taxable)}</td><td>₹${fmt(r.total_tax)}</td></tr>`).join('');
+  const cdnrRows = d.cdnr.map(r => `<tr><td>${r.invoice_no}</td><td>${r.invoice_date}</td><td>${r.invoice_type === 'credit_note' ? 'Credit Note' : 'Debit Note'}</td><td>${r.billing_name}</td><td>₹${fmt(r.taxable_amount)}</td><td>₹${fmt(r.total_amount)}</td></tr>`).join('');
+  const exportRows = d.exports.map(r => `<tr><td>${r.invoice_no}</td><td>${r.invoice_date}</td><td>${r.billing_name}</td><td>${r.export_type === 'WPAY' ? 'With Tax' : 'LUT/Bond'}</td><td>₹${fmt(r.taxable_amount)}</td></tr>`).join('');
+  el.innerHTML = `
+    <div class="card" style="margin-bottom:14px"><div style="font-size:13px;font-weight:700;margin-bottom:10px">B2B Invoices (Registered)</div>
+      <table><thead><tr><th>Invoice No</th><th>Date</th><th>Customer</th><th>GSTIN</th><th>Taxable</th><th>Total</th></tr></thead>
+      <tbody>${b2bRows || '<tr><td colspan="6" style="text-align:center;color:var(--text3)">No B2B invoices</td></tr>'}</tbody></table></div>
+    <div class="card" style="margin-bottom:14px"><div style="font-size:13px;font-weight:700;margin-bottom:10px">B2C Summary (Unregistered)</div>
+      <table><thead><tr><th>Category</th><th>Invoices</th><th>Taxable</th><th>Total Tax</th></tr></thead>
+      <tbody>${b2cRows || '<tr><td colspan="4" style="text-align:center;color:var(--text3)">No B2C invoices</td></tr>'}</tbody></table></div>
+    <div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:10px">CDNR — Credit/Debit Notes (Registered)</div>
+      <table><thead><tr><th>Note No</th><th>Date</th><th>Type</th><th>Customer</th><th>Taxable</th><th>Total</th></tr></thead>
+      <tbody>${cdnrRows || '<tr><td colspan="6" style="text-align:center;color:var(--text3)">No CDNR entries</td></tr>'}</tbody></table>
+      <div style="font-size:10px;color:var(--text3);margin-top:8px">${d.note}</div></div>
+    <div class="card" style="margin-top:14px"><div style="font-size:13px;font-weight:700;margin-bottom:10px">Exports</div>
+      <table><thead><tr><th>Invoice No</th><th>Date</th><th>Customer</th><th>Export Type</th><th>Taxable</th></tr></thead>
+      <tbody>${exportRows || '<tr><td colspan="5" style="text-align:center;color:var(--text3)">No export invoices</td></tr>'}</tbody></table></div>`;
+}
+
+function renderGSTR3B(d) {
+  const el = document.getElementById('gst-gstr3b'); if (!el) return;
+  const o = d.outward_taxable_supplies, i = d.itc_available, n = d.net_tax_payable;
+  el.innerHTML = `
+    <div class="card" style="margin-bottom:14px"><div style="font-size:13px;font-weight:700;margin-bottom:10px">3.1 Outward Taxable Supplies</div>
+      <table><thead><tr><th>Taxable Value</th><th>CGST</th><th>SGST</th><th>IGST</th><th>CESS</th></tr></thead>
+      <tbody><tr><td>₹${fmt(o.taxable)}</td><td>₹${fmt(o.cgst)}</td><td>₹${fmt(o.sgst)}</td><td>₹${fmt(o.igst)}</td><td>₹${fmt(o.cess)}</td></tr></tbody></table></div>
+    <div class="card" style="margin-bottom:14px"><div style="font-size:13px;font-weight:700;margin-bottom:10px">4. Eligible ITC</div>
+      <table><thead><tr><th>CGST</th><th>SGST</th><th>IGST</th></tr></thead>
+      <tbody><tr><td>₹${fmt(i.cgst)}</td><td>₹${fmt(i.sgst)}</td><td>₹${fmt(i.igst)}</td></tr></tbody></table></div>
+    <div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:10px">Net Tax Payable</div>
+      <table><thead><tr><th>CGST</th><th>SGST</th><th>IGST</th></tr></thead>
+      <tbody><tr style="font-weight:700;color:var(--red)"><td>₹${fmt(n.cgst)}</td><td>₹${fmt(n.sgst)}</td><td>₹${fmt(n.igst)}</td></tr></tbody></table></div>
+      <button class="btn btn-p" style="margin-top:14px" onclick="fileGSTR3B()" id="fileGSTR3BBtn">🔒 File GSTR-3B for this period</button>
+      <div id="gstFiledHistory" style="margin-top:16px"></div>`;
+
+    
+}
+
+function renderHSNSummary(d) {
+  const el = document.getElementById('gst-hsn'); if (!el) return;
+  const rows = d.items.map(r => `<tr><td class="mono">${r.hsn}</td><td>${r.description}</td><td>${r.gst_rate}%</td><td>${Number(r.total_qty).toFixed(0)}</td><td>₹${fmt(r.taxable)}</td><td>₹${fmt(r.total_tax)}</td></tr>`).join('');
+  el.innerHTML = `<div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:10px">HSN/SAC-wise Summary</div>
+    <table><thead><tr><th>HSN/SAC</th><th>Description</th><th>Rate</th><th>Qty</th><th>Taxable Value</th><th>Total Tax</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="6" style="text-align:center;color:var(--text3)">No data for this period</td></tr>'}</tbody></table></div>`;
+}
+
+function renderITCLedger(d) {
+  const el = document.getElementById('gst-itc'); if (!el) return;
+  const rows = d.by_vendor.map(r => `<tr><td>${r.vendor_name}</td><td>${r.po_no}</td><td>${r.po_date}</td><td>₹${fmt(r.taxable_amount)}</td><td>₹${fmt(r.total_itc)}</td></tr>`).join('');
+  el.innerHTML = `<div class="g3" style="margin-bottom:14px">
+      <div class="card"><div class="slbl">CGST</div><div class="sval bl" style="font-size:18px;margin-top:6px">₹${fmt(d.totals.cgst)}</div></div>
+      <div class="card"><div class="slbl">SGST</div><div class="sval bl" style="font-size:18px;margin-top:6px">₹${fmt(d.totals.sgst)}</div></div>
+      <div class="card"><div class="slbl">IGST</div><div class="sval bl" style="font-size:18px;margin-top:6px">₹${fmt(d.totals.igst)}</div></div>
+    </div>
+    <div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:10px">ITC by Purchase</div>
+      <table><thead><tr><th>Vendor</th><th>PO No</th><th>Date</th><th>Taxable</th><th>ITC</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:var(--text3)">No purchases this period</td></tr>'}</tbody></table>
+      <div style="font-size:10px;color:var(--text3);margin-top:8px">${d.note}</div></div>`;
 }
 
 // ── open "Add Customer" modal with empty fields ──────────────
@@ -3752,6 +4123,7 @@ function normPO(p) {
       prod: it.description || '',
       qty: Number(it.quantity || 0),
       receivedQty: Number(it.received_qty || 0),
+      returnedQty: Number(it.returned_qty || 0),
       rate: Number(it.rate || 0),
       disc: Number(it.discount_pct || 0),
       gst: Number(it.gst_rate || 18),
@@ -3801,7 +4173,7 @@ async function renderPO(list) {
     return `<tr>
       <td class="b mono">${p.no}</td><td>${fmtDate(p.date)}</td><td class="b">${p.vendor}</td>
       <td>₹${fmt(p.taxable)}</td><td>₹${fmt(gstTotal)}</td><td class="b">₹${fmt(p.total)}</td>
-      <td><span class="sb ${poStatusClass(p.status)}">${(p.status||'').replace('_',' ')}</span></td>
+      <td><span class="sb ${poStatusClass(p.status)}">${(p.status||'').replace('_',' ')}</span>${p.items.some(it=>it.returnedQty>0) ? ` <span class="sb sov" title="Some items on this PO have been returned">↩ Returned</span>` : ''}</td>
       <td><span class="sb ${p.paidAmount >= p.total ? 'sp' : p.paidAmount > 0 ? 'spen' : 'sov'}">${p.paidAmount >= p.total ? 'PAID' : p.paidAmount > 0 ? 'PARTIALLY PAID' : 'UNPAID'}</span></td>
       <td><div style="display:flex;gap:3px">
         <button class="btn btn-o btn-sm" onclick="viewPO('${p.id}')" title="View">👁</button>
@@ -4008,10 +4380,11 @@ function openPOActions(id) {
   ];
   const statusButtons = statuses
     .filter(s => s.key !== p.status)
+    .filter(s => !(s.key === 'open' && ['received', 'partially_received'].includes(p.status)))
     .map(s => `<button class="btn btn-o" style="justify-content:center;width:100%;margin-bottom:8px" onclick="setPOStatus('${id}','${s.key}')">${s.icon} ${s.label}</button>`)
     .join('');
   const receiveButton = (p.status !== 'received')
-    ? `<button class="btn btn-p" style="justify-content:center;width:100%;margin-bottom:8px" onclick="closeModal('poActionsModal');receivePO('${id}')">📦 Received All Goods</button>
+    ? `<button class="btn btn-p" style="justify-content:center;width:100%;margin-bottom:8px" onclick="confirmReceiveAll('${id}')">📦 Received All Goods</button>
        <button class="btn btn-o" style="justify-content:center;width:100%;margin-bottom:8px" onclick="closeModal('poActionsModal');openReceiveModal('${id}')">📥 Partial Goods Received</button>`
     : '';
 
@@ -4025,6 +4398,22 @@ function openPOActions(id) {
       <button class="btn btn-d" style="justify-content:center;width:100%" onclick="closeModal('poActionsModal');deletePO('${id}')">🗑 Delete PO</button>
     </div>`;
   openModal('poActionsModal');
+}
+
+function confirmReceiveAll(id) {
+  const p = PO_DATA.find(x => String(x.id) === String(id));
+  if (!p) return;
+  const rows = p.items.map(it => `<tr><td>${it.prod}</td><td style="text-align:right">${it.qty - it.receivedQty}</td></tr>`).join('');
+  document.getElementById('poActionsContent').innerHTML = `
+    <div style="font-size:13px;font-weight:700;margin-bottom:4px">Confirm Full Receipt</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:14px">${p.no} · ${p.vendor}</div>
+    <table style="margin-bottom:16px"><thead><tr><th>Item</th><th style="text-align:right">Qty to Receive</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:16px">This marks all pending quantities as received and updates stock for each item above.</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-o" style="flex:1;justify-content:center" onclick="openPOActions('${id}')">Back</button>
+      <button class="btn btn-p" style="flex:1;justify-content:center" onclick="closeModal('poActionsModal');receivePO('${id}')">✅ Confirm Receipt</button>
+    </div>`;
 }
 
 async function setPOStatus(id, status) {
@@ -4115,24 +4504,59 @@ async function submitPartialReceive() {
   }
 }
 
-async function recordPOPayment(id) {
+function recordPOPayment(id) {
   const p = PO_DATA.find(x => String(x.id) === String(id));
   if (!p) return;
-  const outstanding = p.total - (p.paidAmount || 0);
-  const input = prompt(`${p.no} — Total ₹${fmt(p.total)}, Outstanding ₹${fmt(outstanding)}\n\nEnter amount paid:`, outstanding.toFixed(2));
-  if (input === null) return;
-  const amount = parseFloat(input);
-  if (isNaN(amount) || amount <= 0) { showToast('⚠️ Enter a valid amount','warn'); return; }
 
-  const newPaid = Math.min((p.paidAmount || 0) + amount, p.total);
-  if (AUTH.apiOnline) {
-    try {
-      await apiFetch(`/billing/purchase-orders/${id}`, { method:'PATCH', body: JSON.stringify({ paid_amount: newPaid }) });
-    } catch (e) { showToast('⚠️ Could not save payment','warn'); return; }
+  openModal('payModal');
+  setVal('payDate', new Date().toISOString().slice(0,10));
+  setVal('payRef', '');
+  setVal('payNarration', '');
+
+  document.getElementById('payType').value = 'payment';
+  document.getElementById('payType').disabled = true;
+  onPayTypeChange();
+
+  document.getElementById('payParty').value = p.vendorId;
+  document.getElementById('payParty').disabled = true;
+  onPayPartyChange();
+
+  document.getElementById('payAgainst').value = p.id;
+  document.getElementById('payAgainst').disabled = true;
+
+  const outstanding = p.total - (p.paidAmount || 0);
+  setVal('payAmt', outstanding.toFixed(2));
+}
+
+function recordInvoicePayment(id) {
+  const inv = INVOICES.find(i => String(i.id) === String(id));
+  if (!inv) return;
+
+  openModal('payModal');
+  setVal('payDate', new Date().toISOString().slice(0,10));
+  setVal('payRef', '');
+  setVal('payNarration', '');
+
+  document.getElementById('payType').value = 'receipt';
+  document.getElementById('payType').disabled = true;
+  onPayTypeChange();
+
+  if (inv.party_id) {
+    document.getElementById('payParty').value = inv.party_id;
+    document.getElementById('payParty').disabled = true;
+    onPayPartyChange();
+    document.getElementById('payAgainst').value = inv.id;
+    document.getElementById('payAgainst').disabled = true;
+  } else {
+    // No linked customer record (e.g. name was typed instead of selected) —
+    // leave the fields editable so the user can pick manually.
+    document.getElementById('payParty').disabled = false;
+    document.getElementById('payAgainst').disabled = false;
+    showToast('⚠️ Customer not linked to a record — select manually', 'warn');
   }
-  p.paidAmount = newPaid;
-  showToast(newPaid >= p.total ? '✅ Marked as fully paid' : '✅ Payment recorded');
-  renderPO(PO_DATA);
+
+  const outstanding = inv.total - (inv.paid || 0);
+  setVal('payAmt', outstanding.toFixed(2));
 }
 
 async function deletePO(id) {
@@ -4227,6 +4651,7 @@ async function convertQuote(quoteId) {
 
 async function renderReturns() {
   const b = document.getElementById('retBody'); if (!b) return;
+  if (!PO_DATA.length && typeof renderPO === 'function') await renderPO();
   let data = RETURNS;
   if (AUTH.apiOnline) {
     try {
@@ -4235,6 +4660,15 @@ async function renderReturns() {
       const credit = r.data?.items || [];
       const debit  = r2.data?.items || [];
       const all = [...credit, ...debit];
+
+      // NEW — Purchase Returns aren't Invoices at all; they're journal vouchers
+      // (jv_type='debit_note', ref_type='purchase_order') posted directly against a PO.
+      let poReturns = [];
+      try {
+        const rv = await apiFetch('/accounting/vouchers?jv_type=debit_note&page_size=200');
+        const vouchers = rv?.data?.items || rv?.items || [];
+        poReturns = vouchers.filter(v => v.ref_type === 'purchase_order');
+      } catch (e) { /* accounting module may not be reachable; degrade gracefully */ }
 
       // resolve against_invoice_id -> invoice_no
       const againstIds = [...new Set(all.map(inv => inv.against_invoice_id).filter(Boolean))];
@@ -4255,7 +4689,27 @@ async function renderReturns() {
         party: inv.billing_name,
         amount: Number(inv.total_amount||0),
         status: inv.status,
+        kind: 'invoice',
       }));
+
+      const poReturnRows = poReturns.map(v => {
+        const creditorLine = (v.entries || []).find(e => Number(e.debit_amount) > 0 && e.party_id);
+        const vendor = creditorLine ? VENDORS.find(x => String(x.id) === String(creditorLine.party_id)) : null;
+        return {
+          id: v.ref_id,
+          jvId: v.id,
+          no: v.jv_no,
+          date: (v.jv_date || '').slice(0,10),
+          type: 'Purchase Return',
+          against: v.ref_no || '—', // the PO number
+          party: vendor ? vendor.name : '—',
+          amount: Number(v.total_debit || 0),
+          status: v.is_posted ? 'posted' : 'draft',
+          kind: 'po_return',
+        };
+      });
+
+      data = [...data, ...poReturnRows].sort((a,b) => (b.date||'').localeCompare(a.date||''));
       RETURNS = data;
 
       // merge into INVOICES so the existing viewInvoice() modal can find these records
@@ -4271,7 +4725,32 @@ async function renderReturns() {
     <td class="mono">${r.against}</td><td class="b">${r.party}</td>
     <td class="b">₹${r.amount.toLocaleString()}</td>
     <td><span class="sb ${r.status==='processed'?'sp':'spen'}">${r.status}</span></td>
-    <td><button class="btn btn-o btn-sm" onclick="viewInvoice('${r.id}')">👁</button></td></tr>`).join('');
+    <td>
+      <button class="btn btn-o btn-sm" onclick="${r.kind === 'po_return' ? `viewPO('${r.id}')` : `viewInvoice('${r.id}')`}">👁</button>
+      <button class="btn btn-d btn-sm" onclick="deleteReturn('${r.no}')">🗑</button>
+    </td></tr>`).join('');
+}
+
+async function deleteReturn(no) {
+  const r = RETURNS.find(x => x.no === no);
+  if (!r) return;
+  if (!confirm(`This reverses the stock and ledger effects of ${r.no}. Continue?`)) return;
+
+  try {
+    if (r.kind === 'po_return') {
+      await apiFetch(`/billing/purchase-orders/${r.id}/return/${r.jvId}/undo`, { method: 'POST' });
+    } else {
+      await apiFetch(`/billing/invoices/${r.id}/cancel`, { method: 'POST', body: JSON.stringify({ reason: 'Deleted from Returns & Credit' }) });
+    }
+    showToast('✅ Return reversed');
+    addAuditEntry('DELETE', 'Return', 'Reversed ' + r.no);
+    await renderReturns();
+    if (typeof renderPO === 'function') await renderPO();
+    if (typeof renderInvoices === 'function') await renderInvoices();
+    if (typeof renderInventory === 'function') await renderInventory();
+  } catch (e) {
+    showToast('❌ Could not reverse: ' + e.message);
+  }
 }
 
 async function loadPaymentsIfNeeded() {
@@ -4302,7 +4781,17 @@ function resolvePartyName(paymentType, partyId) {
   return found ? found.name : '—';
 }
 
+async function loadVendorsIfNeeded() {
+  if (!AUTH.apiOnline) return;
+  try {
+    const r = await apiFetch('/vendors?limit=200');
+    const items = r?.data?.items || r?.items || [];
+    if (items.length) VENDORS = items.map(normVendor);
+  } catch (e) { /* keep existing VENDORS as fallback */ }
+}
+
 async function renderPayments() {
+  await loadVendorsIfNeeded();
   const data = await loadPaymentsIfNeeded();
   PAYMENTS_DATA = data;
 
@@ -4341,6 +4830,9 @@ function openPayModal() {
   setVal('payRef', '');
   setVal('payNarration', '');
   document.getElementById('payType').value = 'receipt';
+  document.getElementById('payType').disabled = false;      // ⬅ new
+  document.getElementById('payParty').disabled = false;     // ⬅ new
+  document.getElementById('payAgainst').disabled = false;   // ⬅ new
   onPayTypeChange();
   openModal('payModal');
 }
@@ -5170,20 +5662,46 @@ async function genEWB() {
   }
 }
 
-function openReturnModal() {
-   const sel = document.getElementById('retAgainstInv');
-   if (sel) {
-     sel.innerHTML = '<option value="">Select original invoice…</option>' +
-       INVOICES.map(inv => `<option value="${inv.id}">${inv.no} — ${inv.customer} — ₹${inv.total.toLocaleString()}</option>`).join('');
-   }
-   document.getElementById('retParty').value = '';
-   document.getElementById('retAmount').value = '';
-   document.getElementById('retReason').value = '';
-   document.getElementById('retDate').value = new Date().toISOString().slice(0,10);
-   openModal('retModal');
- }
+async function openReturnModal() {
+  // Ensure the data these dropdowns depend on is actually loaded — otherwise,
+  // right after a fresh page load (before ever visiting Purchase/Vendors/Invoices),
+  // these arrays are empty or still holding stale demo data.
+  const loaders = [];
+  if (typeof renderPO === 'function') loaders.push(renderPO());
+  if (typeof loadVendorsIfNeeded === 'function') loaders.push(loadVendorsIfNeeded());
+  if (!INVOICES.length && typeof renderInvoices === 'function') loaders.push(renderInvoices());
+  await Promise.all(loaders);
 
- function onRetInvoiceChange() {
+  document.getElementById('retDocType').value = 'sales_return';
+  onRetDocTypeChange();
+
+  const sel = document.getElementById('retAgainstInv');
+  sel.innerHTML = '<option value="">Select original invoice…</option>' +
+    INVOICES.filter(i => i.status !== 'draft').map(inv => `<option value="${inv.id}">${inv.no} — ${inv.customer} — ₹${inv.total.toLocaleString()}</option>`).join('');
+  document.getElementById('retParty').value = '';
+  document.getElementById('retAmount').value = '';
+  document.getElementById('retReason').value = '';
+  document.getElementById('retDate').value = new Date().toISOString().slice(0,10);
+
+  const poSel = document.getElementById('retAgainstPO');
+  const returnablePOs = PO_DATA.filter(p => p.items.some(it => (it.receivedQty - it.returnedQty) > 0));
+  poSel.innerHTML = '<option value="">Select purchase order…</option>' +
+    returnablePOs.map(p => `<option value="${p.id}">${p.no} — ${p.vendor}</option>`).join('');
+  document.getElementById('retPOVendor').value = '';
+  document.getElementById('retPOItems').innerHTML = '';
+  document.getElementById('retPODate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('retPOReason').value = '';
+
+  openModal('retModal');
+}
+
+function onRetDocTypeChange() {
+  const isSales = getVal('retDocType') === 'sales_return';
+  document.getElementById('retSalesSection').classList.toggle('hidden', !isSales);
+  document.getElementById('retPurchaseSection').classList.toggle('hidden', isSales);
+}
+
+function onRetInvoiceChange() {
   const id = getVal('retAgainstInv');
   const inv = INVOICES.find(i => String(i.id) === String(id));
   const prodSel = document.getElementById('retProduct');
@@ -5224,36 +5742,90 @@ function updateRetAmount() {
   document.getElementById('retAmount').value = (qty * rate).toFixed(2);
 }
 
- async function saveReturn() {
-  const docType   = getVal('retDocType');
+function onRetPOChange() {
+  const id = getVal('retAgainstPO');
+  const po = PO_DATA.find(p => String(p.id) === String(id));
+  const itemsDiv = document.getElementById('retPOItems');
+  if (!po) { document.getElementById('retPOVendor').value = ''; itemsDiv.innerHTML = ''; return; }
+
+  document.getElementById('retPOVendor').value = po.vendor;
+  const returnable = po.items.filter(it => it.productId && (it.receivedQty - it.returnedQty) > 0);
+  if (!returnable.length) {
+    itemsDiv.innerHTML = `<div style="color:var(--text3);font-size:12px">Nothing available to return on this PO</div>`;
+    itemsDiv.dataset.count = 0;
+    return;
+  }
+  itemsDiv.innerHTML = returnable.map((it, i) => {
+    const returnableQty = it.receivedQty - it.returnedQty;
+    return `<div class="iir" id="ret-row-${i}" data-item-id="${it.id}" data-max="${returnableQty}">
+      <span>${it.prod}</span><span>${it.receivedQty}</span><span>${it.returnedQty}</span><span>${returnableQty}</span>
+      <input type="number" class="fi" style="padding:6px 7px;font-size:11px" id="ret-qty-${i}" value="0" min="0" max="${returnableQty}"/>
+    </div>`;
+  }).join('');
+  itemsDiv.dataset.count = returnable.length;
+}
+
+async function saveReturn() {
+  const docType = getVal('retDocType');
+
+  if (docType === 'purchase_return') {
+    const poId = getVal('retAgainstPO');
+    if (!poId) { showToast('⚠️ Select a purchase order', 'warn'); return; }
+    const count = +document.getElementById('retPOItems').dataset.count || 0;
+    const items = [];
+    for (let i = 0; i < count; i++) {
+      const row = document.getElementById('ret-row-' + i);
+      const qty = +getVal('ret-qty-' + i) || 0;
+      const max = +row.dataset.max || 0;
+      if (qty <= 0) continue;
+      if (qty > max) { showToast('⚠️ Return quantity exceeds what is returnable for one item', 'warn'); return; }
+      items.push({ item_id: row.dataset.itemId, qty });
+    }
+    if (!items.length) { showToast('⚠️ Enter at least one quantity to return', 'warn'); return; }
+
+    try {
+      if (AUTH.apiOnline) {
+        await apiFetch(`/billing/purchase-orders/${poId}/return`, { method: 'POST', body: JSON.stringify({ items }) });
+      }
+      showToast('✅ Purchase return recorded');
+      closeModal('retModal');
+      addAuditEntry('CREATE', 'Return', 'Purchase return against PO ' + poId);
+      await renderReturns();
+      if (typeof renderPO === 'function') await renderPO();
+      if (typeof renderInventory === 'function') await renderInventory();
+    } catch (e) {
+      showToast('❌ ' + e.message);
+    }
+    return;
+  }
+
+  // Sales Return / Credit Note
   const againstId = getVal('retAgainstInv');
   const prodIdx   = getVal('retProduct');
-  const party     = getVal('retParty');
   const date      = getVal('retDate') || new Date().toISOString().slice(0,10);
   const qty       = parseFloat(getVal('retQty')) || 0;
   const rate      = parseFloat(getVal('retRate')) || 0;
   const reason    = getVal('retReason');
 
-  if (!againstId)      { showToast('⚠️ Select the original invoice','warn'); return; }
-  if (prodIdx === '')  { showToast('⚠️ Select a product','warn'); return; }
-  if (!party.trim())   { showToast('⚠️ Enter customer / vendor name','warn'); return; }
-  if (qty <= 0)        { showToast('⚠️ Enter a valid quantity','warn'); return; }
+  if (!againstId)      { showToast('⚠️ Select the original invoice', 'warn'); return; }
+  if (prodIdx === '')  { showToast('⚠️ Select a product', 'warn'); return; }
+  if (qty <= 0)        { showToast('⚠️ Enter a valid quantity', 'warn'); return; }
 
   const inv  = INVOICES.find(i => String(i.id) === String(againstId));
   const item = inv?.items?.[prodIdx];
-  const invoiceType = (docType === 'Purchase Return' || docType === 'Debit Note') ? 'debit_note' : 'credit_note';
 
   const payload = {
-    invoice_type: invoiceType,
+    invoice_type: 'credit_note',
     invoice_date: date,
     against_invoice_id: againstId,
     party_id: inv?.party_id || undefined,
-    billing_name: party,
+    billing_name: inv?.customer || '',
     supply_type: inv?.supply || 'intra',
     place_of_supply: inv?.custState || '27',
     notes: reason || '',
     items: [{
-      description: item?.prod || docType,
+      product_id: item?.productId || null,
+      description: item?.prod || 'Sales Return',
       hsn_code: item?.hsn || '',
       quantity: qty,
       rate: rate,
@@ -5262,12 +5834,22 @@ function updateRetAmount() {
   };
 
   try {
+    let newId = null;
     if (AUTH.apiOnline) {
-      await apiFetch('/billing/invoices', { method: 'POST', body: JSON.stringify(payload) });
+      const r = await apiFetch('/billing/invoices', { method: 'POST', body: JSON.stringify(payload) });
+      newId = r?.id || r?.data?.id;
+      if (newId) {
+        // NEW — finalize immediately, same gap regular invoices had originally.
+        // Without this, the credit note stays a draft and never posts to the ledger.
+        await apiFetch(`/billing/invoices/${newId}/finalize`, { method: 'POST' });
+      }
     }
-    showToast('✅ ' + docType + ' saved');
+    showToast('✅ Sales return recorded');
     closeModal('retModal');
+    addAuditEntry('CREATE', 'Return', 'Sales return against ' + (inv?.no || againstId));
     await renderReturns();
+    if (typeof renderInvoices === 'function') await renderInvoices();
+    if (typeof renderInventory === 'function') await renderInventory();
   } catch (e) {
     showToast('❌ ' + e.message);
   }

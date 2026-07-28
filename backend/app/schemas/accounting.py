@@ -177,6 +177,7 @@ class JournalVoucherOut(APIModel):
     jv_date: date
     narration: Optional[str]
     ref_type: Optional[str]
+    ref_id: Optional[UUID]
     ref_no: Optional[str]
     total_debit: Decimal
     total_credit: Decimal
