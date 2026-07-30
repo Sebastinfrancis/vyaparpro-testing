@@ -263,6 +263,15 @@ class ContraVoucherCreate(APIModel):
     narration: Optional[str] = None
 
 
+class CapitalVoucherCreate(APIModel):
+    """Owner introduces capital into the business, or withdraws (drawings)."""
+    voucher_date: date
+    cash_bank_account_id: UUID          # which Cash/Bank account money moves through
+    txn_type: str                       # "introduce" | "drawings"
+    amount: Decimal = Field(gt=0)
+    narration: Optional[str] = None
+
+
 # ════════════════════════════════════════════════════════════════════
 # REPORTS
 # ════════════════════════════════════════════════════════════════════

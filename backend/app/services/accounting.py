@@ -33,7 +33,7 @@ from app.db.repositories.accounting import (
 )
 from app.schemas.accounting import (
     AccountCreate, AccountGroupCreate, AccountUpdate,
-    ContraVoucherCreate, FinancialYearCreate,
+    ContraVoucherCreate, CapitalVoucherCreate, FinancialYearCreate,
     JournalVoucherCreate, LedgerEntryOut, LedgerOut, PaymentVoucherCreate,
     ReceiptVoucherCreate, TrialBalanceOut, TrialBalanceRow,
     ProfitLossOut, PLRow, BalanceSheetOut, BalanceSheetRow,
@@ -101,7 +101,46 @@ class ChartOfAccountsService:
             raise PermissionDeniedError("Account group belongs to a different company.")
         data = payload.model_dump()
         data.update({"company_id": company_id, "created_by": user_id})
-        return await self.repo.create(data)
+        account = await self.repo.create(data)
+        if account.opening_balance and account.opening_balance > 0:
+            await self._post_opening_balance_to_capital(account, company_id, user_id)
+        return account
+
+    async def _post_opening_balance_to_capital(self, account: Account, company_id: UUID, user_id: UUID) -> None:
+        """Auto-post opening balance as: [account] vs Capital Account (skips Capital itself)."""
+        if account.account_type == "equity":
+            return
+        capital_accts = await self.repo.get_by_type(company_id, "equity")
+        if not capital_accts:
+            return
+        capital = capital_accts[0]
+        from app.schemas.accounting import JournalEntryLine, JournalVoucherCreate
+        from app.services.accounting import JournalVoucherService
+        is_dr = account.opening_balance_type == "Dr"
+        entries = [
+            JournalEntryLine(
+                account_id=account.id,
+                debit_amount=account.opening_balance if is_dr else Decimal("0"),
+                credit_amount=Decimal("0") if is_dr else account.opening_balance,
+            ),
+            JournalEntryLine(
+                account_id=capital.id,
+                debit_amount=Decimal("0") if is_dr else account.opening_balance,
+                credit_amount=account.opening_balance if is_dr else Decimal("0"),
+            ),
+        ]
+        payload = JournalVoucherCreate(
+            jv_type="opening",
+            jv_date=date.today(),
+            narration=f"Opening balance — {account.account_name}",
+            ref_type="account_opening",
+            ref_id=account.id,
+            ref_no=account.account_code,
+            entries=entries,
+        )
+        jv_svc = JournalVoucherService(self.repo.session)
+        jv = await jv_svc.create(company_id, payload, user_id)
+        await jv_svc.post(jv.id, company_id, user_id)
 
     async def update(self, account_id: UUID, payload: AccountUpdate, company_id: UUID) -> Account:
         account = await self.repo.get_or_raise(account_id)
@@ -245,6 +284,7 @@ class ChartOfAccountsService:
             ("7002", "Purchase Returns", "expense",  "EX01"),
             ("8001", "Capital Account",  "equity",   "E01"),
             ("9001", "TDS Payable",      "tds_payable","L01-TDS"),
+            ("9002", "TDS Receivable",   "tds_receivable","A01"),
         ]
         for code, name, atype, group_code in accounts_seed:
             existing = await self.repo.get_by(company_id=company_id, account_code=code)
@@ -505,6 +545,43 @@ class JournalVoucherService:
         jv = await self.create(company_id, jv_payload, user_id)
         return await self.post(jv.id, company_id, user_id)
 
+    async def create_capital_transaction(
+        self,
+        company_id: UUID,
+        payload: CapitalVoucherCreate,
+        user_id: UUID,
+    ) -> JournalVoucher:
+        """Introduce Capital: Dr Cash/Bank, Cr Capital Account.
+        Owner's Drawings: Dr Capital Account, Cr Cash/Bank."""
+        from app.db.repositories.accounting import AccountRepository
+        from app.schemas.accounting import JournalEntryLine, JournalVoucherCreate
+
+        acct_repo = AccountRepository(self.session)
+        capital_accts = await acct_repo.get_by_type(company_id, "equity")
+        if not capital_accts:
+            raise BusinessError("No Capital Account found — run /accounting/seed first.")
+        capital = capital_accts[0]
+
+        is_introduce = payload.txn_type == "introduce"
+        entries = [
+            JournalEntryLine(
+                account_id=payload.cash_bank_account_id if is_introduce else capital.id,
+                debit_amount=payload.amount,
+            ),
+            JournalEntryLine(
+                account_id=capital.id if is_introduce else payload.cash_bank_account_id,
+                credit_amount=payload.amount,
+            ),
+        ]
+        jv_payload = JournalVoucherCreate(
+            jv_type="journal",
+            jv_date=payload.voucher_date,
+            narration=payload.narration or ("Capital introduced" if is_introduce else "Owner's drawings"),
+            entries=entries,
+        )
+        jv = await self.create(company_id, jv_payload, user_id)
+        return await self.post(jv.id, company_id, user_id)
+
 
 # ═══════════════════════════════════════════════════════════════════
 # AUTOMATED ACCOUNTING FROM BILLING
@@ -552,10 +629,11 @@ class AutoAccountingService:
         supply_type: str,
         user_id: UUID,
         invoice_type: str = "tax_invoice",
+        tds_amount: Decimal = Decimal("0"),
     ) -> JournalVoucher:
         """
-        Normal sale: Dr Debtor, Cr Sales + Cr GST Output.
-        Credit note (Sales Return): the exact reverse — Cr Debtor, Dr Sales Returns + Dr GST Output.
+        Normal sale: Dr Debtor + Dr TDS Receivable, Cr Sales + Cr GST Output.
+        Credit note (Sales Return): the exact reverse — Cr Debtor + Cr TDS Receivable, Dr Sales Returns + Dr GST Output.
         """
         from app.schemas.accounting import JournalEntryLine, JournalVoucherCreate
 
@@ -573,11 +651,17 @@ class AutoAccountingService:
                 JournalEntryLine(account_id=debtor.id, credit_amount=total_amount, party_id=party_id),
                 JournalEntryLine(account_id=sales.id,  debit_amount=taxable_amount),
             ]
+            if tds_amount > 0:
+                tds_r = await self._get_system_account(company_id, "tds_receivable")
+                entries.append(JournalEntryLine(account_id=tds_r.id, credit_amount=tds_amount))
         else:
             entries = [
                 JournalEntryLine(account_id=debtor.id, debit_amount=total_amount, party_id=party_id),
                 JournalEntryLine(account_id=sales.id,  credit_amount=taxable_amount),
             ]
+            if tds_amount > 0:
+                tds_r = await self._get_system_account(company_id, "tds_receivable")
+                entries.append(JournalEntryLine(account_id=tds_r.id, debit_amount=tds_amount))
 
         is_igst = supply_type == "inter" and igst_amount > 0
         gst_side = "debit_amount" if is_return else "credit_amount"
@@ -677,8 +761,9 @@ class AutoAccountingService:
         igst_amount: Decimal,
         total_amount: Decimal,
         user_id: UUID,
+        tds_amount: Decimal = Decimal("0"),
     ) -> JournalVoucher:
-        """Dr Purchase + Dr GST Input, Cr Creditor."""
+        """Dr Purchase + Dr GST Input, Cr Creditor (net of TDS) + Cr TDS Payable."""
         purchase  = await self._get_system_account(company_id, "expense")
         creditor  = await self._get_system_account(company_id, "payable")
         cgst_i = await self._get_system_account(company_id, "gst_input", "CGST")
@@ -687,8 +772,11 @@ class AutoAccountingService:
         from app.schemas.accounting import JournalEntryLine, JournalVoucherCreate
         entries = [
             JournalEntryLine(account_id=purchase.id, debit_amount=taxable_amount),
-            JournalEntryLine(account_id=creditor.id, credit_amount=total_amount, party_id=vendor_id),
+            JournalEntryLine(account_id=creditor.id, credit_amount=total_amount - tds_amount, party_id=vendor_id),
         ]
+        if tds_amount > 0:
+            tds = await self._get_system_account(company_id, "tds_payable")
+            entries.append(JournalEntryLine(account_id=tds.id, credit_amount=tds_amount))
         if igst_amount > 0:
             entries.append(JournalEntryLine(account_id=igst_i.id, debit_amount=igst_amount))
         else:
@@ -1044,7 +1132,7 @@ class GSTReportService:
         from_date: date,
         to_date: date,
         user_id: UUID,
-    ) -> GSTReturn:
+    ) -> GSTReturnOut:
         from app.db.models.accounting import GSTReturn as GSTReturnModel
         from datetime import date as dt
 

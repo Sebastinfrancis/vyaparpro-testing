@@ -190,6 +190,8 @@ class PurchaseOrderCreate(APIModel):
     special_instructions: Optional[str] = None
     notes: Optional[str] = None
     other_charges: Decimal = Decimal("0")
+    tds_amount: Decimal = Decimal("0")
+    supply_type: str = "intra"  # intra | inter — determines CGST+SGST vs IGST
     items: list[BillingItemIn] = Field(min_length=1)
 
 

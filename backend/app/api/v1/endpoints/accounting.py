@@ -37,10 +37,16 @@ from uuid import UUID
 from fastapi import APIRouter, Query
 from fastapi.responses import ORJSONResponse
 
+from fastapi import Response
+
 from app.api.v1.dependencies import CurrentUserDep, DBDep, PaginationDep
 from app.core.exceptions import NotFoundError, PermissionDeniedError
+from app.utils.accounting_report_export import (
+    build_balance_sheet_tables, build_ledger_like_tables, build_pl_tables,
+    build_trial_balance_tables, export_response, get_company_dict,
+)
 from app.schemas.accounting import (
-    LedgerOut,AccountCreate, AccountGroupCreate, AccountGroupUpdate, AccountGroupOut,
+    CapitalVoucherCreate, LedgerOut,AccountCreate, AccountGroupCreate, AccountGroupUpdate, AccountGroupOut,
     AccountOut, AccountUpdate, ContraVoucherCreate, JournalVoucherCreate,
     JournalVoucherOut, PaymentVoucherCreate, ReceiptVoucherCreate,
 )
@@ -125,7 +131,7 @@ async def create_account(payload: AccountCreate, current: CurrentUserDep, db: DB
     account = await svc.create(current.company_id, payload, current.user_id)
     return created(AccountOut.model_validate(account).model_dump(mode='json'), "Account created.")
 
-@router.get("/accounts/{account_id}/ledger", summary="Per-account ledger — opening/closing balance + entries")
+@router.get("/accounts/{account_id}/ledger", response_model=None, summary="Per-account ledger — opening/closing balance + entries")
 async def get_account_ledger(
     account_id: UUID,
     current: CurrentUserDep,
@@ -133,7 +139,8 @@ async def get_account_ledger(
     pg: PaginationDep,
     from_date: str | None = Query(None),
     to_date: str | None = Query(None),
-) -> ORJSONResponse:
+    format: str = Query("json", pattern="^(json|pdf|xlsx)$"),
+) -> ORJSONResponse | Response:
     svc = ChartOfAccountsService(db)
     ledger = await svc.get_ledger(
         account_id, current.company_id,
@@ -141,6 +148,21 @@ async def get_account_ledger(
         date_cls.fromisoformat(to_date) if to_date else None,
         pg.page, pg.page_size,
     )
+    if format in ("pdf", "xlsx"):
+        entries = [e.model_dump(mode="json") for e in ledger.entries]
+        summary, tables = build_ledger_like_tables(
+            f"Ledger — {ledger.account_code} {ledger.account_name}",
+            entries, ledger.opening_balance, ledger.opening_balance_type,
+            ledger.closing_balance, ledger.closing_balance_type,
+        )
+        company = await get_company_dict(db, current.company_id)
+        period = f"{from_date or 'Beginning'} to {to_date or 'Today'}"
+        return export_response(
+            format, f"ledger_{ledger.account_code}_{from_date or ''}_{to_date or ''}",
+            f"Ledger — {ledger.account_code} {ledger.account_name}", period,
+            summary, tables, company, period,
+            getattr(current, "full_name", "System"),
+        )
     return ok(ledger.model_dump(mode='json'))
 
 
@@ -215,6 +237,13 @@ async def create_contra_voucher(payload: ContraVoucherCreate, current: CurrentUs
     return created(JournalVoucherOut.model_validate(jv).model_dump(mode='json'), "Contra entry recorded.")
 
 
+@router.post("/vouchers/quick/capital", status_code=201, summary="Quick Capital transaction (auto-posted)")
+async def create_capital_voucher(payload: CapitalVoucherCreate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
+    svc = JournalVoucherService(db)
+    jv = await svc.create_capital_transaction(current.company_id, payload, current.user_id)
+    return created(JournalVoucherOut.model_validate(jv).model_dump(mode='json'), "Capital transaction recorded.")
+
+
 @router.get("/vouchers/{jv_id}", summary="Get one journal voucher with its entries")
 async def get_voucher(jv_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = JournalVoucherService(db)
@@ -241,39 +270,68 @@ async def reverse_voucher(jv_id: UUID, current: CurrentUserDep, db: DBDep) -> OR
 
 
 
-@router.get("/reports/cashbook", summary="All cash-account entries across the company")
+@router.get("/reports/cashbook", response_model=None, summary="All cash-account entries across the company")
 async def get_cashbook(
     current: CurrentUserDep, db: DBDep, pg: PaginationDep,
     from_date: str | None = Query(None), to_date: str | None = Query(None),
-) -> ORJSONResponse:
+    format: str = Query("json", pattern="^(json|pdf|xlsx)$"),
+) -> ORJSONResponse | Response:
     from app.db.repositories.accounting import AccountLedgerRepository
     from app.schemas.accounting import LedgerEntryOut
     repo = AccountLedgerRepository(db)
+    page_size = 5000 if format in ("pdf", "xlsx") else pg.page_size
     result = await repo.get_cashbook(
         current.company_id,
         date_cls.fromisoformat(from_date) if from_date else None,
         date_cls.fromisoformat(to_date) if to_date else None,
-        pg.page, pg.page_size,
+        pg.page, page_size,
     )
     items = await _enrich_with_account_names(db, result.items)
+    if format in ("pdf", "xlsx"):
+        opening = sum((i["debit_amount"] - i["credit_amount"]) for i in []) or 0  # cashbook has no single opening
+        summary, tables = build_ledger_like_tables(
+            "Cash Book", items, 0, "Dr",
+            items[-1]["running_balance"] if items else 0,
+            items[-1]["balance_type"] if items else "Dr",
+            include_account_col=True,
+        )
+        company = await get_company_dict(db, current.company_id)
+        period = f"{from_date or 'Beginning'} to {to_date or 'Today'}"
+        return export_response(format, f"cashbook_{from_date or ''}_{to_date or ''}",
+                                "Cash Book", period, summary, tables, company, period,
+                                getattr(current, "full_name", "System"))
     return paginated(items, result.total, result.page, result.page_size, result.pages)
 
 
-@router.get("/reports/bankbook", summary="Bank-account entries, optionally filtered to one account")
+@router.get("/reports/bankbook", response_model=None, summary="Bank-account entries, optionally filtered to one account")
 async def get_bankbook(
     current: CurrentUserDep, db: DBDep, pg: PaginationDep,
     account_id: UUID | None = Query(None),
     from_date: str | None = Query(None), to_date: str | None = Query(None),
-) -> ORJSONResponse:
+    format: str = Query("json", pattern="^(json|pdf|xlsx)$"),
+) -> ORJSONResponse | Response:
     from app.db.repositories.accounting import AccountLedgerRepository
     repo = AccountLedgerRepository(db)
+    page_size = 5000 if format in ("pdf", "xlsx") else pg.page_size
     result = await repo.get_bankbook(
         current.company_id, account_id,
         date_cls.fromisoformat(from_date) if from_date else None,
         date_cls.fromisoformat(to_date) if to_date else None,
-        pg.page, pg.page_size,
+        pg.page, page_size,
     )
     items = await _enrich_with_account_names(db, result.items)
+    if format in ("pdf", "xlsx"):
+        summary, tables = build_ledger_like_tables(
+            "Bank Book", items, 0, "Dr",
+            items[-1]["running_balance"] if items else 0,
+            items[-1]["balance_type"] if items else "Dr",
+            include_account_col=True,
+        )
+        company = await get_company_dict(db, current.company_id)
+        period = f"{from_date or 'Beginning'} to {to_date or 'Today'}"
+        return export_response(format, f"bankbook_{from_date or ''}_{to_date or ''}",
+                                "Bank Book", period, summary, tables, company, period,
+                                getattr(current, "full_name", "System"))
     return paginated(items, result.total, result.page, result.page_size, result.pages)
 
 
@@ -301,35 +359,59 @@ async def _enrich_with_account_names(db, entries) -> list[dict]:
 
 
 
-@router.get("/reports/trial-balance", summary="Trial Balance for a date range")
+@router.get("/reports/trial-balance", response_model=None, summary="Trial Balance for a date range")
 async def get_trial_balance(
     current: CurrentUserDep, db: DBDep,
     from_date: str = Query(...), to_date: str = Query(...),
-) -> ORJSONResponse:
+    format: str = Query("json", pattern="^(json|pdf|xlsx)$"),
+) -> ORJSONResponse | Response:
     svc = AccountingReportService(db)
     result = await svc.trial_balance(
         current.company_id, date_cls.fromisoformat(from_date), date_cls.fromisoformat(to_date)
     )
+    if format in ("pdf", "xlsx"):
+        summary, tables = build_trial_balance_tables(result)
+        company = await get_company_dict(db, current.company_id)
+        period = f"{from_date} to {to_date}"
+        return export_response(format, f"trial_balance_{from_date}_{to_date}",
+                                "Trial Balance", period, summary, tables, company, period,
+                                getattr(current, "full_name", "System"))
     return ok(result.model_dump(mode='json'))
 
 
-@router.get("/reports/profit-and-loss", summary="Profit & Loss for a date range")
+@router.get("/reports/profit-and-loss", response_model=None, summary="Profit & Loss for a date range")
 async def get_profit_and_loss(
     current: CurrentUserDep, db: DBDep,
     from_date: str = Query(...), to_date: str = Query(...),
-) -> ORJSONResponse:
+    format: str = Query("json", pattern="^(json|pdf|xlsx)$"),
+) -> ORJSONResponse | Response:
     svc = AccountingReportService(db)
     result = await svc.profit_and_loss(
         current.company_id, date_cls.fromisoformat(from_date), date_cls.fromisoformat(to_date)
     )
+    if format in ("pdf", "xlsx"):
+        summary, tables = build_pl_tables(result)
+        company = await get_company_dict(db, current.company_id)
+        period = f"{from_date} to {to_date}"
+        return export_response(format, f"profit_and_loss_{from_date}_{to_date}",
+                                "Profit & Loss Statement", period, summary, tables, company, period,
+                                getattr(current, "full_name", "System"))
     return ok(result.model_dump(mode='json'))
 
 
-@router.get("/reports/balance-sheet", summary="Balance Sheet as of a given date")
+@router.get("/reports/balance-sheet", response_model=None, summary="Balance Sheet as of a given date")
 async def get_balance_sheet(
     current: CurrentUserDep, db: DBDep,
     as_of_date: str = Query(...),
-) -> ORJSONResponse:
+    format: str = Query("json", pattern="^(json|pdf|xlsx)$"),
+) -> ORJSONResponse | Response:
     svc = AccountingReportService(db)
     result = await svc.balance_sheet(current.company_id, date_cls.fromisoformat(as_of_date))
+    if format in ("pdf", "xlsx"):
+        summary, tables = build_balance_sheet_tables(result)
+        company = await get_company_dict(db, current.company_id)
+        period = f"As of {as_of_date}"
+        return export_response(format, f"balance_sheet_{as_of_date}",
+                                "Balance Sheet", period, summary, tables, company, period,
+                                getattr(current, "full_name", "System"))
     return ok(result.model_dump(mode='json'))

@@ -402,6 +402,9 @@ class PartyCreate(APIModel):
     opening_balance: Decimal = Decimal("0")
     balance_type: str = "Dr"
     currency: str = "INR"
+    tds_applicable: bool = False
+    tds_section: Optional[str] = None
+    tds_rate: Decimal = Decimal("0")
     tags: Optional[list[str]] = None
     notes: Optional[str] = None
     contacts: list[PartyContactCreate] = Field(default_factory=list)
@@ -433,6 +436,9 @@ class PartyUpdate(APIModel):
     shipping_address: Optional[str] = None
     credit_limit: Optional[Decimal] = None
     credit_days: Optional[int] = None
+    tds_applicable: Optional[bool] = None
+    tds_section: Optional[str] = None
+    tds_rate: Optional[Decimal] = None
     notes: Optional[str] = None
     tags: Optional[list[str]] = None
     is_active: Optional[bool] = None
@@ -461,6 +467,9 @@ class PartyOut(APIModel):
     opening_balance: Decimal
     balance_type: str
     currency: str
+    tds_applicable: bool
+    tds_section: Optional[str]
+    tds_rate: Decimal
     ai_score: Optional[Decimal]
     tags: Optional[list[str]]
     notes: Optional[str]

@@ -115,6 +115,21 @@ class PurchaseOrderRepository(BaseRepository[PurchaseOrder]):
         stmt = stmt.order_by(PurchaseOrder.po_date.desc())
         return await self.paginate(stmt, page, page_size)
 
+    async def sum_taxable_for_vendor_in_fy(
+        self, company_id: UUID, vendor_id: UUID, fy_start: date, fy_end: date
+    ) -> Decimal:
+        """Total taxable value already purchased from this vendor in the given financial year
+        (excludes cancelled POs — used to test TDS threshold crossing)."""
+        stmt = select(func.coalesce(func.sum(PurchaseOrder.taxable_amount), Decimal("0"))).where(
+            PurchaseOrder.company_id == company_id,
+            PurchaseOrder.vendor_id == vendor_id,
+            PurchaseOrder.status != "cancelled",
+            PurchaseOrder.po_date >= fy_start,
+            PurchaseOrder.po_date <= fy_end,
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar() or Decimal("0")
+
     async def get_detail(self, po_id: UUID) -> PurchaseOrder | None:
         stmt = (select(PurchaseOrder).where(PurchaseOrder.id == po_id)
                 .options(selectinload(PurchaseOrder.items),
@@ -147,6 +162,22 @@ class DeliveryChallanRepository(BaseRepository[DeliveryChallan]):
 
 class InvoiceRepository(BaseRepository[Invoice]):
     model = Invoice
+
+    async def sum_taxable_for_customer_in_fy(
+        self, company_id: UUID, party_id: UUID, fy_start: date, fy_end: date
+    ) -> Decimal:
+        """Total taxable value already invoiced to this customer in the given financial year
+        (excludes cancelled invoices — used to test TDS threshold crossing on the sales side)."""
+        stmt = select(func.coalesce(func.sum(Invoice.taxable_amount), Decimal("0"))).where(
+            Invoice.company_id == company_id,
+            Invoice.party_id == party_id,
+            Invoice.status != "cancelled",
+            Invoice.invoice_type == "tax_invoice",
+            Invoice.invoice_date >= fy_start,
+            Invoice.invoice_date <= fy_end,
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar() or Decimal("0")
 
     async def search(self, company_id: UUID, query: str | None = None, status: str | None = None,
                      invoice_type: str | None = None, party_id: UUID | None = None,

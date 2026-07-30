@@ -176,6 +176,7 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
         "invoice": "TAX INVOICE", "quotation": "QUOTATION", "po": "PURCHASE ORDER",
         "delivery_challan": "DELIVERY CHALLAN", "credit_note": "CREDIT NOTE",
         "debit_note": "DEBIT NOTE", "proforma": "PROFORMA INVOICE",
+        "purchase_return": "PURCHASE RETURN / DEBIT NOTE",
     }.get(data.doc_type, data.doc_type.upper().replace("_", " "))
 
     story = []

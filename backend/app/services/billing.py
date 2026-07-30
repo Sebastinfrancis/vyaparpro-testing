@@ -21,9 +21,53 @@ from app.schemas.billing import (
     JobOrderCreate, JobOrderUpdate, PaymentCreate,
     PurchaseOrderCreate, QuotationCreate,
 )
-from app.utils.gst_calculator import GSTCalculator
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
+
+from app.utils.gst_calculator import GSTCalculator
+
+
+# ═══════════════════════════════════════════════════════════════════
+# TDS ENGINE — shared by PurchaseOrderService (vendor deducts-from-you)
+# and InvoiceService (customer deducts-from-you). Section thresholds
+# per the Income-tax Act; "excess" = TDS only on amount crossing the
+# threshold (194Q); "full" = TDS on the entire cumulative amount once
+# crossed (194C/194J/194H/194I/194A), matching Tally/Zoho Books.
+# ═══════════════════════════════════════════════════════════════════
+TDS_SECTION_RULES = {
+    "194Q": {"threshold": Decimal("5000000"), "mode": "excess"},
+    "194C": {"threshold": Decimal("100000"),  "mode": "full"},
+    "194J": {"threshold": Decimal("30000"),   "mode": "full"},
+    "194H": {"threshold": Decimal("15000"),   "mode": "full"},
+    "194I": {"threshold": Decimal("240000"),  "mode": "full"},
+    "194A": {"threshold": Decimal("5000"),    "mode": "full"},
+}
+
+
+def _financial_year_bounds(on_date: date) -> tuple[date, date]:
+    """Indian FY: 1 Apr – 31 Mar."""
+    if on_date.month >= 4:
+        return date(on_date.year, 4, 1), date(on_date.year + 1, 3, 31)
+    return date(on_date.year - 1, 4, 1), date(on_date.year, 3, 31)
+
+
+def _calc_tds_amount(party, prior_ytd: Decimal, current_taxable: Decimal) -> Decimal:
+    """Given a Party (vendor or customer) with a TDS profile, the taxable value already
+    transacted this FY (excluding this transaction), and this transaction's taxable value,
+    return the TDS amount applicable on THIS transaction."""
+    if not party or not party.tds_applicable or not party.tds_rate:
+        return Decimal("0")
+    rule = TDS_SECTION_RULES.get(party.tds_section, {"threshold": Decimal("0"), "mode": "full"})
+    new_cumulative = prior_ytd + current_taxable
+    if new_cumulative <= rule["threshold"]:
+        return Decimal("0")
+    if rule["mode"] == "excess":
+        already_over = max(prior_ytd - rule["threshold"], Decimal("0"))
+        taxable_for_tds = current_taxable - already_over if prior_ytd < rule["threshold"] else current_taxable
+        taxable_for_tds = min(max(taxable_for_tds, Decimal("0")), current_taxable)
+    else:
+        taxable_for_tds = current_taxable
+    return round(taxable_for_tds * party.tds_rate / Decimal("100"), 2)
 
 
 def _calc_items(items_in: list[Any], supply_type: str):
@@ -301,9 +345,91 @@ class PurchaseOrderService:
         )
         return generate_invoice_pdf(data)
 
+    async def get_return_pdf_data(self, po_id: UUID, jv_id: UUID, company_id: UUID) -> bytes:
+        from app.utils.pdf_generator import PDFDocumentData, generate_invoice_pdf
+        from app.db.repositories import CompanyRepository, PartyRepository
+        from app.db.models.accounting import JournalVoucher
+        from app.db.models.billing import PurchaseOrderItem
+        from app.db.models.inventory import StockMovement
+
+        jv = await self.session.get(JournalVoucher, jv_id)
+        if not jv or jv.company_id != company_id or jv.ref_type != "purchase_order" or str(jv.ref_id) != str(po_id):
+            raise NotFoundError("Purchase return not found.")
+
+        po = await self.repo.get_or_raise(po_id)
+        company = await CompanyRepository(self.session).get(company_id)
+        vendor = await PartyRepository(self.session).get(po.vendor_id) if po.vendor_id else None
+
+        mv_result = await self.session.execute(
+            select(StockMovement).where(
+                StockMovement.ref_type == "purchase_return_voucher",
+                StockMovement.ref_id == jv_id,
+            )
+        )
+        movements = mv_result.scalars().all()
+
+        po_items_result = await self.session.execute(
+            select(PurchaseOrderItem).where(PurchaseOrderItem.po_id == po_id)
+        )
+        po_items = {str(it.product_id): it for it in po_items_result.scalars().all() if it.product_id}
+
+        items_data = []
+        total_taxable = Decimal("0"); total_cgst = Decimal("0")
+        total_sgst = Decimal("0"); total_igst = Decimal("0")
+        for i, m in enumerate(movements):
+            it = po_items.get(str(m.product_id))
+            qty = abs(m.quantity)
+            rate = m.cost_price or (it.rate if it else Decimal("0"))
+            gst_rate = it.gst_rate if it else Decimal("0")
+            ratio = (qty / it.quantity) if it and it.quantity else Decimal("0")
+            line_taxable = qty * rate
+            line_cgst = (it.cgst_amount * ratio) if it else Decimal("0")
+            line_sgst = (it.sgst_amount * ratio) if it else Decimal("0")
+            line_igst = (it.igst_amount * ratio) if it else Decimal("0")
+            total_taxable += line_taxable; total_cgst += line_cgst
+            total_sgst += line_sgst; total_igst += line_igst
+            items_data.append({
+                "line_no": i + 1, "description": it.description if it else str(m.product_id),
+                "hsn_code": it.hsn_code if it else "", "quantity": str(qty), "rate": rate,
+                "taxable_amount": line_taxable, "gst_rate": gst_rate,
+                "cgst_amount": line_cgst, "sgst_amount": line_sgst, "igst_amount": line_igst,
+                "total_amount": line_taxable + line_cgst + line_sgst + line_igst,
+            })
+
+        data = PDFDocumentData(
+            doc_type="purchase_return", doc_no=jv.jv_no, doc_date=jv.jv_date,
+            company_name=company.legal_name if company else "", company_gstin=(company.gstin or "") if company else "",
+            company_address=(company.reg_address or "") if company else "",
+            company_phone=(company.phone or "") if company else "", company_email=(company.email or "") if company else "",
+            party_name=vendor.display_name if vendor else "", party_gstin=(vendor.gstin or "") if vendor else "",
+            party_address=(vendor.billing_address or "") if vendor else "",
+            po_no=po.po_no, po_date=po.po_date, items=items_data,
+            taxable_amount=total_taxable, cgst_amount=total_cgst, sgst_amount=total_sgst,
+            igst_amount=total_igst, total_amount=jv.total_debit,
+        )
+        return generate_invoice_pdf(data)
+
+    # Section-wise TDS threshold rules (Income-tax Act). "excess" = TDS only on the amount
+    # crossing the threshold (194Q); "full" = once threshold is crossed, TDS applies on the
+    # ENTIRE cumulative amount incl. this transaction (194C/194J/194H/194I/194A), per common
+    # ERP practice (Tally/Zoho Books) and CBDT clarification for 194C.
+    async def _calc_tds(self, company_id: UUID, vendor, po_date: date, current_taxable: Decimal) -> Decimal:
+        if not vendor or not vendor.tds_applicable:
+            return Decimal("0")
+        fy_start, fy_end = _financial_year_bounds(po_date)
+        prior_ytd = await self.repo.sum_taxable_for_vendor_in_fy(company_id, vendor.id, fy_start, fy_end)
+        return _calc_tds_amount(vendor, prior_ytd, current_taxable)
+
     async def create(self, company_id: UUID, payload: PurchaseOrderCreate, user_id: UUID) -> PurchaseOrder:
-        lines, totals = _calc_items(payload.items, "intra")
+        lines, totals = _calc_items(payload.items, payload.supply_type)
         total = totals["taxable_amount"] + totals["cgst_amount"] + totals["sgst_amount"] + totals["igst_amount"] + totals["cess_amount"] + payload.other_charges
+
+        # TDS is auto-derived from the vendor's TDS profile + section threshold, calculated on
+        # the taxable value only (GST is excluded from the TDS base — CBDT Circular 23/2017).
+        from app.db.repositories import PartyRepository
+        vendor = await PartyRepository(self.session).get(payload.vendor_id)
+        tds_amount = await self._calc_tds(company_id, vendor, payload.po_date, totals["taxable_amount"])
+
         po_no = await self.seq.next_number(company_id, "po")
         po = await self.repo.create({
             "company_id": company_id,
@@ -320,6 +446,7 @@ class PurchaseOrderService:
             "special_instructions": payload.special_instructions,
             "notes": payload.notes,
             "other_charges": payload.other_charges,
+            "tds_amount": tds_amount,
             "created_by": user_id,
             "status": "open",
             "approval_status": "pending",
@@ -420,6 +547,7 @@ class PurchaseOrderService:
                 taxable_amount=total_taxable, cgst_amount=total_cgst,
                 sgst_amount=total_sgst, igst_amount=total_igst,
                 total_amount=total_value, user_id=user_id,
+                tds_amount=po.tds_amount,
             )
 
         all_received = all(it.received_qty >= it.quantity for it in po.items if it.product_id)
@@ -571,10 +699,22 @@ class InvoiceService:
 
     async def create(self, company_id: UUID, payload: InvoiceCreate, user_id: UUID) -> Invoice:
         lines, totals = _calc_items(payload.items, payload.supply_type)
+
+        # TDS Receivable is auto-derived from the CUSTOMER's TDS profile + section threshold —
+        # only applies to normal tax invoices (a credit note has nothing to withhold).
+        tds_amount = Decimal("0")
+        if payload.invoice_type == "tax_invoice":
+            from app.db.repositories import PartyRepository
+            customer = await PartyRepository(self.session).get(payload.party_id)
+            if customer and customer.tds_applicable:
+                fy_start, fy_end = _financial_year_bounds(payload.invoice_date)
+                prior_ytd = await self.repo.sum_taxable_for_customer_in_fy(company_id, customer.id, fy_start, fy_end)
+                tds_amount = _calc_tds_amount(customer, prior_ytd, totals["taxable_amount"])
+
         from decimal import ROUND_HALF_UP
         raw_total = (totals["taxable_amount"] + totals["cgst_amount"] + totals["sgst_amount"] +
                      totals["igst_amount"] + totals["cess_amount"] + payload.other_charges -
-                     payload.tds_amount + payload.tcs_amount)
+                     tds_amount + payload.tcs_amount)
         rounded = raw_total.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
         round_off = rounded - raw_total + payload.round_off
         inv_no = await self.seq.next_number(company_id, "invoice")
@@ -610,7 +750,7 @@ class InvoiceService:
             "notes": payload.notes,
             "terms_conditions": payload.terms_conditions,
             "other_charges": payload.other_charges,
-            "tds_amount": payload.tds_amount,
+            "tds_amount": tds_amount,
             "tcs_amount": payload.tcs_amount,
             "round_off": round_off,
             "status": "draft",
@@ -712,6 +852,7 @@ class InvoiceService:
                 igst_amount=inv.igst_amount, total_amount=inv.total_amount,
                 supply_type=inv.supply_type, user_id=user_id,
                 invoice_type=inv.invoice_type,
+                tds_amount=inv.tds_amount,
             )
         except Exception:
             pass  # Accounting optional at this stage

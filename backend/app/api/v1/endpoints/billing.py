@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 from uuid import UUID
+from app.core.exceptions import BusinessError, NotFoundError
 from fastapi import APIRouter, Query, Response
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import ORJSONResponse
@@ -18,6 +19,7 @@ from app.services.billing import (
     PaymentService, PurchaseOrderService, QuotationService,
 )
 from app.utils.responses import created, ok, paginated
+from sqlalchemy import select
 from app.schemas.billing import EInvoiceRecordIn
 
 router = APIRouter()
@@ -177,6 +179,13 @@ async def return_po_goods(po_id: UUID, current: CurrentUserDep, db: DBDep, paylo
     po = await svc.return_goods(po_id, current.company_id, current.user_id, items)
     return ok(PurchaseOrderOut.model_validate(po).model_dump(mode='json'), "Goods returned; stock and books updated.")
 
+@router.get("/purchase-orders/{po_id}/returns/{jv_id}/pdf", summary="Download purchase return as PDF")
+async def download_purchase_return_pdf(po_id: UUID, jv_id: UUID, current: CurrentUserDep, db: DBDep) -> Response:
+    svc = PurchaseOrderService(db)
+    pdf_bytes = await svc.get_return_pdf_data(po_id, jv_id, current.company_id)
+    return Response(content=pdf_bytes, media_type="application/pdf",
+                     headers={"Content-Disposition": f'attachment; filename="purchase-return-{jv_id}.pdf"'})
+
 @router.patch("/purchase-orders/{po_id}", summary="Partially update purchase order (e.g. status)")
 async def patch_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep, payload: dict) -> ORJSONResponse:
     from app.db.repositories.billing import PurchaseOrderRepository
@@ -205,6 +214,77 @@ async def undo_po_return(po_id: UUID, jv_id: UUID, current: CurrentUserDep, db: 
     svc = PurchaseOrderService(db)
     po = await svc.delete_return(po_id, jv_id, current.company_id, current.user_id)
     return ok(PurchaseOrderOut.model_validate(po).model_dump(mode='json'), "Return reversed — stock and books restored.")
+
+@router.get("/purchase-orders/{po_id}/returns/{jv_id}", summary="Get one purchase return as a printable document")
+async def get_purchase_return_detail(po_id: UUID, jv_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
+    from app.db.models.accounting import JournalVoucher
+    from app.db.models import Party
+    from app.db.models.billing import PurchaseOrder, PurchaseOrderItem
+    from app.db.models.inventory import StockMovement
+
+    jv = await db.get(JournalVoucher, jv_id)
+    if not jv or jv.company_id != current.company_id or jv.ref_type != "purchase_order" or str(jv.ref_id) != str(po_id):
+        raise NotFoundError("Purchase return not found.")
+
+    po = await db.get(PurchaseOrder, po_id)
+    if not po:
+        raise NotFoundError("Purchase order not found.")
+
+    vendor = await db.get(Party, po.vendor_id)
+
+    mv_result = await db.execute(
+        select(StockMovement).where(
+            StockMovement.ref_type == "purchase_return_voucher",
+            StockMovement.ref_id == jv_id,
+        )
+    )
+    movements = mv_result.scalars().all()
+
+    po_items_result = await db.execute(
+        select(PurchaseOrderItem).where(PurchaseOrderItem.po_id == po_id)
+    )
+    po_items = {str(it.product_id): it for it in po_items_result.scalars().all() if it.product_id}
+
+    items = []
+    total_taxable = Decimal("0")
+    total_cgst = Decimal("0")
+    total_sgst = Decimal("0")
+    total_igst = Decimal("0")
+    for m in movements:
+        it = po_items.get(str(m.product_id))
+        qty = abs(m.quantity)
+        rate = m.cost_price or (it.rate if it else Decimal("0"))
+        gst_rate = it.gst_rate if it else Decimal("0")
+        line_taxable = qty * rate
+        line_cgst = it.cgst_amount * (qty / it.quantity) if it and it.quantity else Decimal("0")
+        line_sgst = it.sgst_amount * (qty / it.quantity) if it and it.quantity else Decimal("0")
+        line_igst = it.igst_amount * (qty / it.quantity) if it and it.quantity else Decimal("0")
+        total_taxable += line_taxable
+        total_cgst += line_cgst
+        total_sgst += line_sgst
+        total_igst += line_igst
+        items.append({
+            "product_name": it.description if it else str(m.product_id),
+            "hsn_code": it.hsn_code if it else "",
+            "quantity": float(qty),
+            "rate": float(rate),
+            "gst_rate": float(gst_rate),
+            "amount": float(line_taxable + line_cgst + line_sgst + line_igst),
+        })
+
+    return ok({
+        "jv_no": jv.jv_no,
+        "jv_date": jv.jv_date.isoformat(),
+        "po_no": po.po_no,
+        "vendor_name": vendor.display_name if vendor else "",
+        "vendor_gstin": vendor.gstin if vendor else "",
+        "items": items,
+        "taxable_amount": float(total_taxable),
+        "cgst_amount": float(total_cgst),
+        "sgst_amount": float(total_sgst),
+        "igst_amount": float(total_igst),
+        "total_amount": float(jv.total_debit),
+    })
 
 # ═══════════════════════════════════════════════════════════════════
 # INVOICES
@@ -273,11 +353,16 @@ async def patch_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep, pa
     updated = await repo.update(inv, {k: v for k, v in payload.items() if k in allowed})
     return ok(InvoiceOut.model_validate(updated).model_dump(mode='json'), "Invoice updated.")
 
-@router.delete("/invoices/{invoice_id}", status_code=204, summary="Delete invoice (draft only)")
+@router.delete("/invoices/{invoice_id}", status_code=204, summary="Delete invoice (draft only — use /cancel for finalized documents)")
 async def delete_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> Response:
     from app.db.repositories.billing import InvoiceRepository
     repo = InvoiceRepository(db)
     inv = await repo.get_or_raise(invoice_id)
+    if inv.status != "draft":
+        raise BusinessError(
+            "Only draft invoices can be deleted outright — this invoice has already been finalized "
+            "and has real stock/ledger effects. Use cancel instead, which reverses those effects properly."
+        )
     await repo.delete(inv)
     return Response(status_code=204)
 

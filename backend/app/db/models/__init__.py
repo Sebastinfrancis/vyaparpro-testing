@@ -233,6 +233,9 @@ class Party(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
     opening_balance: Mapped[Decimal] = mapped_column(Numeric(15, 2), default=Decimal("0"))
     balance_type: Mapped[str] = mapped_column(String(2), default="Dr")
     currency: Mapped[str] = mapped_column(String(3), default="INR")
+    tds_applicable: Mapped[bool] = mapped_column(Boolean, default=False)
+    tds_section: Mapped[Optional[str]] = mapped_column(String(10))   # e.g. 194Q, 194C, 194J
+    tds_rate: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("0"))  # percentage, e.g. 0.10
     ai_score: Mapped[Optional[Decimal]] = mapped_column(Numeric(5, 2))
     tags: Mapped[Optional[list[str]]] = mapped_column(ARRAY(Text))
     notes: Mapped[Optional[str]] = mapped_column(Text)

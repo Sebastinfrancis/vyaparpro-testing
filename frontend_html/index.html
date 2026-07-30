@@ -592,6 +592,14 @@ select.fi option{background:var(--bg2)}
             <label style="display:flex;align-items:center;gap:7px;padding:5px 4px;font-size:12px;cursor:pointer"><input type="checkbox" value="cancelled" onchange="filterPO()"/> Cancelled</label>
           </div>
         </div>
+        <div style="position:relative;width:180px" id="poPayFWrap">
+          <button type="button" class="fi" style="width:100%;text-align:left;cursor:pointer" id="poPayFBtn" onclick="togglePOPayMenu(event)">All Payments</button>
+          <div id="poPayFMenu" class="hidden" style="position:absolute;top:calc(100% + 4px);left:0;z-index:50;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:8px;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+            <label style="display:flex;align-items:center;gap:7px;padding:5px 4px;font-size:12px;cursor:pointer"><input type="checkbox" value="paid" onchange="filterPO()"/> Paid</label>
+            <label style="display:flex;align-items:center;gap:7px;padding:5px 4px;font-size:12px;cursor:pointer"><input type="checkbox" value="partial" onchange="filterPO()"/> Partially Paid</label>
+            <label style="display:flex;align-items:center;gap:7px;padding:5px 4px;font-size:12px;cursor:pointer"><input type="checkbox" value="unpaid" onchange="filterPO()"/> Unpaid</label>
+          </div>
+        </div>
       </div>
       <div class="card"><div class="tw"><table>
         <thead><tr><th>PO No</th><th>Date</th><th>Vendor</th><th>Amount</th><th>GST</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
@@ -702,7 +710,10 @@ select.fi option{background:var(--bg2)}
       <div class="bc">Accounts / <span>Books</span></div>
       <div class="sh" style="margin-top:8px">
         <div><div class="st">Accounting & Ledger</div><div class="ss">Double-entry bookkeeping, P&L, Balance Sheet</div></div>
-        <button class="btn btn-o btn-sm" onclick="openJEModal()">➕ Journal Entry</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-o btn-sm" onclick="openCapitalModal()">💰 Capital Txn</button>
+          <button class="btn btn-o btn-sm" onclick="openJEModal()">➕ Journal Entry</button>
+        </div>
       </div>
       <div class="tabr">
         <button class="tabb active" onclick="switchTab(this,'acc','pl')">P&L</button>
@@ -718,6 +729,8 @@ select.fi option{background:var(--bg2)}
             <div class="fg" style="margin:0"><label class="fl">From</label><input type="date" class="fi" id="plFrom"/></div>
             <div class="fg" style="margin:0"><label class="fl">To</label><input type="date" class="fi" id="plTo"/></div>
             <button class="btn btn-o btn-sm" onclick="loadPL()">🔄 Refresh</button>
+            <button class="btn btn-o btn-sm" onclick="exportPL('pdf')">📄 PDF</button>
+            <button class="btn btn-o btn-sm" onclick="exportPL('xlsx')">📊 Excel</button>
           </div>
         </div>
         <div style="max-width:580px" id="plBody">
@@ -730,6 +743,8 @@ select.fi option{background:var(--bg2)}
           <div style="display:flex;gap:8px;align-items:flex-end">
             <div class="fg" style="margin:0"><label class="fl">As on</label><input type="date" class="fi" id="bsAsOf"/></div>
             <button class="btn btn-o btn-sm" onclick="loadBS()">🔄 Refresh</button>
+            <button class="btn btn-o btn-sm" onclick="exportBS('pdf')">📄 PDF</button>
+            <button class="btn btn-o btn-sm" onclick="exportBS('xlsx')">📊 Excel</button>
           </div>
         </div>
         <div class="g2" id="bsBody">
@@ -744,6 +759,8 @@ select.fi option{background:var(--bg2)}
               <select class="fi" id="ledgerAccountSelect" onchange="loadLedger()"><option value="">Select account…</option></select></div>
             <div class="fg" style="margin:0"><label class="fl">From</label><input type="date" class="fi" id="ledgerFrom" onchange="loadLedger()"/></div>
             <div class="fg" style="margin:0"><label class="fl">To</label><input type="date" class="fi" id="ledgerTo" onchange="loadLedger()"/></div>
+            <button class="btn btn-o btn-sm" onclick="exportLedger('pdf')">📄 PDF</button>
+            <button class="btn btn-o btn-sm" onclick="exportLedger('xlsx')">📊 Excel</button>
           </div>
         </div>
         <div class="tw"><table>
@@ -752,11 +769,31 @@ select.fi option{background:var(--bg2)}
         </table></div>
         <div style="margin-top:10px;font-size:11px;color:var(--text3)" id="ledgerSummary"></div>
       </div></div>
-      <div id="acc-cashbook" class="hidden"><div class="card"><div class="tw"><table>
+      <div id="acc-cashbook" class="hidden"><div class="card">
+        <div class="sh" style="margin-bottom:14px">
+          <div><div style="font-size:13px;font-weight:700">Cash Book</div></div>
+          <div style="display:flex;gap:8px;align-items:flex-end">
+            <div class="fg" style="margin:0"><label class="fl">From</label><input type="date" class="fi" id="cashFrom" onchange="loadCashbook()"/></div>
+            <div class="fg" style="margin:0"><label class="fl">To</label><input type="date" class="fi" id="cashTo" onchange="loadCashbook()"/></div>
+            <button class="btn btn-o btn-sm" onclick="exportCashbook('pdf')">📄 PDF</button>
+            <button class="btn btn-o btn-sm" onclick="exportCashbook('xlsx')">📊 Excel</button>
+          </div>
+        </div>
+        <div class="tw"><table>
         <thead><tr><th>Date</th><th>Narration</th><th>Receipt</th><th>Payment</th><th>Balance</th></tr></thead>
         <tbody id="cashBody"></tbody>
       </table></div></div></div>
-      <div id="acc-bank" class="hidden"><div class="card"><div class="tw"><table>
+      <div id="acc-bank" class="hidden"><div class="card">
+        <div class="sh" style="margin-bottom:14px">
+          <div><div style="font-size:13px;font-weight:700">Bank Book</div></div>
+          <div style="display:flex;gap:8px;align-items:flex-end">
+            <div class="fg" style="margin:0"><label class="fl">From</label><input type="date" class="fi" id="bankFrom" onchange="loadBankbook()"/></div>
+            <div class="fg" style="margin:0"><label class="fl">To</label><input type="date" class="fi" id="bankTo" onchange="loadBankbook()"/></div>
+            <button class="btn btn-o btn-sm" onclick="exportBankbook('pdf')">📄 PDF</button>
+            <button class="btn btn-o btn-sm" onclick="exportBankbook('xlsx')">📊 Excel</button>
+          </div>
+        </div>
+        <div class="tw"><table>
         <thead><tr><th>Date</th><th>Narration</th><th>Debit</th><th>Credit</th><th>Balance</th></tr></thead>
         <tbody id="bankBody"></tbody>
       </table></div></div></div>
@@ -1070,6 +1107,24 @@ select.fi option{background:var(--bg2)}
         <div class="fg"><label class="fl">Payment Terms</label><select class="fi" id="cm_terms"><option value="0">Due on Receipt</option><option value="15">Net 15</option><option value="30">Net 30</option><option value="45">Net 45</option></select></div></div>
       <div class="fr c2"><div class="fg"><label class="fl">Opening Balance (₹)</label><input class="fi" type="number" id="cm_opening" placeholder="0"/></div>
         <div class="fg"><label class="fl">Balance Type</label><select class="fi" id="cm_balancetype"><option value="Dr">Dr (They owe us)</option><option value="Cr">Cr (We owe them)</option></select></div></div>
+      <div class="fg" style="display:flex;align-items:center;gap:8px;margin-top:4px">
+        <input type="checkbox" id="cm_tds_applicable" style="width:16px;height:16px" onchange="toggleCustTds()"/>
+        <label class="fl" style="margin:0">TDS Applicable (customer deducts TDS on payments to you)</label>
+      </div>
+      <div class="fr c2" id="cm_tds_fields" style="display:none">
+        <div class="fg"><label class="fl">Section</label>
+          <select class="fi" id="cm_tds_section" onchange="autofillCustTdsRate()">
+            <option value="194Q">194Q — Purchase of Goods (0.1%)</option>
+            <option value="194C">194C — Contractors (2%)</option>
+            <option value="194J">194J — Professional/Technical Fees (10%)</option>
+            <option value="194H">194H — Commission/Brokerage (5%)</option>
+            <option value="194I">194I — Rent (10%)</option>
+            <option value="194A">194A — Interest (10%)</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Rate (%)</label><input class="fi" type="number" step="0.01" id="cm_tds_rate" placeholder="0.10"/></div>
+      </div>
       <div class="fg"><label class="fl">Notes</label><textarea class="fi" rows="2" id="cm_notes" placeholder="Internal notes…"></textarea></div>
     </div>
     <div class="mf"><button class="btn btn-o" onclick="closeModal('custModal')">Cancel</button><button class="btn btn-p" onclick="saveCust()">Save Customer</button></div>
@@ -1106,6 +1161,24 @@ select.fi option{background:var(--bg2)}
             <option>Net 45</option>
           </select>
         </div>
+      </div>
+      <div class="fg" style="display:flex;align-items:center;gap:8px;margin-top:4px">
+        <input type="checkbox" id="vm_tds_applicable" style="width:16px;height:16px" onchange="toggleVendTds()"/>
+        <label class="fl" style="margin:0">TDS Applicable</label>
+      </div>
+      <div class="fr c2" id="vm_tds_fields" style="display:none">
+        <div class="fg"><label class="fl">Section</label>
+          <select class="fi" id="vm_tds_section" onchange="autofillTdsRate()">
+            <option value="194Q">194Q — Purchase of Goods (0.1%)</option>
+            <option value="194C">194C — Contractors (2%)</option>
+            <option value="194J">194J — Professional/Technical Fees (10%)</option>
+            <option value="194H">194H — Commission/Brokerage (5%)</option>
+            <option value="194I">194I — Rent (10%)</option>
+            <option value="194A">194A — Interest (10%)</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Rate (%)</label><input class="fi" type="number" step="0.01" id="vm_tds_rate" placeholder="0.10"/></div>
       </div>
     </div>
     <div class="mf">
@@ -1182,6 +1255,12 @@ select.fi option{background:var(--bg2)}
       <div class="fr c2">
         <div class="fg"><label class="fl">Expected Delivery</label><input type="date" class="fi" id="poExpDelivery"/></div>
         <div class="fg"><label class="fl">Payment Terms</label><select class="fi" id="poPaymentTerms"><option>Net 30</option><option>Net 45</option><option>Advance</option></select></div>
+      </div>
+      <div class="fg"><label class="fl">Supply Type</label>
+        <select class="fi" id="poSupplyType">
+          <option value="intra">Intra-State (CGST+SGST)</option>
+          <option value="inter">Inter-State (IGST)</option>
+        </select>
       </div>
       <div class="fg"><label class="fl">Notes</label><textarea class="fi" rows="2" id="poNotes" placeholder="Special instructions…"></textarea></div>
       <div style="text-align:right;font-size:13px;font-weight:700;margin-top:6px">Total: <span id="poGrandTotal" style="color:var(--accent)">₹0.00</span></div>
@@ -1339,6 +1418,25 @@ select.fi option{background:var(--bg2)}
   </div>
 </div>
 
+<div id="capitalModal" class="mo hidden">
+  <div class="md md-sm">
+    <div class="mh"><span class="mt2">Capital Transaction</span><button class="mc" onclick="closeModal('capitalModal')">✕</button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl">Type</label>
+        <select class="fi" id="capTxnType">
+          <option value="introduce">Introduce Capital (owner adds money)</option>
+          <option value="drawings">Owner's Drawings (owner withdraws money)</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Cash / Bank Account</label><select class="fi" id="capCashBankAccount"></select></div>
+      <div class="fg"><label class="fl">Amount (₹)</label><input class="fi" type="number" id="capAmount" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Date</label><input class="fi" type="date" id="capDate"/></div>
+      <div class="fg"><label class="fl">Narration</label><input class="fi" id="capNarration" placeholder="Optional"/></div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('capitalModal')">Cancel</button><button class="btn btn-p" onclick="saveCapitalTxn()">Save</button></div>
+  </div>
+</div>
+
 <div id="reportModal" class="mo hidden">
   <div class="md" style="max-width:900px">
     <div class="mh"><span class="mt2" id="reportModalTitle">Report</span><button class="mc" onclick="closeModal('reportModal')">✕</button></div>
@@ -1414,6 +1512,25 @@ async function apiFetch(path, opts = {}) {
   // 204 No Content
   if (res.status === 204) return null;
   return res.json();
+}
+
+async function downloadReport(path, filename) {
+  try {
+    const res = await fetch(CFG.API_BASE + path, { headers: getHeaders(false) });
+    if (!res.ok) {
+      let msg = `HTTP ${res.status}`;
+      try { const body = await res.json(); msg = body.detail || body.message || msg; } catch (_) {}
+      throw new Error(msg);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    showToast('❌ Export failed: ' + e.message);
+  }
 }
 
 // ============================================================
@@ -1524,6 +1641,9 @@ function normCustomer(c) {
     creditDays:      c.credit_days       ?? 30,
     openingBalance:  c.opening_balance   || 0,
     balanceType:     c.balance_type      || 'Dr',
+    tdsApplicable:   c.tds_applicable    || false,
+    tdsSection:      c.tds_section       || '194Q',
+    tdsRate:         c.tds_rate          || 0,
     notes:           c.notes             || '',
     total:           c.total_business    || c.lifetime_value || 0,
     outstanding:     c.outstanding_amount|| c.outstanding || 0,
@@ -1875,8 +1995,8 @@ async function preloadRefData() {
   if (!AUTH.apiOnline) return;
   try {
     const [cr, pr] = await Promise.allSettled([
-      apiFetch('/customers?limit=500'),
-      apiFetch('/products?limit=500'),
+      apiFetch('/customers?page_size=200'),
+      apiFetch('/products?page_size=200'),
     ]);
     if (cr.status === 'fulfilled') {
       const list = unwrapList(cr.value, 'data','items','customers','results');
@@ -2063,6 +2183,42 @@ async function downloadDocPDF(type, id) {
   }
 }
 
+function exportPL(fmt) {
+  const from = getVal('plFrom'), to = getVal('plTo');
+  downloadReport(`/accounting/reports/profit-and-loss?format=${fmt}&from_date=${from}&to_date=${to}`, `profit_and_loss_${from}_${to}.${fmt}`);
+}
+
+function exportBS(fmt) {
+  const asOf = getVal('bsAsOf');
+  downloadReport(`/accounting/reports/balance-sheet?format=${fmt}&as_of_date=${asOf}`, `balance_sheet_${asOf}.${fmt}`);
+}
+
+function exportLedger(fmt) {
+  const acctId = getVal('ledgerAccountSelect');
+  if (!acctId) { showToast('Select an account first'); return; }
+  const from = getVal('ledgerFrom'), to = getVal('ledgerTo');
+  let q = `/accounting/accounts/${acctId}/ledger?format=${fmt}`;
+  if (from) q += `&from_date=${from}`;
+  if (to)   q += `&to_date=${to}`;
+  downloadReport(q, `ledger_${from || 'all'}_${to || 'all'}.${fmt}`);
+}
+
+function exportCashbook(fmt) {
+  const from = getVal('cashFrom'), to = getVal('cashTo');
+  let q = `/accounting/reports/cashbook?format=${fmt}`;
+  if (from) q += `&from_date=${from}`;
+  if (to)   q += `&to_date=${to}`;
+  downloadReport(q, `cashbook_${from || 'all'}_${to || 'all'}.${fmt}`);
+}
+
+function exportBankbook(fmt) {
+  const from = getVal('bankFrom'), to = getVal('bankTo');
+  let q = `/accounting/reports/bankbook?format=${fmt}`;
+  if (from) q += `&from_date=${from}`;
+  if (to)   q += `&to_date=${to}`;
+  downloadReport(q, `bankbook_${from || 'all'}_${to || 'all'}.${fmt}`);
+}
+
 // ============================================================
 //  INVOICES — LIST
 // ============================================================
@@ -2075,7 +2231,7 @@ async function renderInvoices(list) {
   if (!data) {
     if (AUTH.apiOnline) {
       try {
-        const result = await apiFetch('/billing/invoices?limit=200');
+        const result = await apiFetch('/billing/invoices?page_size=200');
         const raw    = unwrapList(result);
         data = raw.map(normInvoice);
         INVOICES = data;
@@ -2125,6 +2281,13 @@ const TYPE_ALIASES = {
   'Tax Invoice': ['Tax Invoice', 'tax_invoice'],
   'Credit Note': ['Credit Note', 'credit_note'],
   'Debit Note':  ['Debit Note', 'debit_note'],
+};
+
+const INVOICE_TYPE_SNAKE = {
+  'GST Invoice':      'tax_invoice',
+  'Tax Invoice':      'tax_invoice',
+  'Proforma Invoice': 'proforma_invoice',
+  'Delivery Challan': 'delivery_challan',
 };
 
 function toggleTypeFilterMenu(e) {
@@ -2521,15 +2684,36 @@ async function finalizeDraftInvoice(id) {
 }
 
 async function deleteInvoice(id) {
-  const inv=INVOICES.find(i=>String(i.id)===String(id));
-  if (!confirm('Delete '+(inv?.no||'this invoice')+'? This cannot be undone.')) return;
-  if (AUTH.apiOnline) {
-    try { await apiFetch(`/billing/invoices/${id}`,{method:'DELETE'}); } catch (_) {}
+  const inv = INVOICES.find(i => String(i.id) === String(id));
+  if (!inv) return;
+
+  const isDraft = inv.status === 'draft';
+  const msg = isDraft
+    ? `Delete draft ${inv.no}? This cannot be undone.`
+    : `${inv.no} has already been finalized — this will REVERSE its stock and ledger effects rather than deleting it outright. Continue?`;
+  if (!confirm(msg)) return;
+
+  try {
+    if (isDraft) {
+      if (AUTH.apiOnline) await apiFetch(`/billing/invoices/${id}`, { method: 'DELETE' });
+      INVOICES = INVOICES.filter(i => String(i.id) !== String(id));
+      addAuditEntry('DELETE', 'Invoice', 'Deleted draft ' + inv.no);
+      showToast('🗑 Draft deleted');
+    } else {
+      if (AUTH.apiOnline) {
+        await apiFetch(`/billing/invoices/${id}/cancel`, {
+          method: 'POST', body: JSON.stringify({ reason: 'Deleted from Sales Invoices' }),
+        });
+      }
+      inv.status = 'cancelled';
+      addAuditEntry('CANCEL', 'Invoice', 'Cancelled ' + inv.no + ' — stock and ledger reversed');
+      showToast('✅ Invoice cancelled — stock and ledger reversed');
+    }
+    renderInvoices();
+    if (typeof renderInventory === 'function') await renderInventory();
+  } catch (e) {
+    showToast('❌ Could not delete/cancel: ' + e.message);
   }
-  INVOICES=INVOICES.filter(i=>String(i.id)!==String(id));
-  addAuditEntry('DELETE','Invoice','Deleted '+(inv?.no||id));
-  showToast('🗑 Invoice deleted');
-  renderInvoices();
 }
 
 // ============================================================
@@ -2601,7 +2785,7 @@ const grandTotal = taxableAmt + totalGST;
     invoice_number:       getVal('invNo'),
     invoice_date:         getVal('invDate'),
     due_date:             getVal('invDue'),
-    invoice_type:         getVal('invType'),
+    invoice_type: INVOICE_TYPE_SNAKE[getVal('invType')] || getVal('invType'),
     party_id:             selectedCustomerId || undefined,
     place_of_supply:      getVal('custState'),
     supply_type:          getVal('supplyType'),
@@ -2770,7 +2954,7 @@ async function saveDraft() {
     invoice_number:       getVal('invNo'),
     invoice_date:         getVal('invDate'),
     due_date:             getVal('invDue'),
-    invoice_type:         getVal('invType'),
+    invoice_type: INVOICE_TYPE_SNAKE[getVal('invType')] || getVal('invType'),
     party_id:             selectedCustomerId || undefined,
     place_of_supply:      getVal('custState'),
     supply_type:          getVal('supplyType'),
@@ -2994,7 +3178,7 @@ function populateGSTMonths() {
   const now = new Date();
   for (let i = 0; i < 12; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const value = d.toISOString().slice(0, 7);
+    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const label = d.toLocaleString('default', { month: 'long', year: 'numeric' });
     sel.innerHTML += `<option value="${value}">${label}</option>`;
   }
@@ -3002,7 +3186,8 @@ function populateGSTMonths() {
 
 async function loadGSTData() {
   populateGSTMonths();
-  const month = getVal('gstMonth') || new Date().toISOString().slice(0, 7);
+  const now = new Date();
+  const month = getVal('gstMonth') || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   try {
     const [summary, gstr1, gstr3b, hsn, itc] = await Promise.all([
       apiFetch(`/gst/summary?month=${month}`),
@@ -3113,6 +3298,8 @@ function openAddCust() {
 
   setVal('cm_terms', '30');
   setVal('cm_balancetype', 'Dr');
+  document.getElementById('cm_tds_applicable').checked = false;
+  document.getElementById('cm_tds_fields').style.display = 'none';
   openModal('custModal');
 }
 
@@ -3141,9 +3328,24 @@ function editCust(id) {
   setVal('cm_terms',       String(c.creditDays ?? 30));
   setVal('cm_opening',     c.openingBalance || '');
   setVal('cm_balancetype', c.balanceType || 'Dr');
+  document.getElementById('cm_tds_applicable').checked = !!c.tdsApplicable;
+  document.getElementById('cm_tds_fields').style.display = c.tdsApplicable ? 'flex' : 'none';
+  setVal('cm_tds_section', c.tdsSection || '194Q');
+  setVal('cm_tds_rate', c.tdsRate || '');
   setVal('cm_notes',       c.notes       || '');
 
   openModal('custModal');
+}
+
+function toggleCustTds() {
+  const on = document.getElementById('cm_tds_applicable').checked;
+  document.getElementById('cm_tds_fields').style.display = on ? 'flex' : 'none';
+  if (on && !getVal('cm_tds_rate')) autofillCustTdsRate();
+}
+function autofillCustTdsRate() {
+  const rates = { '194Q': 0.10, '194C': 2, '194J': 10, '194H': 5, '194I': 10, '194A': 10, 'Other': 0 };
+  const sec = getVal('cm_tds_section');
+  setVal('cm_tds_rate', rates[sec] ?? 0);
 }
 
 // ── save (create or update) ──────────────────────────────────
@@ -3170,6 +3372,9 @@ async function saveCust() {
     credit_days:          parseInt(getVal('cm_terms'), 10) || 0,
     opening_balance:      parseFloat(getVal('cm_opening')) || 0,
     balance_type:         getVal('cm_balancetype') || 'Dr',
+    tds_applicable:       document.getElementById('cm_tds_applicable').checked,
+    tds_section:          document.getElementById('cm_tds_applicable').checked ? getVal('cm_tds_section') : null,
+    tds_rate:             document.getElementById('cm_tds_applicable').checked ? (parseFloat(getVal('cm_tds_rate')) || 0) : 0,
     notes:                getVal('cm_notes')       || undefined,
   };
 
@@ -3191,6 +3396,9 @@ async function saveCust() {
     creditDays:      payload.credit_days,
     openingBalance:  payload.opening_balance,
     balanceType:     payload.balance_type,
+    tdsApplicable:   payload.tds_applicable,
+    tdsSection:      payload.tds_section,
+    tdsRate:         payload.tds_rate,
     notes:           payload.notes || '',
     total:           0,
     outstanding:     0,
@@ -3296,6 +3504,9 @@ function normVendor(v) {
     total:       v.total_business    || 0,
     payable:     v.outstanding_amount || 0,
     last:        v.last_purchase_date || '—',
+    tdsApplicable: v.tds_applicable   || false,
+    tdsSection:    v.tds_section      || '194Q',
+    tdsRate:       v.tds_rate         || 0,
   };
 }
 
@@ -3309,7 +3520,7 @@ async function renderVendors(list) {
   if (data === undefined || data === null) {
     if (AUTH.apiOnline) {
       try {
-        const r = await apiFetch('/vendors?limit=200');
+        const r = await apiFetch('/vendors?page_size=200');
         data = (r.data?.items || []).map(normVendor);
         VENDORS = data;
       } catch (e) {
@@ -3392,6 +3603,8 @@ function openAddVend() {
   // set sensible defaults
   const terms = document.getElementById('vm_terms');
   if (terms) terms.value = 'Net 30';
+  document.getElementById('vm_tds_applicable').checked = false;
+  document.getElementById('vm_tds_fields').style.display = 'none';
 
   openModal('vendModal');
 }
@@ -3413,6 +3626,10 @@ function editVend(id) {
   setVal('vm_addr',    v.addr    || '');
   setVal('vm_credit',  v.credit  || '');
   setVal('vm_terms',   v.terms   || 'Net 30');
+  document.getElementById('vm_tds_applicable').checked = !!v.tdsApplicable;
+  document.getElementById('vm_tds_fields').style.display = v.tdsApplicable ? 'flex' : 'none';
+  setVal('vm_tds_section', v.tdsSection || '194Q');
+  setVal('vm_tds_rate', v.tdsRate || '');
 
   openModal('vendModal');
 }
@@ -3433,6 +3650,9 @@ async function saveVend() {
     party_type:      'vendor',
     credit_limit:    parseFloat(getVal('vm_credit'))   || 0,
     payment_terms:   getVal('vm_terms')                || 'Net 30',
+    tds_applicable:  document.getElementById('vm_tds_applicable').checked,
+    tds_section:     document.getElementById('vm_tds_applicable').checked ? getVal('vm_tds_section') : null,
+    tds_rate:        document.getElementById('vm_tds_applicable').checked ? (parseFloat(getVal('vm_tds_rate')) || 0) : 0,
   };
 
   // local shape — keys match normVendor output
@@ -3511,6 +3731,17 @@ async function saveVend() {
   renderVendors(VENDORS);  // pass directly — avoids re-fetch race condition
 }
 
+function toggleVendTds() {
+  const on = document.getElementById('vm_tds_applicable').checked;
+  document.getElementById('vm_tds_fields').style.display = on ? 'flex' : 'none';
+  if (on && !getVal('vm_tds_rate')) autofillTdsRate();
+}
+function autofillTdsRate() {
+  const rates = { '194Q': 0.10, '194C': 2, '194J': 10, '194H': 5, '194I': 10, '194A': 10, 'Other': 0 };
+  const sec = getVal('vm_tds_section');
+  setVal('vm_tds_rate', rates[sec] ?? 0);
+}
+
 // ── delete ───────────────────────────────────────────────────
 async function deleteVendor(id) {
   if (!confirm('Delete this vendor?')) return;
@@ -3561,7 +3792,7 @@ async function renderInventory(list) {
   if (data === undefined || data === null) {
     if (AUTH.apiOnline) {
       try {
-        const r = await apiFetch('/products?limit=500');
+        const r = await apiFetch('/products?page_size=200');
         data = (r.data?.items || []).map(normProduct);
         PRODUCTS = data;
       } catch (e) {
@@ -3956,7 +4187,11 @@ async function loadCashbook() {
   const tbody = document.getElementById('cashBody');
   if (!tbody) return;
   try {
-    const r = await apiFetch('/accounting/reports/cashbook?page_size=100');
+    const from = getVal('cashFrom'), to = getVal('cashTo');
+    let q = '/accounting/reports/cashbook?page_size=100';
+    if (from) q += `&from_date=${from}`;
+    if (to)   q += `&to_date=${to}`;
+    const r = await apiFetch(q);
     const items = r?.data?.items || r?.items || [];
     tbody.innerHTML = items.map(e => `<tr><td>${e.txn_date}</td><td>${e.account_name} — ${e.narration || ''}</td>
       <td style="color:var(--green)">${e.debit_amount > 0 ? fmtINR(e.debit_amount) : '—'}</td>
@@ -3972,7 +4207,11 @@ async function loadBankbook() {
   const tbody = document.getElementById('bankBody');
   if (!tbody) return;
   try {
-    const r = await apiFetch('/accounting/reports/bankbook?page_size=100');
+    const from = getVal('bankFrom'), to = getVal('bankTo');
+    let q = '/accounting/reports/bankbook?page_size=100';
+    if (from) q += `&from_date=${from}`;
+    if (to)   q += `&to_date=${to}`;
+    const r = await apiFetch(q);
     const items = r?.data?.items || r?.items || [];
     tbody.innerHTML = items.map(e => `<tr><td>${e.txn_date}</td><td>${e.account_name} — ${e.narration || ''}</td>
       <td style="color:var(--accent)">${e.debit_amount > 0 ? fmtINR(e.debit_amount) : '—'}</td>
@@ -4028,6 +4267,34 @@ async function saveJE() {
   }
 }
 
+async function openCapitalModal() {
+  await loadAccountsIfNeeded();
+  const sel = document.getElementById('capCashBankAccount');
+  sel.innerHTML = ACCOUNTS.filter(a => a.account_type === 'cash' || a.account_type === 'bank')
+    .map(a => `<option value="${a.id}">${a.account_code} — ${a.account_name}</option>`).join('');
+  if (!sel.innerHTML) sel.innerHTML = '<option value="">No Cash/Bank accounts found</option>';
+  document.getElementById('capDate').value = new Date().toISOString().slice(0,10);
+  openModal('capitalModal');
+}
+
+async function saveCapitalTxn() {
+  const payload = {
+    voucher_date: getVal('capDate'),
+    cash_bank_account_id: getVal('capCashBankAccount'),
+    txn_type: getVal('capTxnType'),
+    amount: +getVal('capAmount') || 0,
+    narration: getVal('capNarration') || '',
+  };
+  try {
+    await apiFetch('/accounting/vouchers/quick/capital', { method: 'POST', body: JSON.stringify(payload) });
+    showToast('✅ Capital transaction recorded');
+    closeModal('capitalModal');
+    if (typeof loadLedger === 'function') loadLedger();
+  } catch (e) {
+    showToast('❌ Could not save: ' + e.message);
+  }
+}
+
 // ============================================================
 //  OTHER MODULE RENDERS (CRM, PO, Quotes, Returns, etc.)
 // ============================================================
@@ -4042,7 +4309,7 @@ async function renderCRM(list) {
   if (data === undefined || data === null) {
     if (AUTH.apiOnline) {
       try {
-        const r = await apiFetch('/crm/leads?limit=200');
+        const r = await apiFetch('/crm/leads?page_size=200');
         data = (r.data?.items || []).map(normLead);
         CRM_LEADS = data;
       } catch (e) {
@@ -4188,6 +4455,12 @@ function fmtLakh(n) {
   return n >= 100000 ? '₹' + (n/100000).toFixed(2) + 'L' : '₹' + fmt(n);
 }
 
+function getPOPaymentStatus(p) {
+  if (p.paidAmount >= p.total) return 'paid';
+  if (p.paidAmount > 0) return 'partial';
+  return 'unpaid';
+}
+
 function updatePOStats(data) {
   const now = new Date();
   const thisMonthTotal = data
@@ -4305,6 +4578,7 @@ async function savePO() {
     expected_delivery: getVal('poExpDelivery') || null,
     payment_terms: getVal('poPaymentTerms'),
     notes: getVal('poNotes') || '',
+    supply_type: getVal('poSupplyType') || 'intra',
     items,
   };
 
@@ -4365,6 +4639,58 @@ function viewPO(id) {
       ${p.notes ? `<div style="margin-top:16px;padding:10px;background:#f8f8f8;border-radius:6px;font-size:11px;color:#666"><strong>Notes:</strong> ${p.notes}</div>` : ''}
     </div>`;
   openModal('invPreviewModal');
+}
+
+async function viewPurchaseReturn(jvId, poId) {
+  if (!AUTH.apiOnline) { showToast('⚠️ Requires connection to view return details', 'warn'); return; }
+  try {
+    const r = await apiFetch(`/billing/purchase-orders/${poId}/returns/${jvId}`);
+    const d = r?.data || r;
+
+    document.getElementById('prevTitle').textContent = 'Purchase Return — ' + d.jv_no;
+    document.getElementById('invPreviewBody').innerHTML = `
+      <div class="inv-preview">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+          <div>
+            <div style="font-size:22px;font-weight:800;color:#111">${CFG.COMPANY_NAME}</div>
+            <div style="font-size:11px;color:#555;margin-top:4px">GSTIN: ${CFG.COMPANY_GSTIN}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:18px;font-weight:800;color:#0099cc">PURCHASE RETURN</div>
+            <div style="font-size:13px;font-weight:700;margin-top:4px">${d.jv_no}</div>
+            <div style="font-size:11px;color:#555">Date: ${fmtDate(d.jv_date)}</div>
+            <div style="font-size:11px;color:#555">Against: ${d.po_no}</div>
+          </div>
+        </div>
+        <div style="background:#f8f8f8;border-radius:8px;padding:14px;margin-bottom:20px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:6px">Vendor</div>
+          <div style="font-size:13px;font-weight:700">${d.vendor_name}</div>
+          ${d.vendor_gstin ? `<div style="font-size:11px;color:#555;margin-top:2px">GSTIN: ${d.vendor_gstin}</div>` : ''}
+        </div>
+        <table style="margin-bottom:16px">
+          <thead><tr><th style="width:5%">#</th><th style="width:35%">Product</th><th style="width:8%">HSN</th><th style="width:8%">Qty</th><th style="width:12%">Rate</th><th style="width:8%">GST%</th><th style="width:24%">Amount</th></tr></thead>
+          <tbody>${d.items.map((it,i)=>`<tr>
+            <td style="color:#666">${i+1}</td>
+            <td style="font-weight:600">${it.product_name}</td>
+            <td style="font-family:monospace;color:#888;font-size:10px">${it.hsn_code||'—'}</td>
+            <td>${it.quantity}</td><td>₹${fmt(it.rate)}</td><td>${it.gst_rate}%</td>
+            <td style="font-weight:700">₹${fmt(it.amount)}</td></tr>`).join('')}</tbody>
+        </table>
+        <div style="display:flex;justify-content:flex-end">
+          <div style="min-width:280px">
+            <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Taxable Amount</span><span>₹${fmt(d.taxable_amount)}</span></div>
+            ${d.cgst_amount ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>CGST</span><span>₹${fmt(d.cgst_amount)}</span></div>` : ''}
+            ${d.sgst_amount ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>SGST</span><span>₹${fmt(d.sgst_amount)}</span></div>` : ''}
+            ${d.igst_amount ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>IGST</span><span>₹${fmt(d.igst_amount)}</span></div>` : ''}
+            <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:800;border-top:2px solid #333;margin-top:6px">
+              <span>TOTAL</span><span style="color:#0099cc">₹${fmt(d.total_amount)}</span></div>
+          </div>
+        </div>
+      </div>`;
+    openModal('invPreviewModal');
+  } catch (e) {
+    showToast('❌ Could not load return details: ' + e.message);
+  }
 }
 
 function poStatusClass(s) {
@@ -4459,7 +4785,7 @@ function openReceiveModal(id) {
   document.getElementById('poReceiveInfo').textContent = `${p.no} · ${p.vendor}`;
   document.getElementById('poReceiveItems').innerHTML = pending.map((it, i) => {
     const remaining = it.qty - it.receivedQty;
-    return `<div class="iir" id="recv-row-${i}" data-item-id="${it.id}" data-max="${remaining}">
+    return `<div class="iir" id="recv-row-${i}" data-item-id="${it.id}" data-max="${remaining}" data-prod-name="${it.prod}">
       <span>${it.prod}</span>
       <span>${it.qty}</span>
       <span>${it.receivedQty}</span>
@@ -4473,6 +4799,8 @@ function openReceiveModal(id) {
   openReceiveModal._currentId = id; // stash for submit
 }
 
+let _pendingReceiveItems = null;
+
 async function submitPartialReceive() {
   const id = openReceiveModal._currentId;
   const p = PO_DATA.find(x => String(x.id) === String(id));
@@ -4480,6 +4808,7 @@ async function submitPartialReceive() {
 
   const count = +document.getElementById('poReceiveItems').dataset.count || 0;
   const items = [];
+  const summaryRows = [];
   for (let i = 0; i < count; i++) {
     const row = document.getElementById('recv-row-' + i);
     const qty = +getVal('recv-qty-' + i) || 0;
@@ -4487,20 +4816,43 @@ async function submitPartialReceive() {
     if (qty <= 0) continue;
     if (qty > max) { showToast('⚠️ Quantity exceeds pending amount for one item', 'warn'); return; }
     items.push({ item_id: row.dataset.itemId, qty });
+    summaryRows.push(`<tr><td>${row.dataset.prodName || row.dataset.itemId}</td><td style="text-align:right">${qty}</td></tr>`);
   }
   if (!items.length) { showToast('⚠️ Enter at least one quantity to receive', 'warn'); return; }
 
+  _pendingReceiveItems = items;
+
+  document.querySelector('#poReceiveModal .mb').innerHTML = `
+    <div style="font-size:13px;font-weight:700;margin-bottom:4px">Confirm Goods Receipt</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:14px">${p.no} · ${p.vendor}</div>
+    <div class="card">
+      <table><thead><tr><th>Item</th><th style="text-align:right">Qty Received Now</th></tr></thead>
+        <tbody>${summaryRows.join('')}</tbody></table>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:12px">This will update stock for the quantities above.</div>`;
+
+  document.querySelector('#poReceiveModal .mf').innerHTML = `
+    <button class="btn btn-o" onclick="openReceiveModal('${id}')">Back</button>
+    <button class="btn btn-p" onclick="_doSubmitPartialReceive('${id}')">✅ Confirm & Update Stock</button>`;
+}
+
+async function _doSubmitPartialReceive(id) {
+  const p = PO_DATA.find(x => String(x.id) === String(id));
+  const items = _pendingReceiveItems;
+  if (!items) return;
   try {
     if (AUTH.apiOnline) {
       await apiFetch(`/billing/purchase-orders/${id}/receive`, { method: 'POST', body: JSON.stringify({ items }) });
     }
     showToast('✅ Goods received — stock updated');
-    addAuditEntry('UPDATE', 'Purchase', 'Partially received goods for ' + (p.no || id));
+    addAuditEntry('UPDATE', 'Purchase', 'Partially received goods for ' + (p?.no || id));
     closeModal('poReceiveModal');
     await renderPO();
     if (typeof renderInventory === 'function') renderInventory();
   } catch (e) {
     showToast('❌ Could not receive goods: ' + e.message);
+  } finally {
+    _pendingReceiveItems = null;
   }
 }
 
@@ -4594,14 +4946,20 @@ function filterPO() {
   const q = (document.getElementById('poSearch')?.value || '').toLowerCase();
   const sortBy = document.getElementById('poSortF')?.value || 'date_desc';
   const selectedStatuses = getSelectedPOStatuses();
+  const selectedPayStatuses = getSelectedPOPayStatuses();
   const labels = { open:'Open', partially_received:'Partially Received', received:'Received', cancelled:'Cancelled' };
+  const payLabels = { paid:'Paid', partial:'Partially Paid', unpaid:'Unpaid' };
 
   const btn = document.getElementById('poStatusFBtn');
   if (btn) btn.textContent = selectedStatuses.length ? selectedStatuses.map(s => labels[s]||s).join(', ') : 'All Status';
 
+  const payBtn = document.getElementById('poPayFBtn');
+  if (payBtn) payBtn.textContent = selectedPayStatuses.length ? selectedPayStatuses.map(s => payLabels[s]||s).join(', ') : 'All Payments';
+
   let filtered = PO_DATA.filter(p =>
     (!q || (p.no || '').toLowerCase().includes(q) || (p.vendor || '').toLowerCase().includes(q)) &&
-    (!selectedStatuses.length || selectedStatuses.includes(p.status))
+    (!selectedStatuses.length || selectedStatuses.includes(p.status)) &&
+    (!selectedPayStatuses.length || selectedPayStatuses.includes(getPOPaymentStatus(p)))
   );
   filtered = sortPOs(filtered, sortBy);
   renderPO(filtered);
@@ -4618,6 +4976,19 @@ document.addEventListener('click', (e) => {
 });
 function getSelectedPOStatuses() {
   return Array.from(document.querySelectorAll('#poStatusFMenu input[type=checkbox]:checked')).map(cb => cb.value);
+}
+
+function togglePOPayMenu(e) {
+  e.stopPropagation();
+  document.getElementById('poPayFMenu').classList.toggle('hidden');
+}
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('poPayFWrap');
+  const menu = document.getElementById('poPayFMenu');
+  if (wrap && menu && !wrap.contains(e.target)) menu.classList.add('hidden');
+});
+function getSelectedPOPayStatuses() {
+  return Array.from(document.querySelectorAll('#poPayFMenu input[type=checkbox]:checked')).map(cb => cb.value);
 }
 
 async function renderQuotes() {
@@ -4651,7 +5022,7 @@ async function convertQuote(quoteId) {
 
 async function renderReturns() {
   const b = document.getElementById('retBody'); if (!b) return;
-  if (!PO_DATA.length && typeof renderPO === 'function') await renderPO();
+  if (typeof renderPO === 'function' && AUTH.apiOnline) await renderPO();
   let data = RETURNS;
   if (AUTH.apiOnline) {
     try {
@@ -4726,7 +5097,7 @@ async function renderReturns() {
     <td class="b">₹${r.amount.toLocaleString()}</td>
     <td><span class="sb ${r.status==='processed'?'sp':'spen'}">${r.status}</span></td>
     <td>
-      <button class="btn btn-o btn-sm" onclick="${r.kind === 'po_return' ? `viewPO('${r.id}')` : `viewInvoice('${r.id}')`}">👁</button>
+      <button class="btn btn-o btn-sm" onclick="${r.kind === 'po_return' ? `viewPurchaseReturn('${r.jvId}','${r.id}')` : `viewInvoice('${r.id}')`}">👁</button>
       <button class="btn btn-d btn-sm" onclick="deleteReturn('${r.no}')">🗑</button>
     </td></tr>`).join('');
 }
@@ -4784,7 +5155,7 @@ function resolvePartyName(paymentType, partyId) {
 async function loadVendorsIfNeeded() {
   if (!AUTH.apiOnline) return;
   try {
-    const r = await apiFetch('/vendors?limit=200');
+    const r = await apiFetch('/vendors?page_size=200');
     const items = r?.data?.items || r?.items || [];
     if (items.length) VENDORS = items.map(normVendor);
   } catch (e) { /* keep existing VENDORS as fallback */ }
@@ -5669,7 +6040,7 @@ async function openReturnModal() {
   const loaders = [];
   if (typeof renderPO === 'function') loaders.push(renderPO());
   if (typeof loadVendorsIfNeeded === 'function') loaders.push(loadVendorsIfNeeded());
-  if (!INVOICES.length && typeof renderInvoices === 'function') loaders.push(renderInvoices());
+  if (typeof renderInvoices === 'function') loaders.push(renderInvoices());
   await Promise.all(loaders);
 
   document.getElementById('retDocType').value = 'sales_return';
