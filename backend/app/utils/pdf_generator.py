@@ -17,8 +17,9 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import (
-    HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle,
+    HRFlowable, Image as RLImage, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle,
 )
+import os
 
 from app.utils.gst_calculator import amount_in_words
 from reportlab.pdfbase import pdfmetrics
@@ -46,6 +47,23 @@ LIGHT_GREY  = colors.HexColor("#F5F5F5")
 MED_GREY    = colors.HexColor("#CCCCCC")
 TEXT_DARK   = colors.HexColor("#212121")
 
+GST_STATE_CODES = {
+    "01": "Jammu and Kashmir", "02": "Himachal Pradesh", "03": "Punjab", "04": "Chandigarh",
+    "05": "Uttarakhand", "06": "Haryana", "07": "Delhi", "08": "Rajasthan", "09": "Uttar Pradesh",
+    "10": "Bihar", "11": "Sikkim", "12": "Arunachal Pradesh", "13": "Nagaland", "14": "Manipur",
+    "15": "Mizoram", "16": "Tripura", "17": "Meghalaya", "18": "Assam", "19": "West Bengal",
+    "20": "Jharkhand", "21": "Odisha", "22": "Chhattisgarh", "23": "Madhya Pradesh", "24": "Gujarat",
+    "25": "Daman and Diu", "26": "Dadra and Nagar Haveli", "27": "Maharashtra", "28": "Andhra Pradesh (Old)",
+    "29": "Karnataka", "30": "Goa", "31": "Lakshadweep", "32": "Kerala", "33": "Tamil Nadu",
+    "34": "Puducherry", "35": "Andaman and Nicobar Islands", "36": "Telangana", "37": "Andhra Pradesh",
+    "38": "Ladakh", "97": "Other Territory", "99": "Centre Jurisdiction",
+}
+
+def _state_label(code: str) -> str:
+    code = (code or "").strip()
+    name = GST_STATE_CODES.get(code.zfill(2))
+    return f"{code} - {name}" if name else (code or "-")
+
 
 @dataclass
 class PDFDocumentData:
@@ -61,6 +79,7 @@ class PDFDocumentData:
     company_phone: str = ""
     company_email: str = ""
     company_logo_url: Optional[str] = None
+    company_tagline: str = ""
     # Buyer
     party_name: str = ""
     party_gstin: str = ""
@@ -113,7 +132,7 @@ class PDFDocumentData:
 
 
 def _fmt(v) -> str:
-    """Indian numbering, non-breaking: ₹17,84,963.00"""
+    """Indian numbering, currency symbol only if the loaded font can render it: ₹17,84,963.00 / Rs.17,84,963.00"""
     v = float(v or 0)
     neg = v < 0
     v = abs(v)
@@ -128,7 +147,9 @@ def _fmt(v) -> str:
         if rest:
             groups.insert(0, rest)
         whole = ",".join(groups) + "," + last3
-    return f"{'-' if neg else ''}₹{whole}.{frac}"
+    symbol = "\u20b9" if FONT_REGULAR == "NotoSans" else "Rs."
+    sep = "" if symbol == "\u20b9" else "\u00a0"
+    return f"{'-' if neg else ''}{symbol}{sep}{whole}.{frac}"
 
 def _footer(canvas, doc):
     canvas.saveState()
@@ -161,16 +182,28 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
                              topMargin=8*mm, bottomMargin=8*mm)
     styles = getSampleStyleSheet()
     BORDER = colors.black
+    THIN = 0.6
+    THICK = 1.2
 
-    h_company = ParagraphStyle("hco", fontName=FONT_BOLD, fontSize=17, textColor=BRAND_DARK)
-    h_tagline = ParagraphStyle("htag", fontName=FONT_BOLD, fontSize=9, textColor=colors.white, alignment=TA_CENTER)
+    h_company = ParagraphStyle("hco", fontName=FONT_BOLD, fontSize=21, textColor=BRAND_DARK, leading=24)
+    h_tagline = ParagraphStyle("htag", fontName=FONT_BOLD, fontSize=9.5, textColor=colors.white, alignment=TA_CENTER)
     contact = ParagraphStyle("contact", fontName=FONT_REGULAR, fontSize=8, textColor=TEXT_DARK, leading=11)
     contact_r = ParagraphStyle("contactr", parent=contact, alignment=TA_RIGHT)
-    doclabel = ParagraphStyle("doclabel", fontName=FONT_BOLD, fontSize=15, alignment=TA_CENTER)
+    doclabel = ParagraphStyle("doclabel", fontName=FONT_BOLD, fontSize=18, alignment=TA_CENTER, leading=22)
     label8 = ParagraphStyle("label8", fontName=FONT_BOLD, fontSize=8)
     body8 = ParagraphStyle("body8", fontName=FONT_REGULAR, fontSize=8, leading=11)
     section_hdr = ParagraphStyle("sechdr", fontName=FONT_BOLD, fontSize=8, alignment=TA_CENTER)
     small = ParagraphStyle("small", fontName=FONT_REGULAR, fontSize=7)
+
+    cell_l = ParagraphStyle("celll", fontName=FONT_REGULAR, fontSize=7, alignment=TA_LEFT, leading=8.5)
+    cell_c = ParagraphStyle("cellc", fontName=FONT_REGULAR, fontSize=7, alignment=TA_CENTER, leading=8.5)
+    cell_r = ParagraphStyle("cellr", fontName=FONT_REGULAR, fontSize=7, alignment=TA_RIGHT, leading=8.5)
+    tot_bold_l = ParagraphStyle("totboldl", fontName=FONT_BOLD, fontSize=7, alignment=TA_LEFT)
+    tot_bold_c = ParagraphStyle("totboldc", fontName=FONT_BOLD, fontSize=7, alignment=TA_CENTER)
+    tot_bold_r = ParagraphStyle("totboldr", fontName=FONT_BOLD, fontSize=7, alignment=TA_RIGHT)
+
+    def P(v, style=cell_r):
+        return Paragraph(str(v) if v not in (None, "") else "-", style)
 
     doc_label = {
         "invoice": "TAX INVOICE", "quotation": "QUOTATION", "po": "PURCHASE ORDER",
@@ -181,120 +214,148 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
 
     story = []
 
-    # ── Company header band ─────────────────────────────────────────
-    header_inner = Table([
-        [Paragraph(data.company_name or "Company Name", h_company), ""],
-    ], colWidths=[183*mm])
+    # -- Company header band (sits above the bordered card) --
+    logo_flowable = ""
+    if data.company_logo_url:
+        logo_path = ("app" + data.company_logo_url) if data.company_logo_url.startswith("/static/") else data.company_logo_url
+        if os.path.exists(logo_path):
+            try:
+                from PIL import Image as PILImage
+                with PILImage.open(logo_path) as im:
+                    iw, ih = im.size
+                max_dim = 20 * mm
+                scale = max_dim / max(iw, ih)
+                logo_flowable = RLImage(logo_path, width=iw * scale, height=ih * scale)
+            except Exception:
+                logo_flowable = ""
+
+    header_inner = Table([[logo_flowable, Paragraph(f"<b>{data.company_name or 'Company Name'}</b>", h_company)]],
+                          colWidths=[24*mm, 159*mm])
+    header_inner.setStyle(TableStyle([
+        ("VALIGN",(0,0),(-1,-1),"MIDDLE"), ("ALIGN",(0,0),(0,0),"CENTER"),
+        ("LEFTPADDING",(0,0),(-1,-1),0), ("RIGHTPADDING",(0,0),(-1,-1),0),
+    ]))
     story.append(header_inner)
-    tagline_band = Table([[Paragraph((data.company_email or data.company_website or " ").upper() if False else " ", h_tagline)]], colWidths=[183*mm])
+
+    if data.company_tagline:
+        tagline_band = Table([[Paragraph(f"<b>{data.company_tagline.upper()}</b>", h_tagline)]], colWidths=[183*mm])
+        tagline_band.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,-1), BRAND_ACCENT),
+            ("TOPPADDING",(0,0),(-1,-1),4), ("BOTTOMPADDING",(0,0),(-1,-1),4),
+        ]))
+        story.append(Spacer(1, 1*mm))
+        story.append(tagline_band)
+
     addr_row = Table([[
         Paragraph((data.company_address or "").replace("\n", "<br/>"), contact),
         Paragraph(f"Tel: {data.company_phone}<br/>Email: {data.company_email}" if (data.company_phone or data.company_email) else "", contact_r),
     ]], colWidths=[100*mm, 83*mm])
     addr_row.setStyle(TableStyle([("VALIGN",(0,0),(-1,-1),"TOP")]))
+    story.append(Spacer(1, 1.5*mm))
     story.append(addr_row)
     story.append(Spacer(1, 2*mm))
 
-    # ── Doc-type title strip: PAN | TAX INVOICE | Copy label ─────────
+    # -- Title strip: PAN | doc label | copy label --
     title_strip = Table([[
         Paragraph(f"<b>PAN: {data.company_pan}</b>" if data.company_pan else "", label8),
         Paragraph(f"<b>{doc_label}</b>", doclabel),
         Paragraph(f"<b>{data.copy_label}</b>", ParagraphStyle("copylbl", fontName=FONT_BOLD, fontSize=8, alignment=TA_RIGHT)),
     ]], colWidths=[55*mm, 73*mm, 55*mm])
     title_strip.setStyle(TableStyle([
-        ("BOX", (0,0), (-1,-1), 1, BORDER), ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
+        ("VALIGN",(0,0),(-1,-1),"MIDDLE"), ("LINEAFTER",(0,0),(1,0),THIN,BORDER),
         ("TOPPADDING",(0,0),(-1,-1),4), ("BOTTOMPADDING",(0,0),(-1,-1),4),
     ]))
-    story.append(title_strip)
 
-    # ── Customer Detail | Invoice/Transport Detail (2-col bordered box) ──
+    # -- Customer Detail | Invoice/Transport Detail --
     cust_lines = [
-        [Paragraph("<b>M/S</b>", label8), Paragraph(data.party_name, body8)],
-        [Paragraph("<b>Address</b>", label8), Paragraph((data.party_address or "").replace("\n","<br/>"), body8)],
-        [Paragraph("<b>Phone</b>", label8), Paragraph(data.party_phone or "—", body8)],
-        [Paragraph("<b>GSTIN</b>", label8), Paragraph(data.party_gstin or "Unregistered", body8)],
-        [Paragraph("<b>Place of Supply</b>", label8), Paragraph(data.place_of_supply or "—", body8)],
+        [Paragraph("<b>M/S:</b>", label8), Paragraph(data.party_name, body8)],
+        [Paragraph("<b>Address:</b>", label8), Paragraph((data.party_address or "").replace("\n","<br/>"), body8)],
+        [Paragraph("<b>Phone:</b>", label8), Paragraph(data.party_phone or "-", body8)],
+        [Paragraph("<b>GSTIN:</b>", label8), Paragraph(data.party_gstin or "Unregistered", body8)],
+        [Paragraph("<b>Place of Supply:</b>", label8), Paragraph(_state_label(data.place_of_supply), body8)],
     ]
     cust_box = Table([[Paragraph("<b>Customer Detail</b>", section_hdr)]] + [[Table(cust_lines, colWidths=[26*mm, 65*mm])]],
                       colWidths=[91*mm])
-    cust_box.setStyle(TableStyle([("BOX",(0,0),(-1,-1),1,BORDER), ("LINEBELOW",(0,0),(-1,0),0.5,BORDER),
-                                   ("TOPPADDING",(0,0),(-1,-1),3), ("BOTTOMPADDING",(0,0),(-1,-1),3)]))
+    cust_box.setStyle(TableStyle([
+        ("LINEBELOW",(0,0),(-1,0),0.5,BORDER),
+        ("TOPPADDING",(0,0),(-1,-1),3), ("BOTTOMPADDING",(0,0),(-1,-1),3),
+    ]))
 
-    meta_rows = [["Invoice No.", f"<b>{data.doc_no}</b>", "Invoice Date", str(data.doc_date)]]
-    if data.challan_no: meta_rows.append(["Challan No", data.challan_no, "Challan Date", str(data.challan_date or "")])
-    if data.eway_bill_no: meta_rows.append(["E-Way Bill No.", data.eway_bill_no, "", ""])
-    if data.transporter_name: meta_rows.append(["Transport", data.transporter_name, "", ""])
-    if data.transporter_id: meta_rows.append(["Transport ID", data.transporter_id, "", ""])
-    if data.vehicle_no: meta_rows.append(["Vehicle No.", data.vehicle_no, "", ""])
-    if data.po_no: meta_rows.append(["PO No.", data.po_no, "PO Date", str(data.po_date or "")])
+    meta_rows = [["Invoice No:", f"<b>{data.doc_no}</b>", "Invoice Date:", str(data.doc_date)]]
+    if data.challan_no: meta_rows.append(["Challan No:", data.challan_no, "Challan Date:", str(data.challan_date or "")])
+    if data.eway_bill_no: meta_rows.append(["E-Way Bill No:", data.eway_bill_no, "", ""])
+    if data.transporter_name: meta_rows.append(["Transport:", data.transporter_name, "", ""])
+    if data.transporter_id: meta_rows.append(["Transport ID:", data.transporter_id, "", ""])
+    if data.vehicle_no: meta_rows.append(["Vehicle No:", data.vehicle_no, "", ""])
+    if data.po_no: meta_rows.append(["PO No:", data.po_no, "PO Date:", str(data.po_date or "")])
     meta_table_rows = [[Paragraph(c, label8) if i%2==0 else Paragraph(c, body8) for i,c in enumerate(row)] for row in meta_rows]
     meta_box = Table([[Paragraph("&nbsp;", section_hdr)]] + [[Table(meta_table_rows, colWidths=[22*mm,22*mm,22*mm,26*mm])]], colWidths=[92*mm])
-    meta_box.setStyle(TableStyle([("BOX",(0,0),(-1,-1),1,BORDER), ("TOPPADDING",(0,0),(-1,-1),3), ("BOTTOMPADDING",(0,0),(-1,-1),3)]))
+    meta_box.setStyle(TableStyle([("TOPPADDING",(0,0),(-1,-1),3), ("BOTTOMPADDING",(0,0),(-1,-1),3)]))
 
     two_col = Table([[cust_box, meta_box]], colWidths=[91*mm, 92*mm])
-    two_col.setStyle(TableStyle([("VALIGN",(0,0),(-1,-1),"TOP"), ("LEFTPADDING",(0,0),(-1,-1),0), ("RIGHTPADDING",(0,0),(-1,-1),0)]))
-    story.append(two_col)
+    two_col.setStyle(TableStyle([
+        ("VALIGN",(0,0),(-1,-1),"TOP"), ("LEFTPADDING",(0,0),(-1,-1),0), ("RIGHTPADDING",(0,0),(-1,-1),0),
+        ("LINEAFTER",(0,0),(0,-1),THIN,BORDER),
+    ]))
 
-    # ── IRN strip (if e-invoiced) ──────────────────────────────────
+    # -- IRN strip (optional) --
+    irn_row = None
     if data.irn:
-        irn_text = f"<b>IRN-</b> {data.irn} | <b>Ack No.-</b> {data.ack_no or '—'} | <b>Ack Date-</b> {data.ack_date or '—'}"
-        irn_strip = Table([[Paragraph(irn_text, ParagraphStyle("irn", fontName=FONT_REGULAR, fontSize=6.5))]], colWidths=[183*mm])
-        irn_strip.setStyle(TableStyle([("BOX",(0,0),(-1,-1),1,BORDER), ("TOPPADDING",(0,0),(-1,-1),3), ("BOTTOMPADDING",(0,0),(-1,-1),3)]))
-        story.append(irn_strip)
+        irn_text = f"<b>IRN:</b> {data.irn} | <b>Ack No:</b> {data.ack_no or '-'} | <b>Ack Date:</b> {data.ack_date or '-'}"
+        irn_row = Table([[Paragraph(irn_text, ParagraphStyle("irn", fontName=FONT_REGULAR, fontSize=6.5))]], colWidths=[183*mm])
+        irn_row.setStyle(TableStyle([("TOPPADDING",(0,0),(-1,-1),3), ("BOTTOMPADDING",(0,0),(-1,-1),3)]))
 
-    # ── Items table ──────────────────────────────────────────────
+    # -- Items table + attached total row (single grid, one font size) --
     is_igst = data.igst_amount > 0
     if is_igst:
         col_headers = ["Sr.\nNo.", "Name of Product/Service", "HSN/\nSAC", "Qty", "Rate", "Taxable\nValue", "IGST %", "IGST Amt", "Total"]
-        col_widths = [8, 55, 14, 12, 18, 20, 12, 18, 26]
+        col_widths = [8, 47, 10, 12, 22, 26, 8, 22, 28]
     else:
         col_headers = ["Sr.\nNo.", "Name of Product/Service", "HSN/\nSAC", "Qty", "Rate", "Taxable\nValue", "CGST\n%", "CGST\nAmt", "SGST\n%", "SGST\nAmt", "Total"]
-        col_widths = [7, 44, 12, 9, 15, 18, 8, 13, 8, 13, 20]
+        col_widths = [6, 34, 9, 12, 22, 24, 8, 17, 8, 17, 26]
     col_widths = [w * mm for w in col_widths]
     header_style = ParagraphStyle("colh", fontName=FONT_BOLD, fontSize=7, alignment=TA_CENTER, leading=8)
 
     item_rows = [[Paragraph(h, header_style) for h in col_headers]]
     for item in data.items:
-        common = [str(item.get("line_no","")), item.get("description",""), item.get("hsn_code",""),
-                  str(item.get("quantity","")), _fmt(item.get("rate",0),""), _fmt(item.get("taxable_amount",0),"")]
+        common = [P(item.get("line_no",""), cell_c), P(item.get("description","") or "-", cell_l),
+                  P(item.get("hsn_code","") or "-", cell_c),
+                  P(item.get("quantity",""), cell_r), P(_fmt(item.get("rate",0))), P(_fmt(item.get("taxable_amount",0)))]
         if is_igst:
-            tail = [f"{item.get('gst_rate',0):g}", _fmt(item.get("igst_amount",0),"")]
+            tail = [P(f"{item.get('gst_rate',0):g}", cell_c), P(_fmt(item.get("igst_amount",0)))]
         else:
             half = float(item.get("gst_rate",0))/2
-            tail = [f"{half:g}", _fmt(item.get("cgst_amount",0),""), f"{half:g}", _fmt(item.get("sgst_amount",0),"")]
-        item_rows.append(common + tail + [_fmt(item.get("total_amount",0),"")])
+            tail = [P(f"{half:g}", cell_c), P(_fmt(item.get("cgst_amount",0))), P(f"{half:g}", cell_c), P(_fmt(item.get("sgst_amount",0)))]
+        item_rows.append(common + tail + [P(_fmt(item.get("total_amount",0)))])
+
+    total_qty = sum(float(i.get("quantity",0)) for i in data.items)
+    if is_igst:
+        item_rows.append(["", Paragraph("Total", tot_bold_l), "", Paragraph(f"{total_qty:g}", tot_bold_c), "",
+                           Paragraph(_fmt(data.taxable_amount), tot_bold_r), "",
+                           Paragraph(_fmt(data.igst_amount), tot_bold_r), Paragraph(_fmt(data.total_amount), tot_bold_r)])
+    else:
+        item_rows.append(["", Paragraph("Total", tot_bold_l), "", Paragraph(f"{total_qty:g}", tot_bold_c), "",
+                           Paragraph(_fmt(data.taxable_amount), tot_bold_r), "",
+                           Paragraph(_fmt(data.cgst_amount), tot_bold_r), "",
+                           Paragraph(_fmt(data.sgst_amount), tot_bold_r), Paragraph(_fmt(data.total_amount), tot_bold_r)])
 
     items_table = Table(item_rows, colWidths=col_widths, repeatRows=1)
     items_table.setStyle(TableStyle([
-        ("GRID",(0,0),(-1,-1),0.5,BORDER), ("FONTNAME",(0,1),(-1,-1),FONT_REGULAR), ("FONTSIZE",(0,1),(-1,-1),7.5),
-        ("ALIGN",(0,0),(0,-1),"CENTER"), ("ALIGN",(3,1),(-1,-1),"RIGHT"),
+        ("GRID",(0,0),(-1,-1),0.5,BORDER),
         ("VALIGN",(0,0),(-1,-1),"TOP"), ("TOPPADDING",(0,0),(-1,-1),3), ("BOTTOMPADDING",(0,0),(-1,-1),3),
+        ("LEFTPADDING",(0,0),(-1,-1),2), ("RIGHTPADDING",(0,0),(-1,-1),2),
+        ("BACKGROUND",(0,-1),(-1,-1), LIGHT_GREY),
     ]))
-    story.append(items_table)
 
-    # ── Totals row (grid-attached, not floating) ────────────────────
-    total_qty = sum(float(i.get("quantity",0)) for i in data.items)
-    if is_igst:
-        total_row = [["", "Total", "", f"{total_qty:g}", "", _fmt(data.taxable_amount,""), "", _fmt(data.igst_amount,""), _fmt(data.total_amount,"")]]
-        tw = col_widths
-    else:
-        total_row = [["", "Total", "", f"{total_qty:g}", "", _fmt(data.taxable_amount,""), "", _fmt(data.cgst_amount,""), "", _fmt(data.sgst_amount,""), _fmt(data.total_amount,"")]]
-        tw = col_widths
-    tot_table = Table(total_row, colWidths=tw)
-    tot_table.setStyle(TableStyle([
-        ("GRID",(0,0),(-1,-1),0.5,BORDER), ("FONTNAME",(0,0),(-1,-1),FONT_BOLD), ("FONTSIZE",(0,0),(-1,-1),8),
-        ("ALIGN",(3,0),(-1,-1),"RIGHT"), ("TOPPADDING",(0,0),(-1,-1),4), ("BOTTOMPADDING",(0,0),(-1,-1),4),
-    ]))
-    story.append(tot_table)
-    story.append(Spacer(1, 1))
-
-    # ── Total in words | Tax summary box ─────────────────────────
+    # -- Total in words | Tax summary --
     words_cell = Table([
         [Paragraph("<b>Total in words</b>", section_hdr)],
         [Paragraph(amount_in_words(data.total_amount).upper(), body8)],
     ], colWidths=[110*mm])
-    words_cell.setStyle(TableStyle([("BOX",(0,0),(-1,-1),1,BORDER), ("LINEBELOW",(0,0),(-1,0),0.5,BORDER),
-                                     ("TOPPADDING",(0,0),(-1,-1),5), ("BOTTOMPADDING",(0,0),(-1,-1),5)]))
+    words_cell.setStyle(TableStyle([
+        ("LINEBELOW",(0,0),(-1,0),0.5,BORDER),
+        ("TOPPADDING",(0,0),(-1,-1),5), ("BOTTOMPADDING",(0,0),(-1,-1),5),
+    ]))
 
     tax_rows = [["Taxable Amount", _fmt(data.taxable_amount)]]
     if is_igst:
@@ -309,51 +370,136 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
                  ParagraphStyle("tval", fontName=FONT_BOLD if r[0]=="Total Amount After Tax" else FONT_REGULAR,
                                 fontSize=10 if r[0]=="Total Amount After Tax" else 8, alignment=TA_RIGHT))] for r in tax_rows]
     tax_box = Table(tax_para, colWidths=[45*mm, 28*mm])
-    tax_box.setStyle(TableStyle([("BOX",(0,0),(-1,-1),1,BORDER), ("LINEABOVE",(0,-1),(-1,-1),0.8,BORDER),
-                                  ("TOPPADDING",(0,0),(-1,-1),3), ("BOTTOMPADDING",(0,0),(-1,-1),3)]))
+    tax_box.setStyle(TableStyle([
+        ("LINEABOVE",(0,-1),(-1,-1),0.8,BORDER),
+        ("TOPPADDING",(0,0),(-1,-1),3), ("BOTTOMPADDING",(0,0),(-1,-1),3),
+    ]))
 
     words_tax_row = Table([[words_cell, tax_box]], colWidths=[110*mm, 73*mm])
-    words_tax_row.setStyle(TableStyle([("VALIGN",(0,0),(-1,-1),"TOP"), ("LEFTPADDING",(0,0),(-1,-1),0), ("RIGHTPADDING",(0,0),(-1,-1),0)]))
-    story.append(words_tax_row)
+    words_tax_row.setStyle(TableStyle([
+        ("VALIGN",(0,0),(-1,-1),"TOP"), ("LEFTPADDING",(0,0),(-1,-1),0), ("RIGHTPADDING",(0,0),(-1,-1),0),
+        ("LINEAFTER",(0,0),(0,-1),THIN,BORDER),
+    ]))
 
-    # ── Bank Details + QR (left) | Certification + Signature (right) ──
+    # -- Bank Details + QR | Certification + Signature --
     bank_lines = []
     if data.bank_name:
         bank_lines = [
-            [Paragraph("Name", label8), Paragraph(data.bank_name, body8)],
-            [Paragraph("Branch", label8), Paragraph(data.bank_branch or "—", body8)],
-            [Paragraph("Acc. Number", label8), Paragraph(data.bank_account_no or "—", body8)],
-            [Paragraph("IFSC", label8), Paragraph(data.bank_ifsc or "—", body8)],
+            [Paragraph("Name:", label8), Paragraph(data.bank_name, body8), ""],
+            [Paragraph("Branch:", label8), Paragraph(data.bank_branch or "-", body8), ""],
+            [Paragraph("Acc. Number:", label8), Paragraph(data.bank_account_no or "-", body8), ""],
+            [Paragraph("IFSC:", label8), Paragraph(data.bank_ifsc or "-", body8), ""],
         ]
         if data.upi_id:
-            bank_lines.append([Paragraph("UPI ID", label8), Paragraph(data.upi_id, body8)])
+            bank_lines.append([Paragraph("UPI ID:", label8), Paragraph(data.upi_id, body8), ""])
 
-    bank_inner_cells = [[Paragraph("<b>Bank Details</b>", section_hdr), Paragraph("", section_hdr)]]
     if bank_lines:
-        bank_table_l = Table(bank_lines, colWidths=[22*mm])
-        qr_cell = [_qr_drawing(f"upi://pay?pa={data.upi_id}&pn={data.company_name}&am={float(data.total_amount):.2f}", 24*mm), Paragraph("Pay using UPI", ParagraphStyle("payupi", fontName=FONT_BOLD, fontSize=7, alignment=TA_CENTER))] if data.upi_id else [Paragraph("", small)]
-        bank_row = Table([[bank_table_l, qr_cell]], colWidths=[45*mm, 45*mm])
+        n_rows = len(bank_lines)
+        bank_row_style = [
+            ("VALIGN",(0,0),(-1,-1),"TOP"),
+            ("LEFTPADDING",(0,0),(-1,-1),2), ("RIGHTPADDING",(0,0),(-1,-1),2),
+            ("TOPPADDING",(0,0),(-1,-1),2), ("BOTTOMPADDING",(0,0),(-1,-1),2),
+        ]
+        if data.upi_id:
+            bank_lines[0][2] = [
+                _qr_drawing(f"upi://pay?pa={data.upi_id}&pn={data.company_name}&am={float(data.total_amount):.2f}", 26*mm),
+                Paragraph("Pay using UPI", ParagraphStyle("payupi", fontName=FONT_BOLD, fontSize=7, alignment=TA_CENTER)),
+            ]
+            bank_row_style.append(("SPAN",(2,0),(2,n_rows-1)))
+            bank_row_style.append(("ALIGN",(2,0),(2,0),"CENTER"))
+        bank_row = Table(bank_lines, colWidths=[20*mm, 55*mm, 35*mm])
+        bank_row.setStyle(TableStyle(bank_row_style))
     else:
-        bank_row = Table([[Paragraph("—", small)]], colWidths=[90*mm])
+        bank_row = Table([[Paragraph("-", small)]], colWidths=[110*mm])
 
-    tnc_cell = Paragraph(f"<b>Terms and Conditions</b><br/>{(data.terms_conditions or '—').replace(chr(10), '<br/>')}", small)
+    tnc_cell = Paragraph(f"<b>Terms and Conditions</b><br/>{(data.terms_conditions or '-').replace(chr(10), '<br/>')}", small)
 
     bank_box = Table([[Paragraph("<b>Bank Details</b>", section_hdr)], [bank_row], [Spacer(1,2)], [tnc_cell]], colWidths=[110*mm])
-    bank_box.setStyle(TableStyle([("BOX",(0,0),(-1,-1),1,BORDER), ("LINEBELOW",(0,0),(-1,0),0.5,BORDER),
-                                   ("TOPPADDING",(0,0),(-1,-1),4), ("BOTTOMPADDING",(0,0),(-1,-1),4)]))
+    bank_box.setStyle(TableStyle([
+        ("LINEBELOW",(0,0),(-1,0),0.5,BORDER),
+        ("TOPPADDING",(0,0),(-1,-1),4), ("BOTTOMPADDING",(0,0),(-1,-1),4),
+    ]))
 
     sig_box = Table([
         [Paragraph("Certified that the particulars given above are true and correct.", ParagraphStyle("cert", fontName=FONT_REGULAR, fontSize=7, alignment=TA_CENTER))],
         [Paragraph(f"<b>For {data.company_name}</b>", ParagraphStyle("forco", fontName=FONT_BOLD, fontSize=9, alignment=TA_CENTER))],
-        [Spacer(1, 14*mm)],
+        [Spacer(1, 6*mm)],
         [Paragraph("This is a computer generated invoice.<br/>No signature required.", ParagraphStyle("stamp", fontName=FONT_REGULAR, fontSize=6.5, alignment=TA_CENTER, textColor=colors.HexColor("#999999")))],
         [Paragraph("Authorised Signatory", ParagraphStyle("sig", fontName=FONT_REGULAR, fontSize=8, alignment=TA_CENTER))],
     ], colWidths=[73*mm])
-    sig_box.setStyle(TableStyle([("BOX",(0,0),(-1,-1),1,BORDER), ("TOPPADDING",(0,0),(-1,-1),5), ("BOTTOMPADDING",(0,0),(-1,-1),5)]))
+    sig_box.setStyle(TableStyle([("TOPPADDING",(0,0),(-1,-1),5), ("BOTTOMPADDING",(0,0),(-1,-1),5)]))
 
     bottom_row = Table([[bank_box, sig_box]], colWidths=[110*mm, 73*mm])
-    bottom_row.setStyle(TableStyle([("VALIGN",(0,0),(-1,-1),"TOP"), ("LEFTPADDING",(0,0),(-1,-1),0), ("RIGHTPADDING",(0,0),(-1,-1),0)]))
-    story.append(bottom_row)
+    bottom_row.setStyle(TableStyle([
+        ("VALIGN",(0,0),(-1,-1),"TOP"), ("LEFTPADDING",(0,0),(-1,-1),0), ("RIGHTPADDING",(0,0),(-1,-1),0),
+        ("LINEAFTER",(0,0),(0,-1),THIN,BORDER),
+    ]))
+
+    # -- Pad the items table with blank rows so the footer (totals / bank
+    #    details / signature) anchors near the bottom of the page instead of
+    #    hugging the last item row, matching standard invoicing software --
+    def _flowable_height(f, width):
+        try:
+            return f.wrap(width, 10000 * mm)[1]
+        except Exception:
+            return 0
+
+    _table_width = sum(col_widths)
+    top_h = _flowable_height(title_strip, 183 * mm) + _flowable_height(two_col, 183 * mm)
+    if irn_row is not None:
+        top_h += _flowable_height(irn_row, 183 * mm)
+    footer_h = _flowable_height(words_tax_row, 183 * mm) + _flowable_height(bottom_row, 183 * mm)
+
+    page_h = A4[1]
+    # Leave room below the card for the "Thank you" line + page number,
+    # plus a safety margin for sub-pixel wrap-height rounding.
+    available_h = page_h - doc.topMargin - doc.bottomMargin - 18 * mm
+    target_items_h = available_h - top_h - footer_h
+    current_items_h = _flowable_height(items_table, _table_width)
+
+    import sys as _sys
+    print(f"DEBUG top_h={top_h/mm:.1f}mm footer_h={footer_h/mm:.1f}mm available_h={available_h/mm:.1f}mm target_items_h={target_items_h/mm:.1f}mm current_items_h={current_items_h/mm:.1f}mm", file=_sys.stderr)
+    if target_items_h > current_items_h:
+        blank_style = ParagraphStyle("blankcell", fontName=FONT_REGULAR, fontSize=7, leading=8.5)
+        probe = Table([[Paragraph("&nbsp;", blank_style) for _ in col_headers]], colWidths=col_widths)
+        probe.setStyle(TableStyle([
+            ("GRID", (0, 0), (-1, -1), 0.5, BORDER),
+            ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+            ("LEFTPADDING", (0, 0), (-1, -1), 2), ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+        ]))
+        one_row_h = _flowable_height(probe, _table_width) or 1
+        n_filler = int((target_items_h - current_items_h) // one_row_h)
+        n_filler = max(0, min(n_filler, 45))  # sanity cap
+        if n_filler:
+            filler_row = [Paragraph("&nbsp;", blank_style) for _ in col_headers]
+            total_row = item_rows[-1]
+            item_rows = item_rows[:-1] + [filler_row] * n_filler + [total_row]
+            items_table = Table(item_rows, colWidths=col_widths, repeatRows=1)
+            items_table.setStyle(TableStyle([
+                ("GRID", (0, 0), (-1, -1), 0.5, BORDER),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"), ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ("LEFTPADDING", (0, 0), (-1, -1), 2), ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+                ("BACKGROUND", (0, -1), (-1, -1), LIGHT_GREY),
+            ]))
+
+    # -- Assemble every section into ONE continuous bordered card --
+    master_rows = [[title_strip], [two_col]]
+    if irn_row is not None:
+        master_rows.append([irn_row])
+    master_rows.append([items_table])
+    master_rows.append([words_tax_row])
+    master_rows.append([bottom_row])
+
+    master = Table(master_rows, colWidths=[183*mm])
+    master_style = [
+        ("BOX",(0,0),(-1,-1),THICK,BORDER),
+        ("LEFTPADDING",(0,0),(-1,-1),0), ("RIGHTPADDING",(0,0),(-1,-1),0),
+        ("TOPPADDING",(0,0),(-1,-1),0), ("BOTTOMPADDING",(0,0),(-1,-1),0),
+    ]
+    for i in range(len(master_rows) - 1):
+        master_style.append(("LINEBELOW",(0,i),(-1,i),THIN,BORDER))
+    master.setStyle(TableStyle(master_style))
+    story.append(master)
     story.append(Spacer(1, 4*mm))
     story.append(Paragraph("Thank you for your business!", ParagraphStyle("thanks", fontName=FONT_REGULAR, fontSize=9)))
 
@@ -378,15 +524,6 @@ from reportlab.graphics.charts.piecharts import Pie
 from reportlab.graphics.charts.legends import Legend
 from reportlab.lib.pagesizes import A4 as A4_SIZE
 
-FONT_REGULAR = "Helvetica"
-FONT_BOLD = "Helvetica-Bold"
-try:
-    pdfmetrics.registerFont(TTFont("NotoSans", "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf"))
-    pdfmetrics.registerFont(TTFont("NotoSans-Bold", "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf"))
-    FONT_REGULAR = "NotoSans"
-    FONT_BOLD = "NotoSans-Bold"
-except Exception:
-    pass  # falls back to Helvetica (no ₹ glyph) if the font isn't installed yet
 
 BRAND_ACCENT = colors.HexColor("#00C2A8")
 BG_SOFT      = colors.HexColor("#F0F4FA")
@@ -582,24 +719,58 @@ def generate_report_pdf(title: str, subtitle: str, summary: list, tables: list,
         story.append(_pie_chart(pie_chart["labels"], pie_chart["values"]))
         story.append(Spacer(1, 4*mm))
 
+    _NUMERIC_HEADERS = {
+        "debit", "credit", "balance", "amount", "opening dr", "opening cr",
+        "period dr", "period cr", "closing dr", "closing cr", "receipt", "payment",
+    }
+    _cell_style = ParagraphStyle("RCell", fontName=FONT_REGULAR, fontSize=8, leading=10, wordWrap="CJK")
+    _cell_style_r = ParagraphStyle("RCellR", parent=_cell_style, alignment=TA_RIGHT)
+    _head_style = ParagraphStyle("RHead", fontName=FONT_BOLD, fontSize=8.5, leading=10,
+                                  textColor=colors.white, wordWrap="CJK")
+    _head_style_r = ParagraphStyle("RHeadR", parent=_head_style, alignment=TA_RIGHT)
+
     for section_title, headers, rows in tables:
         story.append(Paragraph(section_title, section_style))
         if not rows:
             story.append(Paragraph("No data for this period", styles["Normal"]))
             continue
-        data = [headers] + rows
-        col_width = doc.width / len(headers)
-        t = Table(data, colWidths=[col_width]*len(headers), repeatRows=1)
+
+        n_cols = len(headers)
+        is_numeric_col = [h.strip().lower() in _NUMERIC_HEADERS for h in headers]
+
+        # Weight columns by their actual content length (so Narration gets room and
+        # Date/Voucher don't), then rescale to exactly fill the page width.
+        all_rows = [headers] + rows
+        raw_weights = [
+            max((len(str(r[c])) for r in all_rows if len(r) > c), default=4)
+            for c in range(n_cols)
+        ]
+        min_w, max_w = 16 * mm, 70 * mm
+        col_widths = [w / sum(raw_weights) * doc.width for w in raw_weights]
+        col_widths = [min(max(w, min_w), max_w) for w in col_widths]
+        scale = doc.width / sum(col_widths)
+        col_widths = [w * scale for w in col_widths]
+
+        header_row = [
+            Paragraph(str(h), _head_style_r if is_numeric_col[i] else _head_style)
+            for i, h in enumerate(headers)
+        ]
+        data = [header_row]
+        for r in rows:
+            data.append([
+                Paragraph(str(val) if val not in (None, "") else "—",
+                          _cell_style_r if (i < len(is_numeric_col) and is_numeric_col[i]) else _cell_style)
+                for i, val in enumerate(r)
+            ])
+
+        t = Table(data, colWidths=col_widths, repeatRows=1)
         style = [
             ("BACKGROUND", (0,0), (-1,0), BRAND_DARK),
-            ("TEXTCOLOR", (0,0), (-1,0), colors.white),
-            ("FONTNAME", (0,0), (-1,0), FONT_BOLD),
-            ("FONTNAME", (0,1), (-1,-1), FONT_REGULAR),
-            ("FONTSIZE", (0,0), (-1,-1), 8.5),
             ("GRID", (0,0), (-1,-1), 0.4, MED_GREY),
             ("ROWBACKGROUNDS", (0,1), (-1,-1), [colors.white, BG_SOFT]),
             ("TOPPADDING", (0,0), (-1,-1), 6), ("BOTTOMPADDING", (0,0), (-1,-1), 6),
-            ("ALIGN", (1,1), (-1,-1), "RIGHT"),
+            ("LEFTPADDING", (0,0), (-1,-1), 5), ("RIGHTPADDING", (0,0), (-1,-1), 5),
+            ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
         ]
         t.setStyle(TableStyle(style))
         story.append(t)

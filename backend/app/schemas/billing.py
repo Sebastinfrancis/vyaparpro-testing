@@ -27,6 +27,8 @@ class BillingItemIn(APIModel):
     serial_no: Optional[str] = None
     jo_item_id: Optional[UUID] = None
     display_order: int = 0
+    itc_eligible: bool = True
+    itc_ineligible_reason: Optional[str] = None
 
 
 class BillingItemOut(APIModel):
@@ -65,6 +67,8 @@ class QuotationCreate(APIModel):
     billing_gstin: Optional[str] = None
     billing_address: Optional[str] = None
     billing_state_code: Optional[str] = None
+    contact_phone: Optional[str] = None
+    contact_email: Optional[str] = None
     place_of_supply: str = "27"
     supply_type: str = "intra"
     currency: str = "INR"
@@ -192,6 +196,7 @@ class PurchaseOrderCreate(APIModel):
     other_charges: Decimal = Decimal("0")
     tds_amount: Decimal = Decimal("0")
     supply_type: str = "intra"  # intra | inter — determines CGST+SGST vs IGST
+    reverse_charge: bool = False
     items: list[BillingItemIn] = Field(min_length=1)
 
 
@@ -218,6 +223,8 @@ class PurchaseOrderItemOut(APIModel):
     amount: Decimal
     received_qty: Decimal
     returned_qty: Decimal
+    itc_eligible: bool = True
+    itc_ineligible_reason: Optional[str] = None
     display_order: int
 
 
@@ -240,6 +247,7 @@ class PurchaseOrderOut(APIModel):
     total_amount: Decimal
     paid_amount: Decimal
     status: str
+    reverse_charge: bool = False
     approval_status: str
     notes: Optional[str]
     created_at: datetime
@@ -309,6 +317,7 @@ class InvoiceCreate(APIModel):
     currency: str = "INR"
     is_export: bool = False
     export_type: Optional[str] = None
+    supply_category: str = "taxable"  # taxable | nil_rated | exempt | non_gst
     warehouse_id: Optional[UUID] = None
     payment_terms: Optional[str] = None
     notes: Optional[str] = None
@@ -344,6 +353,7 @@ class InvoiceUpdate(APIModel):
     other_charges: Optional[Decimal] = None
     tds_amount: Optional[Decimal] = None
     tcs_amount: Optional[Decimal] = None
+    supply_category: Optional[str] = None
     round_off: Optional[Decimal] = None
     items: Optional[list[BillingItemIn]] = None
 
@@ -385,6 +395,7 @@ class InvoiceOut(APIModel):
     currency: str
     is_export: bool = False
     export_type: Optional[str] = None
+    supply_category: str = "taxable"
     subtotal: Decimal
     discount_amount: Decimal
     taxable_amount: Decimal

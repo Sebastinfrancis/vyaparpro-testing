@@ -153,6 +153,32 @@ select.fi option{background:var(--bg2)}
 .api-online{background:rgba(0,230,118,.09);color:var(--green);border:1px solid rgba(0,230,118,.18)}
 .api-offline{background:rgba(255,68,68,.09);color:var(--red);border:1px solid rgba(255,68,68,.18)}
 @media(max-width:860px){.sidebar{display:none}.sgrid{grid-template-columns:1fr 1fr}.fr.c3{grid-template-columns:1fr 1fr}}
+/* ---- Classic GST document (matches printed PDF) ---- */
+.gst-doc{font-family:Arial,Helvetica,sans-serif;color:#000;font-size:12px;border:1.5px solid #000}
+.gst-doc table{width:100%;border-collapse:collapse}
+.gst-doc td,.gst-doc th{border:1px solid #000;padding:5px 7px;vertical-align:top}
+.gst-head td{border:none;vertical-align:middle}
+.gst-logo{width:70px;height:70px;border:1px dashed #999;display:flex;align-items:center;justify-content:center;font-size:10px;color:#999;text-align:center}
+.gst-coname{font-size:19px;font-weight:800;text-align:center}
+.gst-coaddr{font-size:11px;text-align:center;color:#333}
+.gst-cocontact{font-size:10.5px;text-align:center;color:#333}
+.gst-copy{width:110px;text-align:right;font-size:10px;color:#333;border:none;vertical-align:top}
+.gst-titlebar{background:#111;color:#fff;text-align:center;font-size:16px;font-weight:800;padding:6px;letter-spacing:1px}
+.gst-boxhdr{font-weight:700;font-size:10.5px;text-transform:uppercase;color:#333;margin-bottom:3px}
+.gst-box{width:50%}
+.gst-box div{font-size:11.5px;line-height:1.5}
+.gst-meta td{border:none;padding:1px 4px;font-size:11.5px}
+.gst-items thead th{background:#eee;font-size:10.5px;text-align:center;font-weight:700}
+.gst-items td{font-size:11px;text-align:center}
+.gst-items td.left{text-align:left}
+.gst-items tfoot td{font-weight:800;background:#f5f5f5}
+.gst-taxbox td{border:none;padding:2px 4px;font-size:11.5px}
+.gst-taxbox tr.grand td{font-weight:800;font-size:13px;border-top:1.5px solid #000;padding-top:5px}
+.gst-words{font-size:11.5px;font-weight:600}
+.gst-sigbox{text-align:center}
+.gst-sigspace{height:46px}
+.gst-small{font-size:9.5px;color:#666}
+.gst-doc .no-b{border:none}
 </style>
 </head>
 <body>
@@ -389,7 +415,16 @@ select.fi option{background:var(--bg2)}
                 <select class="fi" id="invState"><option>27 - Maharashtra</option><option>07 - Delhi</option><option>29 - Karnataka</option><option>33 - Tamil Nadu</option><option>09 - UP</option><option>06 - Haryana</option></select></div>
               <div class="fg"><label class="fl">Supply Type</label>
                 <select class="fi" id="supplyType" onchange="calcTotals()"><option value="intra">Intra-State (CGST+SGST)</option><option value="inter">Inter-State (IGST)</option></select></div>
+              <div class="fg"><label class="fl"><input type="checkbox" id="invReverseCharge"/> Reverse Charge Applicable</label></div>
               <div class="fg"><label class="fl"><input type="checkbox" id="invIsExport" onchange="toggleExportType()"/> Export Invoice</label></div>
+              <div class="fg"><label class="fl">Supply Category</label>
+                <select class="fi" id="invSupplyCategory">
+                  <option value="taxable">Taxable</option>
+                  <option value="nil_rated">Nil Rated</option>
+                  <option value="exempt">Exempt</option>
+                  <option value="non_gst">Non-GST Supply</option>
+                </select>
+              </div>
               <div class="fg hidden" id="exportTypeWrap"><label class="fl">Export Type</label>
                 <select class="fi" id="invExportType"><option value="WPAY">With Payment of Tax</option><option value="WOPAY">Without Payment (LUT/Bond)</option></select>
               </div>
@@ -640,7 +675,9 @@ select.fi option{background:var(--bg2)}
         <div><div class="st">GST Compliance Center</div><div class="ss">GSTR-1, GSTR-3B, E-Invoice, HSN summary</div></div>
         <div style="display:flex;gap:7px">
           <select class="fi" style="width:130px" id="gstMonth" onchange="loadGSTData()"></select>
-          <button class="btn btn-p btn-sm" onclick="showToast('📤 GST JSON exported')">📤 Export JSON</button>
+          <button class="btn btn-p btn-sm" onclick="exportGSTReportPDF()">📄 Export PDF</button>
+          <button class="btn btn-s btn-sm" onclick="exportGSTJSON()">📤 Export JSON (GSTR-1)</button>
+          <button class="btn btn-s btn-sm" onclick="exportGSTCSV()">⬇ Export CSV</button>
         </div>
       </div>
       <div class="tabr">
@@ -916,6 +953,7 @@ select.fi option{background:var(--bg2)}
             </div>
             <div class="fg"><label class="fl">Business Name</label><input class="fi" id="setLegalName"/></div>
             <div class="fg"><label class="fl">Trade Name</label><input class="fi" id="setTradeName"/></div>
+            <div class="fg"><label class="fl">Invoice Tagline</label><input class="fi" id="setTagline" placeholder="e.g. Manufacturing &amp; Supply of Precision Tools"/></div>
             <div class="fg"><label class="fl">GSTIN</label><input class="fi mono" id="setGstin"/></div>
             <div class="fg"><label class="fl">PAN</label><input class="fi mono" id="setPan"/></div>
             <div class="fr c2">
@@ -966,6 +1004,26 @@ select.fi option{background:var(--bg2)}
             <div class="fg"><label class="fl">Registered Address</label><textarea class="fi" id="setAddress" rows="2"></textarea></div>
             <div class="fg"><label class="fl">Invoice Prefix</label><input class="fi" id="setInvoicePrefix"/></div>
             <button class="btn btn-p btn-sm" onclick="saveCompanySettings()">Save Changes</button>
+          </div>
+          <div class="card">
+            <div style="font-size:13px;font-weight:700;margin-bottom:14px">🏦 Bank Details & Terms</div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
+              Shown on every invoice, quotation, and purchase order PDF. Leave blank to hide that box.
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="fg"><label class="fl">Bank Name</label><input class="fi" id="setBankName" placeholder="e.g. ICICI Bank"/></div>
+              <div class="fg"><label class="fl">Branch</label><input class="fi" id="setBankBranch"/></div>
+              <div class="fg"><label class="fl">Account Number</label><input class="fi" id="setBankAccount"/></div>
+              <div class="fg"><label class="fl">IFSC</label><input class="fi" id="setBankIfsc"/></div>
+              <div class="fg"><label class="fl">UPI ID</label><input class="fi" id="setUpiId" placeholder="yourname@bank"/></div>
+            </div>
+            <div class="fg"><label class="fl">Default Terms & Conditions</label>
+              <textarea class="fi" id="setDefaultTerms" rows="3" placeholder="e.g. Goods once sold will not be taken back.&#10;Subject to Chennai jurisdiction only."></textarea>
+            </div>
+            <div style="font-size:10.5px;color:var(--muted);margin-bottom:10px">
+              A specific invoice/quotation/PO can override this with its own terms; otherwise this default is used.
+            </div>
+            <button class="btn btn-p btn-sm" onclick="saveBankSettings()">Save Bank & Terms</button>
           </div>
           <div class="card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
@@ -1021,7 +1079,7 @@ select.fi option{background:var(--bg2)}
   <div class="md md-lg">
     <div class="mh"><span class="mt2" id="prevTitle">Invoice Preview</span>
       <div style="display:flex;gap:7px">
-        <button class="btn btn-o btn-sm" onclick="showToast('📄 PDF downloaded!')">📄 PDF</button>
+        <button class="btn btn-o btn-sm" onclick="downloadCurrentPreviewPDF()">📄 PDF</button>
         <button class="btn btn-o btn-sm" onclick="showToast('📱 Sent via WhatsApp!')">📱 WhatsApp</button>
         <button class="btn btn-o btn-sm" onclick="showToast('📧 Email sent!')">📧 Email</button>
         <button class="mc" onclick="closeModal('invPreviewModal')">✕</button>
@@ -1262,6 +1320,7 @@ select.fi option{background:var(--bg2)}
           <option value="inter">Inter-State (IGST)</option>
         </select>
       </div>
+      <div class="fg"><label class="fl"><input type="checkbox" id="poReverseCharge"/> Reverse Charge (self-assessed GST)</label></div>
       <div class="fg"><label class="fl">Notes</label><textarea class="fi" rows="2" id="poNotes" placeholder="Special instructions…"></textarea></div>
       <div style="text-align:right;font-size:13px;font-weight:700;margin-top:6px">Total: <span id="poGrandTotal" style="color:var(--accent)">₹0.00</span></div>
     </div>
@@ -2021,6 +2080,7 @@ function refreshCustomerDatalist() {
 //=============================================================
 let currentReportType = null;
 let currentReportData = null;
+let currentGSTData = {};
 
 function openReport(type) {
   currentReportType = type;
@@ -2166,6 +2226,128 @@ async function exportReportPDF() {
   }
 }
 
+async function exportGSTReportPDF() {
+  const month = getVal('gstMonth');
+  try {
+    showToast('⏳ Generating PDF…');
+    const res = await fetch(`${CFG.API_BASE}/gst/report/pdf?month=${month}`, {
+      headers: { 'Authorization': `Bearer ${AUTH.token}` }
+    });
+    if (!res.ok) throw new Error('Server returned ' + res.status);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `gst_report_${month}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('📄 GST report downloaded');
+  } catch (e) {
+    showToast('⚠️ Could not generate PDF: ' + e.message, 'warn');
+  }
+}
+
+async function exportGSTJSON() {
+  const month = getVal('gstMonth');
+  try {
+    showToast('⏳ Preparing GSTR-1 JSON…');
+    const res = await fetch(`${CFG.API_BASE}/gst/gstr1/json?month=${month}`, {
+      headers: { 'Authorization': `Bearer ${AUTH.token}` }
+    });
+    if (!res.ok) throw new Error('Server returned ' + res.status);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `GSTR1_${month.slice(5,7)}${month.slice(0,4)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('📤 GSTR-1 JSON exported');
+  } catch (e) {
+    showToast('⚠️ Could not export JSON: ' + e.message, 'warn');
+  }
+}
+
+function getActiveGSTTab() {
+  for (const t of ['summary','gstr1','gstr3b','hsn','itc']) {
+    const el = document.getElementById('gst-' + t);
+    if (el && !el.classList.contains('hidden')) return t;
+  }
+  return 'summary';
+}
+
+function csvEscape(v) { return `"${String(v ?? '').replace(/"/g,'""')}"`; }
+
+function exportGSTCSV() {
+  if (!currentGSTData.month) { showToast('⚠️ Load GST data first','warn'); return; }
+  const tab = getActiveGSTTab();
+  const rows = [];
+  const d = currentGSTData;
+
+  if (tab === 'summary') {
+    rows.push(['GST Summary', currentGSTData.month]);
+    rows.push(['Sales (Taxable)', d.summary.sales_taxable]);
+    rows.push(['Output GST', d.summary.output_gst]);
+    rows.push(['Input Tax Credit', d.summary.input_tax_credit]);
+    rows.push([]);
+    rows.push(['Rate', 'Taxable', 'CGST', 'SGST', 'IGST', 'Total Tax']);
+    d.summary.rate_wise.forEach(r => rows.push([r.gst_rate + '%', r.taxable, r.cgst, r.sgst, r.igst, r.total_tax]));
+
+  } else if (tab === 'gstr1') {
+    rows.push(['B2B Invoices (Registered)']);
+    rows.push(['Invoice No','Date','Customer','GSTIN','Taxable','Total']);
+    d.gstr1.b2b.forEach(r => rows.push([r.invoice_no, r.invoice_date, r.billing_name, r.billing_gstin, r.taxable_amount, r.total_amount]));
+    rows.push([]);
+    rows.push(['B2C Summary (Unregistered)']);
+    rows.push(['Category','Invoices','Taxable','Total Tax']);
+    d.gstr1.b2c.forEach(r => rows.push([r.category, r.invoice_count, r.taxable, r.total_tax]));
+    rows.push([]);
+    rows.push(['CDNR — Credit/Debit Notes']);
+    rows.push(['Note No','Date','Type','Customer','Taxable','Total']);
+    d.gstr1.cdnr.forEach(r => rows.push([r.invoice_no, r.invoice_date, r.invoice_type, r.billing_name, r.taxable_amount, r.total_amount]));
+    rows.push([]);
+    rows.push(['Exports']);
+    rows.push(['Invoice No','Date','Customer','Export Type','Taxable']);
+    d.gstr1.exports.forEach(r => rows.push([r.invoice_no, r.invoice_date, r.billing_name, r.export_type, r.taxable_amount]));
+
+  } else if (tab === 'gstr3b') {
+    rows.push(['3.1(a) Outward Taxable Supplies']);
+    rows.push(['Taxable','CGST','SGST','IGST','Cess']);
+    const o = d.gstr3b.outward_taxable_supplies;
+    rows.push([o.taxable, o.cgst, o.sgst, o.igst, o.cess]);
+    rows.push([]);
+    rows.push(['3.1(b) Outward Taxable Supplies (Zero Rated)']);
+    rows.push(['Taxable']);
+    rows.push([d.gstr3b.outward_zero_rated_supplies.taxable]);
+    rows.push([]);
+    rows.push(['4. Eligible ITC']);
+    rows.push(['CGST','SGST','IGST']);
+    const i = d.gstr3b.itc_available;
+    rows.push([i.cgst, i.sgst, i.igst]);
+    rows.push([]);
+    rows.push(['Net Tax Payable']);
+    rows.push(['CGST','SGST','IGST']);
+    const n = d.gstr3b.net_tax_payable;
+    rows.push([n.cgst, n.sgst, n.igst]);
+
+  } else if (tab === 'hsn') {
+    rows.push(['HSN/SAC','Description','Rate','Qty','Taxable Value','Total Tax']);
+    d.hsn.items.forEach(r => rows.push([r.hsn, r.description, r.gst_rate + '%', r.total_qty, r.taxable, r.total_tax]));
+
+  } else if (tab === 'itc') {
+    rows.push(['Vendor','PO No','Date','Taxable','ITC']);
+    d.itc.by_vendor.forEach(r => rows.push([r.vendor_name, r.po_no, r.po_date, r.taxable_amount, r.total_itc]));
+  }
+
+  const csv = rows.map(r => r.map(csvEscape).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `gst_${tab}_${currentGSTData.month}.csv`;
+  a.click();
+  showToast('⬇ CSV exported');
+}
+
 async function downloadDocPDF(type, id) {
   if (!id) { showToast('⚠️ Save the document first','warn'); return; }
   try {
@@ -2266,7 +2448,7 @@ async function renderInvoices(list) {
         <div style="display:flex;gap:4px">
           <button class="btn btn-o btn-sm" onclick="viewInvoice('${inv.id}')" title="View">👁</button>
           <button class="btn btn-o btn-sm" onclick="loadInvoiceToEdit('${inv.id}')" title="Edit">✏️</button>
-          <button class="btn btn-o btn-sm" onclick="showToast('📄 PDF generated!')" title="PDF">📄</button>
+          <button class="btn btn-o btn-sm" onclick="downloadDocPDF('invoices','${inv.id}')" title="PDF">📄</button>
           <button class="btn btn-d btn-sm" onclick="deleteInvoice('${inv.id}')" title="Delete">🗑</button>
         </div>
       </td>
@@ -2379,7 +2561,7 @@ function autofillAgainstInvoice() {
   const inv = INVOICES.find(i => String(i.id) === String(id));
   if (!inv) return;
   document.getElementById('custName').value = inv.customer;
-  document.getElementById('custGstin').value = inv.custGst || '';
+  document.getElementById('custGst').value = inv.custGst || '';
   document.getElementById('custState').value = inv.custState || '27';
   document.getElementById('billAddr').value = inv.custAddr || '';
 }
@@ -2454,60 +2636,178 @@ function openInvActions(id) {
 }
 
 // ============================================================
+//  SHARED — CLASSIC GST DOCUMENT RENDERER (invoice/quote/PO/return)
+// ============================================================
+function numToWordsINR(num) {
+  num = Math.round(Number(num) || 0);
+  if (num === 0) return 'Zero Rupees Only';
+  const ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten',
+    'Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const tens = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  function two(n){ if(n<20) return ones[n]; return tens[Math.floor(n/10)]+(n%10?' '+ones[n%10]:''); }
+  function three(n){ if(n>99) return ones[Math.floor(n/100)]+' Hundred'+(n%100?' '+two(n%100):''); return two(n); }
+  let str = '';
+  const crore = Math.floor(num / 10000000); num %= 10000000;
+  const lakh = Math.floor(num / 100000); num %= 100000;
+  const thousand = Math.floor(num / 1000); num %= 1000;
+  const rest = num;
+  if (crore) str += three(crore) + ' Crore ';
+  if (lakh) str += three(lakh) + ' Lakh ';
+  if (thousand) str += three(thousand) + ' Thousand ';
+  if (rest) str += three(rest);
+  return 'Rs. ' + str.trim() + ' Only';
+}
+
+// Tracks which document is currently open in the preview modal so the header PDF button knows what to fetch
+let CURRENT_PREVIEW = { kind: null, id: null, extraId: null };
+
+function buildClassicDocHTML(d) {
+  // d: { docLabel, copyLabel, docNo, docDate, dueDate, extraLine, isInter,
+  //      partyLabel, partyName, partyGstin, partyAddress, partyPhone, placeOfSupply,
+  //      items:[{sn,name,hsn,qty,unit,rate,discPct,gstPct,cgst,sgst,igst,amount}],
+  //      taxable, cgst, sgst, igst, discount, total, notes }
+  const co = {
+    name: CFG.COMPANY_NAME || 'Your Company',
+    gstin: CFG.COMPANY_GSTIN || '',
+    pan: CFG.COMPANY_PAN || '',
+    address: CFG.COMPANY_ADDRESS || '',
+    phone: CFG.COMPANY_PHONE || '',
+    email: CFG.COMPANY_EMAIL || '',
+    bankName: CFG.BANK_NAME || '', bankAcc: CFG.BANK_ACC || '',
+    bankIfsc: CFG.BANK_IFSC || '', bankBranch: CFG.BANK_BRANCH || '', upi: CFG.UPI_ID || '',
+  };
+  const isInter = !!d.isInter;
+  const rows = (d.items||[]).map((it,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td class="left">${it.name||'—'}</td>
+      <td>${it.hsn||'—'}</td>
+      <td>${it.qty||0} ${it.unit||''}</td>
+      <td>₹${fmt(Number(it.rate||0))}</td>
+      <td>${it.discPct||0}%</td>
+      <td>${it.gstPct||0}%</td>
+      <td>₹${fmt(Number(it.amount||0))}</td>
+    </tr>`).join('');
+
+  return `
+  <div class="gst-doc">
+    <table class="gst-head"><tr>
+      <td style="width:80px"><div class="gst-logo">${CFG.COMPANY_LOGO_URL?`<img src="${CFG.COMPANY_LOGO_URL}" style="max-width:100%;max-height:100%">`:'LOGO'}</div></td>
+      <td>
+        <div class="gst-coname">${co.name}</div>
+        ${co.address?`<div class="gst-coaddr">${co.address}</div>`:''}
+        <div class="gst-cocontact">${co.phone?`Mobile: ${co.phone} `:''}${co.email?`| Email: ${co.email}`:''}</div>
+        <div class="gst-cocontact">${co.gstin?`GSTIN: ${co.gstin} `:''}${co.pan?`| PAN: ${co.pan}`:''}</div>
+      </td>
+      <td class="gst-copy">${d.copyLabel||'ORIGINAL FOR RECIPIENT'}</td>
+    </tr></table>
+    <div class="gst-titlebar">${d.docLabel}</div>
+    <table><tr>
+      <td class="gst-box">
+        <div class="gst-boxhdr">${d.partyLabel||'Bill To'}</div>
+        <div><b>${d.partyName||'—'}</b></div>
+        ${d.partyAddress?`<div>${d.partyAddress}</div>`:''}
+        ${d.partyPhone?`<div>Phone: ${d.partyPhone}</div>`:''}
+        ${d.partyGstin?`<div>GSTIN: ${d.partyGstin}</div>`:''}
+        ${d.placeOfSupply?`<div>Place of Supply: ${d.placeOfSupply}</div>`:''}
+      </td>
+      <td class="gst-box">
+        <table class="gst-meta">
+          <tr><td>${d.docNoLabel||'Document No.'}</td><td><b>${d.docNo||''}</b></td></tr>
+          <tr><td>Date</td><td>${d.docDate?fmtDate(d.docDate):''}</td></tr>
+          ${d.dueDate?`<tr><td>Due Date</td><td>${fmtDate(d.dueDate)}</td></tr>`:''}
+          ${d.extraLine?`<tr><td>${d.extraLine.label}</td><td>${d.extraLine.value}</td></tr>`:''}
+        </table>
+      </td>
+    </tr></table>
+    <table class="gst-items">
+      <thead><tr><th style="width:4%">Sr.</th><th style="width:30%">Item</th><th style="width:9%">HSN</th><th style="width:9%">Qty</th><th style="width:11%">Rate</th><th style="width:8%">Disc%</th><th style="width:8%">GST%</th><th style="width:21%">Amount</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="8" style="color:#999">No items</td></tr>'}</tbody>
+    </table>
+    <table><tr>
+      <td class="gst-box gst-words">
+        <div class="gst-boxhdr">Total in Words</div>
+        <div>${numToWordsINR(d.total)}</div>
+        ${d.notes?`<div class="gst-boxhdr" style="margin-top:10px">Notes</div><div>${d.notes}</div>`:''}
+      </td>
+      <td style="width:50%">
+        <table class="gst-taxbox">
+          <tr><td>Taxable Amount</td><td style="text-align:right">₹${fmt(Number(d.taxable||0))}</td></tr>
+          ${d.discount?`<tr><td>Discount</td><td style="text-align:right">-₹${fmt(Number(d.discount))}</td></tr>`:''}
+          ${!isInter
+            ? `<tr><td>CGST</td><td style="text-align:right">₹${fmt(Number(d.cgst||0))}</td></tr>
+               <tr><td>SGST</td><td style="text-align:right">₹${fmt(Number(d.sgst||0))}</td></tr>`
+            : `<tr><td>IGST</td><td style="text-align:right">₹${fmt(Number(d.igst||0))}</td></tr>`}
+          <tr class="grand"><td>Total Amount</td><td style="text-align:right">₹${fmt(Number(d.total||0))}</td></tr>
+        </table>
+      </td>
+    </tr></table>
+    <table><tr>
+      <td class="gst-box">
+        <div class="gst-boxhdr">Bank Details</div>
+        <div>Name: ${co.bankName||'—'}</div>
+        <div>Branch: ${co.bankBranch||'—'}</div>
+        <div>Acc. No: ${co.bankAcc||'—'}</div>
+        <div>IFSC: ${co.bankIfsc||'—'}</div>
+        ${co.upi?`<div>UPI: ${co.upi}</div>`:''}
+      </td>
+      <td class="gst-box gst-sigbox">
+        <div>Certified that the particulars above are true and correct.</div>
+        <div><b>For ${co.name}</b></div>
+        <div class="gst-sigspace"></div>
+        <div class="gst-small">This is a computer generated document.</div>
+        <div>Authorised Signatory</div>
+      </td>
+    </tr></table>
+  </div>`;
+}
+
+async function downloadCurrentPreviewPDF() {
+  if (!CURRENT_PREVIEW.kind || !CURRENT_PREVIEW.id) { showToast('⚠️ Nothing to download','warn'); return; }
+  if (CURRENT_PREVIEW.kind === 'purchase_return') {
+    return downloadPurchaseReturnPDF(CURRENT_PREVIEW.extraId, CURRENT_PREVIEW.id);
+  }
+  const typeMap = { invoice: 'invoices', quotation: 'quotations', po: 'purchase-orders' };
+  return downloadDocPDF(typeMap[CURRENT_PREVIEW.kind], CURRENT_PREVIEW.id);
+}
+
+async function downloadPurchaseReturnPDF(poId, jvId) {
+  try {
+    const res = await fetch(`${CFG.API_BASE}/billing/purchase-orders/${poId}/returns/${jvId}/pdf`, {
+      headers: { 'Authorization': `Bearer ${AUTH.token}` }
+    });
+    if (!res.ok) throw new Error('Server returned ' + res.status);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `purchase-return-${jvId}.pdf`; a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    showToast('⚠️ Could not generate PDF: ' + e.message, 'warn');
+  }
+}
+
+// ============================================================
 //  VIEW INVOICE (PREVIEW MODAL)
 // ============================================================
 function viewInvoice(id) {
   const inv = INVOICES.find(i=>String(i.id)===String(id));
   if (!inv) return;
-  const isInter = inv.supply==='inter';
-  document.getElementById('prevTitle').textContent='Invoice — '+inv.no;
-  document.getElementById('invPreviewBody').innerHTML=`
-    <div class="inv-preview">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
-        <div>
-          <div style="font-size:22px;font-weight:800;color:#111">${CFG.COMPANY_NAME}</div>
-          <div style="font-size:11px;color:#555;margin-top:4px">GSTIN: ${CFG.COMPANY_GSTIN}</div>
-          <div style="font-size:11px;color:#555">Andheri East, Mumbai — 400069</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:18px;font-weight:800;color:#0099cc">${(inv.type||'').toUpperCase()}</div>
-          <div style="font-size:13px;font-weight:700;margin-top:4px">${inv.no}</div>
-          <div style="font-size:11px;color:#555">Date: ${fmtDate(inv.date)}</div>
-          <div style="font-size:11px;color:#555">Due: ${fmtDate(inv.due)}</div>
-        </div>
-      </div>
-      <div style="background:#f8f8f8;border-radius:8px;padding:14px;margin-bottom:20px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:6px">Bill To</div>
-        <div style="font-size:13px;font-weight:700">${inv.customer}</div>
-        ${inv.custGst?`<div style="font-size:11px;color:#555;font-family:monospace">GSTIN: ${inv.custGst}</div>`:''}
-        <div style="font-size:11px;color:#555">${inv.custAddr||''}</div>
-        <div style="font-size:11px;color:#555">📞 ${inv.custMobile||''}</div>
-      </div>
-      <table style="margin-bottom:16px">
-        <thead><tr><th style="width:5%">#</th><th style="width:35%">Product</th><th style="width:8%">HSN</th><th style="width:8%">Qty</th><th style="width:12%">Rate</th><th style="width:8%">Disc%</th><th style="width:8%">GST%</th><th style="width:16%">Amount</th></tr></thead>
-        <tbody>${(inv.items||[]).map((it,i)=>`<tr>
-          <td style="color:#666">${i+1}</td>
-          <td style="font-weight:600">${it.prod||'—'}</td>
-          <td style="font-family:monospace;color:#888;font-size:10px">${it.hsn||'—'}</td>
-          <td>${it.qty||0}</td><td>₹${fmt(Number(it.rate))}</td><td>${it.disc||0}%</td><td>${it.gst||18}%</td>
-          <td style="font-weight:700">₹${fmt(Number(it.amt || (it.qty * it.rate)))}</td></tr>`).join('')}</tbody>
-      </table>
-      <div style="display:flex;justify-content:flex-end">
-        <div style="min-width:280px">
-          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Subtotal</span><span>₹${fmt(Number(inv.subtotal))}</span></div>
-          ${inv.discount?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#d00"><span>Discount</span><span>-₹${fmt(Number(inv.discount))}</span></div>`:''}
-          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Taxable Amount</span><span>₹${fmt(Number(inv.taxable))}</span></div>
-          ${!isInter
-            ?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>CGST</span><span>₹${fmt(inv.cgst)}</span></div>
-               <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>SGST</span><span>₹${fmt(inv.sgst)}</span></div>`
-            :`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>IGST</span><span>₹${fmt(inv.igst)}</span></div>`}
-          <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:800;border-top:2px solid #333;margin-top:6px">
-            <span>TOTAL</span><span style="color:#0099cc">₹${fmt(inv.total)}</span></div>
-        </div>
-      </div>
-      ${inv.notes?`<div style="margin-top:16px;padding:10px;background:#f8f8f8;border-radius:6px;font-size:11px;color:#666"><strong>Notes:</strong> ${inv.notes}</div>`:''}
-      <div style="margin-top:20px;text-align:center;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:12px">Thank you for your business! · VyaparPro ERP</div>
-    </div>`;
+  CURRENT_PREVIEW = { kind: 'invoice', id: inv.id, extraId: null };
+  document.getElementById('prevTitle').textContent = (inv.type||'Invoice') + ' — ' + inv.no;
+  document.getElementById('invPreviewBody').innerHTML = buildClassicDocHTML({
+    docLabel: (inv.type||'TAX INVOICE').toUpperCase(),
+    docNoLabel: 'Invoice No.', docNo: inv.no, docDate: inv.date, dueDate: inv.due,
+    isInter: inv.supply === 'inter',
+    partyLabel: 'Bill To', partyName: inv.customer, partyGstin: inv.custGst,
+    partyAddress: inv.custAddr, partyPhone: inv.custMobile,
+    items: (inv.items||[]).map(it => ({
+      name: it.prod, hsn: it.hsn, qty: it.qty, rate: it.rate, discPct: it.disc,
+      gstPct: it.gst || 18, amount: it.amt || (it.qty * it.rate),
+    })),
+    taxable: inv.taxable, discount: inv.discount, cgst: inv.cgst, sgst: inv.sgst, igst: inv.igst,
+    total: inv.total, notes: inv.notes,
+  });
   openModal('invPreviewModal');
 }
 
@@ -2523,54 +2823,20 @@ async function viewQuote(id) {
     showToast('❌ Could not load quotation: ' + e.message);
     return;
   }
-  const isInter = q.supply_type === 'inter';
+  CURRENT_PREVIEW = { kind: 'quotation', id: q.id || id, extraId: null };
   document.getElementById('prevTitle').textContent = 'Quotation — ' + q.quote_no;
-  document.getElementById('invPreviewBody').innerHTML = `
-    <div class="inv-preview">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
-        <div>
-          <div style="font-size:22px;font-weight:800;color:#111">${CFG.COMPANY_NAME}</div>
-          <div style="font-size:11px;color:#555;margin-top:4px">GSTIN: ${CFG.COMPANY_GSTIN}</div>
-          <div style="font-size:11px;color:#555">Andheri East, Mumbai — 400069</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:18px;font-weight:800;color:#0099cc">QUOTATION</div>
-          <div style="font-size:13px;font-weight:700;margin-top:4px">${q.quote_no}</div>
-          <div style="font-size:11px;color:#555">Date: ${fmtDate(q.quote_date)}</div>
-          <div style="font-size:11px;color:#555">Valid Till: ${fmtDate(q.valid_until)}</div>
-        </div>
-      </div>
-      <div style="background:#f8f8f8;border-radius:8px;padding:14px;margin-bottom:20px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:6px">Bill To</div>
-        <div style="font-size:13px;font-weight:700">${q.billing_name}</div>
-        ${q.billing_gstin ? `<div style="font-size:11px;color:#555;font-family:monospace">GSTIN: ${q.billing_gstin}</div>` : ''}
-        <div style="font-size:11px;color:#555">${q.billing_address || ''}</div>
-      </div>
-      <table style="margin-bottom:16px">
-        <thead><tr><th style="width:5%">#</th><th style="width:35%">Product</th><th style="width:8%">HSN</th><th style="width:8%">Qty</th><th style="width:12%">Rate</th><th style="width:8%">Disc%</th><th style="width:8%">GST%</th><th style="width:16%">Amount</th></tr></thead>
-        <tbody>${(q.items || []).map((it, i) => `<tr>
-          <td style="color:#666">${i+1}</td>
-          <td style="font-weight:600">${it.description || '—'}</td>
-          <td style="font-family:monospace;color:#888;font-size:10px">${it.hsn_code || '—'}</td>
-          <td>${it.quantity || 0}</td><td>₹${fmt(Number(it.rate))}</td><td>${it.discount_pct || 0}%</td><td>${it.gst_rate || 18}%</td>
-          <td style="font-weight:700">₹${fmt(Number(it.total_amount))}</td></tr>`).join('')}</tbody>
-      </table>
-      <div style="display:flex;justify-content:flex-end">
-        <div style="min-width:280px">
-          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Subtotal</span><span>₹${fmt(Number(q.subtotal))}</span></div>
-          ${Number(q.discount_amount) ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#d00"><span>Discount</span><span>-₹${fmt(Number(q.discount_amount))}</span></div>` : ''}
-          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Taxable Amount</span><span>₹${fmt(Number(q.taxable_amount))}</span></div>
-          ${!isInter
-            ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>CGST</span><span>₹${fmt(Number(q.cgst_amount))}</span></div>
-               <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>SGST</span><span>₹${fmt(Number(q.sgst_amount))}</span></div>`
-            : `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>IGST</span><span>₹${fmt(Number(q.igst_amount))}</span></div>`}
-          <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:800;border-top:2px solid #333;margin-top:6px">
-            <span>TOTAL</span><span style="color:#0099cc">₹${fmt(Number(q.total_amount))}</span></div>
-        </div>
-      </div>
-      ${q.notes ? `<div style="margin-top:16px;padding:10px;background:#f8f8f8;border-radius:6px;font-size:11px;color:#666"><strong>Notes:</strong> ${q.notes}</div>` : ''}
-      <div style="margin-top:20px;text-align:center;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:12px">Thank you for your business! · VyaparPro ERP</div>
-    </div>`;
+  document.getElementById('invPreviewBody').innerHTML = buildClassicDocHTML({
+    docLabel: 'QUOTATION', docNoLabel: 'Quotation No.', docNo: q.quote_no,
+    docDate: q.quote_date, dueDate: q.valid_until, isInter: q.supply_type === 'inter',
+    partyLabel: 'Bill To', partyName: q.billing_name, partyGstin: q.billing_gstin,
+    partyAddress: q.billing_address,
+    items: (q.items||[]).map(it => ({
+      name: it.description, hsn: it.hsn_code, qty: it.quantity, rate: it.rate,
+      discPct: it.discount_pct, gstPct: it.gst_rate || 18, amount: it.total_amount,
+    })),
+    taxable: q.taxable_amount, discount: q.discount_amount, cgst: q.cgst_amount,
+    sgst: q.sgst_amount, igst: q.igst_amount, total: q.total_amount, notes: q.notes,
+  });
   openModal('invPreviewModal');
 }
 
@@ -2790,7 +3056,9 @@ const grandTotal = taxableAmt + totalGST;
     place_of_supply:      getVal('custState'),
     supply_type:          getVal('supplyType'),
     is_export: document.getElementById('invIsExport')?.checked || false,
+    reverse_charge: document.getElementById('invReverseCharge')?.checked || false,
     export_type: document.getElementById('invIsExport')?.checked ? getVal('invExportType') : undefined,
+    supply_category: getVal('invSupplyCategory') || 'taxable',
     notes:                getVal('invNotes'),
     billing_name:         cust,
     billing_gstin:       getVal('custGst'),
@@ -2817,9 +3085,13 @@ const grandTotal = taxableAmt + totalGST;
     const quotePayload = {
       quote_date: getVal('invDate'),
       valid_until: getVal('invDue'),
+      party_id: selectedCustomerId || undefined,
       billing_name: cust,
       billing_gstin: getVal('custGst') || null,
       billing_address: getVal('custAddr'),
+      billing_state_code: getVal('invState'),
+      contact_phone: getVal('custMobile'),
+      contact_email: getVal('custEmail'),
       place_of_supply: getVal('custState'),
       supply_type: getVal('supplyType'),
       notes: getVal('invNotes') || '',
@@ -3186,8 +3458,7 @@ function populateGSTMonths() {
 
 async function loadGSTData() {
   populateGSTMonths();
-  const now = new Date();
-  const month = getVal('gstMonth') || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const month = getVal('gstMonth') || new Date().toISOString().slice(0, 7);
   try {
     const [summary, gstr1, gstr3b, hsn, itc] = await Promise.all([
       apiFetch(`/gst/summary?month=${month}`),
@@ -3201,6 +3472,7 @@ async function loadGSTData() {
     renderGSTR3B(gstr3b.data);
     renderHSNSummary(hsn.data);
     renderITCLedger(itc.data);
+    currentGSTData = { summary: summary.data, gstr1: gstr1.data, gstr3b: gstr3b.data, hsn: hsn.data, itc: itc.data, month };
     loadFiledReturns();
   } catch (e) {
     showToast('⚠️ Could not load GST data: ' + e.message, 'warn');
@@ -3248,11 +3520,14 @@ function renderGSTR1(d) {
 
 function renderGSTR3B(d) {
   const el = document.getElementById('gst-gstr3b'); if (!el) return;
-  const o = d.outward_taxable_supplies, i = d.itc_available, n = d.net_tax_payable;
+  const o = d.outward_taxable_supplies, z = d.outward_zero_rated_supplies, i = d.itc_available, n = d.net_tax_payable;
   el.innerHTML = `
-    <div class="card" style="margin-bottom:14px"><div style="font-size:13px;font-weight:700;margin-bottom:10px">3.1 Outward Taxable Supplies</div>
+    <div class="card" style="margin-bottom:14px"><div style="font-size:13px;font-weight:700;margin-bottom:10px">3.1(a) Outward Taxable Supplies (other than zero rated)</div>
       <table><thead><tr><th>Taxable Value</th><th>CGST</th><th>SGST</th><th>IGST</th><th>CESS</th></tr></thead>
       <tbody><tr><td>₹${fmt(o.taxable)}</td><td>₹${fmt(o.cgst)}</td><td>₹${fmt(o.sgst)}</td><td>₹${fmt(o.igst)}</td><td>₹${fmt(o.cess)}</td></tr></tbody></table></div>
+    <div class="card" style="margin-bottom:14px"><div style="font-size:13px;font-weight:700;margin-bottom:10px">3.1(b) Outward Taxable Supplies (Zero Rated — Exports)</div>
+      <table><thead><tr><th>Taxable Value</th></tr></thead>
+      <tbody><tr><td>₹${fmt(z.taxable)}</td></tr></tbody></table></div>
     <div class="card" style="margin-bottom:14px"><div style="font-size:13px;font-weight:700;margin-bottom:10px">4. Eligible ITC</div>
       <table><thead><tr><th>CGST</th><th>SGST</th><th>IGST</th></tr></thead>
       <tbody><tr><td>₹${fmt(i.cgst)}</td><td>₹${fmt(i.sgst)}</td><td>₹${fmt(i.igst)}</td></tr></tbody></table></div>
@@ -3261,8 +3536,6 @@ function renderGSTR3B(d) {
       <tbody><tr style="font-weight:700;color:var(--red)"><td>₹${fmt(n.cgst)}</td><td>₹${fmt(n.sgst)}</td><td>₹${fmt(n.igst)}</td></tr></tbody></table></div>
       <button class="btn btn-p" style="margin-top:14px" onclick="fileGSTR3B()" id="fileGSTR3BBtn">🔒 File GSTR-3B for this period</button>
       <div id="gstFiledHistory" style="margin-top:16px"></div>`;
-
-    
 }
 
 function renderHSNSummary(d) {
@@ -4444,6 +4717,7 @@ async function renderPO(list) {
       <td><span class="sb ${p.paidAmount >= p.total ? 'sp' : p.paidAmount > 0 ? 'spen' : 'sov'}">${p.paidAmount >= p.total ? 'PAID' : p.paidAmount > 0 ? 'PARTIALLY PAID' : 'UNPAID'}</span></td>
       <td><div style="display:flex;gap:3px">
         <button class="btn btn-o btn-sm" onclick="viewPO('${p.id}')" title="View">👁</button>
+        <button class="btn btn-o btn-sm" onclick="downloadDocPDF('purchase-orders','${p.id}')" title="PDF">📄</button>
         <button class="btn btn-o btn-sm" onclick="openPOActions('${p.id}')" title="Change Status">🔄</button>
       </div></td></tr>`;
   }).join('') : '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text3)">No purchase orders found</td></tr>';
@@ -4512,7 +4786,21 @@ function addPOItem() {
     <input type="number" class="fi" style="padding:6px 7px;font-size:11px" value="0" id="po-disc-${n}" oninput="calcPOItem(${n})" min="0" max="100"/>
     <input type="text" class="fi mono" style="padding:6px 7px;font-size:11px;background:var(--bg)" id="po-gst-${n}" readonly value="18%"/>
     <input type="text" class="fi" style="padding:6px 7px;font-size:11px;background:var(--bg);font-weight:700;color:var(--green)" id="po-amt-${n}" readonly value="₹0.00"/>
-    <button style="background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--red);cursor:pointer;padding:5px 8px;font-size:12px" onclick="removePOItem(${n})">✕</button>`;
+    <button style="background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--red);cursor:pointer;padding:5px 8px;font-size:12px" onclick="removePOItem(${n})">✕</button>
+    <label class="fl" style="grid-column:1/-1;font-size:10px;margin-top:2px">
+      <input type="checkbox" id="po-itc-${n}" checked onchange="document.getElementById('po-itcreason-wrap-${n}').classList.toggle('hidden', this.checked)"/> ITC Eligible
+      <span id="po-itcreason-wrap-${n}" class="hidden">
+        — Reason blocked:
+        <select id="po-itcreason-${n}" style="font-size:10px">
+          <option value="motor_vehicle">Motor Vehicle</option>
+          <option value="food_beverage">Food & Beverages</option>
+          <option value="employee_benefit">Employee Benefit</option>
+          <option value="construction">Construction (immovable property)</option>
+          <option value="personal_use">Personal Use</option>
+          <option value="other">Other</option>
+        </select>
+      </span>
+    </label>`;
   document.getElementById('poItems').appendChild(row);
   calcPOTotals();
 }
@@ -4568,6 +4856,8 @@ async function savePO() {
       rate: +getVal('po-rate-'+n) || 0,
       discount_pct: +getVal('po-disc-'+n) || 0,
       gst_rate: parseFloat(getVal('po-gst-'+n)) || 18,
+      itc_eligible: document.getElementById('po-itc-'+n)?.checked ?? true,
+      itc_ineligible_reason: document.getElementById('po-itc-'+n)?.checked ? null : getVal('po-itcreason-'+n),
     });
   });
   if (!items.length) { showToast('⚠️ Add at least one item','warn'); return; }
@@ -4579,6 +4869,7 @@ async function savePO() {
     payment_terms: getVal('poPaymentTerms'),
     notes: getVal('poNotes') || '',
     supply_type: getVal('poSupplyType') || 'intra',
+    reverse_charge: document.getElementById('poReverseCharge')?.checked || false,
     items,
   };
 
@@ -4598,46 +4889,19 @@ async function savePO() {
 function viewPO(id) {
   const p = PO_DATA.find(x => String(x.id) === String(id));
   if (!p) return;
+  CURRENT_PREVIEW = { kind: 'po', id: p.id, extraId: null };
   document.getElementById('prevTitle').textContent = 'Purchase Order — ' + p.no;
-  document.getElementById('invPreviewBody').innerHTML = `
-    <div class="inv-preview">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
-        <div>
-          <div style="font-size:22px;font-weight:800;color:#111">${CFG.COMPANY_NAME}</div>
-          <div style="font-size:11px;color:#555;margin-top:4px">GSTIN: ${CFG.COMPANY_GSTIN}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:18px;font-weight:800;color:#0099cc">PURCHASE ORDER</div>
-          <div style="font-size:13px;font-weight:700;margin-top:4px">${p.no}</div>
-          <div style="font-size:11px;color:#555">Date: ${fmtDate(p.date)}</div>
-          <div style="font-size:11px;color:#555">Expected: ${fmtDate(p.expectedDelivery) || '—'}</div>
-        </div>
-      </div>
-      <div style="background:#f8f8f8;border-radius:8px;padding:14px;margin-bottom:20px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:6px">Vendor</div>
-        <div style="font-size:13px;font-weight:700">${p.vendor}</div>
-      </div>
-      <table style="margin-bottom:16px">
-        <thead><tr><th style="width:5%">#</th><th style="width:35%">Product</th><th style="width:8%">HSN</th><th style="width:8%">Qty</th><th style="width:12%">Rate</th><th style="width:8%">Disc%</th><th style="width:8%">GST%</th><th style="width:16%">Amount</th></tr></thead>
-        <tbody>${p.items.map((it,i)=>`<tr>
-          <td style="color:#666">${i+1}</td>
-          <td style="font-weight:600">${it.prod}</td>
-          <td style="font-family:monospace;color:#888;font-size:10px">${it.hsn||'—'}</td>
-          <td>${it.qty}</td><td>₹${fmt(it.rate)}</td><td>${it.disc}%</td><td>${it.gst}%</td>
-          <td style="font-weight:700">₹${fmt(it.amt)}</td></tr>`).join('')}</tbody>
-      </table>
-      <div style="display:flex;justify-content:flex-end">
-        <div style="min-width:280px">
-          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Taxable Amount</span><span>₹${fmt(p.taxable)}</span></div>
-          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>CGST</span><span>₹${fmt(p.cgst)}</span></div>
-          <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>SGST</span><span>₹${fmt(p.sgst)}</span></div>
-          ${p.igst ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>IGST</span><span>₹${fmt(p.igst)}</span></div>` : ''}
-          <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:800;border-top:2px solid #333;margin-top:6px">
-            <span>TOTAL</span><span style="color:#0099cc">₹${fmt(p.total)}</span></div>
-        </div>
-      </div>
-      ${p.notes ? `<div style="margin-top:16px;padding:10px;background:#f8f8f8;border-radius:6px;font-size:11px;color:#666"><strong>Notes:</strong> ${p.notes}</div>` : ''}
-    </div>`;
+  document.getElementById('invPreviewBody').innerHTML = buildClassicDocHTML({
+    docLabel: 'PURCHASE ORDER', docNoLabel: 'PO No.', docNo: p.no, docDate: p.date,
+    isInter: !!p.igst,
+    extraLine: { label: 'Expected Delivery', value: p.expectedDelivery ? fmtDate(p.expectedDelivery) : '—' },
+    partyLabel: 'Vendor', partyName: p.vendor,
+    items: p.items.map(it => ({
+      name: it.prod, hsn: it.hsn, qty: it.qty, rate: it.rate, discPct: it.disc,
+      gstPct: it.gst, amount: it.amt,
+    })),
+    taxable: p.taxable, cgst: p.cgst, sgst: p.sgst, igst: p.igst, total: p.total, notes: p.notes,
+  });
   openModal('invPreviewModal');
 }
 
@@ -4646,47 +4910,20 @@ async function viewPurchaseReturn(jvId, poId) {
   try {
     const r = await apiFetch(`/billing/purchase-orders/${poId}/returns/${jvId}`);
     const d = r?.data || r;
-
+    CURRENT_PREVIEW = { kind: 'purchase_return', id: jvId, extraId: poId };
     document.getElementById('prevTitle').textContent = 'Purchase Return — ' + d.jv_no;
-    document.getElementById('invPreviewBody').innerHTML = `
-      <div class="inv-preview">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
-          <div>
-            <div style="font-size:22px;font-weight:800;color:#111">${CFG.COMPANY_NAME}</div>
-            <div style="font-size:11px;color:#555;margin-top:4px">GSTIN: ${CFG.COMPANY_GSTIN}</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:18px;font-weight:800;color:#0099cc">PURCHASE RETURN</div>
-            <div style="font-size:13px;font-weight:700;margin-top:4px">${d.jv_no}</div>
-            <div style="font-size:11px;color:#555">Date: ${fmtDate(d.jv_date)}</div>
-            <div style="font-size:11px;color:#555">Against: ${d.po_no}</div>
-          </div>
-        </div>
-        <div style="background:#f8f8f8;border-radius:8px;padding:14px;margin-bottom:20px">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:6px">Vendor</div>
-          <div style="font-size:13px;font-weight:700">${d.vendor_name}</div>
-          ${d.vendor_gstin ? `<div style="font-size:11px;color:#555;margin-top:2px">GSTIN: ${d.vendor_gstin}</div>` : ''}
-        </div>
-        <table style="margin-bottom:16px">
-          <thead><tr><th style="width:5%">#</th><th style="width:35%">Product</th><th style="width:8%">HSN</th><th style="width:8%">Qty</th><th style="width:12%">Rate</th><th style="width:8%">GST%</th><th style="width:24%">Amount</th></tr></thead>
-          <tbody>${d.items.map((it,i)=>`<tr>
-            <td style="color:#666">${i+1}</td>
-            <td style="font-weight:600">${it.product_name}</td>
-            <td style="font-family:monospace;color:#888;font-size:10px">${it.hsn_code||'—'}</td>
-            <td>${it.quantity}</td><td>₹${fmt(it.rate)}</td><td>${it.gst_rate}%</td>
-            <td style="font-weight:700">₹${fmt(it.amount)}</td></tr>`).join('')}</tbody>
-        </table>
-        <div style="display:flex;justify-content:flex-end">
-          <div style="min-width:280px">
-            <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>Taxable Amount</span><span>₹${fmt(d.taxable_amount)}</span></div>
-            ${d.cgst_amount ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>CGST</span><span>₹${fmt(d.cgst_amount)}</span></div>` : ''}
-            ${d.sgst_amount ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>SGST</span><span>₹${fmt(d.sgst_amount)}</span></div>` : ''}
-            ${d.igst_amount ? `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#555"><span>IGST</span><span>₹${fmt(d.igst_amount)}</span></div>` : ''}
-            <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:800;border-top:2px solid #333;margin-top:6px">
-              <span>TOTAL</span><span style="color:#0099cc">₹${fmt(d.total_amount)}</span></div>
-          </div>
-        </div>
-      </div>`;
+    document.getElementById('invPreviewBody').innerHTML = buildClassicDocHTML({
+      docLabel: 'PURCHASE RETURN / DEBIT NOTE', docNoLabel: 'Return No.', docNo: d.jv_no,
+      docDate: d.jv_date, isInter: !!d.igst_amount,
+      extraLine: { label: 'Against PO', value: d.po_no },
+      partyLabel: 'Vendor', partyName: d.vendor_name, partyGstin: d.vendor_gstin,
+      items: (d.items||[]).map(it => ({
+        name: it.product_name, hsn: it.hsn_code, qty: it.quantity, rate: it.rate,
+        gstPct: it.gst_rate, amount: it.amount,
+      })),
+      taxable: d.taxable_amount, cgst: d.cgst_amount, sgst: d.sgst_amount,
+      igst: d.igst_amount, total: d.total_amount,
+    });
     openModal('invPreviewModal');
   } catch (e) {
     showToast('❌ Could not load return details: ' + e.message);
@@ -5007,6 +5244,7 @@ async function renderQuotes() {
     <td><span class="sb ${q.status==='accepted'?'sp':q.status==='sent'?'spen':'sdr'}">${q.status}</span></td>
     <td><div style="display:flex;gap:3px">
       <button class="btn btn-o btn-sm" onclick="viewQuote('${q.id}')">👁</button>
+      <button class="btn btn-o btn-sm" onclick="downloadDocPDF('quotations','${q.id}')" title="PDF">📄</button>
       <button class="btn btn-p btn-sm" onclick="convertQuote('${q.id}')">→ Invoice</button>
     </div></td></tr>`).join('');
 }
@@ -5607,6 +5845,7 @@ function switchTab(btn,ns,id) {
 //=============================================================
 
 let ROLES_CACHE = [];
+let CURRENT_COMPANY = {};
 
 async function renderSettings() {
   // ---- Company profile ----
@@ -5615,6 +5854,7 @@ async function renderSettings() {
     try {
       const r = await apiFetch(`/companies/${CFG.COMPANY_ID}`);
       company = r?.data || r || {};
+      CURRENT_COMPANY = company;
       setVal('setLegalName', company.legal_name || '');
       setVal('setTradeName', company.trade_name || '');
       setVal('setGstin', company.gstin || '');
@@ -5625,6 +5865,14 @@ async function renderSettings() {
       setVal('setPhone', company.phone || '');
       setVal('setAddress', company.reg_address || '');
       setVal('setInvoicePrefix', company.invoice_prefix || 'INV-');
+      setVal('setTagline', (company.settings || {}).tagline || '');
+      const bankSettings = company.settings || {};
+      setVal('setBankName', bankSettings.bank_name || '');
+      setVal('setBankBranch', bankSettings.bank_branch || '');
+      setVal('setBankAccount', bankSettings.bank_account_no || '');
+      setVal('setBankIfsc', bankSettings.bank_ifsc || '');
+      setVal('setUpiId', bankSettings.upi_id || '');
+      setVal('setDefaultTerms', bankSettings.default_terms || '');
 
       const img = document.getElementById('setLogoPreview');
       const ph  = document.getElementById('setLogoPlaceholder');
@@ -5705,16 +5953,45 @@ async function saveCompanySettings() {
     phone: getVal('setPhone'),
     reg_address: getVal('setAddress'),
     invoice_prefix: getVal('setInvoicePrefix'),
+    settings: { ...(CURRENT_COMPANY.settings || {}), tagline: getVal('setTagline') },
   };
+  if (!AUTH.apiOnline) {
+    showToast('⚠️ Not connected to server — settings were NOT saved. Open this app via your backend URL (not a file:// path) and try again.', 'warn');
+    return;
+  }
   try {
-    if (AUTH.apiOnline) {
-      await apiFetch(`/companies/${CFG.COMPANY_ID}`, { method: 'PATCH', body: JSON.stringify(payload) });
-    }
+    await apiFetch(`/companies/${CFG.COMPANY_ID}`, { method: 'PATCH', body: JSON.stringify(payload) });
     showToast('✅ Settings saved!');
     addAuditEntry('UPDATE', 'Settings', 'Updated company profile');
     syncSidebarCompany();
   } catch (e) {
-    showToast('❌ ' + e.message);
+    showToast('❌ Could not save: ' + e.message);
+  }
+}
+
+async function saveBankSettings() {
+  if (!AUTH.apiOnline) {
+    showToast('⚠️ Not connected to server — bank details were NOT saved.', 'warn');
+    return;
+  }
+  const payload = {
+    settings: {
+      ...(CURRENT_COMPANY.settings || {}),
+      bank_name: getVal('setBankName'),
+      bank_branch: getVal('setBankBranch'),
+      bank_account_no: getVal('setBankAccount'),
+      bank_ifsc: getVal('setBankIfsc'),
+      upi_id: getVal('setUpiId'),
+      default_terms: getVal('setDefaultTerms'),
+    },
+  };
+  try {
+    await apiFetch(`/companies/${CFG.COMPANY_ID}`, { method: 'PATCH', body: JSON.stringify(payload) });
+    CURRENT_COMPANY.settings = payload.settings;
+    showToast('✅ Bank details & terms saved!');
+    addAuditEntry('UPDATE', 'Settings', 'Updated bank details and default terms');
+  } catch (e) {
+    showToast('❌ Could not save: ' + e.message);
   }
 }
 

@@ -225,6 +225,7 @@ class CompanyOut(APIModel):
     po_prefix: str
     jo_prefix: str
     quote_prefix: str
+    settings: Optional[dict] = None
     is_active: bool
     created_at: datetime
     updated_at: datetime

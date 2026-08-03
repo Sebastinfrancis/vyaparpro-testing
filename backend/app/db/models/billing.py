@@ -56,6 +56,8 @@ class Quotation(Base, UUIDMixin, TimestampMixin, GSTAmountMixin):
     billing_gstin: Mapped[Optional[str]] = mapped_column(String(15))
     billing_address: Mapped[Optional[str]] = mapped_column(Text)
     billing_state_code: Mapped[Optional[str]] = mapped_column(String(30))
+    contact_phone: Mapped[Optional[str]] = mapped_column(String(20))
+    contact_email: Mapped[Optional[str]] = mapped_column(String(150))
     place_of_supply: Mapped[str] = mapped_column(String(2), default="27")
     supply_type: Mapped[str] = mapped_column(String(20), default="intra")
     currency: Mapped[str] = mapped_column(String(3), default="INR")
@@ -194,6 +196,8 @@ class PurchaseOrder(Base, UUIDMixin, TimestampMixin, GSTAmountMixin):
     notes: Mapped[Optional[str]] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(20), default="draft")
     # draft|sent|acknowledged|partial|received|closed|cancelled
+    reverse_charge: Mapped[bool] = mapped_column(Boolean, default=False)
+    # True = you (the buyer) self-assess and pay this PO's GST directly to the govt
     approval_status: Mapped[str] = mapped_column(String(20), default="pending")
     # pending|approved|rejected
     approved_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
@@ -230,6 +234,9 @@ class PurchaseOrderItem(Base, UUIDMixin):
     display_order: Mapped[int] = mapped_column(SmallInteger, default=0)
     cess_amount: Mapped[Decimal] = mapped_column(Numeric(15,2),default=Decimal("0"))
     total_amount: Mapped[Decimal] = mapped_column(Numeric(15,2),default=Decimal("0"))
+    itc_eligible: Mapped[bool] = mapped_column(Boolean, default=True)
+    itc_ineligible_reason: Mapped[Optional[str]] = mapped_column(String(50))
+    # e.g. 'motor_vehicle' | 'food_beverage' | 'employee_benefit' | 'construction' | 'personal_use' | 'other'
 
     po: Mapped["PurchaseOrder"] = relationship("PurchaseOrder", back_populates="items")
 
@@ -405,6 +412,8 @@ class Invoice(Base, UUIDMixin, TimestampMixin, GSTAmountMixin):
     created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     is_export: Mapped[bool] = mapped_column(Boolean, default=False)
     export_type: Mapped[Optional[str]] = mapped_column(String(10))  # 'WPAY' or 'WOPAY'
+    supply_category: Mapped[str] = mapped_column(String(20), default="taxable")
+    # taxable | nil_rated | exempt | non_gst — drives GSTR-1/3B Table 3.1(c)/(e) split
 
     items: Mapped[list["InvoiceItem"]] = relationship("InvoiceItem", back_populates="invoice", cascade="all, delete-orphan", lazy = "selectin",)
     party: Mapped[Optional["Party"]] = relationship("Party", foreign_keys=[party_id])  # type: ignore
