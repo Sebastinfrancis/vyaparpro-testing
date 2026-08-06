@@ -39,6 +39,70 @@ def _clean(obj):
         return [_clean(v) for v in obj]
     return obj
 
+def _compute_setoff(outward: dict, itc: dict) -> dict:
+    """
+    Section 49A / 49B and Rule 88A — ITC set-off order:
+      1. IGST ITC must be fully exhausted first: against IGST liability first,
+         then any leftover against CGST liability, then SGST liability.
+      2. CGST ITC can only be used for CGST liability first; any leftover
+         can then be used against IGST liability. CGST ITC can NEVER offset SGST.
+      3. SGST ITC can only be used for SGST liability first; any leftover
+         can then be used against IGST liability. SGST ITC can NEVER offset CGST.
+    Returns net cash payable per head plus unutilised ITC carried forward.
+    """
+    igst_liab = float(outward.get("igst", 0) or 0)
+    cgst_liab = float(outward.get("cgst", 0) or 0)
+    sgst_liab = float(outward.get("sgst", 0) or 0)
+
+    igst_itc = float(itc.get("igst", 0) or 0)
+    cgst_itc = float(itc.get("cgst", 0) or 0)
+    sgst_itc = float(itc.get("sgst", 0) or 0)
+
+    # Step 1: IGST ITC -> IGST liability first
+    used = min(igst_itc, igst_liab)
+    igst_liab -= used
+    igst_itc -= used
+
+    # Step 2: leftover IGST ITC -> CGST liability, then SGST liability
+    used = min(igst_itc, cgst_liab)
+    cgst_liab -= used
+    igst_itc -= used
+
+    used = min(igst_itc, sgst_liab)
+    sgst_liab -= used
+    igst_itc -= used  # remaining IGST ITC (if any) is carried forward
+
+    # Step 3: CGST ITC -> CGST liability first
+    used = min(cgst_itc, cgst_liab)
+    cgst_liab -= used
+    cgst_itc -= used
+
+    # Step 4: leftover CGST ITC -> IGST liability only
+    used = min(cgst_itc, igst_liab)
+    igst_liab -= used
+    cgst_itc -= used
+
+    # Step 5: SGST ITC -> SGST liability first
+    used = min(sgst_itc, sgst_liab)
+    sgst_liab -= used
+    sgst_itc -= used
+
+    # Step 6: leftover SGST ITC -> IGST liability only
+    used = min(sgst_itc, igst_liab)
+    igst_liab -= used
+    sgst_itc -= used
+
+    return {
+        "net_igst": round(igst_liab, 2),
+        "net_cgst": round(cgst_liab, 2),
+        "net_sgst": round(sgst_liab, 2),
+        "remaining_itc": {
+            "igst": round(igst_itc, 2),
+            "cgst": round(cgst_itc, 2),
+            "sgst": round(sgst_itc, 2),
+        },
+    }
+
 
 @router.get("/summary", summary="GST summary — output tax, ITC, rate-wise breakup")
 async def gst_summary(current: CurrentUserDep, db: DBDep, month: str = Query(...)) -> ORJSONResponse:
@@ -148,12 +212,16 @@ async def gstr3b(current: CurrentUserDep, db: DBDep, month: str = Query(...)) ->
     df, dt = _month_bounds(month)
 
     outward_taxable = (await db.execute(text("""
-        SELECT COALESCE(SUM(taxable_amount),0) AS taxable, COALESCE(SUM(cgst_amount),0) AS cgst,
-            COALESCE(SUM(sgst_amount),0) AS sgst, COALESCE(SUM(igst_amount),0) AS igst,
-            COALESCE(SUM(cess_amount),0) AS cess
+        SELECT
+            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -taxable_amount ELSE taxable_amount END),0) AS taxable,
+            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -cgst_amount ELSE cgst_amount END),0) AS cgst,
+            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -sgst_amount ELSE sgst_amount END),0) AS sgst,
+            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -igst_amount ELSE igst_amount END),0) AS igst,
+            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -cess_amount ELSE cess_amount END),0) AS cess
         FROM invoices
         WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
-        AND status NOT IN ('draft','cancelled','void') AND invoice_type IN ('tax_invoice','debit_note')
+        AND status NOT IN ('draft','cancelled','void')
+        AND invoice_type IN ('tax_invoice','debit_note','credit_note')
         AND reverse_charge = false AND is_export = false AND supply_category = 'taxable'
     """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
 
@@ -314,10 +382,14 @@ async def file_gstr3b(current: CurrentUserDep, db: DBDep, month: str = Query(...
         return ok(message="This period is already filed.", data={"status": "filed"})
 
     outward = (await db.execute(text("""
-        SELECT COALESCE(SUM(taxable_amount),0) AS taxable, COALESCE(SUM(cgst_amount),0) AS cgst,
-               COALESCE(SUM(sgst_amount),0) AS sgst, COALESCE(SUM(igst_amount),0) AS igst
+        SELECT
+            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -taxable_amount ELSE taxable_amount END),0) AS taxable,
+            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -cgst_amount ELSE cgst_amount END),0) AS cgst,
+            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -sgst_amount ELSE sgst_amount END),0) AS sgst,
+            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -igst_amount ELSE igst_amount END),0) AS igst
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
-          AND status NOT IN ('draft','cancelled','void') AND invoice_type = 'tax_invoice'
+          AND status NOT IN ('draft','cancelled','void')
+          AND invoice_type IN ('tax_invoice','credit_note')
           AND reverse_charge = false AND supply_category = 'taxable'
     """), {"cid": str(cid), "df": df, "dt": dt})).mappings().one()
 
@@ -413,29 +485,36 @@ async def gst_report_pdf(current: CurrentUserDep, db: DBDep, month: str = Query(
         {"cid": cid}
     )).mappings().one_or_none() or {}
 
-    totals = (await db.execute(text("""
-        SELECT COALESCE(SUM(taxable_amount),0) AS sales_taxable,
-               COALESCE(SUM(cgst_amount+sgst_amount+igst_amount),0) AS output_gst
-        FROM invoices
-        WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
-          AND status NOT IN ('draft','cancelled','void') AND invoice_type != 'credit_note'
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
-
     outward = (await db.execute(text("""
-        SELECT COALESCE(SUM(taxable_amount),0) AS taxable, COALESCE(SUM(cgst_amount),0) AS cgst,
-               COALESCE(SUM(sgst_amount),0) AS sgst, COALESCE(SUM(igst_amount),0) AS igst,
-               COALESCE(SUM(cess_amount),0) AS cess
+        SELECT
+            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -taxable_amount ELSE taxable_amount END),0) AS taxable,
+            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -cgst_amount ELSE cgst_amount END),0) AS cgst,
+            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -sgst_amount ELSE sgst_amount END),0) AS sgst,
+            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -igst_amount ELSE igst_amount END),0) AS igst,
+            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -cess_amount ELSE cess_amount END),0) AS cess
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
-          AND status NOT IN ('draft','cancelled','void') AND invoice_type IN ('tax_invoice','debit_note')
+          AND status NOT IN ('draft','cancelled','void')
+          AND invoice_type IN ('tax_invoice','debit_note','credit_note')
+          AND reverse_charge = false AND is_export = false AND supply_category = 'taxable'
     """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
 
     itc = (await db.execute(text("""
-        SELECT COALESCE(SUM(cgst_amount),0) AS cgst, COALESCE(SUM(sgst_amount),0) AS sgst,
-               COALESCE(SUM(igst_amount),0) AS igst
-        FROM purchase_orders WHERE company_id=:cid AND po_date BETWEEN :df AND :dt AND status != 'cancelled'
+        SELECT COALESCE(SUM(poi.cgst_amount),0) AS cgst, COALESCE(SUM(poi.sgst_amount),0) AS sgst,
+               COALESCE(SUM(poi.igst_amount),0) AS igst
+        FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
+        WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
+          AND poi.itc_eligible = true
     """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
 
-    net = {k: max(0, float(outward[k]) - float(itc[k])) for k in ("cgst", "sgst", "igst")}
+    setoff = _compute_setoff(dict(outward), dict(itc))
+    net = {"cgst": setoff["net_cgst"], "sgst": setoff["net_sgst"], "igst": setoff["net_igst"]}
+
+    # "Sales (Taxable)" / "Output GST" header cards now derive from the SAME
+    # filtered query as the 3.1 table below, so they can never disagree with it.
+    totals = {
+        "sales_taxable": outward["taxable"],
+        "output_gst": float(outward["cgst"]) + float(outward["sgst"]) + float(outward["igst"]),
+    }
 
     b2b = (await db.execute(text("""
         SELECT invoice_no, invoice_date, billing_name, billing_gstin, taxable_amount, total_amount
@@ -460,6 +539,14 @@ async def gst_report_pdf(current: CurrentUserDep, db: DBDep, month: str = Query(
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
           AND status NOT IN ('draft','cancelled','void') AND invoice_type IN ('credit_note','debit_note')
           AND billing_gstin IS NOT NULL AND billing_gstin != ''
+        ORDER BY invoice_date
+    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+
+    cdnur = (await db.execute(text("""
+        SELECT invoice_no, invoice_date, invoice_type, billing_name, taxable_amount, total_amount
+        FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND status NOT IN ('draft','cancelled','void') AND invoice_type IN ('credit_note','debit_note')
+          AND (billing_gstin IS NULL OR billing_gstin = '')
         ORDER BY invoice_date
     """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
 
@@ -505,6 +592,9 @@ async def gst_report_pdf(current: CurrentUserDep, db: DBDep, month: str = Query(
             ("GSTR-1 — CDNR (Credit/Debit Notes)", ["Note No", "Date", "Type", "Customer", "Taxable", "Total"],
              [[r["invoice_no"], str(r["invoice_date"]), r["invoice_type"], r["billing_name"],
                format_inr(r["taxable_amount"]), format_inr(r["total_amount"])] for r in cdnr]),
+            ("GSTR-1 — CDNUR (Credit/Debit Notes, Unregistered)", ["Note No", "Date", "Type", "Customer", "Taxable", "Total"],
+             [[r["invoice_no"], str(r["invoice_date"]), r["invoice_type"], r["billing_name"],
+               format_inr(r["taxable_amount"]), format_inr(r["total_amount"])] for r in cdnur]),
             ("GSTR-1 — Exports", ["Invoice No", "Date", "Customer", "Export Type", "Taxable"],
              [[r["invoice_no"], str(r["invoice_date"]), r["billing_name"], r["export_type"],
                format_inr(r["taxable_amount"])] for r in exports]),

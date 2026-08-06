@@ -652,10 +652,26 @@ class AuditLogOut(APIModel):
     module: str
     entity_type: Optional[str]
     entity_ref: Optional[str]
+    detail: Optional[str]
+    actor_name: Optional[str]
     changed_fields: Optional[list[str]]
     ip_address: Optional[str]
     log_timestamp: datetime
     user_id: Optional[UUID]
+    @field_validator("ip_address", mode="before")
+    @classmethod
+    def _stringify_ip(cls, v):
+        # asyncpg/psycopg return Postgres INET columns as ipaddress.IPv4Address /
+        # IPv6Address objects, not str — coerce here regardless of driver.
+        return str(v) if v is not None else v
+
+
+class AuditLogCreate(APIModel):
+    action: str = Field(max_length=20)
+    module: str = Field(max_length=40)
+    entity_type: Optional[str] = Field(default=None, max_length=50)
+    entity_ref: Optional[str] = Field(default=None, max_length=50)
+    detail: Optional[str] = None
 
 
 # ════════════════════════════════════════════════════════════════════

@@ -430,6 +430,11 @@ select.fi option{background:var(--bg2)}
               </div>
             </div>
             <div class="fg"><label class="fl">Notes / Terms</label><textarea class="fi" rows="2" id="invNotes" placeholder="Payment terms, delivery notes…"></textarea></div>
+            <div class="fr c3">
+              <div class="fg"><label class="fl">Transporter Name</label><input class="fi" id="invTransporterName" placeholder="e.g. Blue Dart Logistics"/></div>
+              <div class="fg"><label class="fl">Transporter ID / GSTIN</label><input class="fi" id="invTransporterId" placeholder="15-digit Transporter ID"/></div>
+              <div class="fg"><label class="fl">Vehicle No</label><input class="fi" id="invVehicleNo" placeholder="MH12AB1234"/></div>
+            </div>
           </div>
           <div class="card">
             <div style="font-size:12px;font-weight:700;margin-bottom:11px">Bill To (Customer)</div>
@@ -703,10 +708,10 @@ select.fi option{background:var(--bg2)}
           <tr style="font-weight:700;color:var(--text)"><td>TOTAL</td><td>₹15,48,700</td><td>₹1,19,548</td><td>₹1,19,548</td><td>₹39,670</td><td>₹2,78,766</td></tr>
         </tbody></table>
       </div></div>
-      <div id="gst-gstr1" class="hidden"><div class="card"><div class="es"><div class="ei">📋</div><div class="et">GSTR-1 Report</div><div class="esb">B2B, B2C, CDNR, exports</div><button class="btn btn-p" style="margin-top:14px" onclick="showToast('GSTR-1 generated ✅')">Generate GSTR-1</button></div></div></div>
-      <div id="gst-gstr3b" class="hidden"><div class="card"><div class="es"><div class="ei">📊</div><div class="et">GSTR-3B Summary</div><div class="esb">Monthly return filing</div><button class="btn btn-p" style="margin-top:14px" onclick="showToast('GSTR-3B generated ✅')">Generate GSTR-3B</button></div></div></div>
-      <div id="gst-hsn" class="hidden"><div class="card"><div class="es"><div class="ei">🔢</div><div class="et">HSN/SAC Summary</div><div class="esb">Commodity-wise tax</div><button class="btn btn-p" style="margin-top:14px" onclick="showToast('HSN summary generated ✅')">Generate</button></div></div></div>
-      <div id="gst-itc" class="hidden"><div class="card"><div class="es"><div class="ei">💰</div><div class="et">ITC Ledger</div><div class="esb">Input tax credit tracking & utilisation</div><button class="btn btn-p" style="margin-top:14px" onclick="showToast('ITC ledger generated ✅')">Generate ITC Ledger</button></div></div></div>
+      <div id="gst-gstr1" class="hidden"><div class="card"><div class="es"><div class="ei">📋</div><div class="et">Loading GSTR-1…</div><div class="esb">B2B, B2C, CDNR, exports</div></div></div></div>
+      <div id="gst-gstr3b" class="hidden"><div class="card"><div class="es"><div class="ei">📊</div><div class="et">Loading GSTR-3B…</div><div class="esb">Monthly return filing</div></div></div></div>
+      <div id="gst-hsn" class="hidden"><div class="card"><div class="es"><div class="ei">🔢</div><div class="et">Loading HSN/SAC Summary…</div><div class="esb">Commodity-wise tax</div></div></div></div>
+      <div id="gst-itc" class="hidden"><div class="card"><div class="es"><div class="ei">💰</div><div class="et">Loading ITC Ledger…</div><div class="esb">Input tax credit tracking & utilisation</div></div></div></div>
     </div>
 
     <!-- ======== E-INVOICE ======== -->
@@ -1845,7 +1850,7 @@ function normBranch(b) {
     value:     b.value ?? b.stock_value   ?? 0,
   };
 }
-let AUDIT_LOG=[
+let AUDIT_LOG = JSON.parse(localStorage.getItem('vyaparpro_audit_log') || 'null') || [
   {ts:'01 Jun 2026 09:42:18',user:'Rajesh Sharma',action:'CREATE',module:'Invoice',detail:'Created INV-2468 for Kumar Electronics — ₹42,000',ip:'192.168.1.10'},
   {ts:'01 Jun 2026 09:40:05',user:'Rajesh Sharma',action:'LOGIN',module:'Auth',detail:'Successful login from Chrome browser',ip:'192.168.1.10'},
 ];
@@ -1960,6 +1965,7 @@ function bootApp() {
   // Live indicator
   setLiveStatus(AUTH.apiOnline);
   addAuditEntry('LOGIN', 'Auth', 'Signed in as ' + (u.name || 'User') + (AUTH.apiOnline ? ' (API online)' : ' (Demo mode)'));
+  if (AUTH.apiOnline) flushAuditQueue();
   // Kick off data loading
   renderDashboard();
   renderInvoices();
@@ -1981,6 +1987,7 @@ function doLogout() {
 }
 
 function setLiveStatus(online) {
+  const wasOffline = !AUTH.apiOnline;
   AUTH.apiOnline = online;
   const dot = document.getElementById('liveDot');
   const lbl = document.getElementById('liveLabel');
@@ -1989,7 +1996,9 @@ function setLiveStatus(online) {
     dot.style.background = 'var(--green)';
     lbl.textContent      = 'Live';
     if (snc) snc.textContent = 'Synced · Online · Just now';
+    if (wasOffline) flushAuditQueue();
   } else {
+    updatePendingAuditBadge();
     dot.style.background = 'var(--orange)';
     lbl.textContent      = 'Demo';
     if (snc) snc.textContent = 'Offline — Demo data';
@@ -2659,7 +2668,26 @@ function numToWordsINR(num) {
 }
 
 // Tracks which document is currently open in the preview modal so the header PDF button knows what to fetch
-let CURRENT_PREVIEW = { kind: null, id: null, extraId: null };
+let CURRENT_PREVIEW = { kind: null, id: null, extraId: null, blobUrl: null, filename: null };
+
+// Fetches the real backend-generated PDF and renders it inline in the preview modal.
+// Falls back to the on-screen mock (fallbackHTML) if the doc isn't saved yet / the fetch fails.
+async function renderPdfPreview(url, filename, fallbackHTML) {
+  const body = document.getElementById('invPreviewBody');
+  if (CURRENT_PREVIEW.blobUrl) { URL.revokeObjectURL(CURRENT_PREVIEW.blobUrl); CURRENT_PREVIEW.blobUrl = null; }
+  body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:60vh;color:var(--text3)">⏳ Loading PDF…</div>`;
+  try {
+    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${AUTH.token}` } });
+    if (!res.ok) throw new Error('Server returned ' + res.status);
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    CURRENT_PREVIEW.blobUrl = blobUrl;
+    CURRENT_PREVIEW.filename = filename;
+    body.innerHTML = `<iframe src="${blobUrl}" style="width:100%;height:78vh;border:0;border-radius:8px;background:#fff" title="PDF preview"></iframe>`;
+  } catch (e) {
+    body.innerHTML = fallbackHTML || `<div style="padding:40px;text-align:center;color:var(--text3)">⚠️ Could not load PDF: ${e.message}</div>`;
+  }
+}
 
 function buildClassicDocHTML(d) {
   // d: { docLabel, copyLabel, docNo, docDate, dueDate, extraLine, isInter,
@@ -2763,6 +2791,11 @@ function buildClassicDocHTML(d) {
 }
 
 async function downloadCurrentPreviewPDF() {
+  if (CURRENT_PREVIEW.blobUrl) {
+    const a = document.createElement('a');
+    a.href = CURRENT_PREVIEW.blobUrl; a.download = CURRENT_PREVIEW.filename || 'document.pdf'; a.click();
+    return;
+  }
   if (!CURRENT_PREVIEW.kind || !CURRENT_PREVIEW.id) { showToast('⚠️ Nothing to download','warn'); return; }
   if (CURRENT_PREVIEW.kind === 'purchase_return') {
     return downloadPurchaseReturnPDF(CURRENT_PREVIEW.extraId, CURRENT_PREVIEW.id);
@@ -2793,9 +2826,10 @@ async function downloadPurchaseReturnPDF(poId, jvId) {
 function viewInvoice(id) {
   const inv = INVOICES.find(i=>String(i.id)===String(id));
   if (!inv) return;
-  CURRENT_PREVIEW = { kind: 'invoice', id: inv.id, extraId: null };
+  CURRENT_PREVIEW = { kind: 'invoice', id: inv.id, extraId: null, blobUrl: null, filename: null };
   document.getElementById('prevTitle').textContent = (inv.type||'Invoice') + ' — ' + inv.no;
-  document.getElementById('invPreviewBody').innerHTML = buildClassicDocHTML({
+  openModal('invPreviewModal');
+  const fallback = buildClassicDocHTML({
     docLabel: (inv.type||'TAX INVOICE').toUpperCase(),
     docNoLabel: 'Invoice No.', docNo: inv.no, docDate: inv.date, dueDate: inv.due,
     isInter: inv.supply === 'inter',
@@ -2808,7 +2842,7 @@ function viewInvoice(id) {
     taxable: inv.taxable, discount: inv.discount, cgst: inv.cgst, sgst: inv.sgst, igst: inv.igst,
     total: inv.total, notes: inv.notes,
   });
-  openModal('invPreviewModal');
+  renderPdfPreview(`${CFG.API_BASE}/billing/invoices/${inv.id}/pdf`, `${inv.no}.pdf`, fallback);
 }
 
 // ============================================================
@@ -2823,9 +2857,10 @@ async function viewQuote(id) {
     showToast('❌ Could not load quotation: ' + e.message);
     return;
   }
-  CURRENT_PREVIEW = { kind: 'quotation', id: q.id || id, extraId: null };
+  CURRENT_PREVIEW = { kind: 'quotation', id: q.id || id, extraId: null, blobUrl: null, filename: null };
   document.getElementById('prevTitle').textContent = 'Quotation — ' + q.quote_no;
-  document.getElementById('invPreviewBody').innerHTML = buildClassicDocHTML({
+  openModal('invPreviewModal');
+  const fallback = buildClassicDocHTML({
     docLabel: 'QUOTATION', docNoLabel: 'Quotation No.', docNo: q.quote_no,
     docDate: q.quote_date, dueDate: q.valid_until, isInter: q.supply_type === 'inter',
     partyLabel: 'Bill To', partyName: q.billing_name, partyGstin: q.billing_gstin,
@@ -2837,7 +2872,7 @@ async function viewQuote(id) {
     taxable: q.taxable_amount, discount: q.discount_amount, cgst: q.cgst_amount,
     sgst: q.sgst_amount, igst: q.igst_amount, total: q.total_amount, notes: q.notes,
   });
-  openModal('invPreviewModal');
+  renderPdfPreview(`${CFG.API_BASE}/billing/quotations/${q.id || id}/pdf`, `${q.quote_no}.pdf`, fallback);
 }
 
 // ============================================================
@@ -2858,8 +2893,8 @@ async function loadInvoiceToEdit(id) {
   document.getElementById('invFormBc').innerHTML = 'Billing / <span>Edit Invoice</span>';
   document.getElementById('editBanner').classList.remove('hidden');
   document.getElementById('editBannerNo').textContent = inv.no;
-  ['invType','invNo','invDate','invDue','invState','supplyType','invNotes'].forEach(f=>{
-    const map={invType:inv.type,invNo:inv.no,invDate:inv.date,invDue:inv.due,invState:inv.state,supplyType:inv.supply,invNotes:inv.notes};
+  ['invType','invNo','invDate','invDue','invState','supplyType','invNotes','invTransporterName','invTransporterId','invVehicleNo'].forEach(f=>{
+    const map={invType:inv.type,invNo:inv.no,invDate:inv.date,invDue:inv.due,invState:inv.state,supplyType:inv.supply,invNotes:inv.notes,invTransporterName:inv.transporter_name,invTransporterId:inv.transporter_id,invVehicleNo:inv.vehicle_no};
     setVal(f,map[f]||'');
   });
   setVal('custName',inv.customer); setVal('custGst',inv.custGst); setVal('custMobile',inv.custMobile);
@@ -3057,6 +3092,9 @@ const grandTotal = taxableAmt + totalGST;
     supply_type:          getVal('supplyType'),
     is_export: document.getElementById('invIsExport')?.checked || false,
     reverse_charge: document.getElementById('invReverseCharge')?.checked || false,
+    transporter_name: getVal('invTransporterName') || undefined,
+    transporter_id: getVal('invTransporterId') || undefined,
+    vehicle_no: getVal('invVehicleNo') || undefined,
     export_type: document.getElementById('invIsExport')?.checked ? getVal('invExportType') : undefined,
     supply_category: getVal('invSupplyCategory') || 'taxable',
     notes:                getVal('invNotes'),
@@ -4889,9 +4927,10 @@ async function savePO() {
 function viewPO(id) {
   const p = PO_DATA.find(x => String(x.id) === String(id));
   if (!p) return;
-  CURRENT_PREVIEW = { kind: 'po', id: p.id, extraId: null };
+  CURRENT_PREVIEW = { kind: 'po', id: p.id, extraId: null, blobUrl: null, filename: null };
   document.getElementById('prevTitle').textContent = 'Purchase Order — ' + p.no;
-  document.getElementById('invPreviewBody').innerHTML = buildClassicDocHTML({
+  openModal('invPreviewModal');
+  const fallback = buildClassicDocHTML({
     docLabel: 'PURCHASE ORDER', docNoLabel: 'PO No.', docNo: p.no, docDate: p.date,
     isInter: !!p.igst,
     extraLine: { label: 'Expected Delivery', value: p.expectedDelivery ? fmtDate(p.expectedDelivery) : '—' },
@@ -4902,7 +4941,7 @@ function viewPO(id) {
     })),
     taxable: p.taxable, cgst: p.cgst, sgst: p.sgst, igst: p.igst, total: p.total, notes: p.notes,
   });
-  openModal('invPreviewModal');
+  renderPdfPreview(`${CFG.API_BASE}/billing/purchase-orders/${p.id}/pdf`, `${p.no}.pdf`, fallback);
 }
 
 async function viewPurchaseReturn(jvId, poId) {
@@ -4910,9 +4949,10 @@ async function viewPurchaseReturn(jvId, poId) {
   try {
     const r = await apiFetch(`/billing/purchase-orders/${poId}/returns/${jvId}`);
     const d = r?.data || r;
-    CURRENT_PREVIEW = { kind: 'purchase_return', id: jvId, extraId: poId };
+    CURRENT_PREVIEW = { kind: 'purchase_return', id: jvId, extraId: poId, blobUrl: null, filename: null };
     document.getElementById('prevTitle').textContent = 'Purchase Return — ' + d.jv_no;
-    document.getElementById('invPreviewBody').innerHTML = buildClassicDocHTML({
+    openModal('invPreviewModal');
+    const fallback = buildClassicDocHTML({
       docLabel: 'PURCHASE RETURN / DEBIT NOTE', docNoLabel: 'Return No.', docNo: d.jv_no,
       docDate: d.jv_date, isInter: !!d.igst_amount,
       extraLine: { label: 'Against PO', value: d.po_no },
@@ -4924,7 +4964,7 @@ async function viewPurchaseReturn(jvId, poId) {
       taxable: d.taxable_amount, cgst: d.cgst_amount, sgst: d.sgst_amount,
       igst: d.igst_amount, total: d.total_amount,
     });
-    openModal('invPreviewModal');
+    renderPdfPreview(`${CFG.API_BASE}/billing/purchase-orders/${poId}/returns/${jvId}/pdf`, `${d.jv_no}.pdf`, fallback);
   } catch (e) {
     showToast('❌ Could not load return details: ' + e.message);
   }
@@ -5335,7 +5375,8 @@ async function renderReturns() {
     <td class="b">₹${r.amount.toLocaleString()}</td>
     <td><span class="sb ${r.status==='processed'?'sp':'spen'}">${r.status}</span></td>
     <td>
-      <button class="btn btn-o btn-sm" onclick="${r.kind === 'po_return' ? `viewPurchaseReturn('${r.jvId}','${r.id}')` : `viewInvoice('${r.id}')`}">👁</button>
+      <button class="btn btn-o btn-sm" onclick="${r.kind === 'po_return' ? `viewPurchaseReturn('${r.jvId}','${r.id}')` : `viewInvoice('${r.id}')`}" title="View">👁</button>
+      <button class="btn btn-o btn-sm" onclick="${r.kind === 'po_return' ? `downloadPurchaseReturnPDF('${r.id}','${r.jvId}')` : `downloadDocPDF('invoices','${r.id}')`}" title="PDF">📄</button>
       <button class="btn btn-d btn-sm" onclick="deleteReturn('${r.no}')">🗑</button>
     </td></tr>`).join('');
 }
@@ -5719,8 +5760,26 @@ function renderEWBList() {
 }
 
 
-function renderAuditLog() {
+async function renderAuditLog() {
   const b=document.getElementById('auditBody'); if(!b)return;
+
+  if (AUTH.apiOnline) {
+    try {
+      const result = await apiFetch('/audit-log?page=1&page_size=100');
+      const items = result?.data?.items || [];
+      AUDIT_LOG = items.map(l => ({
+        ts: new Date(l.log_timestamp).toLocaleString('en-IN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).replace(/\//g,' '),
+        user: l.actor_name || 'User',
+        action: l.action,
+        module: l.module,
+        detail: l.detail || l.entity_ref || '',
+        ip: l.ip_address || '—',
+      }));
+    } catch (err) {
+      console.warn('Could not load audit log from server:', err.message);
+    }
+  }
+
   b.innerHTML=AUDIT_LOG.map(l=>`<tr>
     <td class="mono" style="font-size:10px">${l.ts}</td><td class="b">${l.user}</td>
     <td><span class="chip ${l.action==='CREATE'?'cgr':l.action==='DELETE'?'crd':l.action.startsWith('EDIT')?'cor':l.action==='LOGIN'?'cbl2':'sdr'}">${l.action}</span></td>
@@ -5728,8 +5787,65 @@ function renderAuditLog() {
     <td class="mono" style="font-size:10px">${l.ip}</td></tr>`).join('');
 }
 
+// ---------- Offline queue for Audit Log (and future sync-critical writes) ----------
+const AUDIT_QUEUE_KEY = 'vyaparpro_audit_queue';
+
+function getAuditQueue() {
+  try { return JSON.parse(localStorage.getItem(AUDIT_QUEUE_KEY) || '[]'); }
+  catch (_) { return []; }
+}
+function saveAuditQueue(q) {
+  localStorage.setItem(AUDIT_QUEUE_KEY, JSON.stringify(q));
+}
+function queueAuditEntry(action, module, detail) {
+  const q = getAuditQueue();
+  q.push({ _localId: Date.now() + '-' + Math.random().toString(36).slice(2), action, module, detail, queuedAt: new Date().toISOString() });
+  saveAuditQueue(q);
+  updatePendingAuditBadge();
+}
+function updatePendingAuditBadge() {
+  const n = getAuditQueue().length;
+  const el = document.getElementById('syncLabel');
+  if (el && n > 0 && !AUTH.apiOnline) el.textContent = `Offline — ${n} log ${n===1?'entry':'entries'} pending sync`;
+}
+
+let _auditFlushInFlight = false;
+async function flushAuditQueue() {
+  if (_auditFlushInFlight) return;
+  const queue = getAuditQueue();
+  if (!queue.length || !AUTH.apiOnline) return;
+  _auditFlushInFlight = true;
+  try {
+    const remaining = [];
+    for (const entry of queue) {
+      try {
+        await apiFetch('/audit-log', {
+          method: 'POST',
+          body: JSON.stringify({ action: entry.action, module: entry.module, detail: entry.detail }),
+        });
+      } catch (err) {
+        remaining.push(entry); // keep it queued, try again next flush
+      }
+    }
+    saveAuditQueue(remaining);
+    updatePendingAuditBadge();
+    if (remaining.length === 0 && queue.length > 0) {
+      showToast(`☁️ Synced ${queue.length} queued audit ${queue.length===1?'entry':'entries'}`);
+      if (document.getElementById('page-auditlog')?.classList.contains('active')) renderAuditLog();
+    }
+  } finally {
+    _auditFlushInFlight = false;
+  }
+}
+
+// NEW:
 function addAuditEntry(action,module,detail) {
-  AUDIT_LOG.unshift({ts:new Date().toLocaleString('en-IN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).replace(/\//g,' '),user:(AUTH.user?.name||'User'),action,module,detail,ip:'192.168.1.10'});
+  // Optimistic local entry so the UI feels instant
+  AUDIT_LOG.unshift({ts:new Date().toLocaleString('en-IN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).replace(/\//g,' '),user:(AUTH.user?.name||'User'),action,module,detail,ip:'—'});
+  if (document.getElementById('page-auditlog')?.classList.contains('active')) renderAuditLog();
+
+  queueAuditEntry(action, module, detail);
+  if (AUTH.apiOnline) flushAuditQueue();
 }
 
 // ============================================================
@@ -6700,6 +6816,17 @@ window.onload = async () => {
   });
   document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m)m.classList.add('hidden'); }));
 };
+
+// Retry syncing queued audit entries whenever connectivity returns
+window.addEventListener('online', () => { checkApiHealth().then(ok => setLiveStatus(ok)); });
+
+// Background safety-net: try flushing every 30s in case the 'online' event doesn't fire
+// (common on some mobile WebViews / Electron builds)
+setInterval(() => {
+  if (AUTH.apiOnline) flushAuditQueue();
+  else checkApiHealth().then(ok => { if (ok) setLiveStatus(true); });
+}, 30000);
+
 </script>
 </body>
 </html>

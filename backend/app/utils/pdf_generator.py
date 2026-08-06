@@ -214,7 +214,7 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
 
     story = []
 
-    # -- Company header band (sits above the bordered card) --
+    # -- Company header band (now boxed to match the bordered sections below) --
     logo_flowable = ""
     if data.company_logo_url:
         logo_path = ("app" + data.company_logo_url) if data.company_logo_url.startswith("/static/") else data.company_logo_url
@@ -230,29 +230,57 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
                 logo_flowable = ""
 
     header_inner = Table([[logo_flowable, Paragraph(f"<b>{data.company_name or 'Company Name'}</b>", h_company)]],
-                          colWidths=[24*mm, 159*mm])
+                          colWidths=[24*mm, 154*mm])
     header_inner.setStyle(TableStyle([
         ("VALIGN",(0,0),(-1,-1),"MIDDLE"), ("ALIGN",(0,0),(0,0),"CENTER"),
         ("LEFTPADDING",(0,0),(-1,-1),0), ("RIGHTPADDING",(0,0),(-1,-1),0),
+        ("TOPPADDING",(0,0),(-1,-1),2), ("BOTTOMPADDING",(0,0),(-1,-1),2),
     ]))
-    story.append(header_inner)
 
+    addr_row = Table([[
+        Paragraph((data.company_address or "").replace("\n", "<br/>"), contact),
+        Paragraph(f"Tel: {data.company_phone}<br/>Email: {data.company_email}" if (data.company_phone or data.company_email) else "", contact_r),
+    ]], colWidths=[96*mm, 82*mm])
+    addr_row.setStyle(TableStyle([
+        ("VALIGN",(0,0),(-1,-1),"TOP"),
+        ("LEFTPADDING",(0,0),(-1,-1),0), ("RIGHTPADDING",(0,0),(-1,-1),0),
+        ("TOPPADDING",(0,0),(-1,-1),3), ("BOTTOMPADDING",(0,0),(-1,-1),0),
+    ]))
+
+    # Rows for the single outer header box. header_inner + addr_row get side
+    # padding (they sit inside the box); the tagline band is padding-free so
+    # its background colour runs edge-to-edge inside the border.
+    header_box_rows = [[header_inner]]
+    tagline_row_index = None
     if data.company_tagline:
         tagline_band = Table([[Paragraph(f"<b>{data.company_tagline.upper()}</b>", h_tagline)]], colWidths=[183*mm])
         tagline_band.setStyle(TableStyle([
             ("BACKGROUND",(0,0),(-1,-1), BRAND_ACCENT),
             ("TOPPADDING",(0,0),(-1,-1),4), ("BOTTOMPADDING",(0,0),(-1,-1),4),
         ]))
-        story.append(Spacer(1, 1*mm))
-        story.append(tagline_band)
+        tagline_row_index = len(header_box_rows)
+        header_box_rows.append([tagline_band])
+    header_box_rows.append([addr_row])
 
-    addr_row = Table([[
-        Paragraph((data.company_address or "").replace("\n", "<br/>"), contact),
-        Paragraph(f"Tel: {data.company_phone}<br/>Email: {data.company_email}" if (data.company_phone or data.company_email) else "", contact_r),
-    ]], colWidths=[100*mm, 83*mm])
-    addr_row.setStyle(TableStyle([("VALIGN",(0,0),(-1,-1),"TOP")]))
-    story.append(Spacer(1, 1.5*mm))
-    story.append(addr_row)
+    header_card = Table(header_box_rows, colWidths=[183*mm])
+    header_card_style = [
+        ("BOX",(0,0),(-1,-1),THICK,BORDER),
+        ("BACKGROUND",(0,0),(-1,0), BG_SOFT),
+        ("LEFTPADDING",(0,0),(-1,-1),6), ("RIGHTPADDING",(0,0),(-1,-1),6),
+        ("TOPPADDING",(0,0),(-1,-1),4), ("BOTTOMPADDING",(0,0),(-1,-1),4),
+    ]
+    if tagline_row_index is not None:
+        # Zero out padding just for the tagline row so its accent colour
+        # touches the box border on all sides.
+        header_card_style += [
+            ("LEFTPADDING",(0,tagline_row_index),(-1,tagline_row_index),0),
+            ("RIGHTPADDING",(0,tagline_row_index),(-1,tagline_row_index),0),
+            ("TOPPADDING",(0,tagline_row_index),(-1,tagline_row_index),0),
+            ("BOTTOMPADDING",(0,tagline_row_index),(-1,tagline_row_index),0),
+        ]
+    header_card.setStyle(TableStyle(header_card_style))
+
+    story.append(header_card)
     story.append(Spacer(1, 2*mm))
 
     # -- Title strip: PAN | doc label | copy label --
@@ -274,7 +302,7 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
         [Paragraph("<b>GSTIN:</b>", label8), Paragraph(data.party_gstin or "Unregistered", body8)],
         [Paragraph("<b>Place of Supply:</b>", label8), Paragraph(_state_label(data.place_of_supply), body8)],
     ]
-    cust_box = Table([[Paragraph("<b>Customer Detail</b>", section_hdr)]] + [[Table(cust_lines, colWidths=[26*mm, 65*mm])]],
+    cust_box = Table([[Paragraph("<b>Customer Detail</b>", section_hdr)]] + [[Table(cust_lines, colWidths=[32*mm, 59*mm])]],
                       colWidths=[91*mm])
     cust_box.setStyle(TableStyle([
         ("LINEBELOW",(0,0),(-1,0),0.5,BORDER),
@@ -282,6 +310,8 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
     ]))
 
     meta_rows = [["Invoice No:", f"<b>{data.doc_no}</b>", "Invoice Date:", str(data.doc_date)]]
+    if data.due_date: meta_rows.append(["Due Date:", str(data.due_date), "", ""])
+    meta_rows.append(["Reverse Charge:", "Yes" if getattr(data, "reverse_charge", False) else "No", "", ""])
     if data.challan_no: meta_rows.append(["Challan No:", data.challan_no, "Challan Date:", str(data.challan_date or "")])
     if data.eway_bill_no: meta_rows.append(["E-Way Bill No:", data.eway_bill_no, "", ""])
     if data.transporter_name: meta_rows.append(["Transport:", data.transporter_name, "", ""])
@@ -289,7 +319,19 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
     if data.vehicle_no: meta_rows.append(["Vehicle No:", data.vehicle_no, "", ""])
     if data.po_no: meta_rows.append(["PO No:", data.po_no, "PO Date:", str(data.po_date or "")])
     meta_table_rows = [[Paragraph(c, label8) if i%2==0 else Paragraph(c, body8) for i,c in enumerate(row)] for row in meta_rows]
-    meta_box = Table([[Paragraph("&nbsp;", section_hdr)]] + [[Table(meta_table_rows, colWidths=[22*mm,22*mm,22*mm,26*mm])]], colWidths=[92*mm])
+    meta_inner = Table(meta_table_rows, colWidths=[32*mm,16*mm,22*mm,22*mm])
+    meta_span_style = [
+        ("LEFTPADDING",(0,0),(-1,-1),2), ("RIGHTPADDING",(0,0),(-1,-1),2),
+        ("TOPPADDING",(0,0),(-1,-1),1.5), ("BOTTOMPADDING",(0,0),(-1,-1),1.5),
+    ]
+    # Rows that only carry a single label/value pair (Transport, Transport ID,
+    # Vehicle No, E-Way Bill No) get their value cell spanned across the
+    # remaining columns so long values get the full row width instead of 20mm.
+    for row_idx, row in enumerate(meta_rows):
+        if row[2] == "" and row[3] == "":
+            meta_span_style.append(("SPAN",(1,row_idx),(3,row_idx)))
+    meta_inner.setStyle(TableStyle(meta_span_style))
+    meta_box = Table([[Paragraph("&nbsp;", section_hdr)]] + [[meta_inner]], colWidths=[92*mm])
     meta_box.setStyle(TableStyle([("TOPPADDING",(0,0),(-1,-1),3), ("BOTTOMPADDING",(0,0),(-1,-1),3)]))
 
     two_col = Table([[cust_box, meta_box]], colWidths=[91*mm, 92*mm])
@@ -348,15 +390,9 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
     ]))
 
     # -- Total in words | Tax summary --
-    words_cell = Table([
-        [Paragraph("<b>Total in words</b>", section_hdr)],
-        [Paragraph(amount_in_words(data.total_amount).upper(), body8)],
-    ], colWidths=[110*mm])
-    words_cell.setStyle(TableStyle([
-        ("LINEBELOW",(0,0),(-1,0),0.5,BORDER),
-        ("TOPPADDING",(0,0),(-1,-1),5), ("BOTTOMPADDING",(0,0),(-1,-1),5),
-    ]))
-
+    # Build tax_box FIRST so we know how tall the right column is, then size
+    # words_cell to match — keeping the "Total in words" header pinned to
+    # the top, but centering the amount text in the remaining space.
     tax_rows = [["Taxable Amount", _fmt(data.taxable_amount)]]
     if is_igst:
         tax_rows.append(["Add: IGST", _fmt(data.igst_amount)])
@@ -369,10 +405,28 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
     tax_para = [[Paragraph(r[0], body8), Paragraph(f"<b>{r[1]}</b>" if r[0]=="Total Amount After Tax" else r[1],
                  ParagraphStyle("tval", fontName=FONT_BOLD if r[0]=="Total Amount After Tax" else FONT_REGULAR,
                                 fontSize=10 if r[0]=="Total Amount After Tax" else 8, alignment=TA_RIGHT))] for r in tax_rows]
-    tax_box = Table(tax_para, colWidths=[45*mm, 28*mm])
+    tax_box = Table(tax_para, colWidths=[38*mm, 35*mm])
     tax_box.setStyle(TableStyle([
         ("LINEABOVE",(0,-1),(-1,-1),0.8,BORDER),
         ("TOPPADDING",(0,0),(-1,-1),3), ("BOTTOMPADDING",(0,0),(-1,-1),3),
+    ]))
+
+    words_header = Paragraph("<b>Total in words</b>", section_hdr)
+    words_amount_style = ParagraphStyle("wordsamt", parent=body8, alignment=TA_CENTER)
+    words_amount = Paragraph(amount_in_words(data.total_amount).upper(), words_amount_style)
+
+    tax_box_h = tax_box.wrap(73*mm, 10000*mm)[1]
+    header_row_h = words_header.wrap(110*mm, 10000*mm)[1] + 10  # +5/+5 top/bottom padding below
+    amount_row_h = max(tax_box_h - header_row_h, words_amount.wrap(102*mm, 10000*mm)[1] + 10)
+
+    words_cell = Table([[words_header], [words_amount]], colWidths=[110*mm],
+                        rowHeights=[header_row_h, amount_row_h])
+    words_cell.setStyle(TableStyle([
+        ("LINEBELOW",(0,0),(-1,0),0.5,BORDER),
+        ("VALIGN",(0,0),(-1,0),"TOP"),
+        ("VALIGN",(0,1),(-1,1),"MIDDLE"),
+        ("TOPPADDING",(0,0),(-1,-1),5), ("BOTTOMPADDING",(0,0),(-1,-1),5),
+        ("LEFTPADDING",(0,0),(-1,-1),4), ("RIGHTPADDING",(0,0),(-1,-1),4),
     ]))
 
     words_tax_row = Table([[words_cell, tax_box]], colWidths=[110*mm, 73*mm])
@@ -445,6 +499,13 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
             return 0
 
     _table_width = sum(col_widths)
+
+    # Everything already queued in `story` BEFORE the master card (logo/name,
+    # tagline band, address row, and the spacers between them) must be
+    # counted too, or the budget below runs short and "Thank you" spills
+    # onto a second page.
+    pre_master_h = sum(_flowable_height(f, 183 * mm) for f in story)
+
     top_h = _flowable_height(title_strip, 183 * mm) + _flowable_height(two_col, 183 * mm)
     if irn_row is not None:
         top_h += _flowable_height(irn_row, 183 * mm)
@@ -454,11 +515,9 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
     # Leave room below the card for the "Thank you" line + page number,
     # plus a safety margin for sub-pixel wrap-height rounding.
     available_h = page_h - doc.topMargin - doc.bottomMargin - 18 * mm
-    target_items_h = available_h - top_h - footer_h
+    target_items_h = available_h - pre_master_h - top_h - footer_h
     current_items_h = _flowable_height(items_table, _table_width)
 
-    import sys as _sys
-    print(f"DEBUG top_h={top_h/mm:.1f}mm footer_h={footer_h/mm:.1f}mm available_h={available_h/mm:.1f}mm target_items_h={target_items_h/mm:.1f}mm current_items_h={current_items_h/mm:.1f}mm", file=_sys.stderr)
     if target_items_h > current_items_h:
         blank_style = ParagraphStyle("blankcell", fontName=FONT_REGULAR, fontSize=7, leading=8.5)
         probe = Table([[Paragraph("&nbsp;", blank_style) for _ in col_headers]], colWidths=col_widths)

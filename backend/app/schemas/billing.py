@@ -327,6 +327,9 @@ class InvoiceCreate(APIModel):
     tcs_amount: Decimal = Decimal("0")
     round_off: Decimal = Decimal("0")
     items: list[BillingItemIn] = Field(min_length=1)
+    transporter_name: Optional[str] = None
+    transporter_id: Optional[str] = None
+    vehicle_no: Optional[str] = None
 
 
 class InvoiceUpdate(APIModel):
@@ -390,6 +393,7 @@ class InvoiceOut(APIModel):
     ack_no: Optional[str]
     ewb_no: Optional[str]
     qr_code_data: Optional[str]
+    transporter_name: Optional[str] = None
     transporter_id: Optional[str] = None
     vehicle_no: Optional[str] = None
     currency: str

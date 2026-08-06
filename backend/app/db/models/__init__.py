@@ -375,6 +375,8 @@ class AuditLog(Base, UUIDMixin):
     device_id: Mapped[Optional[str]] = mapped_column(String(100))
     log_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     branch_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("branches.id"))
+    detail: Mapped[Optional[str]] = mapped_column(Text)
+    actor_name: Mapped[Optional[str]] = mapped_column(String(120))
 
 
 # ═══════════════════════════════════════════════════════════════════

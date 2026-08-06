@@ -382,6 +382,7 @@ class Invoice(Base, UUIDMixin, TimestampMixin, GSTAmountMixin):
     ack_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     ewb_no: Mapped[Optional[str]] = mapped_column(String(20))
     ewb_valid_till: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    transporter_name: Mapped[Optional[str]] = mapped_column(String(100))
     transporter_id: Mapped[Optional[str]] = mapped_column(String(20))
     vehicle_no: Mapped[Optional[str]] = mapped_column(String(20))
     qr_code_data: Mapped[Optional[str]] = mapped_column(Text)

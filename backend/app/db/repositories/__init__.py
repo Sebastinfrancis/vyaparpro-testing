@@ -387,6 +387,8 @@ class AuditLogRepository(BaseRepository[AuditLog]):
         new_values: dict | None = None,
         changed_fields: list[str] | None = None,
         ip_address: str | None = None,
+        detail: str | None = None,
+        actor_name: str | None = None,
     ) -> AuditLog:
         return await self.create(
             {
@@ -401,6 +403,8 @@ class AuditLogRepository(BaseRepository[AuditLog]):
                 "new_values": new_values,
                 "changed_fields": changed_fields,
                 "ip_address": ip_address,
+                "detail": detail,
+                "actor_name": actor_name,
             }
         )
 
