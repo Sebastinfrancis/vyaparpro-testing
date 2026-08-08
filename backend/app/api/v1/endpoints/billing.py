@@ -316,6 +316,13 @@ async def create_invoice(payload: InvoiceCreate, current: CurrentUserDep, db: DB
     inv = await svc.create(current.company_id, payload, current.user_id)
     return created(InvoiceOut.model_validate(inv).model_dump(mode='json'), "Invoice created.")
 
+@router.post("/invoices/preview", summary="Generate a preview PDF from unsaved invoice data (no DB write)")
+async def preview_invoice_pdf(payload: InvoiceCreate, current: CurrentUserDep, db: DBDep) -> Response:
+    svc = InvoiceService(db)
+    pdf_bytes = await svc.preview_pdf(current.company_id, payload)
+    return Response(content=pdf_bytes, media_type="application/pdf",
+                    headers={"Content-Disposition": 'inline; filename="preview.pdf"'})
+
 @router.get("/invoices/stats", summary="Invoice dashboard statistics")
 async def invoice_stats(current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories.billing import InvoiceRepository

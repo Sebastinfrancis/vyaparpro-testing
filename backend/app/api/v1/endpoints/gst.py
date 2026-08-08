@@ -16,6 +16,61 @@ from app.utils.pdf_generator import generate_report_pdf, format_inr
 
 router = APIRouter()
 
+# ────────────────────────────────────────────────────────────────────
+# Shared SQL fragments — every GST report must use the SAME definition
+# of "what counts as a supply" and "what counts as claimable ITC", or
+# the different tabs/reports will disagree with each other and with
+# GSTR-3B (which is the one that actually gets filed).
+# ────────────────────────────────────────────────────────────────────
+
+# Only these invoice_type values are real GST supplies. 'proforma_invoice' and
+# 'delivery_challan' share the invoices table but are NOT taxable supplies and
+# must never be counted in GST figures.
+_GST_INVOICE_TYPES = "('tax_invoice','debit_note','credit_note')"
+
+# Signed taxable/tax value for a document: credit notes reduce the figure,
+# tax invoices and debit notes add to it. Matches the logic already used in
+# /gstr3b so every report nets credit notes the same way.
+def _signed(col: str, alias: str = "") -> str:
+    # col may be a single column or a "+"-joined compound expression
+    # (e.g. 'cgst_amount+sgst_amount+igst_amount'); wrap the WHOLE sum in
+    # parens so the credit-note negation applies to every term, not just
+    # the first one.
+    a = f" AS {alias}" if alias else ""
+    expr = "+".join(c.strip() for c in col.split("+"))
+    return f"COALESCE(SUM(CASE WHEN invoice_type='credit_note' THEN -({expr}) ELSE ({expr}) END),0){a}"
+
+def _signed_i(col: str, alias: str = "") -> str:
+    """Same as _signed but for queries that alias the invoices table as 'i'.
+    Every term gets the i. prefix individually (not just the first one) —
+    otherwise bare column names collide with invoice_items' identically
+    named cgst/sgst/igst columns and Postgres raises AmbiguousColumnError."""
+    a = f" AS {alias}" if alias else ""
+    expr = "+".join(f"i.{c.strip()}" for c in col.split("+"))
+    return f"COALESCE(SUM(CASE WHEN i.invoice_type='credit_note' THEN -({expr}) ELSE ({expr}) END),0){a}"
+
+# Net-of-receipt, net-of-returns ITC per PO line item. Two corrections layered:
+#  1. ITC can only be claimed on goods actually RECEIVED (Sec 16(2)(b)) — a PO
+#     that's merely created/sent (received_qty=0) must contribute zero ITC,
+#     not the full ordered-quantity tax.
+#  2. Of what was received, any quantity since returned to the vendor (Rule 37)
+#     must be backed out too.
+# NULLIF guards against a zero-quantity line dividing by zero.
+def _signed_ii(col: str, alias: str = "") -> str:
+    """For queries joining invoice_items (aliased ii) to invoices (aliased i):
+    sums the LINE ITEM's column (ii.{col}) — not the invoice header's — signed
+    by the PARENT invoice's type (a credit note's sign lives on the header,
+    line items don't carry it themselves). Using _signed_i here by mistake
+    summed the header's total once per line item instead of the item's own
+    share, silently multiplying multi-item invoices' contribution."""
+    a = f" AS {alias}" if alias else ""
+    expr = "+".join(f"ii.{c.strip()}" for c in col.split("+"))
+    return f"COALESCE(SUM(CASE WHEN i.invoice_type='credit_note' THEN -({expr}) ELSE ({expr}) END),0){a}"
+
+_ITC_CGST = "poi.cgst_amount * (poi.received_qty - poi.returned_qty) / NULLIF(poi.quantity, 0)"
+_ITC_SGST = "poi.sgst_amount * (poi.received_qty - poi.returned_qty) / NULLIF(poi.quantity, 0)"
+_ITC_IGST = "poi.igst_amount * (poi.received_qty - poi.returned_qty) / NULLIF(poi.quantity, 0)"
+
 
 def _month_bounds(month: str) -> tuple[date, date]:
     """month = 'YYYY-MM' -> (first_day, last_day)"""
@@ -109,35 +164,38 @@ async def gst_summary(current: CurrentUserDep, db: DBDep, month: str = Query(...
     cid = str(current.company_id)
     df, dt = _month_bounds(month)
 
-    totals = (await db.execute(text("""
-        SELECT COALESCE(SUM(taxable_amount),0) AS sales_taxable,
-               COALESCE(SUM(cgst_amount+sgst_amount+igst_amount),0) AS output_gst
+    totals = (await db.execute(text(f"""
+        SELECT {_signed('taxable_amount', 'sales_taxable')},
+               {_signed('cgst_amount+sgst_amount+igst_amount', 'output_gst')}
         FROM invoices
         WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
-          AND status NOT IN ('draft','cancelled','void') AND invoice_type != 'credit_note' AND reverse_charge = false
+          AND status NOT IN ('draft','cancelled','void') AND invoice_type IN {_GST_INVOICE_TYPES}
+          AND reverse_charge = false AND is_export = false AND supply_category = 'taxable'
     """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
 
-    itc = (await db.execute(text("""
-        SELECT COALESCE(SUM(poi.cgst_amount+poi.sgst_amount+poi.igst_amount),0) AS input_tax_credit
+    itc = (await db.execute(text(f"""
+        SELECT COALESCE(SUM({_ITC_CGST}+{_ITC_SGST}+{_ITC_IGST}),0) AS input_tax_credit
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
           AND poi.itc_eligible = true
     """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
 
-    itc_blocked = (await db.execute(text("""
-        SELECT COALESCE(SUM(poi.cgst_amount+poi.sgst_amount+poi.igst_amount),0) AS itc_ineligible
+    itc_blocked = (await db.execute(text(f"""
+        SELECT COALESCE(SUM({_ITC_CGST}+{_ITC_SGST}+{_ITC_IGST}),0) AS itc_ineligible
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
           AND poi.itc_eligible = false
     """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
 
-    rate_wise = (await db.execute(text("""
-        SELECT ii.gst_rate, SUM(ii.taxable_amount) AS taxable,
-               SUM(ii.cgst_amount) AS cgst, SUM(ii.sgst_amount) AS sgst,
-               SUM(ii.igst_amount) AS igst, SUM(ii.cgst_amount+ii.sgst_amount+ii.igst_amount) AS total_tax
+    rate_wise = (await db.execute(text(f"""
+        SELECT ii.gst_rate, {_signed_ii('taxable_amount', 'taxable')},
+               {_signed_ii('cgst_amount', 'cgst')}, {_signed_ii('sgst_amount', 'sgst')},
+               {_signed_ii('igst_amount', 'igst')},
+               {_signed_ii('cgst_amount+sgst_amount+igst_amount', 'total_tax')}
         FROM invoice_items ii JOIN invoices i ON i.id = ii.invoice_id
         WHERE i.company_id=:cid AND i.invoice_date BETWEEN :df AND :dt
-          AND i.status NOT IN ('draft','cancelled','void') AND i.invoice_type != 'credit_note'
+          AND i.status NOT IN ('draft','cancelled','void') AND i.invoice_type IN {_GST_INVOICE_TYPES}
+          AND i.reverse_charge = false AND i.is_export = false AND i.supply_category = 'taxable'
         GROUP BY ii.gst_rate ORDER BY ii.gst_rate
     """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
 
@@ -186,7 +244,6 @@ async def gstr1(current: CurrentUserDep, db: DBDep, month: str = Query(...)) -> 
         WHERE i.company_id=:cid AND i.invoice_date BETWEEN :df AND :dt
           AND i.status NOT IN ('draft','cancelled','void')
           AND i.invoice_type IN ('credit_note','debit_note')
-          AND i.billing_gstin IS NOT NULL AND i.billing_gstin != ''
         ORDER BY i.invoice_date
     """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
 
@@ -211,17 +268,17 @@ async def gstr3b(current: CurrentUserDep, db: DBDep, month: str = Query(...)) ->
     cid = str(current.company_id)
     df, dt = _month_bounds(month)
 
-    outward_taxable = (await db.execute(text("""
+    outward_taxable = (await db.execute(text(f"""
         SELECT
-            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -taxable_amount ELSE taxable_amount END),0) AS taxable,
-            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -cgst_amount ELSE cgst_amount END),0) AS cgst,
-            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -sgst_amount ELSE sgst_amount END),0) AS sgst,
-            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -igst_amount ELSE igst_amount END),0) AS igst,
-            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -cess_amount ELSE cess_amount END),0) AS cess
+            {_signed('taxable_amount', 'taxable')},
+            {_signed('cgst_amount', 'cgst')},
+            {_signed('sgst_amount', 'sgst')},
+            {_signed('igst_amount', 'igst')},
+            {_signed('cess_amount', 'cess')}
         FROM invoices
         WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
         AND status NOT IN ('draft','cancelled','void')
-        AND invoice_type IN ('tax_invoice','debit_note','credit_note')
+        AND invoice_type IN {_GST_INVOICE_TYPES}
         AND reverse_charge = false AND is_export = false AND supply_category = 'taxable'
     """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
 
@@ -242,7 +299,8 @@ async def gstr3b(current: CurrentUserDep, db: DBDep, month: str = Query(...)) ->
     """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
 
     outward_zero_rated = (await db.execute(text("""
-        SELECT COALESCE(SUM(taxable_amount),0) AS taxable
+        SELECT COALESCE(SUM(taxable_amount),0) AS taxable, COALESCE(SUM(cgst_amount),0) AS cgst,
+               COALESCE(SUM(sgst_amount),0) AS sgst, COALESCE(SUM(igst_amount),0) AS igst
         FROM invoices
         WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
         AND status NOT IN ('draft','cancelled','void') AND invoice_type = 'tax_invoice' AND is_export = true
@@ -256,27 +314,36 @@ async def gstr3b(current: CurrentUserDep, db: DBDep, month: str = Query(...)) ->
           AND reverse_charge = true
     """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
 
-    itc_available = (await db.execute(text("""
-        SELECT COALESCE(SUM(poi.cgst_amount),0) AS cgst, COALESCE(SUM(poi.sgst_amount),0) AS sgst,
-               COALESCE(SUM(poi.igst_amount),0) AS igst
+    itc_available = (await db.execute(text(f"""
+        SELECT COALESCE(SUM({_ITC_CGST}),0) AS cgst, COALESCE(SUM({_ITC_SGST}),0) AS sgst,
+               COALESCE(SUM({_ITC_IGST}),0) AS igst
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
           AND poi.itc_eligible = true
     """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
 
-    itc_ineligible = (await db.execute(text("""
-        SELECT COALESCE(SUM(poi.cgst_amount),0) AS cgst, COALESCE(SUM(poi.sgst_amount),0) AS sgst,
-               COALESCE(SUM(poi.igst_amount),0) AS igst,
-               COALESCE(SUM(poi.cgst_amount+poi.sgst_amount+poi.igst_amount),0) AS total
+    itc_ineligible = (await db.execute(text(f"""
+        SELECT COALESCE(SUM({_ITC_CGST}),0) AS cgst, COALESCE(SUM({_ITC_SGST}),0) AS sgst,
+               COALESCE(SUM({_ITC_IGST}),0) AS igst,
+               COALESCE(SUM({_ITC_CGST}+{_ITC_SGST}+{_ITC_IGST}),0) AS total
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
           AND poi.itc_eligible = false
     """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
 
+    # WPAY exports (tax paid, later refunded) still count toward this month's
+    # outward liability for set-off purposes — LUT/bond exports contribute 0
+    # here since their cgst/sgst/igst columns are legitimately zero.
+    combined_liability = {
+        "cgst": float(outward_taxable["cgst"]) + float(outward_zero_rated["cgst"]),
+        "sgst": float(outward_taxable["sgst"]) + float(outward_zero_rated["sgst"]),
+        "igst": float(outward_taxable["igst"]) + float(outward_zero_rated["igst"]),
+    }
+    setoff = _compute_setoff(combined_liability, dict(itc_available))
     net_payable = {
-        "cgst": max(0, float(outward_taxable["cgst"]) - float(itc_available["cgst"])) + float(inward_rcm["cgst"]),
-        "sgst": max(0, float(outward_taxable["sgst"]) - float(itc_available["sgst"])) + float(inward_rcm["sgst"]),
-        "igst": max(0, float(outward_taxable["igst"]) - float(itc_available["igst"])) + float(inward_rcm["igst"]),
+        "cgst": setoff["net_cgst"] + float(inward_rcm["cgst"]),
+        "sgst": setoff["net_sgst"] + float(inward_rcm["sgst"]),
+        "igst": setoff["net_igst"] + float(inward_rcm["igst"]),
     }
 
     return ok(data=_clean({
@@ -296,14 +363,17 @@ async def hsn_summary(current: CurrentUserDep, db: DBDep, month: str = Query(...
     cid = str(current.company_id)
     df, dt = _month_bounds(month)
 
-    rows = (await db.execute(text("""
+    rows = (await db.execute(text(f"""
         SELECT COALESCE(ii.hsn_code, ii.sac_code, 'N/A') AS hsn, MIN(ii.description) AS description,
-               ii.gst_rate, SUM(ii.quantity) AS total_qty, SUM(ii.taxable_amount) AS taxable,
-               SUM(ii.cgst_amount) AS cgst, SUM(ii.sgst_amount) AS sgst, SUM(ii.igst_amount) AS igst,
-               SUM(ii.cgst_amount+ii.sgst_amount+ii.igst_amount) AS total_tax
+               ii.gst_rate,
+               COALESCE(SUM(CASE WHEN i.invoice_type='credit_note' THEN -ii.quantity ELSE ii.quantity END),0) AS total_qty,
+               {_signed_ii('taxable_amount', 'taxable')},
+               {_signed_ii('cgst_amount', 'cgst')}, {_signed_ii('sgst_amount', 'sgst')}, {_signed_ii('igst_amount', 'igst')},
+               {_signed_ii('cgst_amount+sgst_amount+igst_amount', 'total_tax')}
         FROM invoice_items ii JOIN invoices i ON i.id = ii.invoice_id
         WHERE i.company_id=:cid AND i.invoice_date BETWEEN :df AND :dt
-          AND i.status NOT IN ('draft','cancelled','void') AND i.invoice_type != 'credit_note'
+          AND i.status NOT IN ('draft','cancelled','void') AND i.invoice_type IN {_GST_INVOICE_TYPES}
+          AND i.reverse_charge = false AND i.is_export = false AND i.supply_category = 'taxable'
         GROUP BY COALESCE(ii.hsn_code, ii.sac_code, 'N/A'), ii.gst_rate
         ORDER BY taxable DESC
     """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
@@ -316,11 +386,12 @@ async def itc_ledger(current: CurrentUserDep, db: DBDep, month: str = Query(...)
     cid = str(current.company_id)
     df, dt = _month_bounds(month)
 
-    by_vendor = (await db.execute(text("""
+    by_vendor = (await db.execute(text(f"""
         SELECT COALESCE(p.display_name, 'Unknown') AS vendor_name, po.po_no, po.po_date,
-               SUM(poi.taxable_amount) AS taxable_amount, SUM(poi.cgst_amount) AS cgst_amount,
-               SUM(poi.sgst_amount) AS sgst_amount, SUM(poi.igst_amount) AS igst_amount,
-               SUM(poi.cgst_amount+poi.sgst_amount+poi.igst_amount) AS total_itc
+               SUM(poi.taxable_amount * (poi.received_qty - poi.returned_qty) / NULLIF(poi.quantity, 0)) AS taxable_amount,
+               SUM({_ITC_CGST}) AS cgst_amount,
+               SUM({_ITC_SGST}) AS sgst_amount, SUM({_ITC_IGST}) AS igst_amount,
+               SUM({_ITC_CGST}+{_ITC_SGST}+{_ITC_IGST}) AS total_itc
         FROM purchase_order_items poi
         JOIN purchase_orders po ON po.id = poi.po_id
         LEFT JOIN parties p ON p.id = po.vendor_id
@@ -330,10 +401,10 @@ async def itc_ledger(current: CurrentUserDep, db: DBDep, month: str = Query(...)
         ORDER BY po.po_date
     """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
 
-    ineligible_by_vendor = (await db.execute(text("""
+    ineligible_by_vendor = (await db.execute(text(f"""
         SELECT COALESCE(p.display_name, 'Unknown') AS vendor_name, po.po_no, po.po_date,
                poi.description, poi.itc_ineligible_reason,
-               SUM(poi.cgst_amount+poi.sgst_amount+poi.igst_amount) AS blocked_amount
+               SUM({_ITC_CGST}+{_ITC_SGST}+{_ITC_IGST}) AS blocked_amount
         FROM purchase_order_items poi
         JOIN purchase_orders po ON po.id = poi.po_id
         LEFT JOIN parties p ON p.id = po.vendor_id
@@ -343,19 +414,19 @@ async def itc_ledger(current: CurrentUserDep, db: DBDep, month: str = Query(...)
         ORDER BY po.po_date
     """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
 
-    totals = (await db.execute(text("""
-        SELECT COALESCE(SUM(poi.cgst_amount),0) AS cgst, COALESCE(SUM(poi.sgst_amount),0) AS sgst,
-               COALESCE(SUM(poi.igst_amount),0) AS igst,
-               COALESCE(SUM(poi.cgst_amount+poi.sgst_amount+poi.igst_amount),0) AS total
+    totals = (await db.execute(text(f"""
+        SELECT COALESCE(SUM({_ITC_CGST}),0) AS cgst, COALESCE(SUM({_ITC_SGST}),0) AS sgst,
+               COALESCE(SUM({_ITC_IGST}),0) AS igst,
+               COALESCE(SUM({_ITC_CGST}+{_ITC_SGST}+{_ITC_IGST}),0) AS total
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
           AND poi.itc_eligible = true
     """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
 
-    ineligible_totals = (await db.execute(text("""
-        SELECT COALESCE(SUM(poi.cgst_amount),0) AS cgst, COALESCE(SUM(poi.sgst_amount),0) AS sgst,
-               COALESCE(SUM(poi.igst_amount),0) AS igst,
-               COALESCE(SUM(poi.cgst_amount+poi.sgst_amount+poi.igst_amount),0) AS total
+    ineligible_totals = (await db.execute(text(f"""
+        SELECT COALESCE(SUM({_ITC_CGST}),0) AS cgst, COALESCE(SUM({_ITC_SGST}),0) AS sgst,
+               COALESCE(SUM({_ITC_IGST}),0) AS igst,
+               COALESCE(SUM({_ITC_CGST}+{_ITC_SGST}+{_ITC_IGST}),0) AS total
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
           AND poi.itc_eligible = false
@@ -381,15 +452,15 @@ async def file_gstr3b(current: CurrentUserDep, db: DBDep, month: str = Query(...
     if existing == "filed":
         return ok(message="This period is already filed.", data={"status": "filed"})
 
-    outward = (await db.execute(text("""
+    outward = (await db.execute(text(f"""
         SELECT
-            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -taxable_amount ELSE taxable_amount END),0) AS taxable,
-            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -cgst_amount ELSE cgst_amount END),0) AS cgst,
-            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -sgst_amount ELSE sgst_amount END),0) AS sgst,
-            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -igst_amount ELSE igst_amount END),0) AS igst
+            {_signed('taxable_amount', 'taxable')},
+            {_signed('cgst_amount', 'cgst')},
+            {_signed('sgst_amount', 'sgst')},
+            {_signed('igst_amount', 'igst')}
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
           AND status NOT IN ('draft','cancelled','void')
-          AND invoice_type IN ('tax_invoice','credit_note')
+          AND invoice_type IN {_GST_INVOICE_TYPES}
           AND reverse_charge = false AND supply_category = 'taxable'
     """), {"cid": str(cid), "df": df, "dt": dt})).mappings().one()
 
@@ -414,18 +485,18 @@ async def file_gstr3b(current: CurrentUserDep, db: DBDep, month: str = Query(...
           AND reverse_charge = true
     """), {"cid": str(cid), "df": df, "dt": dt})).mappings().one()
 
-    itc = (await db.execute(text("""
-        SELECT COALESCE(SUM(poi.cgst_amount),0) AS cgst, COALESCE(SUM(poi.sgst_amount),0) AS sgst,
-               COALESCE(SUM(poi.igst_amount),0) AS igst
+    itc = (await db.execute(text(f"""
+        SELECT COALESCE(SUM({_ITC_CGST}),0) AS cgst, COALESCE(SUM({_ITC_SGST}),0) AS sgst,
+               COALESCE(SUM({_ITC_IGST}),0) AS igst
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
           AND poi.itc_eligible = true
     """), {"cid": str(cid), "df": df, "dt": dt})).mappings().one()
 
-    itc_ineligible = (await db.execute(text("""
-        SELECT COALESCE(SUM(poi.cgst_amount),0) AS cgst, COALESCE(SUM(poi.sgst_amount),0) AS sgst,
-               COALESCE(SUM(poi.igst_amount),0) AS igst,
-               COALESCE(SUM(poi.cgst_amount+poi.sgst_amount+poi.igst_amount),0) AS total
+    itc_ineligible = (await db.execute(text(f"""
+        SELECT COALESCE(SUM({_ITC_CGST}),0) AS cgst, COALESCE(SUM({_ITC_SGST}),0) AS sgst,
+               COALESCE(SUM({_ITC_IGST}),0) AS igst,
+               COALESCE(SUM({_ITC_CGST}+{_ITC_SGST}+{_ITC_IGST}),0) AS total
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
           AND poi.itc_eligible = false
@@ -485,36 +556,85 @@ async def gst_report_pdf(current: CurrentUserDep, db: DBDep, month: str = Query(
         {"cid": cid}
     )).mappings().one_or_none() or {}
 
-    outward = (await db.execute(text("""
-        SELECT
-            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -taxable_amount ELSE taxable_amount END),0) AS taxable,
-            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -cgst_amount ELSE cgst_amount END),0) AS cgst,
-            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -sgst_amount ELSE sgst_amount END),0) AS sgst,
-            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -igst_amount ELSE igst_amount END),0) AS igst,
-            COALESCE(SUM(CASE WHEN invoice_type = 'credit_note' THEN -cess_amount ELSE cess_amount END),0) AS cess
+    # 3.1(a) Taxable outward supplies — net of credit notes, whitelisted invoice types only
+    outward = (await db.execute(text(f"""
+        SELECT {_signed('taxable_amount', 'taxable')}, {_signed('cgst_amount', 'cgst')},
+               {_signed('sgst_amount', 'sgst')}, {_signed('igst_amount', 'igst')},
+               {_signed('cess_amount', 'cess')}
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
-          AND status NOT IN ('draft','cancelled','void')
-          AND invoice_type IN ('tax_invoice','debit_note','credit_note')
+          AND status NOT IN ('draft','cancelled','void') AND invoice_type IN {_GST_INVOICE_TYPES}
           AND reverse_charge = false AND is_export = false AND supply_category = 'taxable'
     """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    totals = {"sales_taxable": outward["taxable"],
+              "output_gst": float(outward["cgst"]) + float(outward["sgst"]) + float(outward["igst"])}
 
-    itc = (await db.execute(text("""
-        SELECT COALESCE(SUM(poi.cgst_amount),0) AS cgst, COALESCE(SUM(poi.sgst_amount),0) AS sgst,
-               COALESCE(SUM(poi.igst_amount),0) AS igst
+    # 3.1(b) Zero-rated (export) supplies
+    zero_rated = (await db.execute(text("""
+        SELECT COALESCE(SUM(taxable_amount),0) AS taxable, COALESCE(SUM(cgst_amount),0) AS cgst,
+               COALESCE(SUM(sgst_amount),0) AS sgst, COALESCE(SUM(igst_amount),0) AS igst
+        FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND status NOT IN ('draft','cancelled','void') AND invoice_type = 'tax_invoice' AND is_export = true
+    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+
+    # 3.1(c) Nil-rated / exempt supplies
+    nil_exempt = (await db.execute(text("""
+        SELECT COALESCE(SUM(taxable_amount),0) AS taxable
+        FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND status NOT IN ('draft','cancelled','void') AND invoice_type IN ('tax_invoice','debit_note')
+          AND supply_category IN ('nil_rated','exempt')
+    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+
+    # 3.1(e) Non-GST supplies
+    non_gst = (await db.execute(text("""
+        SELECT COALESCE(SUM(taxable_amount),0) AS taxable
+        FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND status NOT IN ('draft','cancelled','void') AND invoice_type IN ('tax_invoice','debit_note')
+          AND supply_category = 'non_gst'
+    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+
+    # 3.1(d) Inward supplies liable to reverse charge
+    inward_rcm = (await db.execute(text("""
+        SELECT COALESCE(SUM(taxable_amount),0) AS taxable, COALESCE(SUM(cgst_amount),0) AS cgst,
+               COALESCE(SUM(sgst_amount),0) AS sgst, COALESCE(SUM(igst_amount),0) AS igst
+        FROM purchase_orders WHERE company_id=:cid AND po_date BETWEEN :df AND :dt AND status != 'cancelled'
+          AND reverse_charge = true
+    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+
+    # 4(A) Eligible ITC — from PO line items only, itc_eligible=true, net of any Rule-37
+    # reversal for goods already returned to the vendor. (Was incorrectly pulling
+    # header-level totals off purchase_orders with no eligibility filter at all.)
+    itc = (await db.execute(text(f"""
+        SELECT COALESCE(SUM({_ITC_CGST}),0) AS cgst, COALESCE(SUM({_ITC_SGST}),0) AS sgst,
+               COALESCE(SUM({_ITC_IGST}),0) AS igst
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
           AND poi.itc_eligible = true
     """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
 
-    setoff = _compute_setoff(dict(outward), dict(itc))
-    net = {"cgst": setoff["net_cgst"], "sgst": setoff["net_sgst"], "igst": setoff["net_igst"]}
+    # 4(B) Ineligible / blocked ITC (Section 17(5)) — must be reversed, never claimed
+    itc_ineligible = (await db.execute(text(f"""
+        SELECT COALESCE(SUM({_ITC_CGST}),0) AS cgst, COALESCE(SUM({_ITC_SGST}),0) AS sgst,
+               COALESCE(SUM({_ITC_IGST}),0) AS igst,
+               COALESCE(SUM({_ITC_CGST}+{_ITC_SGST}+{_ITC_IGST}),0) AS total
+        FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
+        WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
+          AND poi.itc_eligible = false
+    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
 
-    # "Sales (Taxable)" / "Output GST" header cards now derive from the SAME
-    # filtered query as the 3.1 table below, so they can never disagree with it.
-    totals = {
-        "sales_taxable": outward["taxable"],
-        "output_gst": float(outward["cgst"]) + float(outward["sgst"]) + float(outward["igst"]),
+    # Proper Section 49A/49B set-off order (IGST ITC first, CGST/SGST ITC never
+    # cross-offset each other) — same helper used by /gstr3b and /gstr3b/file,
+    # instead of the old flat max(0, outward - itc) per head. WPAY export tax
+    # (zero_rated) is real liability too and must be folded in here — LUT/bond
+    # exports contribute 0 since their tax columns are legitimately zero.
+    combined_liability = {
+        "cgst": float(outward["cgst"]) + float(zero_rated["cgst"]),
+        "sgst": float(outward["sgst"]) + float(zero_rated["sgst"]),
+        "igst": float(outward["igst"]) + float(zero_rated["igst"]),
     }
+    setoff = _compute_setoff(combined_liability, dict(itc))
+    rcm_cash = float(inward_rcm["cgst"]) + float(inward_rcm["sgst"]) + float(inward_rcm["igst"])
+    net = {"cgst": setoff["net_cgst"], "sgst": setoff["net_sgst"], "igst": setoff["net_igst"]}
+    total_cash_payable = setoff["net_cgst"] + setoff["net_sgst"] + setoff["net_igst"] + rcm_cash
 
     b2b = (await db.execute(text("""
         SELECT invoice_no, invoice_date, billing_name, billing_gstin, taxable_amount, total_amount
@@ -538,15 +658,6 @@ async def gst_report_pdf(current: CurrentUserDep, db: DBDep, month: str = Query(
         SELECT invoice_no, invoice_date, invoice_type, billing_name, taxable_amount, total_amount
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
           AND status NOT IN ('draft','cancelled','void') AND invoice_type IN ('credit_note','debit_note')
-          AND billing_gstin IS NOT NULL AND billing_gstin != ''
-        ORDER BY invoice_date
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
-
-    cdnur = (await db.execute(text("""
-        SELECT invoice_no, invoice_date, invoice_type, billing_name, taxable_amount, total_amount
-        FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
-          AND status NOT IN ('draft','cancelled','void') AND invoice_type IN ('credit_note','debit_note')
-          AND (billing_gstin IS NULL OR billing_gstin = '')
         ORDER BY invoice_date
     """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
 
@@ -557,13 +668,16 @@ async def gst_report_pdf(current: CurrentUserDep, db: DBDep, month: str = Query(
         ORDER BY invoice_date
     """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
 
-    hsn = (await db.execute(text("""
+    hsn = (await db.execute(text(f"""
         SELECT COALESCE(ii.hsn_code, ii.sac_code, 'N/A') AS hsn, MIN(ii.description) AS description,
-               ii.gst_rate, SUM(ii.quantity) AS qty, SUM(ii.taxable_amount) AS taxable,
-               SUM(ii.cgst_amount+ii.sgst_amount+ii.igst_amount) AS total_tax
+               ii.gst_rate,
+               COALESCE(SUM(CASE WHEN i.invoice_type='credit_note' THEN -ii.quantity ELSE ii.quantity END),0) AS qty,
+               {_signed_ii('taxable_amount', 'taxable')},
+               {_signed_ii('cgst_amount+sgst_amount+igst_amount', 'total_tax')}
         FROM invoice_items ii JOIN invoices i ON i.id = ii.invoice_id
         WHERE i.company_id=:cid AND i.invoice_date BETWEEN :df AND :dt
-          AND i.status NOT IN ('draft','cancelled','void') AND i.invoice_type != 'credit_note'
+          AND i.status NOT IN ('draft','cancelled','void') AND i.invoice_type IN {_GST_INVOICE_TYPES}
+          AND i.reverse_charge = false AND i.is_export = false AND i.supply_category = 'taxable'
         GROUP BY COALESCE(ii.hsn_code, ii.sac_code, 'N/A'), ii.gst_rate ORDER BY taxable DESC
     """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
 
@@ -573,17 +687,32 @@ async def gst_report_pdf(current: CurrentUserDep, db: DBDep, month: str = Query(
         summary=[
             ("Sales (Taxable)", format_inr(totals["sales_taxable"]), "blue"),
             ("Output GST", format_inr(totals["output_gst"]), "green"),
-            ("Input Tax Credit", format_inr(float(itc["cgst"]) + float(itc["sgst"]) + float(itc["igst"])), "orange"),
-            ("Net Tax Payable", format_inr(net["cgst"] + net["sgst"] + net["igst"]), "red"),
+            ("Eligible ITC", format_inr(float(itc["cgst"]) + float(itc["sgst"]) + float(itc["igst"])), "orange"),
+            ("Net Cash Payable", format_inr(total_cash_payable), "red"),
         ],
         tables=[
-            ("3.1 Outward Taxable Supplies", ["Taxable Value", "CGST", "SGST", "IGST", "Cess"],
+            ("3.1(a) Outward Taxable Supplies (net of credit notes)",
+             ["Taxable Value", "CGST", "SGST", "IGST", "Cess"],
              [[format_inr(outward["taxable"]), format_inr(outward["cgst"]), format_inr(outward["sgst"]),
                format_inr(outward["igst"]), format_inr(outward["cess"])]]),
-            ("4. Eligible Input Tax Credit (ITC)", ["CGST", "SGST", "IGST"],
+            ("3.1(b) Zero-Rated (Export) Supplies", ["Taxable Value", "CGST", "SGST", "IGST"],
+             [[format_inr(zero_rated["taxable"]), format_inr(zero_rated["cgst"]),
+               format_inr(zero_rated["sgst"]), format_inr(zero_rated["igst"])]]),
+            ("3.1(c) Nil-Rated / Exempt Supplies", ["Taxable Value"],
+             [[format_inr(nil_exempt["taxable"])]]),
+            ("3.1(d) Inward Supplies Liable to Reverse Charge", ["Taxable Value", "CGST", "SGST", "IGST"],
+             [[format_inr(inward_rcm["taxable"]), format_inr(inward_rcm["cgst"]),
+               format_inr(inward_rcm["sgst"]), format_inr(inward_rcm["igst"])]]),
+            ("3.1(e) Non-GST Supplies", ["Taxable Value"],
+             [[format_inr(non_gst["taxable"])]]),
+            ("4(A) Eligible Input Tax Credit (ITC)", ["CGST", "SGST", "IGST"],
              [[format_inr(itc["cgst"]), format_inr(itc["sgst"]), format_inr(itc["igst"])]]),
-            ("Net Tax Payable", ["CGST", "SGST", "IGST"],
-             [[format_inr(net["cgst"]), format_inr(net["sgst"]), format_inr(net["igst"])]]),
+            ("4(B) Ineligible / Blocked ITC — Section 17(5)", ["CGST", "SGST", "IGST", "Total"],
+             [[format_inr(itc_ineligible["cgst"]), format_inr(itc_ineligible["sgst"]),
+               format_inr(itc_ineligible["igst"]), format_inr(itc_ineligible["total"])]]),
+            ("Net Tax Payable (after Sec 49A/49B set-off)", ["CGST", "SGST", "IGST", "RCM (cash only)", "Total Cash Payable"],
+             [[format_inr(net["cgst"]), format_inr(net["sgst"]), format_inr(net["igst"]),
+               format_inr(rcm_cash), format_inr(total_cash_payable)]]),
             ("GSTR-1 — B2B Invoices (Registered)", ["Invoice No", "Date", "Customer", "GSTIN", "Taxable", "Total"],
              [[r["invoice_no"], str(r["invoice_date"]), r["billing_name"], r["billing_gstin"],
                format_inr(r["taxable_amount"]), format_inr(r["total_amount"])] for r in b2b]),
@@ -592,9 +721,6 @@ async def gst_report_pdf(current: CurrentUserDep, db: DBDep, month: str = Query(
             ("GSTR-1 — CDNR (Credit/Debit Notes)", ["Note No", "Date", "Type", "Customer", "Taxable", "Total"],
              [[r["invoice_no"], str(r["invoice_date"]), r["invoice_type"], r["billing_name"],
                format_inr(r["taxable_amount"]), format_inr(r["total_amount"])] for r in cdnr]),
-            ("GSTR-1 — CDNUR (Credit/Debit Notes, Unregistered)", ["Note No", "Date", "Type", "Customer", "Taxable", "Total"],
-             [[r["invoice_no"], str(r["invoice_date"]), r["invoice_type"], r["billing_name"],
-               format_inr(r["taxable_amount"]), format_inr(r["total_amount"])] for r in cdnur]),
             ("GSTR-1 — Exports", ["Invoice No", "Date", "Customer", "Export Type", "Taxable"],
              [[r["invoice_no"], str(r["invoice_date"]), r["billing_name"], r["export_type"],
                format_inr(r["taxable_amount"])] for r in exports]),
@@ -678,13 +804,17 @@ async def gstr1_json_export(current: CurrentUserDep, db: DBDep, month: str = Que
                total_amount, taxable_amount, cgst_amount, sgst_amount, igst_amount, cess_amount
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
           AND status NOT IN ('draft','cancelled','void') AND invoice_type IN ('credit_note','debit_note')
-          AND billing_gstin IS NOT NULL AND billing_gstin != ''
         ORDER BY billing_gstin, invoice_date
     """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
 
+    # Real GSTR-1 has no bucket for credit/debit notes against unregistered
+    # customers (CDNR is B2B-only by definition) — group those under a
+    # placeholder key instead of silently dropping them, so at least nothing
+    # goes missing from the export. Flag them for manual review before upload.
     cdnr_by_gstin: dict[str, list] = {}
     for r in cdnr_rows:
-        cdnr_by_gstin.setdefault(r["billing_gstin"], []).append({
+        gstin_key = r["billing_gstin"] or "UNREGISTERED"
+        cdnr_by_gstin.setdefault(gstin_key, []).append({
             "nt_num": r["invoice_no"],
             "nt_dt": _fmt_date(r["invoice_date"]),
             "ntty": "C" if r["invoice_type"] == "credit_note" else "D",
@@ -719,13 +849,16 @@ async def gstr1_json_export(current: CurrentUserDep, db: DBDep, month: str = Que
         })
     exp = [{"exp_typ": t, "inv": invs} for t, invs in exp_by_type.items()]
 
-    hsn_rows = (await db.execute(text("""
+    hsn_rows = (await db.execute(text(f"""
         SELECT COALESCE(ii.hsn_code, ii.sac_code, '') AS hsn, MIN(ii.description) AS desc,
-               ii.gst_rate AS rt, SUM(ii.quantity) AS qty, SUM(ii.taxable_amount) AS txval,
-               SUM(ii.cgst_amount) AS camt, SUM(ii.sgst_amount) AS samt, SUM(ii.igst_amount) AS iamt
+               ii.gst_rate AS rt,
+               COALESCE(SUM(CASE WHEN i.invoice_type='credit_note' THEN -ii.quantity ELSE ii.quantity END),0) AS qty,
+               {_signed_ii('taxable_amount', 'txval')},
+               {_signed_ii('cgst_amount', 'camt')}, {_signed_ii('sgst_amount', 'samt')}, {_signed_ii('igst_amount', 'iamt')}
         FROM invoice_items ii JOIN invoices i ON i.id = ii.invoice_id
         WHERE i.company_id=:cid AND i.invoice_date BETWEEN :df AND :dt
-          AND i.status NOT IN ('draft','cancelled','void') AND i.invoice_type != 'credit_note'
+          AND i.status NOT IN ('draft','cancelled','void') AND i.invoice_type IN {_GST_INVOICE_TYPES}
+          AND i.reverse_charge = false AND i.is_export = false AND i.supply_category = 'taxable'
         GROUP BY COALESCE(ii.hsn_code, ii.sac_code, ''), ii.gst_rate
     """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
 

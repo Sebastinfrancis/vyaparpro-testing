@@ -50,23 +50,31 @@ async def sales_report(
     """), {"cid": cid, "df": date_from, "dt": date_to})).mappings().one()
 
     by_customer = (await db.execute(text("""
-        SELECT i.party_id, COALESCE(p.display_name, i.billing_name) AS customer_name,
-               COUNT(*) AS invoice_count, SUM(i.total_amount) AS total
+        SELECT COALESCE(i.party_id::text, lower(trim(i.billing_name))) AS customer_key,
+               MAX(i.party_id::text) AS party_id,
+               COALESCE(MAX(p.display_name), MIN(i.billing_name)) AS customer_name,
+               COUNT(*) FILTER (WHERE i.invoice_type NOT IN ('credit_note','debit_note')) AS invoice_count,
+               COALESCE(SUM(i.total_amount) FILTER (WHERE i.invoice_type != 'credit_note'), 0)
+                 - COALESCE(SUM(i.total_amount) FILTER (WHERE i.invoice_type = 'credit_note'), 0) AS total
         FROM invoices i LEFT JOIN parties p ON p.id = i.party_id
         WHERE i.company_id = :cid AND i.invoice_date BETWEEN :df AND :dt
-          AND i.status NOT IN ('draft','cancelled','void') AND i.invoice_type != 'credit_note'
-        GROUP BY i.party_id, p.display_name, i.billing_name
+          AND i.status NOT IN ('draft','cancelled','void')
+        GROUP BY COALESCE(i.party_id::text, lower(trim(i.billing_name)))
+        HAVING COUNT(*) FILTER (WHERE i.invoice_type NOT IN ('credit_note','debit_note')) > 0
         ORDER BY total DESC LIMIT 20
     """), {"cid": cid, "df": date_from, "dt": date_to})).mappings().all()
 
     by_product = (await db.execute(text("""
-        SELECT ii.product_id, COALESCE(p.product_name, MIN(ii.description)) AS product_name,
+        SELECT COALESCE(ii.product_id::text, lower(trim(ii.description))) AS product_key,
+               MAX(ii.product_id::text) AS product_id,
+               COALESCE(MAX(p.product_name), MIN(ii.description)) AS product_name,
                SUM(ii.quantity) AS qty_sold, SUM(ii.taxable_amount) AS revenue
         FROM invoice_items ii JOIN invoices i ON i.id = ii.invoice_id
         LEFT JOIN products p ON p.id = ii.product_id
         WHERE i.company_id = :cid AND i.invoice_date BETWEEN :df AND :dt
-          AND i.status NOT IN ('draft','cancelled','void') AND i.invoice_type != 'credit_note'
-        GROUP BY ii.product_id, p.product_name
+          AND i.status NOT IN ('draft','cancelled','void')
+          AND i.invoice_type NOT IN ('credit_note','debit_note')
+        GROUP BY COALESCE(ii.product_id::text, lower(trim(ii.description)))
         ORDER BY revenue DESC
     """), {"cid": cid, "df": date_from, "dt": date_to})).mappings().all()
 

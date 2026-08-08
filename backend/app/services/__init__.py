@@ -501,19 +501,27 @@ class ProductService:
         product = await self.products.get_or_raise(product_id)
         if product.company_id != company_id:
             raise PermissionDeniedError()
-    
+
         update_data = payload.model_dump(exclude_unset=True)
-        updated = await repo.update(inv, update_data)
-    
+
         # explicitly include current_stock if sent
         if payload.current_stock is not None:
             update_data["current_stock"] = payload.current_stock
-    
+
         # filter to only valid DB columns
         valid_fields = {c.key for c in Product.__mapper__.columns}
         update_data = {k: v for k, v in update_data.items() if k in valid_fields}
-    
+
         updated = await self.products.update(product, update_data)
+
+        stmt = (
+            select(Product)
+            .where(Product.id == updated.id)
+            .options(selectinload(Product.category), selectinload(Product.uom))
+        )
+        result = await self.session.execute(stmt)
+        updated = result.scalar_one()
+
         return updated
 
     async def search(self, company_id: UUID, **kwargs: Any):

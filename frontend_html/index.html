@@ -116,12 +116,41 @@ select.fi option{background:var(--bg2)}
 .cor{background:rgba(255,145,0,.09);color:var(--orange);border:1px solid rgba(255,145,0,.18)}
 .crd{background:rgba(255,68,68,.09);color:var(--red);border:1px solid rgba(255,68,68,.18)}
 .div{height:1px;background:var(--border);margin:14px 0}
+/* ---- Settings menu (grouped sections) ---- */
+.settings-menu-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:16px}
+.settings-menu-item{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;cursor:pointer;transition:all .13s}
+.settings-menu-item:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow)}
+.smi-icon{width:42px;height:42px;min-width:42px;border-radius:var(--r2);background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:19px}
+.smi-text{flex:1}
+.smi-title{font-size:13px;font-weight:700;color:var(--text)}
+.smi-sub{font-size:10.5px;color:var(--text3);margin-top:2px}
+.smi-arrow{font-size:18px;color:var(--text3)}
+.settings-back{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;user-select:none;padding:8px 14px 8px 10px;border-radius:20px;border:1px solid var(--border);background:var(--card);transition:all .13s}
+.settings-back:hover{color:var(--accent);border-color:var(--accent);background:rgba(0,212,255,.06)}
+.settings-section{max-width:880px;margin:0 auto}
+.settings-section-header{display:flex;align-items:center;gap:16px;margin:22px 0 18px}
+.ssh-icon{width:50px;height:50px;min-width:50px;border-radius:14px;background:linear-gradient(135deg,rgba(0,212,255,.16),rgba(0,230,118,.08));border:1px solid rgba(0,212,255,.2);display:flex;align-items:center;justify-content:center;font-size:23px}
+.ssh-title{font-size:17px;font-weight:800;color:var(--text);letter-spacing:-.2px}
+.ssh-sub{font-size:11.5px;color:var(--text3);margin-top:3px}
+.settings-section .card{padding:26px 28px;border-radius:16px}
+.settings-section .card>.card-title{font-size:13px;font-weight:700;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.settings-section .fg{margin-bottom:15px}
+.settings-section .fi,.settings-section textarea.fi{background:var(--bg2)}
+.settings-menu-grid .settings-menu-item{padding:18px 20px}
 .mono{font-family:'JetBrains Mono',monospace;font-size:11px}
 .hidden{display:none!important}
 .page{display:none}.page.active{display:block}
 .prog{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:5px}
 .pb{height:100%;border-radius:3px;transition:width .3s}
 .ndot{width:7px;height:7px;background:var(--red);border-radius:50%;position:absolute;top:5px;right:5px}
+.notif-panel{position:absolute;top:44px;right:0;width:330px;max-height:420px;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 12px 36px rgba(0,0,0,.45);z-index:80;text-align:left}
+.notif-panel-header{padding:13px 16px;font-size:12px;font-weight:700;border-bottom:1px solid var(--border);color:var(--text)}
+.notif-list{padding:7px}
+.notif-item{display:flex;align-items:flex-start;gap:10px;padding:10px 9px;border-radius:var(--r2);cursor:pointer}
+.notif-item:hover{background:var(--bg3)}
+.notif-item .ni-icon{font-size:15px;line-height:1.3}
+.notif-item .ni-text{font-size:11.5px;color:var(--text2);line-height:1.4}
+.notif-empty{padding:26px 16px;text-align:center;color:var(--text3);font-size:12px}
 .gsum{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:14px}
 .tr{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:12px}
 .tr.fin{border-top:2px solid var(--border2);margin-top:7px;padding-top:10px;font-size:15px;font-weight:800}
@@ -224,7 +253,7 @@ select.fi option{background:var(--bg2)}
     <div class="ni" onclick="nav('purchase',this)"><span class="ni-ic">🛒</span>Purchase</div>
     <div class="ni" onclick="nav('returns',this)"><span class="ni-ic">↩️</span>Returns / Credit</div>
     <div class="ns">GST</div>
-    <div class="ni" onclick="nav('gst',this)"><span class="ni-ic">🇮🇳</span>GST Reports <span class="bdg">!</span></div>
+    <div class="ni" onclick="nav('gst',this)"><span class="ni-ic">🇮🇳</span>GST Reports </div>
     <div class="ni" onclick="nav('einvoice',this)"><span class="ni-ic">⚡</span>E-Invoice / E-Way</div>
     <div class="ns">Inventory</div>
     <div class="ni" onclick="nav('inventory',this)"><span class="ni-ic">📦</span>Products & Stock</div>
@@ -258,11 +287,14 @@ select.fi option{background:var(--bg2)}
 <!-- ======== MAIN ======== -->
 <div class="main">
   <div class="topbar">
-    <div class="sbox"><span style="font-size:13px;color:var(--text3)">🔍</span>
-      <input id="gSearch" placeholder="Search invoices, customers, products… (Ctrl+K)" oninput="doSearch(this.value)"/></div>
     <div class="tba">
       <div class="bic" onclick="nav('create',null)" title="New Invoice (Ctrl+N)">➕</div>
-      <div class="bic" style="position:relative" onclick="showNotifs()">🔔<div class="ndot"></div></div>
+      <div class="bic" style="position:relative" onclick="event.stopPropagation();toggleNotifPanel()">🔔<div class="ndot hidden" id="notifDot"></div>
+        <div class="notif-panel hidden" id="notifPanel" onclick="event.stopPropagation()">
+          <div class="notif-panel-header">Notifications</div>
+          <div id="notifList" class="notif-list"></div>
+        </div>
+      </div>
       <div class="bic" onclick="syncAll()">☁️</div>
       <div style="display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);padding:5px 11px;border-radius:7px;font-size:11px" id="liveIndicator">
         <div class="sdot" id="liveDot" style="background:var(--text3)"></div>
@@ -280,22 +312,22 @@ select.fi option{background:var(--bg2)}
         <div><div class="st">Good morning, <span id="dashGreetName">Rajesh</span>! 👋</div>
           <div class="ss">Business overview — <span id="dashDate"></span></div></div>
         <div style="display:flex;gap:7px">
-          <select class="fi" style="width:110px;padding:7px 10px">
-            <option>This Month</option><option>This Week</option><option>This Year</option></select>
+          <select class="fi" id="dashPeriod" style="width:110px;padding:7px 10px" onchange="renderDashboard()">
+            <option value="month">This Month</option><option value="week">This Week</option><option value="year">This Year</option></select>
           <button class="btn btn-p btn-sm" onclick="nav('create',null)">➕ New Invoice</button>
         </div>
       </div>
       <div style="background:linear-gradient(135deg,rgba(0,212,255,.07),rgba(0,230,118,.04));border:1px solid rgba(0,212,255,.18);border-radius:var(--r);padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px">
         <div style="font-size:26px">🤖</div>
         <div><div style="font-size:12px;font-weight:700;color:var(--accent)">AI Insight</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px">Sales up <strong style="color:var(--text)">18%</strong> vs last month. <strong style="color:var(--text)">Samsung 55" QLED</strong> is your fastest mover. <strong style="color:var(--orange)">3 customers</strong> have overdue payments totalling ₹1,24,500. <strong style="color:var(--red)">Mi Router AX6000</strong> stocks out in ~4 days.</div></div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px" id="dashAIInsight">Loading insight…</div></div>
         <button class="btn btn-o btn-sm" style="margin-left:auto;white-space:nowrap" onclick="nav('ai',null)">Ask AI →</button>
       </div>
       <div class="sgrid">
-        <div class="sc bl"><div class="slbl">Today's Sales</div><div class="sval bl" id="dash-today-sales">₹84,200</div><div class="sch up">▲ 12% vs yesterday</div></div>
-        <div class="sc gr"><div class="slbl">Monthly Revenue</div><div class="sval gr" id="dash-monthly-rev">₹18,46,500</div><div class="sch up">▲ 18% vs last month</div></div>
-        <div class="sc or"><div class="slbl">Outstanding</div><div class="sval or" id="dash-outstanding">₹3,24,800</div><div class="sch dn">▼ 12 invoices pending</div></div>
-        <div class="sc pu"><div class="slbl">Net Profit (MTD)</div><div class="sval pu" id="dash-net-profit">₹2,18,400</div><div class="sch up">▲ 22% margin</div></div>
+        <div class="sc bl"><div class="slbl">Today's Sales</div><div class="sval bl" id="dash-today-sales">₹0</div><div class="sch" id="dash-today-sales-sub">—</div></div>
+        <div class="sc gr"><div class="slbl" id="dash-rev-label">Monthly Revenue</div><div class="sval gr" id="dash-monthly-rev">₹0</div><div class="sch" id="dash-monthly-rev-sub">—</div></div>
+        <div class="sc or"><div class="slbl">Outstanding</div><div class="sval or" id="dash-outstanding">₹0</div><div class="sch" id="dash-outstanding-sub">—</div></div>
+        <div class="sc pu"><div class="slbl" id="dash-profit-label">Net Profit (MTD)</div><div class="sval pu" id="dash-net-profit">₹0</div><div class="sch" id="dash-net-profit-sub">—</div></div>
       </div>
       <div class="g2" style="margin-bottom:18px">
         <div class="card">
@@ -337,10 +369,10 @@ select.fi option{background:var(--bg2)}
       <div class="g2">
         <div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:14px">Top Customers (Month)</div><div id="topCust"></div></div>
         <div class="card">
-          <div style="font-size:13px;font-weight:700;margin-bottom:3px">🔮 AI Sales Forecast</div>
-          <div style="font-size:10px;color:var(--text3);margin-bottom:14px">Based on historical trends & seasonality</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:3px">📊 Invoice Status Breakdown</div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:14px">This month, by status</div>
           <div id="forecastBars"></div>
-          <div style="margin-top:14px;padding:11px;background:var(--bg3);border-radius:var(--r2);font-size:11px;color:var(--text2)"><strong style="color:var(--green)">AI:</strong> June likely ₹22,80,000 (+23%). Stock up for Diwali season Oct.</div>
+          <div style="margin-top:14px;padding:11px;background:var(--bg3);border-radius:var(--r2);font-size:11px;color:var(--text2)" id="forecastNote">Loading…</div>
         </div>
       </div>
     </div>
@@ -474,7 +506,6 @@ select.fi option{background:var(--bg2)}
             </div>
             <div style="margin-top:7px;display:flex;gap:7px">
               <button class="btn btn-o btn-sm" style="flex:1;justify-content:center" onclick="previewInvoice()">👁 Preview</button>
-              <button class="btn btn-o btn-sm" style="flex:1;justify-content:center" onclick="showToast('📄 PDF generated!')">📄 PDF</button>
               <button class="btn btn-o btn-sm" style="flex:1;justify-content:center" onclick="showToast('📱 Sent via WhatsApp!')">📱 WhatsApp</button>
               <button class="btn btn-o btn-sm" style="flex:1;justify-content:center" onclick="showToast('📧 Email sent!')">📧 Email</button>
             </div>
@@ -605,7 +636,6 @@ select.fi option{background:var(--bg2)}
       <div class="sh" style="margin-top:8px">
         <div><div class="st">Purchase Management</div><div class="ss">Purchase orders, GRN, vendor bills, returns</div></div>
         <div style="display:flex;gap:7px">
-          <button class="btn btn-o btn-sm" onclick="showToast('📷 OCR scanner ready — scan supplier bill')">📷 OCR Scan Bill</button>
           <button class="btn btn-p btn-sm" onclick="openNewPOModal()">➕ New Purchase Order</button>
         </div>
       </div>
@@ -894,7 +924,6 @@ select.fi option{background:var(--bg2)}
       <div class="sh" style="margin-top:8px">
         <div><div class="st">🤖 AI Business Assistant</div><div class="ss">Ask anything — sales, stock, customers, forecasts</div></div>
         <div style="display:flex;gap:7px">
-          <button class="btn btn-o btn-sm" onclick="showToast('🎤 Voice mode activated — speak now')">🎤 Voice</button>
           <button class="btn btn-o btn-sm" onclick="clearAI()">🗑 Clear</button>
         </div>
       </div>
@@ -909,19 +938,34 @@ select.fi option{background:var(--bg2)}
           </div>
           <div style="margin-top:11px"><div style="font-size:9px;color:var(--text3);margin-bottom:7px;text-transform:uppercase;letter-spacing:1px">Quick Questions</div>
           <div style="display:flex;flex-wrap:wrap;gap:5px" id="aiSug"></div></div>
+
+          <div style="margin-top:18px">
+            <div style="font-size:9px;color:var(--text3);margin-bottom:7px;text-transform:uppercase;letter-spacing:1px">What can I ask?</div>
+            <div class="card" style="padding:13px">
+              <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:5px">📍 Navigation &amp; Help</div>
+              <div style="font-size:11px;color:var(--text2);line-height:1.75;margin-bottom:12px">
+                "How do I add a customer / vendor / product?" · "Where is GST Settings / GST Reports?" ·
+                "How do I create an invoice?" · "Open Purchase Orders / Quotations / Returns" ·
+                "Where is E-Invoice / E-Way Bill?" · "Where are Reports / Audit Log / Settings?"
+              </div>
+              <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:5px">📊 Live Business Data</div>
+              <div style="font-size:11px;color:var(--text2);line-height:1.75;margin-bottom:12px">
+                "Show today's / this month's sales" · "Which products are low on stock?" ·
+                "Who are my top customers?" · "Show pending payments" ·
+                "How many open purchase orders?" · "How many customers do I have?"
+              </div>
+              <div style="font-size:11px;font-weight:700;color:var(--orange);margin-bottom:5px">👤 Customers, Vendors &amp; Leads</div>
+              <div style="font-size:11px;color:var(--text2);line-height:1.75">
+                Type a name — "about Kumar Electronics", "customer Bhuvanesh", "who is Metro Traders" —
+                to get their outstanding balance, GSTIN, contact info and last activity.
+              </div>
+            </div>
+          </div>
         </div>
         <div>
-          <div class="card" style="margin-bottom:14px">
+          <div class="card">
             <div style="font-size:13px;font-weight:700;margin-bottom:11px">🔮 AI Predictions</div>
             <div id="aiPreds"></div>
-          </div>
-          <div class="card">
-            <div style="font-size:13px;font-weight:700;margin-bottom:11px">📷 OCR Bill Scanner</div>
-            <div style="text-align:center;padding:18px;background:var(--bg3);border:2px dashed var(--border2);border-radius:var(--r2);cursor:pointer" onclick="showToast('📷 Camera opened — point at supplier invoice')">
-              <div style="font-size:30px;margin-bottom:7px">📸</div>
-              <div style="font-size:12px;font-weight:600;color:var(--text2)">Scan Supplier Invoice</div>
-              <div style="font-size:10px;color:var(--text3);margin-top:3px">AI extracts all details automatically</div>
-            </div>
           </div>
         </div>
       </div>
@@ -931,7 +975,7 @@ select.fi option{background:var(--bg2)}
     <div class="page" id="page-auditlog">
       <div class="bc">System / <span>Audit Log</span></div>
       <div class="sh" style="margin-top:8px"><div><div class="st">Audit Log</div><div class="ss">All user actions tracked with timestamp</div></div>
-        <button class="btn btn-o btn-sm" onclick="showToast('📤 Audit log exported')">📤 Export</button>
+        <button class="btn btn-o btn-sm" onclick="exportAuditLog()">📤 Export</button>
       </div>
       <div class="card"><div class="tw"><table>
         <thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Module</th><th>Details</th><th>IP</th></tr></thead>
@@ -940,125 +984,278 @@ select.fi option{background:var(--bg2)}
     </div>
 
     <!-- ======== SETTINGS ======== -->
-    <div class="page" id="page-settings">
-      <div class="bc">Settings</div>
-      <div class="sh" style="margin-top:8px"><div><div class="st">Settings & Configuration</div></div></div>
-      <div class="g2" style="gap:18px">
+    <!-- ======== SETTINGS ======== -->
+<div class="page" id="page-settings">
+  <div class="bc">Settings</div>
+  <div class="sh" style="margin-top:8px"><div><div class="st">Settings & Configuration</div></div></div>
+
+  <!-- ---- SETTINGS MENU (landing view — list of headings) ---- -->
+  <!-- To add a new settings option later: add one more .settings-menu-item block here,
+       and a matching #settingsSection-<key> block below in #settingsDetail. -->
+  <div id="settingsMenu" class="settings-menu-grid">
+    <div class="settings-menu-item" onclick="openSettingsSection('company')">
+      <div class="smi-icon">🏢</div>
+      <div class="smi-text">
+        <div class="smi-title">Company Profile</div>
+        <div class="smi-sub">Business name, GSTIN, logo, address</div>
+      </div>
+      <div class="smi-arrow">›</div>
+    </div>
+    <div class="settings-menu-item" onclick="openSettingsSection('bank')">
+      <div class="smi-icon">🏦</div>
+      <div class="smi-text">
+        <div class="smi-title">Bank Details & Terms</div>
+        <div class="smi-sub">Payment info, invoice & PO terms</div>
+      </div>
+      <div class="smi-arrow">›</div>
+    </div>
+    <div class="settings-menu-item" onclick="openSettingsSection('users')">
+      <div class="smi-icon">👤</div>
+      <div class="smi-text">
+        <div class="smi-title">User & Role Management</div>
+        <div class="smi-sub">Add users, assign roles</div>
+      </div>
+      <div class="smi-arrow">›</div>
+    </div>
+    <div class="settings-menu-item" onclick="openSettingsSection('security')">
+      <div class="smi-icon">🔐</div>
+      <div class="smi-text">
+        <div class="smi-title">Security</div>
+        <div class="smi-sub">2FA, backups, encryption</div>
+      </div>
+      <div class="smi-arrow">›</div>
+    </div>
+    <div class="settings-menu-item" onclick="openSettingsSection('backup')">
+      <div class="smi-icon">💾</div>
+      <div class="smi-text">
+        <div class="smi-title">Local Backup</div>
+        <div class="smi-sub">Download a copy of your data to this device</div>
+      </div>
+      <div class="smi-arrow">›</div>
+    </div>
+    <div class="settings-menu-item" onclick="openSettingsSection('roles')">
+      <div class="smi-icon">🔑</div>
+      <div class="smi-text">
+        <div class="smi-title">Roles & Permissions</div>
+        <div class="smi-sub">Define role-based access levels</div>
+      </div>
+      <div class="smi-arrow">›</div>
+    </div>
+  </div>
+
+  <!-- ---- SETTINGS DETAIL (only the clicked section shows) ---- -->
+  <div id="settingsDetail" class="hidden">
+    <div class="settings-back" onclick="closeSettingsSection()">‹ Back to Settings</div>
+
+    <div id="settingsSection-company" class="settings-section hidden">
+      <div class="settings-section-header">
+        <div class="ssh-icon">🏢</div>
         <div>
-          <div class="card" style="margin-bottom:14px">
-            <div style="font-size:13px;font-weight:700;margin-bottom:14px">🏢 Company Profile</div>
-            <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-              <img id="setLogoPreview" src="" style="width:56px;height:56px;border-radius:10px;object-fit:cover;background:var(--bg3);display:none"/>
-              <div id="setLogoPlaceholder" style="width:56px;height:56px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:22px">🏢</div>
-              <div>
-                <input type="file" id="setLogoFile" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="uploadCompanyLogo(this)"/>
-                <button class="btn btn-o btn-sm" onclick="document.getElementById('setLogoFile').click()">Upload Logo</button>
-                <div style="font-size:10px;color:var(--text3);margin-top:4px">PNG/JPEG/WebP, max 2MB</div>
-              </div>
-            </div>
-            <div class="fg"><label class="fl">Business Name</label><input class="fi" id="setLegalName"/></div>
-            <div class="fg"><label class="fl">Trade Name</label><input class="fi" id="setTradeName"/></div>
-            <div class="fg"><label class="fl">Invoice Tagline</label><input class="fi" id="setTagline" placeholder="e.g. Manufacturing &amp; Supply of Precision Tools"/></div>
-            <div class="fg"><label class="fl">GSTIN</label><input class="fi mono" id="setGstin"/></div>
-            <div class="fg"><label class="fl">PAN</label><input class="fi mono" id="setPan"/></div>
-            <div class="fr c2">
-              <div class="fg"><label class="fl">State</label><select class="fi" id="setStateCode">
-                <option value="01">01 - Jammu & Kashmir</option>
-                <option value="02">02 - Himachal Pradesh</option>
-                <option value="03">03 - Punjab</option>
-                <option value="04">04 - Chandigarh</option>
-                <option value="05">05 - Uttarakhand</option>
-                <option value="06">06 - Haryana</option>
-                <option value="07">07 - Delhi</option>
-                <option value="08">08 - Rajasthan</option>
-                <option value="09">09 - Uttar Pradesh</option>
-                <option value="10">10 - Bihar</option>
-                <option value="11">11 - Sikkim</option>
-                <option value="12">12 - Arunachal Pradesh</option>
-                <option value="13">13 - Nagaland</option>
-                <option value="14">14 - Manipur</option>
-                <option value="15">15 - Mizoram</option>
-                <option value="16">16 - Tripura</option>
-                <option value="17">17 - Meghalaya</option>
-                <option value="18">18 - Assam</option>
-                <option value="19">19 - West Bengal</option>
-                <option value="20">20 - Jharkhand</option>
-                <option value="21">21 - Odisha</option>
-                <option value="22">22 - Chhattisgarh</option>
-                <option value="23">23 - Madhya Pradesh</option>
-                <option value="24">24 - Gujarat</option>
-                <option value="26">26 - Dadra & Nagar Haveli and Daman & Diu</option>
-                <option value="27">27 - Maharashtra</option>
-                <option value="29">29 - Karnataka</option>
-                <option value="30">30 - Goa</option>
-                <option value="31">31 - Lakshadweep</option>
-                <option value="32">32 - Kerala</option>
-                <option value="33">33 - Tamil Nadu</option>
-                <option value="34">34 - Puducherry</option>
-                <option value="35">35 - Andaman & Nicobar Islands</option>
-                <option value="36">36 - Telangana</option>
-                <option value="37">37 - Andhra Pradesh</option>
-                <option value="38">38 - Ladakh</option>
-              </select></div>
-              <div class="fg"><label class="fl">Business Type</label><select class="fi" id="setBizType"><option value="retailer">Retailer</option><option value="wholesaler">Wholesaler</option><option value="manufacturer">Manufacturer</option></select></div>
-            </div>
-            <div class="fr c2">
-              <div class="fg"><label class="fl">Email</label><input class="fi" id="setEmail" type="email"/></div>
-              <div class="fg"><label class="fl">Phone</label><input class="fi" id="setPhone"/></div>
-            </div>
-            <div class="fg"><label class="fl">Registered Address</label><textarea class="fi" id="setAddress" rows="2"></textarea></div>
-            <div class="fg"><label class="fl">Invoice Prefix</label><input class="fi" id="setInvoicePrefix"/></div>
-            <button class="btn btn-p btn-sm" onclick="saveCompanySettings()">Save Changes</button>
-          </div>
-          <div class="card">
-            <div style="font-size:13px;font-weight:700;margin-bottom:14px">🏦 Bank Details & Terms</div>
-            <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
-              Shown on every invoice, quotation, and purchase order PDF. Leave blank to hide that box.
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-              <div class="fg"><label class="fl">Bank Name</label><input class="fi" id="setBankName" placeholder="e.g. ICICI Bank"/></div>
-              <div class="fg"><label class="fl">Branch</label><input class="fi" id="setBankBranch"/></div>
-              <div class="fg"><label class="fl">Account Number</label><input class="fi" id="setBankAccount"/></div>
-              <div class="fg"><label class="fl">IFSC</label><input class="fi" id="setBankIfsc"/></div>
-              <div class="fg"><label class="fl">UPI ID</label><input class="fi" id="setUpiId" placeholder="yourname@bank"/></div>
-            </div>
-            <div class="fg"><label class="fl">Default Terms & Conditions</label>
-              <textarea class="fi" id="setDefaultTerms" rows="3" placeholder="e.g. Goods once sold will not be taken back.&#10;Subject to Chennai jurisdiction only."></textarea>
-            </div>
-            <div style="font-size:10.5px;color:var(--muted);margin-bottom:10px">
-              A specific invoice/quotation/PO can override this with its own terms; otherwise this default is used.
-            </div>
-            <button class="btn btn-p btn-sm" onclick="saveBankSettings()">Save Bank & Terms</button>
-          </div>
-          <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-              <div style="font-size:13px;font-weight:700">👤 User & Role Management</div>
-              <button class="btn btn-p btn-sm" onclick="openAddUserModal()">➕ Add User</button>
-            </div>
-            <div class="tw"><table>
-              <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
-              <tbody id="settingsUsersBody"></tbody>
-            </table></div>
-          </div>
-        </div>
-        <div>
-          <div class="card" style="margin-bottom:14px">
-            <div style="font-size:13px;font-weight:700;margin-bottom:14px">🔐 Security</div>
-            <div style="display:flex;flex-direction:column;gap:9px">
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
-                <div><div style="font-size:12px;font-weight:600">Two-Factor Auth (TOTP)</div><div style="font-size:10px;color:var(--text3)">Google Authenticator / SMS OTP</div></div><span class="chip cgr" id="sec_two_factor_enabled" style="cursor:pointer">Enabled</span></div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
-                <div><div style="font-size:12px;font-weight:600">Auto Cloud Backup</div><div style="font-size:10px;color:var(--text3)">Daily 2 AM → AWS S3 encrypted</div></div><span class="chip cgr" id="sec_auto_backup_enabled" style="cursor:pointer">Active</span></div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
-                <div><div style="font-size:12px;font-weight:600">Data Encryption (AES-256)</div><div style="font-size:10px;color:var(--text3)">At rest & in transit</div></div><span class="chip cgr" id="sec_data_encryption_enabled" style="cursor:pointer">Active</span></div>
-            </div>
-          </div>
+          <div class="ssh-title">Company Profile</div>
+          <div class="ssh-sub">Business identity shown on invoices, quotations & POs</div>
         </div>
       </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+          <img id="setLogoPreview" src="" style="width:56px;height:56px;border-radius:10px;object-fit:cover;background:var(--bg3);display:none"/>
+          <div id="setLogoPlaceholder" style="width:56px;height:56px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:22px">🏢</div>
+          <div>
+            <input type="file" id="setLogoFile" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="uploadCompanyLogo(this)"/>
+            <button class="btn btn-o btn-sm" onclick="document.getElementById('setLogoFile').click()">Upload Logo</button>
+            <div style="font-size:10px;color:var(--text3);margin-top:4px">PNG/JPEG/WebP, max 2MB</div>
+          </div>
+        </div>
+        <div class="fg"><label class="fl">Business Name</label><input class="fi" id="setLegalName"/></div>
+        <div class="fg"><label class="fl">Trade Name</label><input class="fi" id="setTradeName"/></div>
+        <div class="fg"><label class="fl">Invoice Tagline</label><input class="fi" id="setTagline" placeholder="e.g. Manufacturing &amp; Supply of Precision Tools"/></div>
+        <div class="fg"><label class="fl">GSTIN</label><input class="fi mono" id="setGstin"/></div>
+        <div class="fg"><label class="fl">PAN</label><input class="fi mono" id="setPan"/></div>
+        <div class="fr c2">
+          <div class="fg"><label class="fl">State</label><select class="fi" id="setStateCode">
+            <option value="01">01 - Jammu & Kashmir</option>
+            <option value="02">02 - Himachal Pradesh</option>
+            <option value="03">03 - Punjab</option>
+            <option value="04">04 - Chandigarh</option>
+            <option value="05">05 - Uttarakhand</option>
+            <option value="06">06 - Haryana</option>
+            <option value="07">07 - Delhi</option>
+            <option value="08">08 - Rajasthan</option>
+            <option value="09">09 - Uttar Pradesh</option>
+            <option value="10">10 - Bihar</option>
+            <option value="11">11 - Sikkim</option>
+            <option value="12">12 - Arunachal Pradesh</option>
+            <option value="13">13 - Nagaland</option>
+            <option value="14">14 - Manipur</option>
+            <option value="15">15 - Mizoram</option>
+            <option value="16">16 - Tripura</option>
+            <option value="17">17 - Meghalaya</option>
+            <option value="18">18 - Assam</option>
+            <option value="19">19 - West Bengal</option>
+            <option value="20">20 - Jharkhand</option>
+            <option value="21">21 - Odisha</option>
+            <option value="22">22 - Chhattisgarh</option>
+            <option value="23">23 - Madhya Pradesh</option>
+            <option value="24">24 - Gujarat</option>
+            <option value="26">26 - Dadra & Nagar Haveli and Daman & Diu</option>
+            <option value="27">27 - Maharashtra</option>
+            <option value="29">29 - Karnataka</option>
+            <option value="30">30 - Goa</option>
+            <option value="31">31 - Lakshadweep</option>
+            <option value="32">32 - Kerala</option>
+            <option value="33">33 - Tamil Nadu</option>
+            <option value="34">34 - Puducherry</option>
+            <option value="35">35 - Andaman & Nicobar Islands</option>
+            <option value="36">36 - Telangana</option>
+            <option value="37">37 - Andhra Pradesh</option>
+            <option value="38">38 - Ladakh</option>
+          </select></div>
+          <div class="fg"><label class="fl">Business Type</label><select class="fi" id="setBizType"><option value="retailer">Retailer</option><option value="wholesaler">Wholesaler</option><option value="manufacturer">Manufacturer</option></select></div>
+        </div>
+        <div class="fr c2">
+          <div class="fg"><label class="fl">Email</label><input class="fi" id="setEmail" type="email"/></div>
+          <div class="fg"><label class="fl">Phone</label><input class="fi" id="setPhone"/></div>
+        </div>
+        <div class="fg"><label class="fl">Registered Address</label><textarea class="fi" id="setAddress" rows="2"></textarea></div>
+        <div class="fg"><label class="fl">Invoice Prefix</label><input class="fi" id="setInvoicePrefix"/></div>
+        <button class="btn btn-p btn-sm" onclick="saveCompanySettings()">Save Changes</button>
+      </div>
+    </div>
 
-      <div class="card" style="margin-top:18px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-          <div style="font-size:13px;font-weight:700">🔑 Roles & Permissions</div>
+    <div id="settingsSection-bank" class="settings-section hidden">
+      <div class="settings-section-header">
+        <div class="ssh-icon">🏦</div>
+        <div>
+          <div class="ssh-title">Bank Details & Terms</div>
+          <div class="ssh-sub">Payment info & default terms for invoices, quotations and POs</div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:18px">
+          Bank details are shown on invoice and quotation PDFs only — Purchase Orders don't request payment, so this box is omitted there automatically.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="fg"><label class="fl">Bank Name</label><input class="fi" id="setBankName" placeholder="e.g. ICICI Bank"/></div>
+          <div class="fg"><label class="fl">Branch</label><input class="fi" id="setBankBranch"/></div>
+          <div class="fg"><label class="fl">Account Number</label><input class="fi" id="setBankAccount"/></div>
+          <div class="fg"><label class="fl">IFSC</label><input class="fi" id="setBankIfsc"/></div>
+          <div class="fg"><label class="fl">UPI ID</label><input class="fi" id="setUpiId" placeholder="yourname@bank"/></div>
+        </div>
+        <div class="fg"><label class="fl">Default Terms & Conditions <span style="font-weight:400;color:var(--muted);font-size:11px">(Invoices &amp; Quotations)</span></label>
+          <textarea class="fi" id="setDefaultTerms" rows="3" placeholder="e.g. Goods once sold will not be taken back.&#10;Subject to Chennai jurisdiction only."></textarea>
+        </div>
+        <div style="font-size:10.5px;color:var(--muted);margin-bottom:10px">
+          A specific invoice/quotation can override this with its own terms; otherwise this default is used.
+        </div>
+        <div class="fg"><label class="fl">Purchase Order Terms & Conditions</label>
+          <textarea class="fi" id="setPoTerms" rows="3" placeholder="Any additional terms specific to your purchase orders — added below the standard procurement terms already printed on every PO."></textarea>
+        </div>
+        <div style="font-size:10.5px;color:var(--muted);margin-bottom:10px">
+          Kept separate from invoice terms on purpose — a Purchase Order already carries its own standard procurement terms and shouldn't repeat sales-invoice wording.
+        </div>
+        <button class="btn btn-p btn-sm" onclick="saveBankSettings()">Save Bank & Terms</button>
+      </div>
+    </div>
+
+    <div id="settingsSection-users" class="settings-section hidden">
+      <div class="settings-section-header">
+        <div class="ssh-icon">👤</div>
+        <div>
+          <div class="ssh-title">User & Role Management</div>
+          <div class="ssh-sub">Add teammates and control what they can access</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          <span>All Users</span>
+          <button class="btn btn-p btn-sm" onclick="openAddUserModal()">➕ Add User</button>
+        </div>
+        <div class="tw"><table>
+          <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="settingsUsersBody"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <div id="settingsSection-security" class="settings-section hidden">
+      <div class="settings-section-header">
+        <div class="ssh-icon">🔐</div>
+        <div>
+          <div class="ssh-title">Security</div>
+          <div class="ssh-sub">Two-factor auth, backups and data encryption</div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
+            <div><div style="font-size:12px;font-weight:600">Two-Factor Auth (TOTP)</div><div style="font-size:10px;color:var(--text3)">Google Authenticator / SMS OTP</div></div><span class="chip cgr" id="sec_two_factor_enabled" style="cursor:pointer">Enabled</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
+            <div><div style="font-size:12px;font-weight:600">Auto Cloud Backup</div><div style="font-size:10px;color:var(--text3)">Daily 2 AM → AWS S3 encrypted</div></div><span class="chip cgr" id="sec_auto_backup_enabled" style="cursor:pointer">Active</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
+            <div><div style="font-size:12px;font-weight:600">Data Encryption (AES-256)</div><div style="font-size:10px;color:var(--text3)">At rest & in transit</div></div><span class="chip cgr" id="sec_data_encryption_enabled" style="cursor:pointer">Active</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="settingsSection-backup" class="settings-section hidden">
+          <div class="settings-section-header">
+            <div class="ssh-icon">💾</div>
+            <div>
+              <div class="ssh-title">Local Backup</div>
+              <div class="ssh-sub">Download a copy of your data to this device</div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:18px;line-height:1.6">
+              Manual backups let you keep a copy of your business data on your own computer, independent of the
+              server. Download a file whenever you like — before a big update, at the end of the day, or on
+              whatever schedule suits you — and store it somewhere safe (a local drive, external disk, or your
+              own cloud storage).
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:var(--r2);margin-bottom:18px">
+              <div><div style="font-size:12px;font-weight:600">Last local backup</div>
+                <div style="font-size:10px;color:var(--text3)" id="lastBackupTime">No backup taken yet on this device</div>
+              </div>
+              <span class="chip cgr">💾 Manual</span>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px">
+              <div style="padding:14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2)">
+                <div style="font-size:12px;font-weight:700;margin-bottom:4px">📦 Full Backup (JSON)</div>
+                <div style="font-size:10.5px;color:var(--text3);margin-bottom:12px">
+                  One file with your company profile, customers, vendors, products and invoices — the most
+                  complete backup, best for safekeeping or restoring later.
+                </div>
+                <button class="btn btn-p btn-sm" style="width:100%" onclick="downloadFullBackup()">⬇ Download Full Backup</button>
+              </div>
+              <div style="padding:14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2)">
+                <div style="font-size:12px;font-weight:700;margin-bottom:4px">📊 CSV Files</div>
+                <div style="font-size:10.5px;color:var(--text3);margin-bottom:12px">
+                  Separate spreadsheet-friendly files for invoices, customers, vendors and products — handy for
+                  opening in Excel or Google Sheets.
+                </div>
+                <button class="btn btn-o btn-sm" style="width:100%" onclick="downloadCSVBackup()">⬇ Download CSV Files</button>
+              </div>
+            </div>
+
+            <div style="font-size:10px;color:var(--text3);margin-top:6px">
+              Keep the downloaded file somewhere safe — if you ever need to recover data, share it with support
+              or your admin to have it restored.
+            </div>
+          </div>
+        </div>
+
+        <div id="settingsSection-roles" class="settings-section hidden">
+          <div class="settings-section-header">
+            <div class="ssh-icon">🔑</div>
+        <div>
+          <div class="ssh-title">Roles & Permissions</div>
+          <div class="ssh-sub">Define access levels and assign them to users</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          <span>All Roles</span>
           <button class="btn btn-p btn-sm" onclick="openRoleModal()">➕ Create Role</button>
         </div>
         <div class="tw"><table>
@@ -1067,6 +1264,11 @@ select.fi option{background:var(--bg2)}
         </table></div>
       </div>
     </div>
+
+    <!-- To add a new section: copy one of the blocks above, give it a new
+         id="settingsSection-<key>", and add a matching menu item above. -->
+  </div>
+</div>
 
   </div><!-- /content -->
 </div><!-- /main -->
@@ -1109,6 +1311,9 @@ select.fi option{background:var(--bg2)}
 
       <div class="fr c2">
         <div class="fg"><label class="fl">Brand</label><input class="fi" id="pm_brand" placeholder="Logitech" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">Unit of Measure</label>
+          <select class="fi" id="pm_uom"><option value="">Select unit…</option></select>
+        </div>
       </div>
 
       <div class="fr c2">
@@ -1632,7 +1837,9 @@ function normInvoice(inv) {
     party_id:   inv.party_id || null,
     irn:        inv.irn            || '',
     ackNo:      inv.ack_no         || '',
+    ackDate:    inv.ack_date       || '',
     ewbNo:      inv.ewb_no         || '',
+    ewbValidTill: inv.ewb_valid_till || '',
     transporterId: inv.transporter_id  || '',
     vehicleNo:     inv.vehicle_no      || '',
     qrCode:     inv.qr_code_data   || '',
@@ -2183,6 +2390,17 @@ function renderReportResults(type, data) {
   }
 }
 
+// Shared helper: turns an array of row-arrays into a CSV file and downloads it.
+function downloadCSV(filename, rows) {
+  const csv = rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 function exportReportCSV() {
   if (!currentReportData) { showToast('⚠️ Generate the report first','warn'); return; }
   const rows = [];
@@ -2289,70 +2507,89 @@ function csvEscape(v) { return `"${String(v ?? '').replace(/"/g,'""')}"`; }
 
 function exportGSTCSV() {
   if (!currentGSTData.month) { showToast('⚠️ Load GST data first','warn'); return; }
-  const tab = getActiveGSTTab();
-  const rows = [];
+  // FIX — build ONE consolidated CSV covering every section, mirroring the PDF's
+  // structure, instead of only whatever tab happens to be active on screen.
   const d = currentGSTData;
+  const rows = [];
+  const section = (title) => { rows.push([]); rows.push([title]); };
 
-  if (tab === 'summary') {
-    rows.push(['GST Summary', currentGSTData.month]);
-    rows.push(['Sales (Taxable)', d.summary.sales_taxable]);
-    rows.push(['Output GST', d.summary.output_gst]);
-    rows.push(['Input Tax Credit', d.summary.input_tax_credit]);
-    rows.push([]);
-    rows.push(['Rate', 'Taxable', 'CGST', 'SGST', 'IGST', 'Total Tax']);
-    d.summary.rate_wise.forEach(r => rows.push([r.gst_rate + '%', r.taxable, r.cgst, r.sgst, r.igst, r.total_tax]));
+  section('GST Compliance Report - ' + d.month);
 
-  } else if (tab === 'gstr1') {
-    rows.push(['B2B Invoices (Registered)']);
-    rows.push(['Invoice No','Date','Customer','GSTIN','Taxable','Total']);
-    d.gstr1.b2b.forEach(r => rows.push([r.invoice_no, r.invoice_date, r.billing_name, r.billing_gstin, r.taxable_amount, r.total_amount]));
-    rows.push([]);
-    rows.push(['B2C Summary (Unregistered)']);
-    rows.push(['Category','Invoices','Taxable','Total Tax']);
-    d.gstr1.b2c.forEach(r => rows.push([r.category, r.invoice_count, r.taxable, r.total_tax]));
-    rows.push([]);
-    rows.push(['CDNR — Credit/Debit Notes']);
-    rows.push(['Note No','Date','Type','Customer','Taxable','Total']);
-    d.gstr1.cdnr.forEach(r => rows.push([r.invoice_no, r.invoice_date, r.invoice_type, r.billing_name, r.taxable_amount, r.total_amount]));
-    rows.push([]);
-    rows.push(['Exports']);
-    rows.push(['Invoice No','Date','Customer','Export Type','Taxable']);
-    d.gstr1.exports.forEach(r => rows.push([r.invoice_no, r.invoice_date, r.billing_name, r.export_type, r.taxable_amount]));
+  section('Summary');
+  rows.push(['Sales (Taxable)', d.summary.sales_taxable]);
+  rows.push(['Output GST', d.summary.output_gst]);
+  rows.push(['Input Tax Credit', d.summary.input_tax_credit]);
+  rows.push(['ITC Ineligible', d.summary.itc_ineligible]);
 
-  } else if (tab === 'gstr3b') {
-    rows.push(['3.1(a) Outward Taxable Supplies']);
-    rows.push(['Taxable','CGST','SGST','IGST','Cess']);
-    const o = d.gstr3b.outward_taxable_supplies;
-    rows.push([o.taxable, o.cgst, o.sgst, o.igst, o.cess]);
-    rows.push([]);
-    rows.push(['3.1(b) Outward Taxable Supplies (Zero Rated)']);
-    rows.push(['Taxable']);
-    rows.push([d.gstr3b.outward_zero_rated_supplies.taxable]);
-    rows.push([]);
-    rows.push(['4. Eligible ITC']);
-    rows.push(['CGST','SGST','IGST']);
-    const i = d.gstr3b.itc_available;
-    rows.push([i.cgst, i.sgst, i.igst]);
-    rows.push([]);
-    rows.push(['Net Tax Payable']);
-    rows.push(['CGST','SGST','IGST']);
-    const n = d.gstr3b.net_tax_payable;
-    rows.push([n.cgst, n.sgst, n.igst]);
+  section('GST Rate-wise Breakup');
+  rows.push(['Rate', 'Taxable', 'CGST', 'SGST', 'IGST', 'Total Tax']);
+  d.summary.rate_wise.forEach(r => rows.push([r.gst_rate + '%', r.taxable, r.cgst, r.sgst, r.igst, r.total_tax]));
 
-  } else if (tab === 'hsn') {
-    rows.push(['HSN/SAC','Description','Rate','Qty','Taxable Value','Total Tax']);
-    d.hsn.items.forEach(r => rows.push([r.hsn, r.description, r.gst_rate + '%', r.total_qty, r.taxable, r.total_tax]));
+  section('GSTR-1 - B2B Invoices (Registered)');
+  rows.push(['Invoice No','Date','Customer','GSTIN','Taxable','Total']);
+  d.gstr1.b2b.forEach(r => rows.push([r.invoice_no, r.invoice_date, r.billing_name, r.billing_gstin, r.taxable_amount, r.total_amount]));
 
-  } else if (tab === 'itc') {
-    rows.push(['Vendor','PO No','Date','Taxable','ITC']);
-    d.itc.by_vendor.forEach(r => rows.push([r.vendor_name, r.po_no, r.po_date, r.taxable_amount, r.total_itc]));
-  }
+  section('GSTR-1 - B2C Summary (Unregistered)');
+  rows.push(['Category','Invoices','Taxable','Total Tax']);
+  d.gstr1.b2c.forEach(r => rows.push([r.category, r.invoice_count, r.taxable, r.total_tax]));
+
+  section('GSTR-1 - CDNR (Credit/Debit Notes)');
+  rows.push(['Note No','Date','Type','Customer','Taxable','Total']);
+  d.gstr1.cdnr.forEach(r => rows.push([r.invoice_no, r.invoice_date, r.invoice_type, r.billing_name, r.taxable_amount, r.total_amount]));
+
+  section('GSTR-1 - Exports');
+  rows.push(['Invoice No','Date','Customer','Export Type','Taxable']);
+  d.gstr1.exports.forEach(r => rows.push([r.invoice_no, r.invoice_date, r.billing_name, r.export_type, r.taxable_amount]));
+
+  section('GSTR-3B - 3.1(a) Outward Taxable Supplies (net of credit notes)');
+  rows.push(['Taxable','CGST','SGST','IGST','Cess']);
+  { const o = d.gstr3b.outward_taxable_supplies; rows.push([o.taxable, o.cgst, o.sgst, o.igst, o.cess]); }
+
+  section('GSTR-3B - 3.1(b) Zero-Rated (Export) Supplies');
+  rows.push(['Taxable','CGST','SGST','IGST']);
+  { const z = d.gstr3b.outward_zero_rated_supplies; rows.push([z.taxable, z.cgst, z.sgst, z.igst]); }
+
+  section('GSTR-3B - 3.1(c) Nil-Rated / Exempt Supplies');
+  rows.push(['Taxable']);
+  rows.push([d.gstr3b.outward_nil_rated_exempt_supplies.taxable]);
+
+  section('GSTR-3B - 3.1(d) Inward Supplies Liable to Reverse Charge');
+  rows.push(['Taxable','CGST','SGST','IGST']);
+  { const rc = d.gstr3b.inward_supplies_liable_to_rcm; rows.push([rc.taxable, rc.cgst, rc.sgst, rc.igst]); }
+
+  section('GSTR-3B - 3.1(e) Non-GST Supplies');
+  rows.push(['Taxable']);
+  rows.push([d.gstr3b.outward_non_gst_supplies.taxable]);
+
+  section('GSTR-3B - 4(A) Eligible ITC');
+  rows.push(['CGST','SGST','IGST']);
+  { const i = d.gstr3b.itc_available; rows.push([i.cgst, i.sgst, i.igst]); }
+
+  section('GSTR-3B - 4(B) Ineligible / Blocked ITC (Sec 17(5))');
+  rows.push(['CGST','SGST','IGST','Total']);
+  { const ii = d.gstr3b.itc_ineligible_blocked_17_5; rows.push([ii.cgst, ii.sgst, ii.igst, ii.total]); }
+
+  section('GSTR-3B - Net Tax Payable');
+  rows.push(['CGST','SGST','IGST']);
+  { const n = d.gstr3b.net_tax_payable; rows.push([n.cgst, n.sgst, n.igst]); }
+
+  section('HSN/SAC-wise Summary');
+  rows.push(['HSN/SAC','Description','Rate','Qty','Taxable Value','Total Tax']);
+  d.hsn.items.forEach(r => rows.push([r.hsn, r.description, r.gst_rate + '%', r.total_qty, r.taxable, r.total_tax]));
+
+  section('ITC Ledger - by Purchase');
+  rows.push(['Vendor','PO No','Date','Taxable','ITC']);
+  d.itc.by_vendor.forEach(r => rows.push([r.vendor_name, r.po_no, r.po_date, r.taxable_amount, r.total_itc]));
+
+  section('ITC Ledger - Ineligible / Blocked (Sec 17(5))');
+  rows.push(['Vendor','PO No','Date','Description','Reason','Blocked Amount']);
+  d.itc.ineligible_by_vendor.forEach(r => rows.push([r.vendor_name, r.po_no, r.po_date, r.description, r.itc_ineligible_reason, r.blocked_amount]));
 
   const csv = rows.map(r => r.map(csvEscape).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `gst_${tab}_${currentGSTData.month}.csv`;
+  a.download = `gst_report_${d.month}.csv`;
   a.click();
   showToast('⬇ CSV exported');
 }
@@ -2413,6 +2650,8 @@ function exportBankbook(fmt) {
 // ============================================================
 //  INVOICES — LIST
 // ============================================================
+let CURRENT_INVOICES_VIEW = [];
+
 async function renderInvoices(list) {
   const b = document.getElementById('invBody');
   if (!b) return;
@@ -2464,6 +2703,7 @@ async function renderInvoices(list) {
     </tr>`;
   }).join('') : '<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text3)">No invoices found</td></tr>';
 
+  CURRENT_INVOICES_VIEW = data;
   renderDashInvoices(data);
 }
 
@@ -2551,7 +2791,19 @@ function renderDashInvoices(data) {
   }).join('');
 }
 
-function exportInvoices() { showToast('📤 Invoices exported to Excel'); }
+function exportInvoices() {
+  const data = CURRENT_INVOICES_VIEW.length ? CURRENT_INVOICES_VIEW : INVOICES;
+  if (!data.length) { showToast('⚠️ No invoices to export', 'warn'); return; }
+
+  const rows = [['Invoice No','Date','Customer','Type','Taxable','GST','Total','Due Date','Status']];
+  data.forEach(inv => {
+    const gstTotal = (Number(inv.cgst||0)+Number(inv.sgst||0)+Number(inv.igst||0)).toFixed(2);
+    rows.push([inv.no, fmtDate(inv.date), inv.customer, inv.type, inv.taxable, gstTotal, inv.total, fmtDate(inv.due), inv.status]);
+  });
+
+  downloadCSV(`invoices_${new Date().toISOString().slice(0,10)}.csv`, rows);
+  showToast(`⬇ ${data.length} invoice(s) exported`);
+}
 
 function onInvTypeChange() {
   const type = getVal('invType');
@@ -3046,7 +3298,7 @@ async function finalizeInvoice() {
       discount_pct: disc,
       gst_rate: gstPct,
       amount: grossAmt,
-      hsn_code: products?.hsn_code || '',
+      hsn_code: products?.hsn || '',
     });
   });
   if (!lineItems.length) { showToast('⚠️ Add at least one item','warn'); return; }
@@ -3160,6 +3412,19 @@ const grandTotal = taxableAmt + totalGST;
       const r = AUTH.apiOnline
         ? await apiFetch('/billing/invoices', { method: 'POST', body: JSON.stringify(payload) })
         : null;
+      const newId = r?.id || r?.data?.id;
+
+      // NEW — same fix applied in Returns & Credit's saveReturn(): the note is
+      // created as a draft, so it must be finalized or it never posts to stock/
+      // the ledger and never appears in any GST report.
+      if (AUTH.apiOnline && newId) {
+        try {
+          await apiFetch(`/billing/invoices/${newId}/finalize`, { method: 'POST' });
+        } catch (e) {
+          showToast('⚠️ ' + getVal('invType') + ' saved as draft — could not finalize: ' + e.message, 'warn');
+        }
+      }
+
       showToast('✅ ' + getVal('invType') + ' saved');
       addAuditEntry('CREATE', getVal('invType'), 'Created against invoice '+againstId);
       setTimeout(() => nav('returns', null), 600);
@@ -3245,10 +3510,20 @@ async function saveDraft() {
       discount_pct: disc,
       gst_rate: gstPct,
       amount: grossAmt,
-      hsn_code: products?.hsn_code || '',
+      hsn_code: products?.hsn || '',
     });
   });
   if (!lineItems.length) { showToast('⚠️ Add at least one item before saving a draft','warn'); return; }
+
+  // NEW — Credit Note / Debit Note need the same type mapping and
+  // against_invoice_id that saveInvoice() applies; without this a draft saved
+  // from here would be sent as invoice_type "Credit Note" (unrecognized by the
+  // backend) with no link back to the original invoice.
+  const returnTypeMap = { 'Credit Note': 'credit_note', 'Debit Note': 'debit_note' };
+  const isReturn = returnTypeMap[getVal('invType')];
+  if (isReturn && !getVal('againstInv')) {
+    showToast('⚠️ Select the original invoice first','warn'); return;
+  }
 
   const subtotal   = lineItems.reduce((a,it)=>a + (it.quantity * it.rate), 0);
   const discount   = lineItems.reduce((a,it)=>a + (it.quantity * it.rate * it.discount_pct / 100), 0);
@@ -3264,7 +3539,7 @@ async function saveDraft() {
     invoice_number:       getVal('invNo'),
     invoice_date:         getVal('invDate'),
     due_date:             getVal('invDue'),
-    invoice_type: INVOICE_TYPE_SNAKE[getVal('invType')] || getVal('invType'),
+    invoice_type: isReturn || INVOICE_TYPE_SNAKE[getVal('invType')] || getVal('invType'),
     party_id:             selectedCustomerId || undefined,
     place_of_supply:      getVal('custState'),
     supply_type:          getVal('supplyType'),
@@ -3286,6 +3561,7 @@ async function saveDraft() {
     total_amount:         grandTotal,
     status:               'draft',
   };
+  if (isReturn) payload.against_invoice_id = getVal('againstInv');
 
   try {
     if (editingInvId !== null) {
@@ -3312,74 +3588,70 @@ async function saveDraft() {
   }
 }
 
-function previewInvoice() {
-  const items = [];
+async function previewInvoice() {
+  const cust = getVal('custName');
+  if (!cust.trim()) { showToast('⚠️ Enter a customer name to preview', 'warn'); return; }
 
+  const lineItems = [];
   document.querySelectorAll('[id^="item-"]').forEach(row => {
     const n = row.id.replace('item-', '');
-
-    const prod = row.querySelector('select')?.value;
-    if (!prod) return;
-
-    const qty  = +getVal('qty-' + n) || 1;
-    const rate = +getVal('rate-' + n) || 0;
-    const disc = +getVal('disc-' + n) || 0;
-    const gst  = parseFloat(getVal('gst-' + n)) || 18;
-
-    const lineSubtotal = qty * rate;
-    const lineDiscount = lineSubtotal * disc / 100;
-    const lineTaxable  = lineSubtotal - lineDiscount;
-    const lineGST      = lineTaxable * gst / 100;
-    const lineTotal    = lineTaxable + lineGST;
-
-    items.push({
-      prod,
-      qty,
-      rate,
-      disc,
-      gst,
-      amt: lineTotal,
-      taxable: lineTaxable,
-      gstAmount: lineGST,
-      hsn: ''
+    const sel = row.querySelector('select');
+    const prod = sel?.value; if (!prod) return;
+    const products = PRODUCTS.find(p => p.name === prod);
+    lineItems.push({
+      product_id: products?.id || null,
+      description: prod,
+      quantity: +getVal('qty-'+n) || 1,
+      rate: +getVal('rate-'+n) || 0,
+      discount_pct: +getVal('disc-'+n) || 0,
+      gst_rate: parseInt(getVal('gst-'+n)) || 18,
+      hsn_code: products?.hsn_code || '',
+      uom_id: products?.uomId || null,
     });
   });
+  if (!lineItems.length) { showToast('⚠️ Add at least one item to preview', 'warn'); return; }
+  if (!AUTH.apiOnline) { showToast('⚠️ Go online to preview the actual PDF', 'warn'); return; }
 
-  const subtotal = items.reduce((a,i)=>a + i.qty * i.rate,0);
-  const discount = items.reduce((a,i)=>a + (i.qty * i.rate * i.disc / 100),0);
-  const taxable = items.reduce((a,i)=>a + i.taxable,0);
-  const totalGST = items.reduce((a,i)=>a + i.gstAmount,0);
-
-  const isInter = getVal('supplyType') === 'inter';
-
-  const tmp = {
-    id:'_prev',
-    no:getVal('invNo') || 'DRAFT',
-    date:getVal('invDate'),
-    customer:getVal('custName') || '—',
-    custGst:getVal('custGst'),
-    custMobile:getVal('custMobile'),
-    custAddr:getVal('custAddr'),
-    custEmail:getVal('custEmail'),
-    type:getVal('invType'),
-    supply:isInter ? 'inter' : 'intra',
-    notes:getVal('invNotes'),
-    items,
-    subtotal,
-    discount,
-    taxable,
-    cgst:isInter ? 0 : totalGST / 2,
-    sgst:isInter ? 0 : totalGST / 2,
-    igst:isInter ? totalGST : 0,
-    round:0,
-    total:taxable + totalGST,
-    due:getVal('invDue'),
-    status:'draft'
+  const payload = {
+    invoice_type: INVOICE_TYPE_SNAKE[getVal('invType')] || getVal('invType'),
+    invoice_date: getVal('invDate'),
+    due_date: getVal('invDue') || null,
+    billing_name: cust,
+    billing_gstin: getVal('custGst'),
+    billing_address: getVal('custAddr'),
+    billing_state_code: getVal('invState'),
+    contact_phone: getVal('custMobile'),
+    contact_email: getVal('custEmail'),
+    place_of_supply: getVal('custState'),
+    supply_type: getVal('supplyType'),
+    reverse_charge: document.getElementById('invReverseCharge')?.checked || false,
+    notes: getVal('invNotes'),
+    items: lineItems,
   };
 
-  INVOICES.push(tmp);
-  viewInvoice('_prev');
-  INVOICES.pop();
+  document.getElementById('prevTitle').textContent = (getVal('invType') || 'Invoice') + ' \u2014 Preview (unsaved)';
+  openModal('invPreviewModal');
+  const body = document.getElementById('invPreviewBody');
+  body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:60vh;color:var(--text3)">\u23f3 Generating preview\u2026</div>`;
+
+  try {
+    const res = await fetch(`${CFG.API_BASE}/billing/invoices/preview`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${AUTH.token}` },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.message || `Server returned ${res.status}`);
+    }
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    if (CURRENT_PREVIEW.blobUrl) URL.revokeObjectURL(CURRENT_PREVIEW.blobUrl);
+    CURRENT_PREVIEW = { kind: null, id: null, extraId: null, blobUrl, filename: 'preview.pdf' };
+    body.innerHTML = `<iframe src="${blobUrl}" style="width:100%;height:78vh;border:0;border-radius:8px;background:#fff" title="Invoice preview"></iframe>`;
+  } catch (e) {
+    body.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text3)">\u26a0\ufe0f Could not generate preview: ${e.message}</div>`;
+  }
 }
 
 let selectedCustomerId = null;
@@ -3410,7 +3682,7 @@ async function renderCustomers(list) {
   if (data === undefined || data === null) {
     if (AUTH.apiOnline) {
       try {
-        const r = await apiFetch('/customers?limit=200');
+        const r = await apiFetch('/customers?page_size=200');
         data = (r.data?.items || []).map(normCustomer);
         CUSTOMERS = data;
       } catch (e) {
@@ -3521,6 +3793,10 @@ function renderGSTSummary(d) {
   const el = document.getElementById('gst-summary'); if (!el) return;
   const rateRows = d.rate_wise.map(r => `<tr><td><span class="chip cbl2">${r.gst_rate}%</span></td>
     <td>₹${fmt(r.taxable)}</td><td>₹${fmt(r.cgst)}</td><td>₹${fmt(r.sgst)}</td><td>₹${fmt(r.igst)}</td><td>₹${fmt(r.total_tax)}</td></tr>`).join('');
+  // FIX — TOTAL now sums the visible rows themselves, so it always reconciles
+  // with what's on screen even if the summary cards above (a different query)
+  // are ever filtered differently again in future.
+  const totalTaxable = d.rate_wise.reduce((s, r) => s + r.taxable, 0);
   const totalTax = d.rate_wise.reduce((s, r) => s + r.total_tax, 0);
   el.innerHTML = `<div class="g3" style="margin-bottom:18px">
       <div class="card"><div class="slbl">Sales (Taxable)</div><div class="sval bl" style="font-size:20px;margin-top:7px">₹${fmt(d.sales_taxable)}</div></div>
@@ -3530,7 +3806,7 @@ function renderGSTSummary(d) {
     <div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:14px">GST Rate-wise Breakup</div>
       <table><thead><tr><th>Rate</th><th>Taxable</th><th>CGST</th><th>SGST</th><th>IGST</th><th>Total Tax</th></tr></thead>
       <tbody>${rateRows || '<tr><td colspan="6" style="text-align:center;color:var(--text3)">No data for this period</td></tr>'}
-      <tr style="font-weight:700"><td>TOTAL</td><td>₹${fmt(d.sales_taxable)}</td><td colspan="3"></td><td>₹${fmt(totalTax)}</td></tr>
+      <tr style="font-weight:700"><td>TOTAL</td><td>₹${fmt(totalTaxable)}</td><td colspan="3"></td><td>₹${fmt(totalTax)}</td></tr>
       </tbody></table></div>`;
 }
 
@@ -3564,8 +3840,8 @@ function renderGSTR3B(d) {
       <table><thead><tr><th>Taxable Value</th><th>CGST</th><th>SGST</th><th>IGST</th><th>CESS</th></tr></thead>
       <tbody><tr><td>₹${fmt(o.taxable)}</td><td>₹${fmt(o.cgst)}</td><td>₹${fmt(o.sgst)}</td><td>₹${fmt(o.igst)}</td><td>₹${fmt(o.cess)}</td></tr></tbody></table></div>
     <div class="card" style="margin-bottom:14px"><div style="font-size:13px;font-weight:700;margin-bottom:10px">3.1(b) Outward Taxable Supplies (Zero Rated — Exports)</div>
-      <table><thead><tr><th>Taxable Value</th></tr></thead>
-      <tbody><tr><td>₹${fmt(z.taxable)}</td></tr></tbody></table></div>
+      <table><thead><tr><th>Taxable Value</th><th>CGST</th><th>SGST</th><th>IGST</th></tr></thead>
+      <tbody><tr><td>₹${fmt(z.taxable)}</td><td>₹${fmt(z.cgst)}</td><td>₹${fmt(z.sgst)}</td><td>₹${fmt(z.igst)}</td></tr></tbody></table></div>
     <div class="card" style="margin-bottom:14px"><div style="font-size:13px;font-weight:700;margin-bottom:10px">4. Eligible ITC</div>
       <table><thead><tr><th>CGST</th><th>SGST</th><th>IGST</th></tr></thead>
       <tbody><tr><td>₹${fmt(i.cgst)}</td><td>₹${fmt(i.sgst)}</td><td>₹${fmt(i.igst)}</td></tr></tbody></table></div>
@@ -4076,6 +4352,8 @@ function normProduct(p) {
   const reorder = p.reorder_level ?? p.reorder ?? 0;
   return {
     id:      p.id,
+    uomId:   p.uom?.id ?? p.uom_id ?? null,
+    unit:    p.uom?.uom_code ?? p.unit ?? '',
     name:    p.product_name    || p.name        || '—',
     sku:     p.product_code    || p.sku         || '',
     brand:   p.brand           || '',
@@ -4159,9 +4437,10 @@ function filterProds() {
 }
 
 // ── open "Add Product" modal with empty fields ───────────────
-function openAddProd() {
+async function openAddProd() {
   editingProdId = null;
   document.getElementById('prodModalTitle').textContent = 'Add Product';
+  await loadUOMs();
 
   // wipe every input/textarea/select in the modal at once
   const modal = document.getElementById('prodModal');
@@ -4175,13 +4454,34 @@ function openAddProd() {
   openModal('prodModal');
 }
 
+// ── units of measure (loaded once, cached) ────────────────────
+let UOMS = [];
+async function loadUOMs() {
+  if (!UOMS.length) {
+    try {
+      const r = await apiFetch('/master/uoms');
+      UOMS = r.data || [];
+    } catch (e) {
+      UOMS = [];
+    }
+  }
+  const sel = document.getElementById('pm_uom');
+  if (sel) {
+    sel.innerHTML = '<option value="">Select unit…</option>' +
+      UOMS.map(u => `<option value="${u.id}">${u.uom_name} (${u.uom_code})</option>`).join('');
+  }
+  return UOMS;
+}
+
 // ── open "Edit Product" modal pre-filled ─────────────────────
-function editProd(id) {
+async function editProd(id) {
   const p = PRODUCTS.find(x => String(x.id) === String(id));
   if (!p) return;
 
   editingProdId = id;
   document.getElementById('prodModalTitle').textContent = 'Edit Product';
+  await loadUOMs();
+  setVal('pm_uom', p.uomId ?? '');
 
   setVal('pm_name',    p.name    ?? '');
   setVal('pm_sku',     p.sku     ?? '');
@@ -4218,6 +4518,7 @@ async function saveProd() {
     current_stock:  parseFloat(getVal('pm_stock'))       || 0,
     reorder_level:  parseFloat(getVal('pm_reorder'))     || 0,
     gst_rate:       parseFloat(getVal('pm_gst'))         || 18,
+    uom_id:         getVal('pm_uom') || null,
     track_inventory: true,
   };
   console.log('Payload:', JSON.stringify(payload));
@@ -4314,54 +4615,230 @@ async function doSearch(query) {
 }
 
 // ============================================================
-//  DASHBOARD
+//  DASHBOARD — fully wired to live backend data
 // ============================================================
-async function renderDashboard() {
-  renderSalesChart([62000,84000,71000,95000,68000,88000,84200],['26M','27T','28W','29T','30F','31S','1J']);
-  renderLowStock(PRODUCTS);
-  renderTopCustomers(CUSTOMERS);
-  renderForecastBars();
-  renderDashInvoices(INVOICES);
+// Format a Date using its LOCAL calendar fields — never round-trip
+// through toISOString(), which converts to UTC and silently shifts the
+// date backward by a day for any positive UTC-offset timezone (e.g. IST).
+function isoDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
-function renderSalesChart(vals,days) {
-  const max=Math.max(...vals);
-  const sc=document.getElementById('salesChart');
-  const sl=document.getElementById('salesLabels');
+function pctChangeLabel(current, previous) {
+  if (!previous) return current > 0 ? { cls: 'up', text: '▲ new activity' } : { cls: '', text: 'No activity yet' };
+  const pct = ((current - previous) / previous) * 100;
+  const arrow = pct >= 0 ? '▲' : '▼';
+  return { cls: pct >= 0 ? 'up' : 'dn', text: `${arrow} ${Math.abs(pct).toFixed(0)}%` };
+}
+
+function setSummaryCard(valueId, subId, value, change, suffix) {
+  const v = document.getElementById(valueId);
+  const s = document.getElementById(subId);
+  if (v) v.textContent = '₹' + fmt(value);
+  if (s && change) {
+    s.textContent = `${change.text} ${suffix}`;
+    s.className = 'sch ' + change.cls;
+  } else if (s) {
+    s.textContent = suffix;
+    s.className = 'sch';
+  }
+}
+
+function getPeriodRange(period, today) {
+  if (period === 'week') {
+    const day = today.getDay(); // 0=Sun..6=Sat
+    const diffToMonday = day === 0 ? 6 : day - 1;
+    const start = new Date(today); start.setDate(today.getDate() - diffToMonday);
+    const prevEnd = new Date(start); prevEnd.setDate(start.getDate() - 1);
+    const prevStart = new Date(prevEnd); prevStart.setDate(prevEnd.getDate() - 6);
+    return { start, prevStart, prevEnd, revLabel: 'This Week Revenue', profitLabel: 'Net Profit (WTD)', compareLabel: 'vs last week' };
+  }
+  if (period === 'year') {
+    const start = new Date(today.getFullYear(), 0, 1);
+    const prevStart = new Date(today.getFullYear() - 1, 0, 1);
+    const prevEnd = new Date(today.getFullYear() - 1, 11, 31);
+    return { start, prevStart, prevEnd, revLabel: 'This Year Revenue', profitLabel: 'Net Profit (YTD)', compareLabel: 'vs last year' };
+  }
+  // default: calendar month
+  const start = new Date(today.getFullYear(), today.getMonth(), 1);
+  const prevEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+  const prevStart = new Date(prevEnd.getFullYear(), prevEnd.getMonth(), 1);
+  return { start, prevStart, prevEnd, revLabel: 'Monthly Revenue', profitLabel: 'Net Profit (MTD)', compareLabel: 'vs last month' };
+}
+
+async function renderDashboard() {
+  if (!AUTH.apiOnline) {
+    document.getElementById('dashAIInsight').textContent = 'Connect to the API to see live business insights.';
+    return;
+  }
+
+  const today = new Date();
+  const todayStr = isoDate(today);
+  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+  const yStr = isoDate(yesterday);
+  const period = getVal('dashPeriod') || 'month';
+  const range = getPeriodRange(period, today);
+  const monthStart = isoDate(range.start);
+  const lastMonthStart = isoDate(range.prevStart);
+  const lastMonthEndStr = isoDate(range.prevEnd);
+  const weekAgoStr = isoDate(new Date(today.getTime() - 6 * 86400000));
+
+  const revLabelEl = document.getElementById('dash-rev-label');
+  const profitLabelEl = document.getElementById('dash-profit-label');
+  if (revLabelEl) revLabelEl.textContent = range.revLabel;
+  if (profitLabelEl) profitLabelEl.textContent = range.profitLabel;
+
+  const [
+    statsR, todayR, yestR, monthR, lastMonthR, plR, invR, recentR, monthInvR
+  ] = await Promise.allSettled([
+    apiFetch('/billing/invoices/stats'),
+    apiFetch(`/reports/sales?date_from=${todayStr}&date_to=${todayStr}`),
+    apiFetch(`/reports/sales?date_from=${yStr}&date_to=${yStr}`),
+    apiFetch(`/reports/sales?date_from=${monthStart}&date_to=${todayStr}`),
+    apiFetch(`/reports/sales?date_from=${lastMonthStart}&date_to=${lastMonthEndStr}`),
+    apiFetch(`/accounting/reports/profit-and-loss?from_date=${monthStart}&to_date=${todayStr}`),
+    apiFetch('/reports/inventory'),
+    apiFetch('/billing/invoices?page_size=5'),
+    apiFetch(`/billing/invoices?from_date=${monthStart}&to_date=${todayStr}&page_size=200`),
+  ]);
+
+  const stats     = statsR.status === 'fulfilled'    ? (statsR.value?.data || {})     : {};
+  const todaySum  = todayR.status === 'fulfilled'    ? (todayR.value?.data?.summary || {}) : {};
+  const yestSum   = yestR.status === 'fulfilled'     ? (yestR.value?.data?.summary || {})  : {};
+  const monthData = monthR.status === 'fulfilled'    ? (monthR.value?.data || {})     : {};
+  const lastMonthSum = lastMonthR.status === 'fulfilled' ? (lastMonthR.value?.data?.summary || {}) : {};
+  const pl        = plR.status === 'fulfilled'       ? (plR.value?.data || {})        : {};
+  const inv       = invR.status === 'fulfilled'      ? (invR.value?.data || {})       : {};
+  const recent    = recentR.status === 'fulfilled'   ? unwrapList(recentR.value).map(normInvoice) : [];
+  const monthInv  = monthInvR.status === 'fulfilled' ? unwrapList(monthInvR.value).map(normInvoice) : [];
+
+  // ── Summary cards ─────────────────────────────────────────
+  const todayTotal = Number(todaySum.total_revenue || 0);
+  const yestTotal   = Number(yestSum.total_revenue || 0);
+  setSummaryCard('dash-today-sales', 'dash-today-sales-sub', todayTotal,
+    pctChangeLabel(todayTotal, yestTotal), 'vs yesterday');
+
+  const monthTotal = period === 'month'
+    ? Number(stats.mtd_sales ?? monthData.summary?.total_revenue ?? 0)
+    : Number(monthData.summary?.total_revenue ?? 0);
+  const lastMonthTotal = Number(lastMonthSum.total_revenue || 0);
+  setSummaryCard('dash-monthly-rev', 'dash-monthly-rev-sub', monthTotal,
+    pctChangeLabel(monthTotal, lastMonthTotal), range.compareLabel);
+
+  const outstanding = Number(stats.outstanding || 0);
+  const overdueCount = Number(stats.overdue_count || 0);
+  setSummaryCard('dash-outstanding', 'dash-outstanding-sub', outstanding, null,
+    overdueCount ? `${overdueCount} invoice(s) overdue` : 'All caught up ✅');
+
+  const netProfit = Number(pl.net_profit || 0);
+  const margin = monthTotal > 0 ? ((netProfit / monthTotal) * 100).toFixed(0) : '0';
+  setSummaryCard('dash-net-profit', 'dash-net-profit-sub', netProfit, null, `${margin}% margin`);
+
+  // ── AI Insight banner (built from the real numbers above) ──
+  const topProduct = (monthData.by_product || [])[0];
+  const lowStockItems = (inv.items || []).filter(i => i.stock_status !== 'OK');
+  const insightParts = [];
+  const salesChg = pctChangeLabel(monthTotal, lastMonthTotal);
+  insightParts.push(`Revenue is ${salesChg.cls === 'up' ? 'up' : 'down'} <strong style="color:var(--text)">${salesChg.text.replace(/[▲▼] /,'')}</strong> vs last month.`);
+  if (topProduct) insightParts.push(`<strong style="color:var(--text)">${topProduct.product_name || '—'}</strong> is your top seller this month.`);
+  if (overdueCount) insightParts.push(`<strong style="color:var(--orange)">${overdueCount} invoice(s)</strong> overdue, totalling ${'₹' + fmt(outstanding)}.`);
+  if (lowStockItems.length) insightParts.push(`<strong style="color:var(--red)">${lowStockItems[0].product_name}</strong> is low on stock (${lowStockItems[0].current_stock} left).`);
+  document.getElementById('dashAIInsight').innerHTML = insightParts.join(' ') || 'No notable changes today.';
+
+  // ── Sales trend — last 7 days, computed from real invoices ─
+  const days = [];
+  const totalsByDay = {};
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today.getTime() - i * 86400000);
+    const key = isoDate(d);
+    days.push({ key, label: d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) });
+    totalsByDay[key] = 0;
+  }
+  monthInv.forEach(inv2 => {
+    const d = (inv2.date || '').slice(0, 10);
+    if (d in totalsByDay && inv2.status !== 'cancelled' && inv2.status !== 'void' && inv2.status !== 'draft') {
+      totalsByDay[d] += Number(inv2.total || 0);
+    }
+  });
+  renderSalesChart(days.map(d => totalsByDay[d.key]), days.map(d => d.label));
+
+  // ── Low Stock Alerts — real data from /reports/inventory ───
+  renderLowStock(lowStockItems);
+
+  // ── Top Customers (Month) — real data from /reports/sales ──
+  renderTopCustomers(monthData.by_customer || []);
+
+  // ── Invoice Status Breakdown (This Month) ───────────────────
+  renderStatusBreakdown(monthInv);
+
+  // ── Recent Invoices — always fresh, never stale ─────────────
+  renderDashInvoices(recent);
+}
+
+function renderSalesChart(vals, days) {
+  const max = Math.max(...vals, 1);
+  const sc = document.getElementById('salesChart');
+  const sl = document.getElementById('salesLabels');
   if (!sc) return;
-  sc.innerHTML=''; sl.innerHTML='';
-  vals.forEach((v,i)=>{
-    const b=document.createElement('div'); b.className='cb';
-    b.style.cssText=`height:${Math.round(v/max*80)+10}px;background:${i===vals.length-1?'linear-gradient(180deg,var(--accent),var(--accent2))':'rgba(0,212,255,.28)'};`;
-    b.title='₹'+v.toLocaleString(); sc.appendChild(b);
-    const l=document.createElement('div'); l.className='cbl'; l.style.flex='1'; l.textContent=days[i]; sl.appendChild(l);
+  sc.innerHTML = ''; sl.innerHTML = '';
+  vals.forEach((v, i) => {
+    const b = document.createElement('div'); b.className = 'cb';
+    b.style.cssText = `height:${Math.round(v / max * 80) + 10}px;background:${i === vals.length - 1 ? 'linear-gradient(180deg,var(--accent),var(--accent2))' : 'rgba(0,212,255,.28)'};`;
+    b.title = '₹' + v.toLocaleString('en-IN'); sc.appendChild(b);
+    const l = document.createElement('div'); l.className = 'cbl'; l.style.flex = '1'; l.textContent = days[i]; sl.appendChild(l);
   });
 }
 
-function renderLowStock(products) {
-  const lsl=document.getElementById('lowStockList'); if(!lsl)return;
-  lsl.innerHTML=(products||[]).filter(p=>p.status!=='ok').map(p=>`
+function renderLowStock(items) {
+  const lsl = document.getElementById('lowStockList'); if (!lsl) return;
+  if (!items || !items.length) {
+    lsl.innerHTML = `<div style="padding:14px;text-align:center;color:var(--text3);font-size:12px">✅ All products are above their reorder level.</div>`;
+    return;
+  }
+  lsl.innerHTML = items.slice(0, 6).map(p => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:9px;background:var(--bg3);border-radius:var(--r2);margin-bottom:8px">
-      <div><div style="font-size:12px;font-weight:600">${p.name}</div><div style="font-size:10px;color:var(--text3)">${p.sku}</div></div>
-      <span class="sb ${p.status==='out'?'sov':'spen'}">${p.status==='out'?'Out of Stock':'Stock: '+p.stock}</span>
+      <div><div style="font-size:12px;font-weight:600">${p.product_name}</div><div style="font-size:10px;color:var(--text3)">${p.product_code || ''}</div></div>
+      <span class="sb ${p.stock_status === 'Out of Stock' ? 'sov' : 'spen'}">${p.stock_status === 'Out of Stock' ? 'Out of Stock' : 'Stock: ' + p.current_stock}</span>
     </div>`).join('');
 }
 
-function renderTopCustomers(customers) {
-  const tc=document.getElementById('topCust'); if(!tc)return;
-  const s=[...(customers||[])].sort((a,b)=>(b.total||0)-(a.total||0)).slice(0,5);
-  const mx=s[0]?.total||1;
-  tc.innerHTML=s.map((c,i)=>`<div style="margin-bottom:10px">
+function renderTopCustomers(byCustomer) {
+  const tc = document.getElementById('topCust'); if (!tc) return;
+  const s = [...(byCustomer || [])].slice(0, 5);
+  if (!s.length) { tc.innerHTML = `<div style="padding:14px;text-align:center;color:var(--text3);font-size:12px">No invoices yet this month.</div>`; return; }
+  const mx = Number(s[0]?.total || 0) || 1;
+  tc.innerHTML = s.map((c, i) => `<div style="margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-      <span style="font-size:12px;font-weight:600">${i+1}. ${c.name}</span>
-      <span style="font-size:12px;color:var(--green);font-weight:700">₹${((c.total||0)/1000).toFixed(0)}K</span></div>
-    <div class="prog"><div class="pb" style="width:${Math.round((c.total||0)/mx*100)}%;background:linear-gradient(90deg,var(--accent),var(--green))"></div></div></div>`).join('');
+      <span style="font-size:12px;font-weight:600">${i + 1}. ${c.customer_name || '—'}</span>
+      <span style="font-size:12px;color:var(--green);font-weight:700">₹${(Number(c.total || 0) / 1000).toFixed(0)}K</span></div>
+    <div class="prog"><div class="pb" style="width:${Math.round(Number(c.total || 0) / mx * 100)}%;background:linear-gradient(90deg,var(--accent),var(--green))"></div></div></div>`).join('');
 }
 
-function renderForecastBars() {
-  const fb=document.getElementById('forecastBars'); if(!fb)return;
-  const ms=['Mar','Apr','May','Jun*','Jul*'],vs=[1420,1680,1846,2280,2100],mx=Math.max(...vs);
-  fb.innerHTML=`<div style="display:flex;align-items:flex-end;gap:9px;height:70px">${ms.map((m,i)=>{const h=Math.round(vs[i]/mx*60)+10,fc=i>=3;return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="font-size:9px;color:${fc?'var(--accent)':'var(--text3)'};font-weight:600">₹${(vs[i]/100).toFixed(1)}L</div><div style="width:100%;height:${h}px;border-radius:3px 3px 0 0;background:${fc?'linear-gradient(180deg,rgba(0,212,255,.45),rgba(0,212,255,.15))':'rgba(0,212,255,.25)'}"></div><div style="font-size:9px;color:var(--text3)">${m}</div></div>`;}).join('')}</div>`;
+function renderStatusBreakdown(monthInvoices) {
+  const fb = document.getElementById('forecastBars'); if (!fb) return;
+  const note = document.getElementById('forecastNote');
+  const buckets = { paid: 0, pending: 0, overdue: 0, draft: 0, partial: 0 };
+  (monthInvoices || []).forEach(i => { if (i.status in buckets) buckets[i.status]++; else buckets.pending++; });
+  const labels = { paid: 'Paid', pending: 'Pending', overdue: 'Overdue', draft: 'Draft', partial: 'Partial' };
+  const colors = { paid: 'var(--green)', pending: 'var(--accent)', overdue: 'var(--red)', draft: 'var(--text3)', partial: 'var(--orange)' };
+  const mx = Math.max(...Object.values(buckets), 1);
+  fb.innerHTML = `<div style="display:flex;align-items:flex-end;gap:9px;height:70px">${Object.keys(buckets).map(k => {
+    const h = Math.round(buckets[k] / mx * 60) + 10;
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div style="font-size:9px;color:${colors[k]};font-weight:600">${buckets[k]}</div>
+      <div style="width:100%;height:${h}px;border-radius:3px 3px 0 0;background:${colors[k]};opacity:.55"></div>
+      <div style="font-size:9px;color:var(--text3)">${labels[k]}</div>
+    </div>`;
+  }).join('')}</div>`;
+  if (note) {
+    const total = (monthInvoices || []).length;
+    note.innerHTML = total
+      ? `<strong style="color:var(--green)">${total}</strong> invoice(s) this month — ${buckets.overdue ? `<strong style="color:var(--red)">${buckets.overdue} overdue</strong>, ` : ''}${buckets.paid} paid.`
+      : 'No invoices raised yet this month.';
+  }
 }
 
 
@@ -4730,7 +5207,7 @@ async function renderPO(list) {
     if (AUTH.apiOnline) {
       try {
         if (!VENDORS.length) await renderVendors();
-        const result = await apiFetch('/billing/purchase-orders?limit=200');
+        const result = await apiFetch('/billing/purchase-orders?page_size=200');
         data = unwrapList(result).map(normPO);
         data.forEach(p => {
           const v = VENDORS.find(v => String(v.id) === String(p.vendorId));
@@ -5273,7 +5750,7 @@ async function renderQuotes() {
   let data = QUOTES;
   if (AUTH.apiOnline) {
     try {
-      const r = await apiFetch('/billing/quotations?limit=200');
+      const r = await apiFetch('/billing/quotations?page_size=200');
       data = (r.data?.items || []).map(normQuote);
       QUOTES = data;
     } catch (e) { console.warn('[API] quotations fallback:', e.message); }
@@ -5738,25 +6215,41 @@ async function deleteBranch(id) {
 
 function renderEInvoice() {
   const el=document.getElementById('einvList'); if(!el)return;
-  el.innerHTML=INVOICES.filter(i=>i.type==='GST Invoice'&&i.custGst).slice(0,5).map(inv=>`
+  // FIX — real invoices carry the raw invoice_type value ('tax_invoice'),
+  // never the display label 'GST Invoice', so the old filter matched nothing.
+  const eligible = ['tax_invoice','gst_invoice'];
+  el.innerHTML=INVOICES.filter(i=>eligible.includes(i.type)&&i.custGst).slice(0,5).map(inv=>`
     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:var(--r2);margin-bottom:8px">
       <div><div style="font-size:12px;font-weight:600">${inv.no}</div>
-        <div style="font-size:10px;color:var(--text3)">${inv.customer} · ₹${fmt(inv.total)}${inv.irn ? ' · IRN: '+inv.irn.slice(0,10)+'…' : ''}</div></div>
+        <div style="font-size:10px;color:var(--text3)">${inv.customer} · ₹${fmt(inv.total)}${inv.irn ? ' · IRN: '+inv.irn.slice(0,10)+'…' : ''}${inv.ackDate ? ' · Acked '+new Date(inv.ackDate).toLocaleDateString('en-IN') : ''}</div></div>
       ${inv.irn
         ? `<div style="display:flex;gap:6px;align-items:center"><span class="sb sp">IRN Generated</span><button class="btn btn-o btn-sm" onclick="cancelIRN('${inv.id}')">Clear</button></div>`
-        : `<button class="btn btn-p btn-sm" onclick="genIRN('${inv.id}')">Record IRN</button>`}
-    </div>`).join('');
+        : `<div style="display:flex;gap:6px;align-items:center"><span class="sb sdr">Not Generated</span><button class="btn btn-p btn-sm" onclick="genIRN('${inv.id}')">Record IRN</button></div>`}
+    </div>`).join('') || '<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px">No GST invoices yet</div>';
 }
 
 function renderEWBList() {
   const el = document.getElementById('ewbList'); if (!el) return;
   const withEwb = INVOICES.filter(i => i.ewbNo).slice(0, 5);
-  el.innerHTML = withEwb.length ? withEwb.map(inv => `
+  el.innerHTML = withEwb.length ? withEwb.map(inv => {
+    // FIX — an e-way bill is only valid until ewbValidTill; past that it must
+    // show as Expired, not a permanent "Active" badge.
+    const validTill = inv.ewbValidTill ? new Date(inv.ewbValidTill) : null;
+    const isActive = validTill && validTill.getTime() > Date.now();
+    const badge = isActive
+      ? `<span class="sb sp">Active</span>`
+      : `<span class="sb sov">Expired</span>`;
+    const expiryText = validTill
+      ? (isActive ? ' · valid till '+validTill.toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})
+                  : ' · expired '+validTill.toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}))
+      : '';
+    return `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg3);border-radius:var(--r2);margin-bottom:8px">
       <div><div style="font-size:12px;font-weight:600">${inv.no}</div>
-        <div style="font-size:10px;color:var(--text3)">${inv.customer} · EWB: ${inv.ewbNo}${inv.vehicleNo ? ' · '+inv.vehicleNo : ''}</div></div>
-      <span class="sb sp">Active</span>
-    </div>`).join('') : '<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px">No e-way bills recorded yet</div>';
+        <div style="font-size:10px;color:var(--text3)">${inv.customer} · EWB: ${inv.ewbNo}${inv.vehicleNo ? ' · '+inv.vehicleNo : ''}${expiryText}</div></div>
+      ${badge}
+    </div>`;
+  }).join('') : '<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px">No e-way bills recorded yet</div>';
 }
 
 
@@ -5785,6 +6278,14 @@ async function renderAuditLog() {
     <td><span class="chip ${l.action==='CREATE'?'cgr':l.action==='DELETE'?'crd':l.action.startsWith('EDIT')?'cor':l.action==='LOGIN'?'cbl2':'sdr'}">${l.action}</span></td>
     <td>${l.module}</td><td style="font-size:11px;color:var(--text2)">${l.detail}</td>
     <td class="mono" style="font-size:10px">${l.ip}</td></tr>`).join('');
+}
+
+function exportAuditLog() {
+  if (!AUDIT_LOG.length) { showToast('⚠️ No audit log entries to export', 'warn'); return; }
+  const rows = [['Timestamp','User','Action','Module','Detail','IP Address']];
+  AUDIT_LOG.forEach(l => rows.push([l.ts, l.user, l.action, l.module, l.detail, l.ip]));
+  downloadCSV(`audit_log_${new Date().toISOString().slice(0,10)}.csv`, rows);
+  showToast(`⬇ ${AUDIT_LOG.length} audit log entr${AUDIT_LOG.length===1?'y':'ies'} exported`);
 }
 
 // ---------- Offline queue for Audit Log (and future sync-critical writes) ----------
@@ -5963,7 +6464,34 @@ function switchTab(btn,ns,id) {
 let ROLES_CACHE = [];
 let CURRENT_COMPANY = {};
 
+// Show only the clicked settings section; hide the menu.
+// To support a new section, just add a matching #settingsSection-<key> block in the HTML
+// and a menu item that calls openSettingsSection('<key>') — no JS changes needed here.
+function openSettingsSection(key) {
+  document.getElementById('settingsMenu')?.classList.add('hidden');
+  document.getElementById('settingsDetail')?.classList.remove('hidden');
+  document.querySelectorAll('#settingsDetail .settings-section').forEach(el => el.classList.add('hidden'));
+  document.getElementById(`settingsSection-${key}`)?.classList.remove('hidden');
+}
+
+// Return to the settings menu (list of headings).
+function closeSettingsSection() {
+  document.getElementById('settingsDetail')?.classList.add('hidden');
+  document.getElementById('settingsMenu')?.classList.remove('hidden');
+  document.querySelectorAll('#settingsDetail .settings-section').forEach(el => el.classList.add('hidden'));
+}
+
 async function renderSettings() {
+  // Always land on the menu (list of headings) when navigating to Settings.
+  closeSettingsSection();
+
+  // Paint security toggles with sensible defaults right away, so they're
+  // clickable even before company data loads (or if that fetch ever fails).
+  paintSecurityToggle('two_factor_enabled', true);
+  paintSecurityToggle('auto_backup_enabled', true);
+  paintSecurityToggle('data_encryption_enabled', true);
+  renderLastBackupTime();
+
   // ---- Company profile ----
   let company = {};
   if (AUTH.apiOnline) {
@@ -5989,6 +6517,7 @@ async function renderSettings() {
       setVal('setBankIfsc', bankSettings.bank_ifsc || '');
       setVal('setUpiId', bankSettings.upi_id || '');
       setVal('setDefaultTerms', bankSettings.default_terms || '');
+      setVal('setPoTerms', bankSettings.po_terms_conditions || '');
 
       const img = document.getElementById('setLogoPreview');
       const ph  = document.getElementById('setLogoPlaceholder');
@@ -6099,6 +6628,7 @@ async function saveBankSettings() {
       bank_ifsc: getVal('setBankIfsc'),
       upi_id: getVal('setUpiId'),
       default_terms: getVal('setDefaultTerms'),
+      po_terms_conditions: getVal('setPoTerms'),
     },
   };
   try {
@@ -6322,6 +6852,7 @@ async function toggleUserActive(id, currentlyActive) {
 }
 
 async function toggleSecuritySetting(key, currentlyEnabled) {
+  if (!AUTH.apiOnline) { showToast('⚠️ Connect to the API to change security settings', 'warn'); return; }
   try {
     const r = await apiFetch(`/companies/${CFG.COMPANY_ID}`);
     const company = r?.data || r;
@@ -6335,15 +6866,180 @@ async function toggleSecuritySetting(key, currentlyEnabled) {
 }
 
 // ============================================================
+//  LOCAL BACKUP — download a copy of the company's data to this device
+// ============================================================
+const LAST_BACKUP_KEY = 'vyaparpro_last_backup';
+
+function renderLastBackupTime() {
+  const el = document.getElementById('lastBackupTime');
+  if (!el) return;
+  const ts = localStorage.getItem(LAST_BACKUP_KEY);
+  el.textContent = ts ? `${new Date(ts).toLocaleString('en-IN')} — saved to this device` : 'No backup taken yet on this device';
+}
+
+function markBackupTaken() {
+  localStorage.setItem(LAST_BACKUP_KEY, new Date().toISOString());
+  renderLastBackupTime();
+}
+
+// Pulls the freshest copy of each dataset when online, otherwise falls back
+// to whatever is already cached in memory so the backup still works offline.
+async function collectBackupData() {
+  const out = { company: CURRENT_COMPANY, customers: CUSTOMERS, vendors: VENDORS, products: PRODUCTS, invoices: INVOICES };
+  if (!AUTH.apiOnline) return out;
+  const [custR, vendR, prodR, invR] = await Promise.allSettled([
+    apiFetch('/customers?page_size=1000'),
+    apiFetch('/vendors?page_size=1000'),
+    apiFetch('/products?page_size=1000'),
+    apiFetch('/billing/invoices?page_size=1000'),
+  ]);
+  if (custR.status === 'fulfilled') out.customers = unwrapList(custR.value);
+  if (vendR.status === 'fulfilled') out.vendors   = unwrapList(vendR.value);
+  if (prodR.status === 'fulfilled') out.products  = unwrapList(prodR.value);
+  if (invR.status  === 'fulfilled') out.invoices  = unwrapList(invR.value).map(normInvoice);
+  return out;
+}
+
+async function downloadFullBackup() {
+  showToast('💾 Preparing backup…');
+  try {
+    const data = await collectBackupData();
+    const backup = {
+      backup_type: 'vyaparpro_full_backup',
+      exported_at: new Date().toISOString(),
+      company_name: data.company?.legal_name || data.company?.trade_name || 'VyaparPro',
+      ...data,
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `vyaparpro_backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    markBackupTaken();
+    showToast('⬇ Full backup downloaded');
+  } catch (e) {
+    showToast('❌ Backup failed: ' + e.message);
+  }
+}
+
+async function downloadCSVBackup() {
+  showToast('💾 Preparing CSV files…');
+  try {
+    const data = await collectBackupData();
+    const stamp = new Date().toISOString().slice(0,10);
+
+    downloadCSV(`vyaparpro_invoices_${stamp}.csv`,
+      [['Invoice No','Date','Customer','Type','Total','Status'],
+       ...data.invoices.map(i => [i.no, i.date, i.customer, i.type, i.total, i.status])]);
+
+    downloadCSV(`vyaparpro_customers_${stamp}.csv`,
+      [['Name','GSTIN','Email','Phone','City'],
+       ...data.customers.map(c => [c.name || c.legal_name, c.gstin, c.email, c.phone || c.mobile, c.city])]);
+
+    downloadCSV(`vyaparpro_vendors_${stamp}.csv`,
+      [['Name','GSTIN','Email','Phone','City'],
+       ...data.vendors.map(v => [v.name || v.legal_name, v.gstin, v.email, v.phone || v.mobile, v.city])]);
+
+    downloadCSV(`vyaparpro_products_${stamp}.csv`,
+      [['Name','SKU','Current Stock','Reorder Level'],
+       ...data.products.map(p => [p.name, p.sku, p.current_stock, p.reorder_level])]);
+
+    markBackupTaken();
+    showToast('⬇ CSV backup files downloaded');
+  } catch (e) {
+    showToast('❌ Backup failed: ' + e.message);
+  }
+}
+
+// ============================================================
 //  AI ASSISTANT
 // ============================================================
 function initAI() {
   const m=document.getElementById('aiMsgs'); if(!m||m.children.length>0)return;
-  addAIMsg('bot','👋 Namaste! I\'m your AI Business Assistant. Ask me anything about your business.');
+  addAIMsg('bot','👋 Vanakkam! I\'m your AI Business Assistant. Ask me anything about your business.');
   const s=document.getElementById('aiSug');
-  if (s) s.innerHTML=['Today\'s sales','Low stock','Top customers','Pending payments','Profit analysis','Sales forecast'].map(x=>`<button class="chip cbl2" style="cursor:pointer;padding:5px 11px;font-size:11px" onclick="askAI('${x}')">${x}</button>`).join('');
+  if (s) s.innerHTML=['Today\'s sales','Low stock','Top customers','Pending payments','How do I add a customer?','Where is GST Settings?','Open Purchase Orders'].map(x=>`<button class="chip cbl2" style="cursor:pointer;padding:5px 11px;font-size:11px" onclick="askAI('${x}')">${x}</button>`).join('');
   const p=document.getElementById('aiPreds');
-  if (p) p.innerHTML=[{i:'📈',t:'June revenue likely ₹22.8L (+23%)'},{i:'⚠️',t:'Mi Router AX6000 stockout in ~4 days'},{i:'💰',t:'₹67,800 at risk — Metro Traders overdue'},{i:'🎯',t:'Restock Samsung Galaxy A55 (best margin)'}].map(x=>`<div style="display:flex;gap:9px;padding:9px;background:var(--bg3);border-radius:var(--r2);margin-bottom:7px"><span>${x.i}</span><div style="font-size:11px;color:var(--text2)">${x.t}</div></div>`).join('');
+  if (p) p.innerHTML='<div style="font-size:11px;color:var(--text3)"><div class="ld" style="display:inline-block;margin-right:6px"></div>Loading predictions…</div>';
+  loadAIPredictions();
+}
+
+async function loadAIPredictions() {
+  const p = document.getElementById('aiPreds');
+  if (!p) return;
+  if (!AUTH.apiOnline) {
+    p.innerHTML = '<div style="font-size:11px;color:var(--text3)">Connect to the API to see live predictions.</div>';
+    return;
+  }
+
+  const today = new Date();
+  const todayStr = isoDate(today);
+  const monthStart = isoDate(new Date(today.getFullYear(), today.getMonth(), 1));
+  const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+  const lastMonthStart = isoDate(new Date(lastMonthEnd.getFullYear(), lastMonthEnd.getMonth(), 1));
+  const lastMonthEndStr = isoDate(lastMonthEnd);
+
+  const [monthR, lastMonthR, invR, custR, prodR] = await Promise.allSettled([
+    apiFetch(`/reports/sales?date_from=${monthStart}&date_to=${todayStr}`),
+    apiFetch(`/reports/sales?date_from=${lastMonthStart}&date_to=${lastMonthEndStr}`),
+    apiFetch('/reports/inventory'),
+    apiFetch('/reports/customers'),
+    apiFetch('/products?page_size=200'),
+  ]);
+
+  const preds = [];
+
+  // 1. Revenue trend — real month-over-month comparison
+  const monthTotal = monthR.status === 'fulfilled' ? Number(monthR.value?.data?.summary?.total_revenue || 0) : 0;
+  const lastMonthTotal = lastMonthR.status === 'fulfilled' ? Number(lastMonthR.value?.data?.summary?.total_revenue || 0) : 0;
+  if (lastMonthTotal > 0) {
+    const pct = (monthTotal - lastMonthTotal) / lastMonthTotal * 100;
+    preds.push({
+      i: pct >= 0 ? '📈' : '📉',
+      t: `Revenue is ${pct >= 0 ? 'up' : 'down'} ${Math.abs(pct).toFixed(0)}% vs last month (₹${fmt(monthTotal)} so far).`,
+    });
+  } else if (monthTotal > 0) {
+    preds.push({ i: '📈', t: `₹${fmt(monthTotal)} billed this month so far.` });
+  }
+
+  // 2. Stock risk — real, from /reports/inventory (already sorted low-stock first)
+  const invItems = invR.status === 'fulfilled' ? (invR.value?.data?.items || []) : [];
+  const critical = invItems.find(i => i.stock_status === 'Out of Stock') || invItems.find(i => i.stock_status === 'Low Stock');
+  if (critical) {
+    preds.push({
+      i: critical.stock_status === 'Out of Stock' ? '🚫' : '⚠️',
+      t: critical.stock_status === 'Out of Stock'
+        ? `${critical.product_name} is out of stock.`
+        : `${critical.product_name} is low on stock (${critical.current_stock} left).`,
+    });
+  }
+
+  // 3. Biggest overdue risk — real, from /reports/customers
+  const custRows = custR.status === 'fulfilled' ? (custR.value?.data?.customers || []) : [];
+  const riskiest = [...custRows].filter(c => Number(c.outstanding) > 0)
+    .sort((a, b) => Number(b.outstanding) - Number(a.outstanding))[0];
+  if (riskiest) {
+    preds.push({ i: '💰', t: `₹${fmt(riskiest.outstanding)} at risk — ${riskiest.name} outstanding.` });
+  }
+
+  // 4. Best restock candidate — real, highest margin/unit among in-stock products
+  const products = prodR.status === 'fulfilled' ? unwrapList(prodR.value) : [];
+  const withMargin = products
+    .map(p2 => ({
+      name: p2.product_name || p2.name,
+      stock: Number(p2.current_stock ?? p2.stock ?? 0),
+      margin: Number(p2.selling_price ?? p2.price ?? 0) - Number(p2.purchase_price ?? p2.pp ?? 0),
+    }))
+    .filter(p2 => p2.stock > 0 && p2.margin > 0)
+    .sort((a, b) => b.margin - a.margin)[0];
+  if (withMargin) {
+    preds.push({ i: '🎯', t: `${withMargin.name} has the best margin (₹${fmt(withMargin.margin)}/unit) — good one to push.` });
+  }
+
+  p.innerHTML = preds.length
+    ? preds.map(x => `<div style="display:flex;gap:9px;padding:9px;background:var(--bg3);border-radius:var(--r2);margin-bottom:7px"><span>${x.i}</span><div style="font-size:11px;color:var(--text2)">${x.t}</div></div>`).join('')
+    : '<div style="font-size:11px;color:var(--text3)">Not enough data yet to generate insights.</div>';
 }
 
 function addAIMsg(type,text) {
@@ -6359,23 +7055,46 @@ function sendAI() {
   askAI(msg);
 }
 
-function askAI(msg) {
-  addAIMsg('usr',msg);
-  const ld=document.createElement('div'); ld.className='aimsg bot'; ld.innerHTML='<div class="ld"></div>';
+async function askAI(msg) {
+  addAIMsg('usr', msg);
+  const ld = document.createElement('div'); ld.className = 'aimsg bot'; ld.innerHTML = '<div class="ld"></div>';
   document.getElementById('aiMsgs').appendChild(ld);
-  document.getElementById('aiMsgs').scrollTop=99999;
-  setTimeout(()=>{
+  document.getElementById('aiMsgs').scrollTop = 99999;
+
+  try {
+    // Local, on-device assistant — runs against your own VyaparPro backend.
+    // No cloud AI APIs, no paid services, no data leaves your machine.
+    const result = await apiFetch('/ai/ask', {
+      method: 'POST',
+      body: JSON.stringify({ message: msg }),
+    });
     ld.remove();
-    const l=msg.toLowerCase();
-    let r=AI_KB.default;
-    if (l.includes('sale')||l.includes('revenue')||l.includes('today')) r=AI_KB.sales;
-    else if (l.includes('stock')||l.includes('inventory')||l.includes('low')) r=AI_KB.stock;
-    else if (l.includes('customer')) r=AI_KB.customers;
-    else if (l.includes('payment')||l.includes('pending')||l.includes('due')||l.includes('outstanding')) r=AI_KB.payment;
-    else if (l.includes('profit')||l.includes('margin')) r=AI_KB.profit;
-    else if (l.includes('forecast')||l.includes('predict')||l.includes('next')) r=AI_KB.forecast;
-    addAIMsg('bot',r);
-  },900);
+    const data = result?.data || result;
+    addAIMsg('bot', data.answer || AI_KB.default);
+
+    // Navigation questions ("How do I add a customer?", "Open Purchase Orders")
+    // get a "Take me there" shortcut button in addition to the answer text.
+    if (data.intent === 'navigation' && data.page) {
+      const goBtn = document.createElement('div');
+      goBtn.className = 'aimsg bot';
+      goBtn.innerHTML = `<button class="btn btn-o btn-sm" onclick="nav('${data.page}', null)">→ Take me there</button>`;
+      document.getElementById('aiMsgs').appendChild(goBtn);
+      document.getElementById('aiMsgs').scrollTop = 99999;
+    }
+  } catch (e) {
+    // Backend unreachable — fall back to the old canned local responses
+    // so the assistant still says *something* useful offline.
+    ld.remove();
+    const l = msg.toLowerCase();
+    let r = AI_KB.default;
+    if (l.includes('sale') || l.includes('revenue') || l.includes('today')) r = AI_KB.sales;
+    else if (l.includes('stock') || l.includes('inventory') || l.includes('low')) r = AI_KB.stock;
+    else if (l.includes('customer')) r = AI_KB.customers;
+    else if (l.includes('payment') || l.includes('pending') || l.includes('due') || l.includes('outstanding')) r = AI_KB.payment;
+    else if (l.includes('profit') || l.includes('margin')) r = AI_KB.profit;
+    else if (l.includes('forecast') || l.includes('predict') || l.includes('next')) r = AI_KB.forecast;
+    addAIMsg('bot', r);
+  }
 }
 
 function clearAI() { const m=document.getElementById('aiMsgs'); if(m)m.innerHTML=''; initAI(); }
@@ -6391,8 +7110,81 @@ function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); 
 // ============================================================
 function openQuote()   { showToast('💡 Tip: Create Invoice → Type = Quotation'); setTimeout(()=>nav('create',null),600); }
 function genUPI()      { const amt=getVal('upiAmt'),uid=getVal('upiId'); if(!amt){showToast('⚠️ Enter amount','warn');return;} document.getElementById('upiQR').style.display='block'; document.getElementById('upiIdShow').textContent=uid; showToast('📱 UPI QR generated for ₹'+parseInt(amt).toLocaleString()); }
-function showNotifs()  { const n=['⚠️ Metro Traders — ₹67,800 overdue','📦 Mi Router AX6000 critically low','📦 Samsung Galaxy A55 out of stock','✅ INV-2468 paid — Kumar Electronics']; showToast(n[Math.floor(Math.random()*n.length)]); }
-function exportInvoices() { showToast('📤 Invoices exported to Excel'); }
+// ============================================================
+//  NOTIFICATIONS — real alerts pulled from live app data
+// ============================================================
+let notifPanelOpen = false;
+
+function toggleNotifPanel() {
+  const panel = document.getElementById('notifPanel');
+  if (!panel) return;
+  notifPanelOpen = !notifPanelOpen;
+  panel.classList.toggle('hidden', !notifPanelOpen);
+  if (notifPanelOpen) loadNotifications();
+}
+
+function closeNotifPanel() {
+  document.getElementById('notifPanel')?.classList.add('hidden');
+  notifPanelOpen = false;
+}
+document.addEventListener('click', () => { if (notifPanelOpen) closeNotifPanel(); });
+
+async function loadNotifications() {
+  const list = document.getElementById('notifList');
+  const dot  = document.getElementById('notifDot');
+  if (!list) return;
+
+  if (!AUTH.apiOnline) {
+    list.innerHTML = `<div class="notif-empty">Connect to the API to see notifications.</div>`;
+    dot?.classList.add('hidden');
+    return;
+  }
+  list.innerHTML = `<div class="notif-empty">Loading…</div>`;
+
+  const [statsR, invR, paidR] = await Promise.allSettled([
+    apiFetch('/billing/invoices/stats'),
+    apiFetch('/reports/inventory'),
+    apiFetch('/billing/invoices?page_size=5&status=paid'),
+  ]);
+  const stats = statsR.status === 'fulfilled' ? (statsR.value?.data || {}) : {};
+  const inv   = invR.status   === 'fulfilled' ? (invR.value?.data || {})   : {};
+  const paid  = paidR.status  === 'fulfilled' ? unwrapList(paidR.value).map(normInvoice) : [];
+
+  const items = [];
+
+  const overdueCount = Number(stats.overdue_count || 0);
+  const outstanding  = Number(stats.outstanding || 0);
+  if (overdueCount) {
+    items.push({ icon: '⚠️', text: `${overdueCount} invoice(s) overdue — ₹${fmt(outstanding)} outstanding`, navId: 'invoices' });
+  }
+
+  const lowStockItems = (inv.items || []).filter(i => i.stock_status !== 'OK');
+  lowStockItems.slice(0, 4).forEach(p => {
+    items.push({
+      icon: '📦',
+      text: p.stock_status === 'Out of Stock'
+        ? `${p.product_name} is out of stock`
+        : `${p.product_name} is low on stock (${p.current_stock} left)`,
+      navId: 'inventory',
+    });
+  });
+
+  paid.slice(0, 3).forEach(i => {
+    items.push({ icon: '✅', text: `${i.no} paid by ${i.customer} — ₹${fmt(i.total || 0)}`, navId: 'invoices' });
+  });
+
+  dot?.classList.toggle('hidden', items.length === 0);
+
+  if (!items.length) {
+    list.innerHTML = `<div class="notif-empty">🎉 You're all caught up — no alerts right now.</div>`;
+    return;
+  }
+  list.innerHTML = items.map(it => `
+    <div class="notif-item" onclick="${it.navId ? `nav('${it.navId}',null);` : ''}closeNotifPanel()">
+      <span class="ni-icon">${it.icon}</span>
+      <span class="ni-text">${it.text}</span>
+    </div>`).join('');
+}
 
 async function genEWB() {
   const invNo = getVal('ewbInv');
@@ -6414,6 +7206,7 @@ async function genEWB() {
       });
     }
     inv.ewbNo = ewbNo;
+    inv.ewbValidTill = validTill;
     inv.transporterId = getVal('ewbTransporter');
     inv.vehicleNo = getVal('ewbVehicle');
     showToast('🛣️ E-Way Bill recorded for ' + inv.no + ' — valid ' + validDays + ' day(s)');
@@ -6578,6 +7371,11 @@ async function saveReturn() {
   const inv  = INVOICES.find(i => String(i.id) === String(againstId));
   const item = inv?.items?.[prodIdx];
 
+  if (!inv || !item) {
+    showToast('⚠️ Could not load the original invoice line — please reopen this invoice and try again', 'warn');
+    return;
+  }
+
   const payload = {
     invoice_type: 'credit_note',
     invoice_date: date,
@@ -6588,12 +7386,12 @@ async function saveReturn() {
     place_of_supply: inv?.custState || '27',
     notes: reason || '',
     items: [{
-      product_id: item?.productId || null,
-      description: item?.prod || 'Sales Return',
-      hsn_code: item?.hsn || '',
+      product_id: item.productId || null,
+      description: item.prod,
+      hsn_code: item.hsn || '',
       quantity: qty,
       rate: rate,
-      gst_rate: item?.gst ?? 18,
+      gst_rate: item.gst ?? 18,
     }],
   };
 
@@ -6810,10 +7608,9 @@ window.onload = async () => {
 
   // Global keyboard shortcuts
   document.addEventListener('keydown',e=>{
-    if ((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); document.getElementById('gSearch').focus(); }
-    if ((e.ctrlKey||e.metaKey)&&e.key==='n'){ e.preventDefault(); nav('create',null); }
-    if (e.key==='Escape') document.querySelectorAll('.mo:not(.hidden)').forEach(m=>m.classList.add('hidden'));
-  });
+  if ((e.ctrlKey||e.metaKey)&&e.key==='n'){ e.preventDefault(); nav('create',null); }
+  if (e.key==='Escape') { document.querySelectorAll('.mo:not(.hidden)').forEach(m=>m.classList.add('hidden')); closeNotifPanel(); }
+});
   document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m)m.classList.add('hidden'); }));
 };
 

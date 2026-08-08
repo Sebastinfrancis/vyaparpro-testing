@@ -327,15 +327,39 @@ class PurchaseOrderService:
         self.session = session
 
     async def get_pdf_data(self, po_id: UUID, company_id: UUID) -> bytes:
-        from app.utils.pdf_generator import PDFDocumentData, generate_invoice_pdf
+        from app.utils.pdf_generator import PDFDocumentData, generate_purchase_order_pdf
         from app.db.repositories import CompanyRepository, PartyRepository
         po = await self.repo.get_detail(po_id)
         if not po:
             raise NotFoundError("Purchase order not found.")
         company = await CompanyRepository(self.session).get(company_id)
         vendor = await PartyRepository(self.session).get(po.vendor_id) if po.vendor_id else None
+        from app.db.repositories import UnitOfMeasureRepository, ProductRepository
+        uom_repo = UnitOfMeasureRepository(self.session)
+        product_repo = ProductRepository(self.session)
+
+        # Resolve each line's unit: use the line's own uom_id if set, else
+        # fall back to the linked product's own default unit of measure.
+        product_uom_cache: dict = {}
+        resolved_uom_ids = []
+        for it in po.items:
+            uid = it.uom_id
+            if not uid and it.product_id:
+                if it.product_id not in product_uom_cache:
+                    prod = await product_repo.get(it.product_id)
+                    product_uom_cache[it.product_id] = prod.uom_id if prod else None
+                uid = product_uom_cache[it.product_id]
+            resolved_uom_ids.append(uid)
+
+        uom_names = {}
+        for uid in set(u for u in resolved_uom_ids if u):
+            uom = await uom_repo.get(uid)
+            if uom:
+                uom_names[uid] = uom.uom_code or uom.uom_name
+
         items_data = [{
             "line_no": i + 1, "description": it.description, "hsn_code": it.hsn_code or "",
+            "unit": uom_names.get(resolved_uom_ids[i], ""),
             "quantity": str(it.quantity), "rate": it.rate, "discount_amount": it.discount_amount,
             "taxable_amount": it.taxable_amount, "gst_rate": it.gst_rate,
             "cgst_amount": it.cgst_amount, "sgst_amount": it.sgst_amount, "igst_amount": it.igst_amount,
@@ -357,12 +381,17 @@ class PurchaseOrderService:
             bank_account_no=(company.settings or {}).get("bank_account_no", "") if company else "",
             bank_ifsc=(company.settings or {}).get("bank_ifsc", "") if company else "",
             upi_id=(company.settings or {}).get("upi_id", "") if company else "",
-            terms_conditions=(po.warranty_terms or po.delivery_terms or "") or ((company.settings or {}).get("default_terms", "") if company else ""),
+            terms_conditions=(po.warranty_terms or "") or ((company.settings or {}).get("po_terms_conditions", "") if company else ""),
             items=items_data, subtotal=po.subtotal, taxable_amount=po.taxable_amount,
             cgst_amount=po.cgst_amount, sgst_amount=po.sgst_amount, igst_amount=po.igst_amount,
             total_amount=po.total_amount, notes=po.notes or "",
+            expected_delivery=po.expected_delivery, delivery_address=po.delivery_address or "",
+            supplier_ref=po.vendor_ref_no or "", payment_terms=po.payment_terms or "",
+            delivery_terms=po.delivery_terms or "", remarks=po.special_instructions or po.notes or "",
+            buyer_contact=(company.settings or {}).get("contact_person", "") if company else "",
+            status=po.status or "draft",
         )
-        return generate_invoice_pdf(data)
+        return generate_purchase_order_pdf(data)
 
     async def get_return_pdf_data(self, po_id: UUID, jv_id: UUID, company_id: UUID) -> bytes:
         from app.utils.pdf_generator import PDFDocumentData, generate_invoice_pdf
@@ -475,15 +504,24 @@ class PurchaseOrderService:
             **totals,
             "total_amount": total,
         })
+        from app.db.repositories import ProductRepository
+        product_repo = ProductRepository(self.session)
+        product_uom_cache: dict = {}
         for line in lines:
             item = payload.items[line.line_no - 1]
+            uom_id = item.uom_id
+            if not uom_id and item.product_id:
+                if item.product_id not in product_uom_cache:
+                    prod = await product_repo.get(item.product_id)
+                    product_uom_cache[item.product_id] = prod.uom_id if prod else None
+                uom_id = product_uom_cache[item.product_id]
             self.session.add(PurchaseOrderItem(
                 po_id=po.id,
                 product_id=item.product_id,
                 description=line.description,
                 hsn_code=line.hsn_code,
                 quantity=line.quantity,
-                uom_id=item.uom_id,
+                uom_id=uom_id,
                 rate=line.rate,
                 discount_pct=line.discount_pct,
                 discount_amount=line.discount_amount,
@@ -722,8 +760,12 @@ class InvoiceService:
         return wh.id if wh else None
 
     async def create(self, company_id: UUID, payload: InvoiceCreate, user_id: UUID) -> Invoice:
-        lines, totals = _calc_items(payload.items, payload.supply_type)
-
+        # Exports are always inter-state supply under GST law — there's no such
+        # thing as an intra-state export. Force it here rather than trusting
+        # whatever supply_type the form happened to have selected, otherwise
+        # export tax gets wrongly split into CGST/SGST instead of IGST.
+        effective_supply_type = "inter" if payload.is_export else payload.supply_type
+        lines, totals = _calc_items(payload.items, effective_supply_type)
         # TDS Receivable is auto-derived from the CUSTOMER's TDS profile + section threshold —
         # only applies to normal tax invoices (a credit note has nothing to withhold).
         tds_amount = Decimal("0")
@@ -769,7 +811,7 @@ class InvoiceService:
             "dc_id": payload.dc_id,
             "against_invoice_id": payload.against_invoice_id,
             "place_of_supply": payload.place_of_supply,
-            "supply_type": payload.supply_type,
+            "supply_type": effective_supply_type,
             "reverse_charge": payload.reverse_charge,
             "currency": payload.currency,
             "is_export": payload.is_export,
@@ -964,14 +1006,34 @@ class InvoiceService:
         inv = await self.repo.get_detail(invoice_id)
         if not inv:
             raise NotFoundError("Invoice not found.")
-        from app.db.repositories import CompanyRepository
+        from app.db.repositories import CompanyRepository, UnitOfMeasureRepository, ProductRepository
         company_repo = CompanyRepository(self.session)
         company = await company_repo.get(company_id)
+
+        uom_repo = UnitOfMeasureRepository(self.session)
+        product_repo = ProductRepository(self.session)
+        product_uom_cache: dict = {}
+        resolved_uom_ids = []
+        for it in inv.items:
+            uid = it.uom_id
+            if not uid and it.product_id:
+                if it.product_id not in product_uom_cache:
+                    prod = await product_repo.get(it.product_id)
+                    product_uom_cache[it.product_id] = prod.uom_id if prod else None
+                uid = product_uom_cache[it.product_id]
+            resolved_uom_ids.append(uid)
+        uom_names = {}
+        for uid in set(u for u in resolved_uom_ids if u):
+            uom = await uom_repo.get(uid)
+            if uom:
+                uom_names[uid] = uom.uom_code or uom.uom_name
+
         items_data = [
             {
                 "line_no": i + 1,
                 "description": it.description,
                 "hsn_code": it.hsn_code or "",
+                "unit": uom_names.get(resolved_uom_ids[i], ""),
                 "quantity": str(it.quantity),
                 "rate": it.rate,
                 "discount_amount": it.discount_amount,
@@ -1032,6 +1094,100 @@ class InvoiceService:
             irn=inv.irn,
             ack_no=inv.ack_no,
             notes=inv.notes or "",
+        )
+        return generate_invoice_pdf(data)
+
+    async def preview_pdf(self, company_id: UUID, payload: InvoiceCreate) -> bytes:
+        """Generate the real invoice PDF straight from an unsaved payload.
+        No sequence number is consumed, nothing is written to the DB — this
+        exists purely so 'Preview' can show the actual rendered document
+        before the user commits to saving anything."""
+        from app.utils.pdf_generator import PDFDocumentData, generate_invoice_pdf
+        from app.db.repositories import CompanyRepository, UnitOfMeasureRepository, ProductRepository
+
+        lines, totals = _calc_items(payload.items, payload.supply_type)
+
+        company_repo = CompanyRepository(self.session)
+        company = await company_repo.get(company_id)
+
+        uom_repo = UnitOfMeasureRepository(self.session)
+        product_repo = ProductRepository(self.session)
+        product_uom_cache: dict = {}
+        resolved_uom_ids = []
+        for item in payload.items:
+            uid = item.uom_id
+            if not uid and item.product_id:
+                if item.product_id not in product_uom_cache:
+                    prod = await product_repo.get(item.product_id)
+                    product_uom_cache[item.product_id] = prod.uom_id if prod else None
+                uid = product_uom_cache[item.product_id]
+            resolved_uom_ids.append(uid)
+        uom_names = {}
+        for uid in set(u for u in resolved_uom_ids if u):
+            uom = await uom_repo.get(uid)
+            if uom:
+                uom_names[uid] = uom.uom_code or uom.uom_name
+
+        items_data = [{
+            "line_no": i + 1,
+            "description": line.description,
+            "hsn_code": line.hsn_code or "",
+            "unit": uom_names.get(resolved_uom_ids[i], ""),
+            "quantity": str(line.quantity),
+            "rate": line.rate,
+            "discount_amount": line.discount_amount,
+            "taxable_amount": line.taxable_amount,
+            "gst_rate": line.gst_rate,
+            "cgst_amount": line.cgst_amount,
+            "sgst_amount": line.sgst_amount,
+            "igst_amount": line.igst_amount,
+            "total_amount": line.total_amount,
+        } for i, line in enumerate(lines)]
+
+        from decimal import ROUND_HALF_UP
+        raw_total = (totals["taxable_amount"] + totals["cgst_amount"] + totals["sgst_amount"]
+                     + totals["igst_amount"] + totals["cess_amount"] + payload.other_charges)
+        rounded = raw_total.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+
+        data = PDFDocumentData(
+            doc_type=payload.invoice_type if payload.invoice_type in ("credit_note", "debit_note") else "invoice",
+            doc_no="PREVIEW",
+            doc_date=payload.invoice_date,
+            due_date=payload.due_date,
+            company_name=company.legal_name if company else "",
+            company_tagline=((company.settings or {}).get("tagline", "") if company else ""),
+            company_gstin=company.gstin or "" if company else "",
+            company_address=company.reg_address or "" if company else "",
+            company_phone=company.phone or "" if company else "",
+            company_email=company.email or "" if company else "",
+            company_logo_url=(company.logo_url or "") if company else "",
+            company_pan=company.pan if company else "",
+            party_name=payload.billing_name,
+            party_gstin=payload.billing_gstin or "",
+            party_address=payload.billing_address or "",
+            party_phone=payload.contact_phone or "",
+            status="draft",
+            upi_id=(company.settings or {}).get("upi_id", "") if company else "",
+            bank_name=(company.settings or {}).get("bank_name", "") if company else "",
+            bank_branch=(company.settings or {}).get("bank_branch", "") if company else "",
+            bank_account_no=(company.settings or {}).get("bank_account_no", "") if company else "",
+            bank_ifsc=(company.settings or {}).get("bank_ifsc", "") if company else "",
+            terms_conditions=payload.terms_conditions or ((company.settings or {}).get("default_terms", "") if company else ""),
+            place_of_supply=payload.place_of_supply,
+            supply_type=payload.supply_type,
+            items=items_data,
+            subtotal=totals["subtotal"],
+            discount_amount=totals["discount_amount"],
+            taxable_amount=totals["taxable_amount"],
+            cgst_amount=totals["cgst_amount"],
+            sgst_amount=totals["sgst_amount"],
+            igst_amount=totals["igst_amount"],
+            cess_amount=totals["cess_amount"],
+            other_charges=payload.other_charges,
+            round_off=rounded - raw_total,
+            total_amount=rounded,
+            notes=payload.notes or "",
+            copy_label="PREVIEW \u2013 NOT A VALID TAX INVOICE",
         )
         return generate_invoice_pdf(data)
     

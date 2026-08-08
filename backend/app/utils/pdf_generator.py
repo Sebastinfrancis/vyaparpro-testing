@@ -90,6 +90,14 @@ class PDFDocumentData:
     po_no: Optional[str] = None
     po_date: Optional[date] = None
     jo_no: Optional[str] = None
+    # Purchase-order-specific
+    expected_delivery: Optional[date] = None
+    delivery_address: str = ""
+    buyer_contact: str = ""
+    supplier_ref: str = ""
+    payment_terms: str = ""
+    delivery_terms: str = ""
+    remarks: str = ""
     status: str = ""  # 'paid' | 'unpaid' | 'overdue' | 'draft' etc — drives the status badge
     place_of_supply: str = ""
     supply_type: str = "intra"
@@ -150,6 +158,13 @@ def _fmt(v) -> str:
     symbol = "\u20b9" if FONT_REGULAR == "NotoSans" else "Rs."
     sep = "" if symbol == "\u20b9" else "\u00a0"
     return f"{'-' if neg else ''}{symbol}{sep}{whole}.{frac}"
+
+def _fmt_compact(v) -> str:
+    """Same formatting as _fmt but without the Rs./₹ prefix — for dense table
+    cells where the column header already implies currency and every extra
+    character eats into already-tight column width."""
+    s = _fmt(v)
+    return s.replace("\u20b9", "").replace("Rs.\u00a0", "").replace("Rs.", "").strip()
 
 def _footer(canvas, doc):
     canvas.saveState()
@@ -350,36 +365,36 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
     # -- Items table + attached total row (single grid, one font size) --
     is_igst = data.igst_amount > 0
     if is_igst:
-        col_headers = ["Sr.\nNo.", "Name of Product/Service", "HSN/\nSAC", "Qty", "Rate", "Taxable\nValue", "IGST %", "IGST Amt", "Total"]
-        col_widths = [8, 47, 10, 12, 22, 26, 8, 22, 28]
+        col_headers = ["Sr.\nNo.", "Name of Product/Service", "HSN/\nSAC", "Unit", "Qty", "Rate", "Taxable\nValue", "IGST %", "IGST Amt", "Total"]
+        col_widths = [8, 52, 15, 10, 10, 17, 22, 8, 20, 21]
     else:
-        col_headers = ["Sr.\nNo.", "Name of Product/Service", "HSN/\nSAC", "Qty", "Rate", "Taxable\nValue", "CGST\n%", "CGST\nAmt", "SGST\n%", "SGST\nAmt", "Total"]
-        col_widths = [6, 34, 9, 12, 22, 24, 8, 17, 8, 17, 26]
+        col_headers = ["Sr.\nNo.", "Name of Product/Service", "HSN/\nSAC", "Unit", "Qty", "Rate", "Taxable\nValue", "CGST\n%", "CGST\nAmt", "SGST\n%", "SGST\nAmt", "Total"]
+        col_widths = [6, 39, 14, 9, 10, 15, 20, 6, 18, 6, 18, 22]
     col_widths = [w * mm for w in col_widths]
     header_style = ParagraphStyle("colh", fontName=FONT_BOLD, fontSize=7, alignment=TA_CENTER, leading=8)
 
     item_rows = [[Paragraph(h, header_style) for h in col_headers]]
     for item in data.items:
         common = [P(item.get("line_no",""), cell_c), P(item.get("description","") or "-", cell_l),
-                  P(item.get("hsn_code","") or "-", cell_c),
-                  P(item.get("quantity",""), cell_r), P(_fmt(item.get("rate",0))), P(_fmt(item.get("taxable_amount",0)))]
+                  P(item.get("hsn_code","") or "-", cell_c), P(item.get("unit","") or "-", cell_c),
+                  P(item.get("quantity",""), cell_r), P(_fmt_compact(item.get("rate",0))), P(_fmt_compact(item.get("taxable_amount",0)))]
         if is_igst:
-            tail = [P(f"{item.get('gst_rate',0):g}", cell_c), P(_fmt(item.get("igst_amount",0)))]
+            tail = [P(f"{item.get('gst_rate',0):g}", cell_c), P(_fmt_compact(item.get("igst_amount",0)))]
         else:
             half = float(item.get("gst_rate",0))/2
-            tail = [P(f"{half:g}", cell_c), P(_fmt(item.get("cgst_amount",0))), P(f"{half:g}", cell_c), P(_fmt(item.get("sgst_amount",0)))]
-        item_rows.append(common + tail + [P(_fmt(item.get("total_amount",0)))])
+            tail = [P(f"{half:g}", cell_c), P(_fmt_compact(item.get("cgst_amount",0))), P(f"{half:g}", cell_c), P(_fmt_compact(item.get("sgst_amount",0)))]
+        item_rows.append(common + tail + [P(_fmt_compact(item.get("total_amount",0)))])
 
     total_qty = sum(float(i.get("quantity",0)) for i in data.items)
     if is_igst:
-        item_rows.append(["", Paragraph("Total", tot_bold_l), "", Paragraph(f"{total_qty:g}", tot_bold_c), "",
-                           Paragraph(_fmt(data.taxable_amount), tot_bold_r), "",
-                           Paragraph(_fmt(data.igst_amount), tot_bold_r), Paragraph(_fmt(data.total_amount), tot_bold_r)])
+        item_rows.append(["", Paragraph("Total", tot_bold_l), "", "", Paragraph(f"{total_qty:g}", tot_bold_c), "",
+                           Paragraph(_fmt_compact(data.taxable_amount), tot_bold_r), "",
+                           Paragraph(_fmt_compact(data.igst_amount), tot_bold_r), Paragraph(_fmt_compact(data.total_amount), tot_bold_r)])
     else:
-        item_rows.append(["", Paragraph("Total", tot_bold_l), "", Paragraph(f"{total_qty:g}", tot_bold_c), "",
-                           Paragraph(_fmt(data.taxable_amount), tot_bold_r), "",
-                           Paragraph(_fmt(data.cgst_amount), tot_bold_r), "",
-                           Paragraph(_fmt(data.sgst_amount), tot_bold_r), Paragraph(_fmt(data.total_amount), tot_bold_r)])
+        item_rows.append(["", Paragraph("Total", tot_bold_l), "", "", Paragraph(f"{total_qty:g}", tot_bold_c), "",
+                           Paragraph(_fmt_compact(data.taxable_amount), tot_bold_r), "",
+                           Paragraph(_fmt_compact(data.cgst_amount), tot_bold_r), "",
+                           Paragraph(_fmt_compact(data.sgst_amount), tot_bold_r), Paragraph(_fmt_compact(data.total_amount), tot_bold_r)])
 
     items_table = Table(item_rows, colWidths=col_widths, repeatRows=1)
     items_table.setStyle(TableStyle([
@@ -573,6 +588,341 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
     doc.build(story, onFirstPage=_page_footer, onLaterPages=_page_footer)
     return buffer.getvalue()
 
+def generate_purchase_order_pdf(data: PDFDocumentData) -> bytes:
+    """Dedicated Purchase Order layout — a procurement document, not a payment
+    document. Shares the same visual identity (fonts, header, GST logic) as
+    generate_invoice_pdf, restructured with PO-specific sections."""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=8*mm, leftMargin=8*mm,
+                             topMargin=8*mm, bottomMargin=8*mm)
+    BORDER = colors.black
+    THIN = 0.6
+    THICK = 1.2
+
+    h_company = ParagraphStyle("hco", fontName=FONT_BOLD, fontSize=21, textColor=BRAND_DARK, leading=24)
+    h_tagline = ParagraphStyle("htag", fontName=FONT_BOLD, fontSize=9.5, textColor=colors.white, alignment=TA_CENTER)
+    contact = ParagraphStyle("contact", fontName=FONT_REGULAR, fontSize=8, textColor=TEXT_DARK, leading=11)
+    contact_r = ParagraphStyle("contactr", parent=contact, alignment=TA_RIGHT)
+    doclabel = ParagraphStyle("doclabel", fontName=FONT_BOLD, fontSize=18, alignment=TA_CENTER, leading=22)
+    label8 = ParagraphStyle("label8", fontName=FONT_BOLD, fontSize=8)
+    body8 = ParagraphStyle("body8", fontName=FONT_REGULAR, fontSize=8, leading=11)
+    body8_c = ParagraphStyle("body8c", parent=body8, alignment=TA_CENTER)
+    section_hdr = ParagraphStyle("sechdr", fontName=FONT_BOLD, fontSize=8, alignment=TA_CENTER)
+    small = ParagraphStyle("small", fontName=FONT_REGULAR, fontSize=7)
+
+    cell_l = ParagraphStyle("celll", fontName=FONT_REGULAR, fontSize=7, alignment=TA_LEFT, leading=8.5)
+    cell_c = ParagraphStyle("cellc", fontName=FONT_REGULAR, fontSize=7, alignment=TA_CENTER, leading=8.5)
+    cell_r = ParagraphStyle("cellr", fontName=FONT_REGULAR, fontSize=7, alignment=TA_RIGHT, leading=8.5)
+    tot_bold_l = ParagraphStyle("totboldl", fontName=FONT_BOLD, fontSize=7, alignment=TA_LEFT)
+    tot_bold_c = ParagraphStyle("totboldc", fontName=FONT_BOLD, fontSize=7, alignment=TA_CENTER)
+    tot_bold_r = ParagraphStyle("totboldr", fontName=FONT_BOLD, fontSize=7, alignment=TA_RIGHT)
+
+    def P(v, style=cell_r):
+        return Paragraph(str(v) if v not in (None, "") else "-", style)
+
+    story = []
+
+    # -- Company header band (identical to Tax Invoice) --
+    logo_flowable = ""
+    if data.company_logo_url:
+        logo_path = ("app" + data.company_logo_url) if data.company_logo_url.startswith("/static/") else data.company_logo_url
+        if os.path.exists(logo_path):
+            try:
+                from PIL import Image as PILImage
+                with PILImage.open(logo_path) as im:
+                    iw, ih = im.size
+                max_dim = 20 * mm
+                scale = max_dim / max(iw, ih)
+                logo_flowable = RLImage(logo_path, width=iw * scale, height=ih * scale)
+            except Exception:
+                logo_flowable = ""
+
+    header_inner = Table([[logo_flowable, Paragraph(f"<b>{data.company_name or 'Company Name'}</b>", h_company)]],
+                          colWidths=[24*mm, 154*mm])
+    header_inner.setStyle(TableStyle([
+        ("VALIGN",(0,0),(-1,-1),"MIDDLE"), ("ALIGN",(0,0),(0,0),"CENTER"),
+        ("LEFTPADDING",(0,0),(-1,-1),0), ("RIGHTPADDING",(0,0),(-1,-1),0),
+        ("TOPPADDING",(0,0),(-1,-1),2), ("BOTTOMPADDING",(0,0),(-1,-1),2),
+    ]))
+
+    addr_row = Table([[
+        Paragraph((data.company_address or "").replace("\n", "<br/>"), contact),
+        Paragraph(f"Tel: {data.company_phone}<br/>Email: {data.company_email}" if (data.company_phone or data.company_email) else "", contact_r),
+    ]], colWidths=[96*mm, 82*mm])
+    addr_row.setStyle(TableStyle([
+        ("VALIGN",(0,0),(-1,-1),"TOP"),
+        ("LEFTPADDING",(0,0),(-1,-1),0), ("RIGHTPADDING",(0,0),(-1,-1),0),
+        ("TOPPADDING",(0,0),(-1,-1),3), ("BOTTOMPADDING",(0,0),(-1,-1),0),
+    ]))
+
+    header_box_rows = [[header_inner]]
+    tagline_row_index = None
+    if data.company_tagline:
+        tagline_band = Table([[Paragraph(f"<b>{data.company_tagline.upper()}</b>", h_tagline)]], colWidths=[183*mm])
+        tagline_band.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,-1), BRAND_ACCENT),
+            ("TOPPADDING",(0,0),(-1,-1),4), ("BOTTOMPADDING",(0,0),(-1,-1),4),
+        ]))
+        tagline_row_index = len(header_box_rows)
+        header_box_rows.append([tagline_band])
+    header_box_rows.append([addr_row])
+
+    header_card = Table(header_box_rows, colWidths=[183*mm])
+    header_card_style = [
+        ("BOX",(0,0),(-1,-1),THICK,BORDER),
+        ("BACKGROUND",(0,0),(-1,0), BG_SOFT),
+        ("LEFTPADDING",(0,0),(-1,-1),6), ("RIGHTPADDING",(0,0),(-1,-1),6),
+        ("TOPPADDING",(0,0),(-1,-1),4), ("BOTTOMPADDING",(0,0),(-1,-1),4),
+    ]
+    if tagline_row_index is not None:
+        header_card_style += [
+            ("LEFTPADDING",(0,tagline_row_index),(-1,tagline_row_index),0),
+            ("RIGHTPADDING",(0,tagline_row_index),(-1,tagline_row_index),0),
+            ("TOPPADDING",(0,tagline_row_index),(-1,tagline_row_index),0),
+            ("BOTTOMPADDING",(0,tagline_row_index),(-1,tagline_row_index),0),
+        ]
+    header_card.setStyle(TableStyle(header_card_style))
+    story.append(header_card)
+    story.append(Spacer(1, 2*mm))
+
+    # -- Title strip --
+    title_strip = Table([[
+        Paragraph(f"<b>PAN: {data.company_pan}</b>" if data.company_pan else "", label8),
+        Paragraph("<b>PURCHASE ORDER</b>", doclabel),
+        Paragraph("<b>FOR SUPPLIER</b>", ParagraphStyle("copylbl", fontName=FONT_BOLD, fontSize=8, alignment=TA_RIGHT)),
+    ]], colWidths=[55*mm, 73*mm, 55*mm])
+    title_strip.setStyle(TableStyle([
+        ("VALIGN",(0,0),(-1,-1),"MIDDLE"), ("LINEAFTER",(0,0),(1,0),THIN,BORDER),
+        ("TOPPADDING",(0,0),(-1,-1),4), ("BOTTOMPADDING",(0,0),(-1,-1),4),
+    ]))
+
+    # -- Document Information: PO No, PO Date, Expected Delivery, Supplier Ref,
+    #    Buyer, Payment Terms, Delivery Terms, Status. Empty optional fields
+    #    are skipped entirely rather than shown as "-". --
+    status_colors = {
+        "draft": colors.HexColor("#6B7280"), "approved": GOOD_GREEN, "sent": BRAND_BLUE,
+        "acknowledged": BRAND_BLUE, "partial": WARN_ORANGE, "received": GOOD_GREEN,
+        "closed": colors.HexColor("#6B7280"), "cancelled": BAD_RED,
+    }
+    status_val = (data.status or "draft").lower()
+    status_style = ParagraphStyle("statusval", fontName=FONT_BOLD, fontSize=8,
+                                   textColor=status_colors.get(status_val, colors.HexColor("#6B7280")))
+
+    info_pairs = [("PO No.", f"<b>{data.doc_no}</b>", body8), ("PO Date", str(data.doc_date), body8)]
+    if data.expected_delivery: info_pairs.append(("Expected Delivery", str(data.expected_delivery), body8))
+    if data.supplier_ref: info_pairs.append(("Supplier Reference", data.supplier_ref, body8))
+    if data.buyer_contact: info_pairs.append(("Buyer", data.buyer_contact, body8))
+    if data.payment_terms: info_pairs.append(("Payment Terms", data.payment_terms, body8))
+    if data.delivery_terms: info_pairs.append(("Delivery Terms", data.delivery_terms, body8))
+    info_pairs.append(("Status", (data.status or "Draft").title(), status_style))
+
+    info_grid_rows = []
+    for i in range(0, len(info_pairs), 2):
+        left = info_pairs[i]
+        right = info_pairs[i+1] if i+1 < len(info_pairs) else None
+        row = [
+            Paragraph(f"{left[0]}:", label8), Paragraph(left[1], left[2]),
+            Paragraph(f"{right[0]}:", label8) if right else "",
+            Paragraph(right[1], right[2]) if right else "",
+        ]
+        info_grid_rows.append(row)
+    info_grid = Table(info_grid_rows, colWidths=[28*mm, 63*mm, 28*mm, 64*mm])
+    info_grid.setStyle(TableStyle([
+        ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
+        ("LEFTPADDING",(0,0),(-1,-1),2), ("RIGHTPADDING",(0,0),(-1,-1),2),
+        ("TOPPADDING",(0,0),(-1,-1),3), ("BOTTOMPADDING",(0,0),(-1,-1),3),
+    ]))
+    info_box = Table([[Paragraph("<b>Purchase Order Information</b>", section_hdr)], [info_grid]], colWidths=[183*mm])
+    info_box.setStyle(TableStyle([
+        ("LINEBELOW",(0,0),(-1,0),0.5,BORDER),
+        ("TOPPADDING",(0,0),(-1,-1),4), ("BOTTOMPADDING",(0,0),(-1,-1),4),
+    ]))
+
+    # -- Supplier Details | Delivery Address (two aligned sections) --
+    supplier_lines = [[Paragraph("<b>M/S:</b>", label8), Paragraph(data.party_name or "-", body8)]]
+    if data.party_address:
+        supplier_lines.append([Paragraph("<b>Address:</b>", label8), Paragraph(data.party_address.replace("\n","<br/>"), body8)])
+    if data.party_phone:
+        supplier_lines.append([Paragraph("<b>Phone:</b>", label8), Paragraph(data.party_phone, body8)])
+    supplier_lines.append([Paragraph("<b>GSTIN:</b>", label8), Paragraph(data.party_gstin or "Unregistered", body8)])
+    if data.place_of_supply:
+        supplier_lines.append([Paragraph("<b>Place of Supply:</b>", label8), Paragraph(_state_label(data.place_of_supply), body8)])
+    supplier_box = Table([[Paragraph("<b>Supplier Details</b>", section_hdr)]] + [[Table(supplier_lines, colWidths=[30*mm, 61*mm])]],
+                          colWidths=[91*mm])
+    supplier_box.setStyle(TableStyle([
+        ("LINEBELOW",(0,0),(-1,0),0.5,BORDER),
+        ("TOPPADDING",(0,0),(-1,-1),3), ("BOTTOMPADDING",(0,0),(-1,-1),3),
+    ]))
+
+    deliver_box = Table([
+        [Paragraph("<b>Delivery Address</b>", section_hdr)],
+        [Paragraph((data.delivery_address or data.company_address or "Same as company address").replace("\n","<br/>"), body8)],
+    ], colWidths=[92*mm])
+    deliver_box.setStyle(TableStyle([
+        ("LINEBELOW",(0,0),(-1,0),0.5,BORDER),
+        ("TOPPADDING",(0,0),(-1,-1),3), ("BOTTOMPADDING",(0,0),(-1,-1),4),
+        ("LEFTPADDING",(0,0),(-1,-1),4), ("RIGHTPADDING",(0,0),(-1,-1),4),
+    ]))
+
+    two_col = Table([[supplier_box, deliver_box]], colWidths=[91*mm, 92*mm])
+    two_col.setStyle(TableStyle([
+        ("VALIGN",(0,0),(-1,-1),"TOP"), ("LEFTPADDING",(0,0),(-1,-1),0), ("RIGHTPADDING",(0,0),(-1,-1),0),
+        ("LINEAFTER",(0,0),(0,-1),THIN,BORDER),
+    ]))
+
+    # -- Items table: Sr, Item Description, HSN/SAC, Unit, Qty, Rate, GST%, Amount --
+    col_headers = ["Sr.\nNo.", "Item Description", "HSN/\nSAC", "Unit", "Qty", "Rate", "GST\n%", "Amount"]
+    col_widths = [w * mm for w in [8, 55, 16, 14, 14, 22, 14, 40]]
+    header_style = ParagraphStyle("colh", fontName=FONT_BOLD, fontSize=7, alignment=TA_CENTER, leading=8)
+
+    item_rows = [[Paragraph(h, header_style) for h in col_headers]]
+    for item in data.items:
+        item_rows.append([
+            P(item.get("line_no",""), cell_c),
+            P(item.get("description","") or "-", cell_l),
+            P(item.get("hsn_code","") or "-", cell_c),
+            P(item.get("unit","") or "-", cell_c),
+            P(item.get("quantity",""), cell_r),
+            P(_fmt(item.get("rate",0))),
+            P(f"{float(item.get('gst_rate',0)):g}", cell_c),
+            P(_fmt(item.get("total_amount",0))),
+        ])
+
+    total_qty = sum(float(i.get("quantity",0)) for i in data.items)
+    item_rows.append([
+        "", Paragraph("Total", tot_bold_l), "", "",
+        Paragraph(f"{total_qty:g}", tot_bold_c), "", "",
+        Paragraph(_fmt(data.total_amount), tot_bold_r),
+    ])
+
+    items_table = Table(item_rows, colWidths=col_widths, repeatRows=1)
+    items_table.setStyle(TableStyle([
+        ("GRID",(0,0),(-1,-1),0.5,BORDER),
+        ("VALIGN",(0,0),(-1,-1),"TOP"), ("TOPPADDING",(0,0),(-1,-1),3), ("BOTTOMPADDING",(0,0),(-1,-1),3),
+        ("LEFTPADDING",(0,0),(-1,-1),2), ("RIGHTPADDING",(0,0),(-1,-1),2),
+        ("BACKGROUND",(0,-1),(-1,-1), LIGHT_GREY),
+    ]))
+
+    # -- Total in words (center-aligned) | Bordered totals summary --
+    words_cell = Table([
+        [Paragraph("<b>Total in Words</b>", section_hdr)],
+        [Paragraph(amount_in_words(data.total_amount).upper(), body8_c)],
+    ], colWidths=[110*mm])
+    words_cell.setStyle(TableStyle([
+        ("LINEBELOW",(0,0),(-1,0),0.5,BORDER),
+        ("ALIGN",(0,0),(-1,-1),"CENTER"),
+        ("TOPPADDING",(0,0),(-1,-1),5), ("BOTTOMPADDING",(0,0),(-1,-1),5),
+    ]))
+
+    is_igst = data.igst_amount > 0
+    tax_rows = [["Taxable Amount", _fmt(data.taxable_amount)]]
+    if is_igst:
+        tax_rows.append(["Add: IGST", _fmt(data.igst_amount)])
+    else:
+        tax_rows.append(["Add: CGST", _fmt(data.cgst_amount)])
+        tax_rows.append(["Add: SGST", _fmt(data.sgst_amount)])
+    if data.round_off: tax_rows.append(["Round Off", _fmt(data.round_off)])
+    tax_rows.append(["Total Tax", _fmt(float(data.cgst_amount)+float(data.sgst_amount)+float(data.igst_amount))])
+    tax_rows.append(["Total Amount After Tax", _fmt(data.total_amount)])
+    tax_para = [[Paragraph(r[0], body8), Paragraph(f"<b>{r[1]}</b>" if r[0]=="Total Amount After Tax" else r[1],
+                 ParagraphStyle("tval", fontName=FONT_BOLD if r[0]=="Total Amount After Tax" else FONT_REGULAR,
+                                fontSize=10 if r[0]=="Total Amount After Tax" else 8, alignment=TA_RIGHT))] for r in tax_rows]
+    tax_box = Table(tax_para, colWidths=[38*mm, 35*mm])
+    tax_box.setStyle(TableStyle([
+        ("LINEABOVE",(0,-1),(-1,-1),0.8,BORDER),
+        ("BACKGROUND",(0,-1),(-1,-1), BG_SOFT),
+        ("TOPPADDING",(0,0),(-1,-1),4), ("BOTTOMPADDING",(0,0),(-1,-1),4),
+        ("LEFTPADDING",(0,0),(-1,-1),4), ("RIGHTPADDING",(0,0),(-1,-1),4),
+    ]))
+
+    words_tax_row = Table([[words_cell, tax_box]], colWidths=[110*mm, 73*mm])
+    words_tax_row.setStyle(TableStyle([
+        ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
+        ("LEFTPADDING",(0,0),(-1,-1),0), ("RIGHTPADDING",(0,0),(-1,-1),0),
+        ("LINEAFTER",(0,0),(0,-1),THIN,BORDER),
+    ]))
+
+    # -- Remarks & Terms | Signature (Prepared By / Approved By / Authorised Signatory) --
+    po_standard_terms = [
+        "Please supply the items strictly as per the specifications mentioned above.",
+        "Goods are subject to inspection and quality check upon receipt.",
+        "Delivery must be completed on or before the expected delivery date.",
+        "Tax Invoice must accompany the shipment.",
+        "Supplier must acknowledge receipt of this Purchase Order.",
+        "Any change in quantity, price, or specifications requires prior written approval.",
+    ]
+    if data.terms_conditions:
+        # A PO-level or Settings-level override replaces the built-in defaults
+        # entirely, rather than stacking below them.
+        terms_html = data.terms_conditions.replace("\n", "<br/>")
+    else:
+        terms_html = "<br/>".join(f"&#8226; {t}" for t in po_standard_terms)
+    remarks_para = [Paragraph(f"<b>Remarks:</b> {data.remarks}", small)] if data.remarks else []
+    terms_cell = Paragraph(f"<b>Terms &amp; Conditions</b><br/>{terms_html}", small)
+
+    remarks_box = Table([[Paragraph("<b>Remarks &amp; Terms</b>", section_hdr)]] + [[r] for r in remarks_para] +
+                         [[Spacer(1,3)], [terms_cell]], colWidths=[110*mm])
+    remarks_box.setStyle(TableStyle([
+        ("LINEBELOW",(0,0),(-1,0),0.5,BORDER),
+        ("TOPPADDING",(0,0),(-1,-1),4), ("BOTTOMPADDING",(0,0),(-1,-1),4),
+    ]))
+
+    sig_lbl = ParagraphStyle("siglbl", fontName=FONT_REGULAR, fontSize=6, alignment=TA_CENTER)
+    sig_line_row = Table([
+        ["", "", ""],
+        [Paragraph("Prepared By", sig_lbl), Paragraph("Approved By", sig_lbl), Paragraph("Authorised Signatory", sig_lbl)],
+    ], colWidths=[24*mm, 24*mm, 25*mm], rowHeights=[9*mm, None])
+    sig_line_row.setStyle(TableStyle([
+        ("LINEABOVE",(0,1),(-1,1),0.6,BORDER),
+        ("ALIGN",(0,0),(-1,-1),"CENTER"),
+        ("TOPPADDING",(0,1),(-1,1),2), ("BOTTOMPADDING",(0,0),(-1,-1),0),
+        ("LEFTPADDING",(0,0),(-1,-1),1), ("RIGHTPADDING",(0,0),(-1,-1),1),
+    ]))
+
+    sig_box = Table([
+        [Paragraph("Certified that the above Purchase Order is issued on behalf of the company.", ParagraphStyle("cert", fontName=FONT_REGULAR, fontSize=6.5, alignment=TA_CENTER))],
+        [Paragraph(f"<b>For {data.company_name}</b>", ParagraphStyle("forco", fontName=FONT_BOLD, fontSize=9, alignment=TA_CENTER))],
+        [Spacer(1, 4*mm)],
+        [sig_line_row],
+        [Paragraph("This is a system-generated Purchase Order.", ParagraphStyle("stamp", fontName=FONT_REGULAR, fontSize=6, alignment=TA_CENTER, textColor=colors.HexColor("#999999")))],
+    ], colWidths=[73*mm])
+    sig_box.setStyle(TableStyle([
+        ("TOPPADDING",(0,0),(-1,-1),4), ("BOTTOMPADDING",(0,0),(-1,-1),4),
+        ("ALIGN",(0,0),(-1,-1),"CENTER"),
+    ]))
+
+    bottom_row = Table([[remarks_box, sig_box]], colWidths=[110*mm, 73*mm])
+    bottom_row.setStyle(TableStyle([
+        ("VALIGN",(0,0),(-1,-1),"TOP"), ("LEFTPADDING",(0,0),(-1,-1),0), ("RIGHTPADDING",(0,0),(-1,-1),0),
+        ("LINEAFTER",(0,0),(0,-1),THIN,BORDER),
+    ]))
+
+    # -- Assemble --
+    master_rows = [[title_strip], [info_box], [two_col], [items_table], [words_tax_row], [bottom_row]]
+    master = Table(master_rows, colWidths=[183*mm])
+    master_style = [
+        ("BOX",(0,0),(-1,-1),THICK,BORDER),
+        ("LEFTPADDING",(0,0),(-1,-1),0), ("RIGHTPADDING",(0,0),(-1,-1),0),
+        ("TOPPADDING",(0,0),(-1,-1),0), ("BOTTOMPADDING",(0,0),(-1,-1),0),
+    ]
+    for i in range(len(master_rows) - 1):
+        master_style.append(("LINEBELOW",(0,i),(-1,i),THIN,BORDER))
+    master.setStyle(TableStyle(master_style))
+    story.append(master)
+    story.append(Spacer(1, 4*mm))
+    story.append(Paragraph("Kindly acknowledge receipt and confirm the delivery schedule.",
+                            ParagraphStyle("thanks", fontName=FONT_REGULAR, fontSize=9)))
+
+    def _page_footer(canvas, doc_):
+        canvas.saveState()
+        page_w, _ = A4
+        canvas.setFillColor(colors.HexColor("#999999"))
+        canvas.setFont(FONT_REGULAR, 6.5)
+        canvas.drawRightString(page_w - 8*mm, 5*mm, f"Page {doc_.page}")
+        canvas.restoreState()
+
+    doc.build(story, onFirstPage=_page_footer, onLaterPages=_page_footer)
+    return buffer.getvalue()
 
 # ── Font setup: register Noto Sans for proper ₹ glyph + clean typography ──────
 from reportlab.pdfbase import pdfmetrics
@@ -628,7 +978,10 @@ def _header_footer(canvas, doc, title: str, company: dict, period: str, generate
     canvas.setFillColor(colors.HexColor("#B8C4D9"))
     line_y = page_h - 17*mm
     details = []
-    if company.get("reg_address"): details.append(company["reg_address"][:60])
+    if company.get("reg_address"):
+        addr_lines = [ln.strip().rstrip(",").strip() for ln in company["reg_address"].replace("\r", "").split("\n")]
+        addr_lines = [ln for ln in addr_lines if ln]
+        details.append(", ".join(addr_lines)[:60])
     if company.get("gstin"): details.append(f"GSTIN: {company['gstin']}")
     contact_bits = [b for b in [company.get("phone"), company.get("email"), company.get("website")] if b]
     if contact_bits: details.append(" · ".join(contact_bits))

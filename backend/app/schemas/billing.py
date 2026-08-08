@@ -391,7 +391,9 @@ class InvoiceOut(APIModel):
     reverse_charge: bool
     irn: Optional[str]
     ack_no: Optional[str]
+    ack_date: Optional[datetime] = None
     ewb_no: Optional[str]
+    ewb_valid_till: Optional[datetime] = None
     qr_code_data: Optional[str]
     transporter_name: Optional[str] = None
     transporter_id: Optional[str] = None
