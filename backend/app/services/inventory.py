@@ -209,6 +209,15 @@ class InventoryService:
             "received_by": user_id,
         })
 
+    async def cancel_transfer(self, transfer_id: UUID, company_id: UUID, user_id: UUID):
+        trf = await self.transfer_repo.get_or_raise(transfer_id)
+        if trf.status not in ("draft",):
+            raise BusinessError(
+                "Only draft transfers can be cancelled. A dispatched transfer must be "
+                "received and then corrected with a reverse transfer."
+            )
+        await self.transfer_repo.update(trf, {"status": "cancelled"})
+
     async def get_stock_valuation(self, company_id: UUID) -> dict:
         from sqlalchemy import text
         stmt = text("""

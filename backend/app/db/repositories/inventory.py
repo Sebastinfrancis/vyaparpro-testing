@@ -24,7 +24,15 @@ class WarehouseRepository(BaseRepository[Warehouse]):
         return list((await self.session.execute(stmt)).scalars().all())
 
     async def get_default(self, company_id: UUID) -> Warehouse | None:
-        return await self.get_by(company_id=company_id, is_default=True)
+        # Defensive: if more than one warehouse was ever marked default (e.g. from
+        # older branch-creation logic), don't crash — just take the oldest.
+        stmt = (
+            select(Warehouse)
+            .where(Warehouse.company_id == company_id, Warehouse.is_default == True)
+            .order_by(Warehouse.created_at.asc())
+            .limit(1)
+        )
+        return (await self.session.execute(stmt)).scalars().first()
 
 
 class InventoryStockRepository(BaseRepository[InventoryStock]):

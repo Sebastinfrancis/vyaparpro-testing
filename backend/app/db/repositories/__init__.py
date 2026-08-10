@@ -129,6 +129,18 @@ class UserRepository(BaseRepository[User]):
     async def get_by_email(self, company_id: UUID, email: str) -> User | None:
         return await self.get_by(company_id=company_id, email=email.lower().strip())
 
+    async def get_companies_by_email(self, email: str) -> list[User]:
+        """Find every active user record with this email, across all companies.
+        Email is only unique *within* a company, so a login screen needs this
+        to work out which company_id to log the person into."""
+        stmt = (
+            select(User)
+            .where(User.email == email.lower().strip(), User.is_active == True)  # noqa: E712
+            .options(selectinload(User.company))
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
     async def get_with_role(self, user_id: UUID) -> User | None:
         stmt = (
             select(User)

@@ -38,8 +38,8 @@ from app.schemas import (
     BranchCreate, BranchUpdate, CategoryCreate, CategoryUpdate,
     CompanyCreate, CompanyUpdate, GSTRateOut, LoginRequest,
     OrganizationCreate, PartyCreate, PartyUpdate, ProductCreate,
-    ProductUpdate, RoleCreate, RoleUpdate, TokenResponse, UserCreate,
-    UserUpdate,
+    ProductUpdate, RegisterRequest, RoleCreate, RoleUpdate, TokenResponse,
+    UserCreate, UserUpdate,
 )
 
 
@@ -49,10 +49,119 @@ from app.schemas import (
 
 class AuthService:
     def __init__(self, session: AsyncSession) -> None:
+        self.session = session
         self.users = UserRepository(session)
         self.sessions = UserSessionRepository(session)
         self.perms = PermissionRepository(session)
         self.audit = AuditLogRepository(session)
+        self.orgs = OrganizationRepository(session)
+        self.companies = CompanyRepository(session)
+        self.roles = RoleRepository(session)
+
+    async def register(self, payload: RegisterRequest, ip: str | None = None) -> dict[str, Any]:
+        """Public sign-up flow: Organization + Company + Owner Role + first User, then auto-login."""
+        if payload.gstin:
+            existing_company = await self.companies.get_by_gstin(payload.gstin)
+            if existing_company:
+                raise AlreadyExistsError(f"A company with GSTIN {payload.gstin} is already registered.")
+
+        errors = validate_password_strength(payload.password)
+        if errors:
+            raise PasswordValidationError("; ".join(errors))
+
+        # 1. Organization (tenant root)
+        org = await self.orgs.create({
+            "org_name": payload.business_name,
+            "org_type": "company",
+        })
+
+        # 2. Company
+        company = await self.companies.create({
+            "org_id": org.id,
+            "legal_name": payload.business_name,
+            "trade_name": payload.business_name,
+            "gstin": payload.gstin,
+            "business_type": payload.business_type,
+            "email": payload.email,
+            "phone": payload.phone,
+        })
+
+        # 3. Owner role with every permission currently in the system
+        owner_role = await self.roles.create({
+            "company_id": company.id,
+            "role_name": "Owner",
+            "role_level": 1,
+            "description": "Full access — created automatically at sign-up.",
+            "is_system_role": True,
+        })
+        all_perms = await self.session.execute(select(Permission))
+        for perm in all_perms.scalars().all():
+            self.session.add(RolePermission(role_id=owner_role.id, perm_id=perm.id))
+        await self.session.flush()
+
+        # 4. First user (the owner)
+        if await self.users.get_by_email(company.id, payload.email):
+            raise AlreadyExistsError(f"User with email '{payload.email}' already exists.")
+        user = await self.users.create({
+            "company_id": company.id,
+            "full_name": payload.full_name,
+            "email": payload.email.lower().strip(),
+            "phone": payload.phone,
+            "password_hash": hash_password(payload.password),
+            "role_id": owner_role.id,
+            "is_active": True,
+        })
+
+        await self.audit.log(
+            company_id=company.id, action="CREATE", module="auth",
+            user_id=user.id, entity_type="companies", entity_id=company.id,
+            entity_ref=company.legal_name,
+        )
+
+        # 4b. Seed the standard Chart of Accounts so Ledger & Books
+        # isn't empty the moment the company is created.
+        from app.services.accounting import ChartOfAccountsService
+        coa_svc = ChartOfAccountsService(self.session)
+        await coa_svc.seed_default_accounts(company.id, user.id)
+
+        # 5. Auto-login — issue tokens exactly like /auth/login
+        perm_codes = await self.perms.get_user_permissions(user.id)
+        access = create_access_token(
+            user_id=user.id, company_id=user.company_id,
+            role_id=user.role_id, branch_id=user.branch_id, scopes=perm_codes,
+        )
+        refresh = create_refresh_token(user.id)
+
+        from datetime import timedelta
+        from app.core.config import settings
+        expires_at = datetime.now(timezone.utc) + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS)
+        await self.sessions.create({
+            "user_id": user.id,
+            "token_hash": hash_token(refresh),
+            "ip_address": ip,
+            "device_info": {},
+            "expires_at": expires_at,
+        })
+
+        await self.audit.log(company_id=company.id, action="LOGIN", module="auth", user_id=user.id, ip_address=ip)
+
+        return {
+            "access_token": access,
+            "refresh_token": refresh,
+            "token_type": "bearer",
+            "expires_in": settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            "user": user,
+            "company": company,
+        }
+
+    async def resolve_companies(self, email: str) -> list[dict[str, Any]]:
+        """Look up which company/companies an email belongs to, so the login
+        screen can supply the right company_id without the user typing one."""
+        users = await self.users.get_companies_by_email(email)
+        return [
+            {"company_id": str(u.company_id), "legal_name": u.company.legal_name if u.company else ""}
+            for u in users
+        ]
 
     async def login(self, payload: LoginRequest, ip: str | None = None) -> dict[str, Any]:
         user = await self.users.get_by_email(payload.company_id, payload.email)
@@ -224,6 +333,33 @@ class CompanyService:
             user_id=created_by, entity_type="companies", entity_id=company.id,
             entity_ref=company.legal_name,
         )
+
+        # Every real ERP treats the registered address as the first location —
+        # usually labelled "Head Office" — the moment the company profile is
+        # saved, rather than leaving the business with zero branches until
+        # someone remembers to add one manually.
+        from app.schemas import BranchCreate
+        branch_svc = BranchService(self.companies.session)
+        await branch_svc.create(
+            company.id,
+            BranchCreate(
+                branch_code="HO",
+                branch_name="Head Office",
+                gstin=company.gstin,
+                address=company.reg_address,
+                state_code=company.state_code,
+                branch_type="branch",
+            ),
+            created_by,
+        )
+
+        # Seed the standard Chart of Accounts for this new company too —
+        # otherwise Ledger & Books stays empty until someone remembers
+        # to hit /accounting/seed manually.
+        from app.services.accounting import ChartOfAccountsService
+        coa_svc = ChartOfAccountsService(self.companies.session)
+        await coa_svc.seed_default_accounts(company.id, created_by)
+
         return company
 
     async def update(self, company_id: UUID, payload: CompanyUpdate, user_id: UUID) -> Company:
@@ -257,6 +393,28 @@ class BranchService:
         data = payload.model_dump()
         data["company_id"] = company_id
         branch = await self.branches.create(data)
+
+        # Every branch needs at least one stock location to hold inventory,
+        # run "View Stock" and take part in inter-branch transfers.
+        from app.db.repositories.inventory import WarehouseRepository
+        wh_repo = WarehouseRepository(self.branches.session)
+        # Only the company's very first warehouse should be "the" default —
+        # marking every branch's warehouse as default makes get_default()
+        # ambiguous once a company has more than one branch.
+        existing_warehouses = await wh_repo.get_by_company(company_id, active_only=False)
+        await wh_repo.create({
+            "company_id": company_id,
+            "branch_id": branch.id,
+            "warehouse_code": f"{branch.branch_code}-WH",
+            "warehouse_name": f"{branch.branch_name} — Main Store",
+            "address": branch.address,
+            "city": branch.city,
+            "state": branch.state,
+            "pincode": branch.pincode,
+            "is_default": len(existing_warehouses) == 0,
+            "warehouse_type": "owned",
+        })
+
         await self.audit.log(
             company_id=company_id, action="CREATE", module="branch",
             user_id=user_id, entity_type="branches", entity_id=branch.id,

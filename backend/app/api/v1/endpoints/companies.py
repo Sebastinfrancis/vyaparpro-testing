@@ -167,6 +167,38 @@ async def upload_logo(
     return ok(data={"logo_url": logo_url}, message="Logo uploaded.")
 
 
+@router.post("/{company_id}/signature", summary="Upload authorised-signatory signature image (multipart)")
+async def upload_signature(
+    company_id: UUID,
+    file: UploadFile,
+    current: CurrentUserDep,
+    db: DBDep,
+) -> ORJSONResponse:
+    # Validate file type
+    if file.content_type not in ("image/jpeg", "image/png", "image/webp"):
+        from app.core.exceptions import ValidationError
+        raise ValidationError("Only JPEG, PNG, or WebP images are accepted.")
+    from pathlib import Path
+
+    ext = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}[file.content_type]
+    static_dir = Path("app/static/signatures")
+    static_dir.mkdir(parents=True, exist_ok=True)
+    dest = static_dir / f"{company_id}.{ext}"
+    contents = await file.read()
+    if len(contents) > 1 * 1024 * 1024:
+        from app.core.exceptions import ValidationError
+        raise ValidationError("Signature image must be under 1MB.")
+    with open(dest, "wb") as f:
+        f.write(contents)
+    signature_url = f"/static/signatures/{company_id}.{ext}"
+    from app.db.repositories import CompanyRepository
+    repo = CompanyRepository(db)
+    company = await repo.get_or_raise(company_id)
+    # Stored inside settings JSONB (no dedicated column, unlike logo_url) so no migration is needed.
+    await repo.update(company, {"settings": {**(company.settings or {}), "signature_url": signature_url}})
+    return ok(data={"signature_url": signature_url}, message="Signature uploaded.")
+
+
 @router.get("/{company_id}/summary", summary="Company dashboard KPI summary")
 async def company_summary(
     company_id: UUID,

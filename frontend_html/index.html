@@ -76,6 +76,7 @@ tbody td.b{color:var(--text);font-weight:600}
 .fg{margin-bottom:14px}
 .fl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:5px;display:block}
 .fi{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:9px 12px;color:var(--text);font-family:'Sora',sans-serif;font-size:12px;outline:none;transition:border .13s}
+.uc-field{text-transform:uppercase}
 .fi:focus{border-color:var(--accent)}
 .fi::placeholder{color:var(--text3)}
 select.fi option{background:var(--bg2)}
@@ -181,6 +182,50 @@ select.fi option{background:var(--bg2)}
 .api-status{display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:3px 9px;border-radius:18px;font-weight:600;margin-bottom:18px}
 .api-online{background:rgba(0,230,118,.09);color:var(--green);border:1px solid rgba(0,230,118,.18)}
 .api-offline{background:rgba(255,68,68,.09);color:var(--red);border:1px solid rgba(255,68,68,.18)}
+/* Welcome / Landing Screen — premium marketing-style entry page */
+.welcome-screen{position:relative;min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;
+  background:
+    radial-gradient(1100px 520px at 10% -10%, rgba(0,212,255,.10), transparent 60%),
+    radial-gradient(900px 480px at 100% 5%, rgba(0,230,118,.08), transparent 55%),
+    var(--bg)}
+.wnav{display:flex;align-items:center;justify-content:space-between;padding:22px 5vw;border-bottom:1px solid var(--border)}
+.wnav-logo{font-size:19px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.2px;line-height:1.3}
+.wnav-logo span{display:block;font-size:9px;color:var(--text3);letter-spacing:2px;-webkit-text-fill-color:var(--text3);font-weight:600;margin-top:1px}
+.whero{flex:1;display:grid;grid-template-columns:1.05fr .95fr;gap:60px;align-items:center;max-width:1180px;margin:0 auto;padding:64px 5vw 70px;width:100%}
+.weyebrow{display:inline-flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent);background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.22);border-radius:20px;padding:6px 13px;margin-bottom:22px}
+.whead{font-size:44px;line-height:1.12;font-weight:800;color:var(--text);letter-spacing:-.5px;margin-bottom:18px}
+.whead em{font-style:normal;background:linear-gradient(135deg,var(--accent),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.wsub{font-size:14.5px;color:var(--text2);line-height:1.7;max-width:460px;margin-bottom:32px}
+.wctas{display:flex;gap:14px;margin-bottom:34px;flex-wrap:wrap}
+.wchecks{display:flex;gap:22px;flex-wrap:wrap}
+.wcheck{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text2);font-weight:600}
+.wcheck b{color:var(--green);font-size:13px}
+.wmock{position:relative;background:linear-gradient(180deg,var(--card),var(--bg3));border:1px solid var(--border2);border-radius:18px;padding:26px;box-shadow:0 30px 60px -20px rgba(0,0,0,.55);animation:wfloat 6s ease-in-out infinite}
+.wmock-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.wmock-brand{font-size:12px;font-weight:800;color:var(--text)}
+.wmock-badge{font-size:9px;font-weight:700;color:var(--green);background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.25);border-radius:12px;padding:3px 9px;letter-spacing:.5px}
+.wmock-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--border);font-size:11px}
+.wmock-row span:first-child{color:var(--text3)}
+.wmock-row span:last-child{color:var(--text2);font-weight:600}
+.wmock-bars{display:flex;align-items:flex-end;gap:6px;height:64px;margin:20px 0 6px}
+.wmock-bars i{flex:1;background:linear-gradient(180deg,var(--accent),var(--accent2));border-radius:4px 4px 0 0;opacity:.85}
+.wmock-tax{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.wmock-chip{font-size:9.5px;font-weight:700;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:5px 9px}
+@keyframes wfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.wstrip{border-top:1px solid var(--border);padding:50px 5vw 60px}
+.wstrip-inner{max-width:1180px;margin:0 auto}
+.wstrip-h{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-weight:700;margin-bottom:22px;text-align:center}
+.wgrid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.wcard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;transition:transform .15s,border-color .15s}
+.wcard:hover{transform:translateY(-3px);border-color:var(--border2)}
+.wcard-i{font-size:22px;margin-bottom:12px}
+.wcard-t{font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px}
+.wcard-d{font-size:11.5px;color:var(--text3);line-height:1.55}
+.wfoot{border-top:1px solid var(--border);padding:18px 5vw;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.wfoot-txt{font-size:10.5px;color:var(--text3)}
+.back-link{font-size:11px;color:var(--text3);cursor:pointer;text-align:left;margin-bottom:14px;display:inline-block}
+.back-link:hover{color:var(--accent)}
+@media(max-width:860px){.whero{grid-template-columns:1fr;padding-top:40px}.whead{font-size:32px}.wgrid3{grid-template-columns:1fr}}
 @media(max-width:860px){.sidebar{display:none}.sgrid{grid-template-columns:1fr 1fr}.fr.c3{grid-template-columns:1fr 1fr}}
 /* ---- Classic GST document (matches printed PDF) ---- */
 .gst-doc{font-family:Arial,Helvetica,sans-serif;color:#000;font-size:12px;border:1.5px solid #000}
@@ -212,21 +257,123 @@ select.fi option{background:var(--bg2)}
 </head>
 <body>
 
-<!-- ===== LOGIN SCREEN ===== -->
-<div id="loginScreen" class="login-screen">
+<!-- ===== WELCOME / LANDING SCREEN ===== -->
+<div id="welcomeScreen" class="welcome-screen">
+  <div class="wnav">
+    <div class="wnav-logo">VyaparPro<span>AI-POWERED GST ERP</span></div>
+    <button class="btn btn-o" onclick="showAuthScreen('login')">Sign In</button>
+  </div>
+
+  <div class="whero">
+    <div>
+      <div class="weyebrow">🇮🇳 Built for Indian GST compliance</div>
+      <div class="whead">Billing and GST that <em>keep pace</em> with your business.</div>
+      <p class="wsub">Invoicing, inventory, purchases and GST returns in one place — with an AI assistant that answers questions about your own data.</p>
+      <div class="wctas">
+        <button class="btn btn-p" style="padding:13px 24px" onclick="showAuthScreen('signup')">Create Free Account</button>
+        <button class="btn btn-o" style="padding:13px 24px" onclick="showAuthScreen('login')">Sign In</button>
+      </div>
+      <div class="wchecks">
+        <div class="wcheck"><b>✓</b> No card required</div>
+        <div class="wcheck"><b>✓</b> GSTR-1 &amp; GSTR-3B ready</div>
+        <div class="wcheck"><b>✓</b> Multi-branch support</div>
+      </div>
+    </div>
+
+    <div class="wmock">
+      <div class="wmock-top">
+        <div class="wmock-brand">🧾 Tax Invoice</div>
+        <div class="wmock-badge">GST COMPLIANT</div>
+      </div>
+      <div class="wmock-row"><span>Invoice No.</span><span>INV-000482</span></div>
+      <div class="wmock-row"><span>Party</span><span>Registered Buyer</span></div>
+      <div class="wmock-row"><span>Place of Supply</span><span>33 – Tamil Nadu</span></div>
+      <div class="wmock-bars">
+        <i style="height:38%"></i><i style="height:62%"></i><i style="height:48%"></i>
+        <i style="height:80%"></i><i style="height:54%"></i><i style="height:70%"></i><i style="height:44%"></i>
+      </div>
+      <div class="wmock-tax">
+        <div class="wmock-chip">CGST</div>
+        <div class="wmock-chip">SGST</div>
+        <div class="wmock-chip">IGST</div>
+        <div class="wmock-chip">HSN Summary</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wstrip">
+    <div class="wstrip-inner">
+      <div class="wstrip-h">Everything a growing business needs</div>
+      <div class="wgrid3">
+        <div class="wcard"><div class="wcard-i">🧾</div><div class="wcard-t">GST-Compliant Invoicing</div><div class="wcard-d">GSTR-1, GSTR-3B and HSN summary exports in the official GSTN offline-tool schema.</div></div>
+        <div class="wcard"><div class="wcard-i">📦</div><div class="wcard-t">Inventory &amp; Purchasing</div><div class="wcard-d">Stock tracking, purchase orders, vendor management and low-stock alerts.</div></div>
+        <div class="wcard"><div class="wcard-i">🤖</div><div class="wcard-t">AI Assistant</div><div class="wcard-d">Ask plain-language questions about your sales, stock and parties.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wfoot">
+    <div class="wfoot-txt">© 2026 VyaparPro. Built for Indian businesses.</div>
+    <div id="welcomeApiPill" class="api-status api-offline" style="margin-bottom:0">⏳ Checking API…</div>
+  </div>
+</div>
+
+<!-- ===== AUTH SCREEN (Sign In / Sign Up) ===== -->
+<div id="authScreen" class="login-screen" style="display:none">
   <div class="login-box">
+    <div class="back-link" onclick="showWelcomeScreen()">← Back</div>
     <div class="login-logo">VyaparPro</div>
-    <div style="font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:18px">AI-Powered ERP</div>
+    <div style="font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px">AI-Powered ERP</div>
+
+    <div class="tabr" style="margin-bottom:18px">
+      <button class="tabb active" id="authTabLogin" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="tabb" id="authTabSignup" onclick="switchAuthTab('signup')">Sign Up</button>
+    </div>
+
     <div id="apiStatusPill" class="api-status api-offline">⏳ Checking API…</div>
-    <div class="fg"><label class="fl">Username / Email</label>
-      <input class="fi" id="loginUser" placeholder="admin@vyaparpro.com" value="admin@vyaparpro.com"/></div>
-    <div class="fg"><label class="fl">Password</label>
-      <input class="fi" type="password" id="loginPass" placeholder="••••••••" value="admin123"
-        onkeydown="if(event.key==='Enter')doLogin()"/></div>
-    <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px" onclick="doLogin()" id="loginBtn">
-      Sign In
-    </button>
-    <div id="loginErr" style="color:var(--red);font-size:11px;margin-top:10px;text-align:center"></div>
+
+    <!-- LOGIN FORM -->
+    <div id="loginForm">
+      <div class="fg"><label class="fl">Username / Email</label>
+        <input class="fi" id="loginUser" placeholder="admin@vyaparpro.com" value="admin@vyaparpro.com"/></div>
+      <div class="fg"><label class="fl">Password</label>
+        <input class="fi" type="password" id="loginPass" placeholder="••••••••" value="admin123"
+          onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px" onclick="doLogin()" id="loginBtn">
+        Sign In
+      </button>
+      <div id="loginErr" style="color:var(--red);font-size:11px;margin-top:10px;text-align:center"></div>
+      <div style="margin-top:16px;font-size:11px;color:var(--text3);text-align:center">
+        New here? <a href="javascript:void(0)" onclick="switchAuthTab('signup')" style="color:var(--accent)">Create an account</a>
+      </div>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div id="signupForm" style="display:none">
+      <div class="fg"><label class="fl">Business Name</label>
+        <input class="fi" id="suBusiness" placeholder="Sharma Electronics"/></div>
+      <div class="fg"><label class="fl">Your Full Name</label>
+        <input class="fi" id="suName" placeholder="Rajesh Sharma"/></div>
+      <div class="fg"><label class="fl">Email</label>
+        <input class="fi" id="suEmail" placeholder="you@business.com"/></div>
+      <div class="fg"><label class="fl">Phone (optional)</label>
+        <input class="fi" id="suPhone" placeholder="9876543210"/></div>
+      <div class="fg"><label class="fl">GSTIN (optional)</label>
+        <input class="fi uc-field" id="suGstin" placeholder="27AABCS1234F1Z5" style="text-transform:uppercase"/></div>
+      <div class="fg"><label class="fl">Password</label>
+        <input class="fi" type="password" id="suPass" placeholder="Min. 8 characters"/></div>
+      <div class="fg"><label class="fl">Confirm Password</label>
+        <input class="fi" type="password" id="suPass2" placeholder="Re-enter password"
+          onkeydown="if(event.key==='Enter')doRegister()"/></div>
+      <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px" onclick="doRegister()" id="signupBtn">
+        Create Account
+      </button>
+      <div id="signupErr" style="color:var(--red);font-size:11px;margin-top:10px;text-align:center"></div>
+      <div style="margin-top:16px;font-size:11px;color:var(--text3);text-align:center">
+        Already have an account? <a href="javascript:void(0)" onclick="switchAuthTab('login')" style="color:var(--accent)">Sign in</a>
+      </div>
+    </div>
+
     <div style="margin-top:18px;padding:11px;background:var(--bg3);border-radius:var(--r2);font-size:10px;color:var(--text3)">
       💡 If API is offline, app runs on local demo data automatically.
     </div>
@@ -442,9 +589,49 @@ select.fi option{background:var(--bg2)}
               <div class="fg"><label class="fl">Date</label><input type="date" class="fi" id="invDate"/></div>
             </div>
             <div class="fr c3">
+              <div class="fg"><label class="fl">Branch</label><select class="fi" id="invBranch"></select></div>
               <div class="fg"><label class="fl">Due Date</label><input type="date" class="fi" id="invDue"/></div>
               <div class="fg"><label class="fl">Place of Supply</label>
-                <select class="fi" id="invState"><option>27 - Maharashtra</option><option>07 - Delhi</option><option>29 - Karnataka</option><option>33 - Tamil Nadu</option><option>09 - UP</option><option>06 - Haryana</option></select></div>
+                <select class="fi" id="invState">
+                  <option>01 - Jammu and Kashmir</option>
+                  <option>02 - Himachal Pradesh</option>
+                  <option>03 - Punjab</option>
+                  <option>04 - Chandigarh</option>
+                  <option>05 - Uttarakhand</option>
+                  <option>06 - Haryana</option>
+                  <option>07 - Delhi</option>
+                  <option>08 - Rajasthan</option>
+                  <option>09 - Uttar Pradesh</option>
+                  <option>10 - Bihar</option>
+                  <option>11 - Sikkim</option>
+                  <option>12 - Arunachal Pradesh</option>
+                  <option>13 - Nagaland</option>
+                  <option>14 - Manipur</option>
+                  <option>15 - Mizoram</option>
+                  <option>16 - Tripura</option>
+                  <option>17 - Meghalaya</option>
+                  <option>18 - Assam</option>
+                  <option>19 - West Bengal</option>
+                  <option>20 - Jharkhand</option>
+                  <option>21 - Odisha</option>
+                  <option>22 - Chhattisgarh</option>
+                  <option>23 - Madhya Pradesh</option>
+                  <option>24 - Gujarat</option>
+                  <option>26 - Dadra and Nagar Haveli and Daman and Diu</option>
+                  <option selected>27 - Maharashtra</option>
+                  <option>29 - Karnataka</option>
+                  <option>30 - Goa</option>
+                  <option>31 - Lakshadweep</option>
+                  <option>32 - Kerala</option>
+                  <option>33 - Tamil Nadu</option>
+                  <option>34 - Puducherry</option>
+                  <option>35 - Andaman and Nicobar Islands</option>
+                  <option>36 - Telangana</option>
+                  <option>37 - Andhra Pradesh</option>
+                  <option>38 - Ladakh</option>
+                  <option>97 - Other Territory</option>
+                  <option>99 - Centre Jurisdiction</option>
+                </select></div>
               <div class="fg"><label class="fl">Supply Type</label>
                 <select class="fi" id="supplyType" onchange="calcTotals()"><option value="intra">Intra-State (CGST+SGST)</option><option value="inter">Inter-State (IGST)</option></select></div>
               <div class="fg"><label class="fl"><input type="checkbox" id="invReverseCharge"/> Reverse Charge Applicable</label></div>
@@ -464,7 +651,7 @@ select.fi option{background:var(--bg2)}
             <div class="fg"><label class="fl">Notes / Terms</label><textarea class="fi" rows="2" id="invNotes" placeholder="Payment terms, delivery notes…"></textarea></div>
             <div class="fr c3">
               <div class="fg"><label class="fl">Transporter Name</label><input class="fi" id="invTransporterName" placeholder="e.g. Blue Dart Logistics"/></div>
-              <div class="fg"><label class="fl">Transporter ID / GSTIN</label><input class="fi" id="invTransporterId" placeholder="15-digit Transporter ID"/></div>
+              <div class="fg"><label class="fl">Transporter ID / GSTIN</label><input class="fi uc-field" id="invTransporterId" placeholder="15-digit Transporter ID"/></div>
               <div class="fg"><label class="fl">Vehicle No</label><input class="fi" id="invVehicleNo" placeholder="MH12AB1234"/></div>
             </div>
           </div>
@@ -474,7 +661,7 @@ select.fi option{background:var(--bg2)}
               <input class="fi" id="custName" placeholder="Type or select customer…" list="custDL" oninput="autofillCustomer(this.value)"/>
               <datalist id="custDL"></datalist></div>
             <div class="fr c2">
-              <div class="fg"><label class="fl">GSTIN</label><input class="fi" id="custGst" placeholder="29AABCS1234F1Z5"/></div>
+              <div class="fg"><label class="fl">GSTIN</label><input class="fi uc-field" id="custGst" placeholder="29AABCS1234F1Z5"/></div>
               <div class="fg"><label class="fl">Mobile</label><input class="fi" id="custMobile" placeholder="9876543210"/></div>
             </div>
             <div class="fg"><label class="fl">Billing Address</label><textarea class="fi" rows="2" id="custAddr" placeholder="Full address…"></textarea></div>
@@ -753,7 +940,7 @@ select.fi option{background:var(--bg2)}
         <div class="card">
           <div style="font-size:13px;font-weight:700;margin-bottom:14px">🛣️ E-Way Bill</div>
           <div class="fg"><label class="fl">Invoice No</label><input class="fi" id="ewbInv" placeholder="INV-2468"/></div>
-          <div class="fg"><label class="fl">Transporter ID</label><input class="fi mono" id="ewbTransporter" placeholder="12AABCT1234A1Z3"/></div>
+          <div class="fg"><label class="fl">Transporter ID</label><input class="fi mono uc-field" id="ewbTransporter" placeholder="12AABCT1234A1Z3"/></div>
           <div class="fr c2">
             <div class="fg"><label class="fl">Vehicle No</label><input class="fi" id="ewbVehicle" placeholder="MH01AB1234"/></div>
             <div class="fg"><label class="fl">Distance (km)</label><input class="fi" type="number" id="ewbDistance" placeholder="120"/></div>
@@ -775,6 +962,15 @@ select.fi option{background:var(--bg2)}
         <button class="btn btn-p btn-sm" onclick="openAddBranch()">➕ Add Branch</button>
       </div>
       <div class="g3" id="branchGrid"></div>
+
+      <div class="sh" style="margin-top:24px">
+        <div><div class="st">Inter-Branch Stock Transfers</div><div class="ss">Move stock between branches — dispatch, receive, track in transit</div></div>
+        <button class="btn btn-p btn-sm" onclick="openNewTransfer()">➕ New Transfer</button>
+      </div>
+      <div class="card"><div class="tw"><table>
+        <thead><tr><th>Transfer No</th><th>Date</th><th>From</th><th>To</th><th>Note</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="transferBody"></tbody>
+      </table></div></div>
     </div>
 
     <!-- ======== ACCOUNTING ======== -->
@@ -885,12 +1081,12 @@ select.fi option{background:var(--bg2)}
         </div>
         <div class="card">
           <div style="font-size:13px;font-weight:700;margin-bottom:11px">📱 Generate UPI QR</div>
-          <div class="fg"><label class="fl">Amount (₹)</label><input class="fi" placeholder="Enter amount" id="upiAmt"/></div>
-          <div class="fg"><label class="fl">Invoice / Reference</label><input class="fi" placeholder="INV-2469"/></div>
-          <div class="fg"><label class="fl">UPI ID</label><input class="fi" value="sharma.electronics@ybl" id="upiId"/></div>
+          <div class="fg"><label class="fl">Amount (₹)</label><input class="fi" placeholder="Enter amount" id="upiAmt" type="number" min="1" step="0.01"/></div>
+          <div class="fg"><label class="fl">Invoice / Reference</label><input class="fi" placeholder="INV-2469" id="upiRef"/></div>
+          <div class="fg"><label class="fl">UPI ID</label><input class="fi" placeholder="yourname@bank" id="upiId"/></div>
           <button class="btn btn-p" style="width:100%;justify-content:center" onclick="genUPI()">Generate QR Code</button>
           <div id="upiQR" style="display:none;text-align:center;margin-top:14px;padding:18px;background:var(--bg3);border-radius:var(--r2)">
-            <div style="font-size:56px;letter-spacing:-4px">▩▩▩<br>▩▩▩<br>▩▩▩</div>
+            <div id="upiQRImgWrap"></div>
             <div style="font-size:12px;color:var(--text2);margin-top:7px">UPI QR — Scan to Pay</div>
             <div id="upiIdShow" style="font-size:10px;color:var(--text3);margin-top:3px"></div>
           </div>
@@ -1001,6 +1197,30 @@ select.fi option{background:var(--bg2)}
       </div>
       <div class="smi-arrow">›</div>
     </div>
+    <div class="settings-menu-item" onclick="openSettingsSection('tax')">
+      <div class="smi-icon">🧾</div>
+      <div class="smi-text">
+        <div class="smi-title">Tax & GST Defaults</div>
+        <div class="smi-sub">Default rates, pricing type, filing frequency</div>
+      </div>
+      <div class="smi-arrow">›</div>
+    </div>
+    <div class="settings-menu-item" onclick="openSettingsSection('numbering')">
+      <div class="smi-icon">🔢</div>
+      <div class="smi-text">
+        <div class="smi-title">Document Numbering</div>
+        <div class="smi-sub">Prefix & next number for invoices, POs, quotations</div>
+      </div>
+      <div class="smi-arrow">›</div>
+    </div>
+    <div class="settings-menu-item" onclick="openSettingsSection('pdf')">
+      <div class="smi-icon">🖨️</div>
+      <div class="smi-text">
+        <div class="smi-title">Invoice & PDF Preferences</div>
+        <div class="smi-sub">Page size, UPI QR, signature, copy label</div>
+      </div>
+      <div class="smi-arrow">›</div>
+    </div>
     <div class="settings-menu-item" onclick="openSettingsSection('bank')">
       <div class="smi-icon">🏦</div>
       <div class="smi-text">
@@ -1068,8 +1288,8 @@ select.fi option{background:var(--bg2)}
         <div class="fg"><label class="fl">Business Name</label><input class="fi" id="setLegalName"/></div>
         <div class="fg"><label class="fl">Trade Name</label><input class="fi" id="setTradeName"/></div>
         <div class="fg"><label class="fl">Invoice Tagline</label><input class="fi" id="setTagline" placeholder="e.g. Manufacturing &amp; Supply of Precision Tools"/></div>
-        <div class="fg"><label class="fl">GSTIN</label><input class="fi mono" id="setGstin"/></div>
-        <div class="fg"><label class="fl">PAN</label><input class="fi mono" id="setPan"/></div>
+        <div class="fg"><label class="fl">GSTIN</label><input class="fi mono uc-field" id="setGstin"/></div>
+        <div class="fg"><label class="fl">PAN</label><input class="fi mono uc-field" id="setPan"/></div>
         <div class="fr c2">
           <div class="fg"><label class="fl">State</label><select class="fi" id="setStateCode">
             <option value="01">01 - Jammu & Kashmir</option>
@@ -1121,6 +1341,69 @@ select.fi option{background:var(--bg2)}
       </div>
     </div>
 
+    <div id="settingsSection-tax" class="settings-section hidden">
+      <div class="settings-section-header">
+        <div class="ssh-icon">🧾</div>
+        <div>
+          <div class="ssh-title">Tax & GST Defaults</div>
+          <div class="ssh-sub">Defaults applied when creating new products and documents</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="fr c2">
+          <div class="fg"><label class="fl">Default GST Rate for New Products</label>
+            <select class="fi" id="taxDefaultGst">
+              <option value="0">0%</option>
+              <option value="5">5%</option>
+              <option value="12">12%</option>
+              <option value="18">18%</option>
+              <option value="28">28%</option>
+            </select>
+          </div>
+          <div class="fg"><label class="fl">Prices Entered As</label>
+            <select class="fi" id="taxPriceType">
+              <option value="exclusive">Exclusive of GST</option>
+              <option value="inclusive">Inclusive of GST</option>
+            </select>
+          </div>
+        </div>
+        <div class="fr c2">
+          <div class="fg"><label class="fl">GSTR Filing Frequency</label>
+            <select class="fi" id="taxFilingFreq">
+              <option value="monthly">Monthly</option>
+              <option value="qrmp">Quarterly (QRMP)</option>
+            </select>
+           </div>
+           <div class="fg"><label class="fl">HSN/SAC Code Digits Required</label>
+            <select class="fi" id="taxHsnDigits">
+              <option value="4">4 digits</option>
+              <option value="6">6 digits</option>
+              <option value="8">8 digits</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="div"></div>
+
+        <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:18px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
+            <div><div style="font-size:12px;font-weight:600">Composition Scheme Dealer</div>
+              <div style="font-size:10px;color:var(--text3)">Turns off GST rate breakup on invoices — a flat composition levy applies instead</div>
+            </div>
+            <span class="chip cor" id="tax_composition_scheme" style="cursor:pointer">Off</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2)">
+            <div><div style="font-size:12px;font-weight:600">Round Invoice Totals</div>
+              <div style="font-size:10px;color:var(--text3)">Rounds the final payable amount to the nearest ₹1</div>
+            </div>
+            <span class="chip cgr" id="tax_round_invoice_totals" style="cursor:pointer">On</span>
+          </div>
+        </div>
+
+        <button class="btn btn-p btn-sm" onclick="saveTaxSettings()">Save Tax & GST Defaults</button>
+      </div>
+    </div>
+
     <div id="settingsSection-bank" class="settings-section hidden">
       <div class="settings-section-header">
         <div class="ssh-icon">🏦</div>
@@ -1137,7 +1420,7 @@ select.fi option{background:var(--bg2)}
           <div class="fg"><label class="fl">Bank Name</label><input class="fi" id="setBankName" placeholder="e.g. ICICI Bank"/></div>
           <div class="fg"><label class="fl">Branch</label><input class="fi" id="setBankBranch"/></div>
           <div class="fg"><label class="fl">Account Number</label><input class="fi" id="setBankAccount"/></div>
-          <div class="fg"><label class="fl">IFSC</label><input class="fi" id="setBankIfsc"/></div>
+          <div class="fg"><label class="fl">IFSC</label><input class="fi uc-field" id="setBankIfsc"/></div>
           <div class="fg"><label class="fl">UPI ID</label><input class="fi" id="setUpiId" placeholder="yourname@bank"/></div>
         </div>
         <div class="fg"><label class="fl">Default Terms & Conditions <span style="font-weight:400;color:var(--muted);font-size:11px">(Invoices &amp; Quotations)</span></label>
@@ -1197,53 +1480,81 @@ select.fi option{background:var(--bg2)}
     </div>
 
     <div id="settingsSection-backup" class="settings-section hidden">
-          <div class="settings-section-header">
-            <div class="ssh-icon">💾</div>
-            <div>
-              <div class="ssh-title">Local Backup</div>
-              <div class="ssh-sub">Download a copy of your data to this device</div>
-            </div>
+      <div class="settings-section-header">
+        <div class="ssh-icon">💾</div>
+        <div>
+          <div class="ssh-title">Local Backup</div>
+          <div class="ssh-sub">Download a copy of your data to this device</div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:18px;line-height:1.6">
+          Manual backups let you keep a copy of your business data on your own computer, independent of the
+          server. Download a file whenever you like — before a big update, at the end of the day, or on
+          whatever schedule suits you — and store it somewhere safe (a local drive, external disk, or your
+          own cloud storage).
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:var(--r2);margin-bottom:12px">
+          <div><div style="font-size:12px;font-weight:600">Last local backup</div>
+            <div style="font-size:10px;color:var(--text3)" id="lastBackupTime">No backup taken yet on this device</div>
           </div>
-          <div class="card">
-            <div style="font-size:11px;color:var(--muted);margin-bottom:18px;line-height:1.6">
-              Manual backups let you keep a copy of your business data on your own computer, independent of the
-              server. Download a file whenever you like — before a big update, at the end of the day, or on
-              whatever schedule suits you — and store it somewhere safe (a local drive, external disk, or your
-              own cloud storage).
-            </div>
+          <span class="chip cgr">💾 Manual</span>
+        </div>
 
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:var(--r2);margin-bottom:18px">
-              <div><div style="font-size:12px;font-weight:600">Last local backup</div>
-                <div style="font-size:10px;color:var(--text3)" id="lastBackupTime">No backup taken yet on this device</div>
-              </div>
-              <span class="chip cgr">💾 Manual</span>
-            </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:var(--r2);margin-bottom:18px">
+          <div><div style="font-size:12px;font-weight:600">Automatic Backup Reminder</div>
+            <div style="font-size:10px;color:var(--text3)">Runs a Full Backup automatically when due, whenever the app is open on this device</div>
+          </div>
+          <select class="fi" id="backupSchedule" style="width:130px;padding:8px 10px" onchange="saveBackupSchedule(this.value)">
+            <option value="off">Off</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+          </select>
+        </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px">
-              <div style="padding:14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2)">
-                <div style="font-size:12px;font-weight:700;margin-bottom:4px">📦 Full Backup (JSON)</div>
-                <div style="font-size:10.5px;color:var(--text3);margin-bottom:12px">
-                  One file with your company profile, customers, vendors, products and invoices — the most
-                  complete backup, best for safekeeping or restoring later.
-                </div>
-                <button class="btn btn-p btn-sm" style="width:100%" onclick="downloadFullBackup()">⬇ Download Full Backup</button>
-              </div>
-              <div style="padding:14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2)">
-                <div style="font-size:12px;font-weight:700;margin-bottom:4px">📊 CSV Files</div>
-                <div style="font-size:10.5px;color:var(--text3);margin-bottom:12px">
-                  Separate spreadsheet-friendly files for invoices, customers, vendors and products — handy for
-                  opening in Excel or Google Sheets.
-                </div>
-                <button class="btn btn-o btn-sm" style="width:100%" onclick="downloadCSVBackup()">⬇ Download CSV Files</button>
-              </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px">
+          <div style="padding:14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2)">
+            <div style="font-size:12px;font-weight:700;margin-bottom:4px">📦 Full Backup (JSON)</div>
+            <div style="font-size:10.5px;color:var(--text3);margin-bottom:12px">
+              One file with your company profile, customers, vendors, products and invoices — the most
+              complete backup, best for safekeeping or restoring later.
             </div>
-
-            <div style="font-size:10px;color:var(--text3);margin-top:6px">
-              Keep the downloaded file somewhere safe — if you ever need to recover data, share it with support
-              or your admin to have it restored.
+            <button class="btn btn-p btn-sm" style="width:100%" onclick="downloadFullBackup()">⬇ Download Full Backup</button>
+          </div>
+          <div style="padding:14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2)">
+            <div style="font-size:12px;font-weight:700;margin-bottom:4px">📊 CSV Files</div>
+            <div style="font-size:10.5px;color:var(--text3);margin-bottom:12px">
+              Separate spreadsheet-friendly files for invoices, customers, vendors and products — handy for
+              opening in Excel or Google Sheets.
             </div>
+            <button class="btn btn-o btn-sm" style="width:100%" onclick="downloadCSVBackup()">⬇ Download CSV Files</button>
           </div>
         </div>
+
+        <div style="font-size:10px;color:var(--text3);margin-top:6px">
+          Keep the downloaded file somewhere safe — you can restore it into this or any VyaparPro company below.
+        </div>
+
+        <div class="div"></div>
+
+        <div style="font-size:12px;font-weight:700;margin-bottom:6px">📤 Restore from a Backup File</div>
+        <div style="font-size:10.5px;color:var(--text3);margin-bottom:12px;line-height:1.6">
+          Upload a Full Backup (.json) file. Matches are found by GSTIN for customers/vendors and by SKU for
+          products — a matching record is <b>updated</b>, everything else is added as <b>new</b>, so it's
+          safe to restore the same file more than once. Invoices are shown for reference but aren't
+          auto-restored, since GST documents carry sequential numbers and need a manual check to avoid
+          duplicate filings.
+        </div>
+        <input type="file" id="restoreFile" accept="application/json,.json" style="display:none" onchange="handleRestoreFile(this)"/>
+        <button class="btn btn-o btn-sm" onclick="document.getElementById('restoreFile').click()">📤 Upload Backup File</button>
+
+        <div class="div"></div>
+
+        <div style="font-size:12px;font-weight:700;margin-bottom:10px">Backup & Restore History <span style="font-weight:400;color:var(--text3);font-size:10px">(this device)</span></div>
+        <div id="backupHistoryList" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+    </div>
 
         <div id="settingsSection-roles" class="settings-section hidden">
           <div class="settings-section-header">
@@ -1360,16 +1671,58 @@ select.fi option{background:var(--bg2)}
     <div class="mb">
       <div class="fr c2"><div class="fg"><label class="fl">Business / Customer Name</label><input class="fi" id="cm_name" placeholder="Kumar Electronics"/></div>
         <div class="fg"><label class="fl">Contact Person</label><input class="fi" id="cm_contact" placeholder="Suresh Kumar"/></div></div>
-      <div class="fr c2"><div class="fg"><label class="fl">GSTIN</label><input class="fi mono" id="cm_gstin" placeholder="27AABCK5678G1Z2"/></div>
-        <div class="fg"><label class="fl">PAN</label><input class="fi mono" id="cm_pan" placeholder="AABCK5678G"/></div></div>
+      <div class="fr c2"><div class="fg"><label class="fl">GSTIN</label><input class="fi mono uc-field" id="cm_gstin" placeholder="27AABCK5678G1Z2"/></div>
+        <div class="fg"><label class="fl">PAN</label><input class="fi mono uc-field" id="cm_pan" placeholder="AABCK5678G"/></div></div>
       <div class="fr c2"><div class="fg"><label class="fl">Mobile</label><input class="fi" id="cm_mobile" placeholder="9876543210"/></div>
         <div class="fg"><label class="fl">Alt. Mobile</label><input class="fi" id="cm_altmobile" placeholder="9876500000"/></div></div>
       <div class="fr c2"><div class="fg"><label class="fl">Email</label><input class="fi" id="cm_email" placeholder="kumar@email.com"/></div>
         <div class="fg"><label class="fl">Category</label><select class="fi" id="cm_category"><option value="">—</option><option>Retail</option><option>Wholesale</option><option>Distributor</option><option>Corporate</option></select></div></div>
       <div class="fg"><label class="fl">Full Address</label><textarea class="fi" rows="2" id="cm_addr" placeholder="Billing address…"></textarea></div>
       <div class="fr c3"><div class="fg"><label class="fl">City</label><input class="fi" id="cm_city" placeholder="Mumbai"/></div>
-        <div class="fg"><label class="fl">State</label><input class="fi" id="cm_state" placeholder="Maharashtra"/></div>
-        <div class="fg"><label class="fl">State Code</label><input class="fi" id="cm_statecode" placeholder="27" maxlength="2"/></div></div>
+        <div class="fg"><label class="fl">State</label>
+          <select class="fi" id="cm_state" onchange="onCmStateChange()">
+            <option value="">Select state…</option>
+            <option>Jammu and Kashmir</option>
+            <option>Himachal Pradesh</option>
+            <option>Punjab</option>
+            <option>Chandigarh</option>
+            <option>Uttarakhand</option>
+            <option>Haryana</option>
+            <option>Delhi</option>
+            <option>Rajasthan</option>
+            <option>Uttar Pradesh</option>
+            <option>Bihar</option>
+            <option>Sikkim</option>
+            <option>Arunachal Pradesh</option>
+            <option>Nagaland</option>
+            <option>Manipur</option>
+            <option>Mizoram</option>
+            <option>Tripura</option>
+            <option>Meghalaya</option>
+            <option>Assam</option>
+            <option>West Bengal</option>
+            <option>Jharkhand</option>
+            <option>Odisha</option>
+            <option>Chhattisgarh</option>
+            <option>Madhya Pradesh</option>
+            <option>Gujarat</option>
+            <option>Dadra and Nagar Haveli and Daman and Diu</option>
+            <option>Maharashtra</option>
+            <option>Karnataka</option>
+            <option>Goa</option>
+            <option>Lakshadweep</option>
+            <option>Kerala</option>
+            <option>Tamil Nadu</option>
+            <option>Puducherry</option>
+            <option>Andaman and Nicobar Islands</option>
+            <option>Telangana</option>
+            <option>Andhra Pradesh</option>
+            <option>Ladakh</option>
+            <option>Other Territory</option>
+            <option>Centre Jurisdiction</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">State Code</label><input class="fi num-field" id="cm_statecode" placeholder="27" maxlength="2" inputmode="numeric" pattern="[0-9]*"/></div></div>
       <div class="fg" style="max-width:200px"><label class="fl">Pincode</label><input class="fi" id="cm_pincode" placeholder="400001"/></div>
       <div class="fr c2"><div class="fg"><label class="fl">Credit Limit (₹)</label><input class="fi" type="number" id="cm_credit" placeholder="100000"/></div>
         <div class="fg"><label class="fl">Payment Terms</label><select class="fi" id="cm_terms"><option value="0">Due on Receipt</option><option value="15">Net 15</option><option value="30">Net 30</option><option value="45">Net 45</option></select></div></div>
@@ -1411,7 +1764,7 @@ select.fi option{background:var(--bg2)}
         <div class="fg"><label class="fl">Contact Person</label><input class="fi" id="vm_contact" placeholder="Amit Singh" autocomplete="off"/></div>
       </div>
       <div class="fr c2">
-        <div class="fg"><label class="fl">GSTIN</label><input class="fi mono" id="vm_gstin" placeholder="07AAACS1234A1Z5" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">GSTIN</label><input class="fi mono uc-field" id="vm_gstin" placeholder="07AAACS1234A1Z5" autocomplete="off"/></div>
         <div class="fg"><label class="fl">Mobile</label><input class="fi" id="vm_mobile" placeholder="9876543210" autocomplete="off"/></div>
       </div>
       <div class="fr c2">
@@ -1482,9 +1835,23 @@ select.fi option{background:var(--bg2)}
       <div class="fr c2"><div class="fg"><label class="fl">Email</label><input class="fi" id="au_email" placeholder="murali@company.com"/></div>
         <div class="fg"><label class="fl">Phone</label><input class="fi" id="au_phone" placeholder="9876543210"/></div></div>
       <div class="fg"><label class="fl">Temporary Password</label><input class="fi" type="text" id="au_password" placeholder="Min. 8 characters"/></div>
-      <div class="fg"><label class="fl">Role</label><select class="fi" id="au_role"></select></div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Role</label><select class="fi" id="au_role"></select></div>
+        <div class="fg"><label class="fl">Branch <span style="color:var(--text3);font-weight:400">(optional)</span></label><select class="fi" id="au_branch"><option value="">— No fixed branch (all-access) —</option></select></div>
+      </div>
     </div>
     <div class="mf"><button class="btn btn-o" onclick="closeModal('addUserModal')">Cancel</button><button class="btn btn-p" onclick="saveNewUser()">Create User</button></div>
+  </div>
+</div>
+
+<div id="restoreModal" class="mo hidden">
+  <div class="md md-md">
+    <div class="mh"><span class="mt2">Restore from Backup</span><button class="mc" onclick="closeModal('restoreModal')">✕</button></div>
+    <div class="mb"><div id="restoreSummary"></div></div>
+    <div class="mf">
+      <button class="btn btn-o" onclick="closeModal('restoreModal')">Cancel</button>
+      <button class="btn btn-p" id="restoreConfirmBtn" onclick="confirmRestore()">Restore Data</button>
+    </div>
   </div>
 </div>
 
@@ -1513,7 +1880,10 @@ select.fi option{background:var(--bg2)}
         <div class="fg"><label class="fl">PO Number</label><input class="fi mono" id="poNo" readonly/></div>
         <div class="fg"><label class="fl">Date</label><input type="date" class="fi" id="poDate"/></div>
       </div>
-      <div class="fg"><label class="fl">Vendor</label><select class="fi" id="poVendor"><option value="">Select vendor…</option></select></div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Vendor</label><select class="fi" id="poVendor"><option value="">Select vendor…</option></select></div>
+        <div class="fg"><label class="fl">Deliver To Branch</label><select class="fi" id="poBranch"></select></div>
+      </div>
       <div class="card" style="margin:10px 0">
         <div style="font-size:12px;font-weight:700;margin-bottom:10px">PO Items</div>
         <div class="iih iir" style="padding:3px 0 7px"><span>Product / Description</span><span>Qty</span><span>Rate (₹)</span><span>Disc%</span><span>GST%</span><span>Amount</span><span></span></div>
@@ -1655,7 +2025,7 @@ select.fi option{background:var(--bg2)}
         <div class="fg"><label class="fl">State Code</label><input class="fi mono" id="br_state_code" placeholder="27" autocomplete="off"/></div>
         <div class="fg"><label class="fl">Pincode</label><input class="fi mono" id="br_pincode" placeholder="400069" autocomplete="off"/></div>
       </div>
-      <div class="fg"><label class="fl">GSTIN</label><input class="fi mono" id="br_gstin" placeholder="27AABCS1234F1Z5" autocomplete="off"/></div>
+      <div class="fg"><label class="fl">GSTIN</label><input class="fi mono uc-field" id="br_gstin" placeholder="27AABCS1234F1Z5" autocomplete="off"/></div>
       <div class="fr c2">
         <div class="fg"><label class="fl">Phone</label><input class="fi" id="br_phone" placeholder="9876543210" autocomplete="off"/></div>
         <div class="fg"><label class="fl">Email</label><input class="fi" id="br_email" placeholder="branch@example.com" autocomplete="off"/></div>
@@ -1670,6 +2040,36 @@ select.fi option{background:var(--bg2)}
       </div>
     </div>
     <div class="mf"><button class="btn btn-o" onclick="closeModal('branchModal')">Cancel</button><button class="btn btn-p" onclick="saveBranch()">Save Branch</button></div>
+  </div>
+</div>
+
+<div id="stockModal" class="mo hidden" autocomplete="off">
+  <div class="md md-sm">
+    <div class="mh"><span class="mt2" id="stockModalTitle">Branch Stock</span><button class="mc" onclick="closeModal('stockModal')">✕</button></div>
+    <div class="mb">
+      <div id="stockModalBody" style="max-height:60vh;overflow-y:auto">Loading…</div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('stockModal')">Close</button></div>
+  </div>
+</div>
+
+<div id="transferModal" class="mo hidden" autocomplete="off">
+  <div class="md md-sm">
+    <div class="mh"><span class="mt2">New Stock Transfer</span><button class="mc" onclick="closeModal('transferModal')">✕</button></div>
+    <div class="mb">
+      <div class="fr c2">
+        <div class="fg"><label class="fl">From Branch</label><select class="fi" id="trf_from"></select></div>
+        <div class="fg"><label class="fl">To Branch</label><select class="fi" id="trf_to"></select></div>
+      </div>
+      <div class="fg"><label class="fl">Date</label><input class="fi" type="date" id="trf_date"/></div>
+      <div class="fg"><label class="fl">Narration</label><input class="fi" id="trf_narration" placeholder="Reason for transfer…" autocomplete="off"/></div>
+      <div class="fg">
+        <label class="fl">Items</label>
+        <div id="trfItemsWrap"></div>
+        <button class="btn btn-o btn-sm" style="margin-top:6px" onclick="addTransferItemRow()">➕ Add Item</button>
+      </div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('transferModal')">Cancel</button><button class="btn btn-p" onclick="saveTransfer()">Create Transfer</button></div>
   </div>
 </div>
 
@@ -1729,6 +2129,81 @@ select.fi option{background:var(--bg2)}
 
 <script>
 // ============================================================
+//  AUTO-UPPERCASE for GSTIN / PAN / IFSC style fields
+//  Any input with class "uc-field" is force-uppercased as the
+//  user types (cursor position preserved), and again on blur/paste.
+// ============================================================
+(function(){
+  function forceUpper(el){
+    const start = el.selectionStart, end = el.selectionEnd;
+    const upper = el.value.toUpperCase();
+    if (upper !== el.value){
+      el.value = upper;
+      // restore cursor position (only meaningful for text inputs)
+      if (typeof start === 'number' && typeof end === 'number'){
+        try { el.setSelectionRange(start, end); } catch(e){}
+      }
+    }
+  }
+  document.addEventListener('input', function(e){
+    const el = e.target;
+    if (el && el.classList && el.classList.contains('uc-field')){
+      forceUpper(el);
+    }
+  }, true);
+  document.addEventListener('blur', function(e){
+    const el = e.target;
+    if (el && el.classList && el.classList.contains('uc-field')){
+      forceUpper(el);
+    }
+  }, true);
+  document.addEventListener('paste', function(e){
+    const el = e.target;
+    if (el && el.classList && el.classList.contains('uc-field')){
+      setTimeout(function(){ forceUpper(el); }, 0);
+    }
+  }, true);
+})();
+
+// ============================================================
+//  STATE NAME -> GST STATE CODE (used to auto-fill State Code
+//  when a state is picked in the Customer modal)
+// ============================================================
+const STATE_CODE_MAP = {
+  "Jammu and Kashmir":"01","Himachal Pradesh":"02","Punjab":"03","Chandigarh":"04",
+  "Uttarakhand":"05","Haryana":"06","Delhi":"07","Rajasthan":"08","Uttar Pradesh":"09",
+  "Bihar":"10","Sikkim":"11","Arunachal Pradesh":"12","Nagaland":"13","Manipur":"14",
+  "Mizoram":"15","Tripura":"16","Meghalaya":"17","Assam":"18","West Bengal":"19",
+  "Jharkhand":"20","Odisha":"21","Chhattisgarh":"22","Madhya Pradesh":"23","Gujarat":"24",
+  "Dadra and Nagar Haveli and Daman and Diu":"26","Maharashtra":"27","Karnataka":"29",
+  "Goa":"30","Lakshadweep":"31","Kerala":"32","Tamil Nadu":"33","Puducherry":"34",
+  "Andaman and Nicobar Islands":"35","Telangana":"36","Andhra Pradesh":"37","Ladakh":"38",
+  "Other Territory":"97","Centre Jurisdiction":"99"
+};
+function onCmStateChange(){
+  const name = getVal('cm_state');
+  if (STATE_CODE_MAP[name]) setVal('cm_statecode', STATE_CODE_MAP[name]);
+}
+
+// ============================================================
+//  NUMERIC-ONLY fields (e.g. State Code) — strips any
+//  non-digit character as the user types.
+// ============================================================
+document.addEventListener('input', function(e){
+  const el = e.target;
+  if (el && el.classList && el.classList.contains('num-field')){
+    const start = el.selectionStart;
+    const cleaned = el.value.replace(/[^0-9]/g, '');
+    if (cleaned !== el.value){
+      const removedBefore = el.value.slice(0, start).length - cleaned.slice(0, start).length;
+      el.value = cleaned;
+      const pos = Math.max(0, start - removedBefore);
+      try { el.setSelectionRange(pos, pos); } catch(err){}
+    }
+  }
+}, true);
+
+// ============================================================
 //  CONFIGURATION — change API_BASE to match your FastAPI host
 // ============================================================
 const CFG = {
@@ -1743,6 +2218,8 @@ const CFG = {
   COMPANY_GSTIN: '27AABCS1234F1Z5',
   // Same company_id used at login — branches are nested under /companies/{company_id}/branches
   COMPANY_ID: '34091ba5-aa42-40c8-9d22-e916cfefef6b',
+  // Public sign-up endpoint
+  REGISTER_PATH: '/auth/register',
 };
 
 // ============================================================
@@ -2037,6 +2514,10 @@ let BRANCHES=[
   {id:2,name:'Pune Godown',code:'BR-002',addr:'Plot 8, Bhosari MIDC, Pune',city:'Pune',state:'Maharashtra',stateCode:'27',pincode:'',gstin:'',phone:'',email:'',type:'warehouse',items:68,value:1240000},
 ];
 let editingBranchId = null; // ← declare globally alongside BRANCHES = []
+let TRANSFERS = [];
+let ALL_WAREHOUSES = [];
+let BRANCH_WAREHOUSES = {}; // branch_id -> default warehouse id
+let trfItemCount = 0;
 
 // ── normalise API response → local shape ────────────────────
 function normBranch(b) {
@@ -2085,6 +2566,83 @@ async function checkApiHealth() {
   } catch (_) { return false; }
 }
 
+function showWelcomeScreen() {
+  document.getElementById('authScreen').style.display    = 'none';
+  document.getElementById('welcomeScreen').style.display  = 'flex';
+}
+
+function showAuthScreen(tab) {
+  document.getElementById('welcomeScreen').style.display = 'none';
+  document.getElementById('authScreen').style.display    = 'flex';
+  switchAuthTab(tab || 'login');
+}
+
+function switchAuthTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('loginForm').style.display  = isLogin ? 'block' : 'none';
+  document.getElementById('signupForm').style.display = isLogin ? 'none'  : 'block';
+  document.getElementById('authTabLogin').classList.toggle('active', isLogin);
+  document.getElementById('authTabSignup').classList.toggle('active', !isLogin);
+  document.getElementById('loginErr').textContent  = '';
+  document.getElementById('signupErr').textContent = '';
+}
+
+async function doRegister() {
+  const business = document.getElementById('suBusiness').value.trim();
+  const name     = document.getElementById('suName').value.trim();
+  const email    = document.getElementById('suEmail').value.trim();
+  const phone    = document.getElementById('suPhone').value.trim();
+  const gstin    = document.getElementById('suGstin').value.trim().toUpperCase();
+  const pass     = document.getElementById('suPass').value;
+  const pass2    = document.getElementById('suPass2').value;
+  const btn      = document.getElementById('signupBtn');
+  const err      = document.getElementById('signupErr');
+
+  if (!business || !name || !email || !pass) { err.textContent = 'Please fill all required fields.'; return; }
+  if (pass.length < 8) { err.textContent = 'Password must be at least 8 characters.'; return; }
+  if (pass !== pass2)  { err.textContent = 'Passwords do not match.'; return; }
+
+  btn.innerHTML = '<div class="ld" style="display:inline-block"></div> Creating account…';
+  btn.disabled  = true;
+  err.textContent = '';
+
+  try {
+    const res = await fetch(CFG.API_BASE + CFG.REGISTER_PATH, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        business_name: business,
+        full_name: name,
+        email: email,
+        phone: phone || null,
+        gstin: gstin || null,
+        password: pass,
+        confirm_password: pass2,
+      }),
+    });
+    const result = await res.json();
+    if (!res.ok) {
+      err.textContent = result.message || result.detail || 'Could not create account.';
+      return;
+    }
+    const token = result?.data?.access_token;
+    if (!token) { err.textContent = 'Unexpected response from server.'; return; }
+
+    AUTH.token     = token;
+    AUTH.apiOnline = true;
+    CFG.COMPANY_ID = result.data.company?.id || CFG.COMPANY_ID;
+    sessionStorage.setItem('vyaparpro_token', AUTH.token);
+    AUTH.user = { name: result.data.user?.full_name || name, role: 'Owner' };
+    clearAuthForms();
+    bootApp();
+  } catch (e) {
+    err.textContent = 'Cannot reach the server. Check your connection and try again.';
+  } finally {
+    btn.innerHTML = 'Create Account';
+    btn.disabled  = false;
+  }
+}
+
 async function doLogin() {
   const user = document.getElementById('loginUser').value.trim();
   const pass = document.getElementById('loginPass').value;
@@ -2098,35 +2656,45 @@ async function doLogin() {
 
   // Try real login first
   try {
-    // FastAPI OAuth2 password flow uses form-encoded body by default.
-    // Your auth router may accept JSON — we try JSON first, then form.
-    let result;
+    // Every account's company_id is different (each sign-up creates its own
+    // company), so we first look up which company this email belongs to
+    // instead of assuming the shared demo company_id.
+    let companyId = CFG.COMPANY_ID;
     try {
-      result = await (await fetch(CFG.API_BASE + CFG.LOGIN_PATH, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({  company_id:'34091ba5-aa42-40c8-9d22-e916cfefef6b', email: user, password: pass }),
-      })).json();
-      console.log("Login result:", result);
+      const lookup = await (await fetch(CFG.API_BASE + '/auth/resolve-company?email=' + encodeURIComponent(user))).json();
+      const matches = lookup?.data?.matches || [];
+      if (matches.length === 1) {
+        companyId = matches[0].company_id;
+      } else if (matches.length > 1) {
+        // Same email used across more than one business — fall back to the
+        // most recently created match rather than guessing wrong.
+        companyId = matches[matches.length - 1].company_id;
+      } else {
+        err.textContent = 'No account found for that email.';
+        return;
+      }
     } catch (_) {
-      // Fallback: form-encoded (OAuth2PasswordRequestForm)
-      const fd = new URLSearchParams();
-      fd.append('username', user); fd.append('password', pass);
-      result = await (await fetch(CFG.API_BASE + CFG.LOGIN_PATH, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company_id:'34091ba5-aa42-40c8-9d22-e916cfefef6b', email: user, password: pass}) 
-      })).json();
+      // Lookup endpoint unreachable — fall back to demo company_id below.
     }
+
+    const result = await (await fetch(CFG.API_BASE + CFG.LOGIN_PATH, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ company_id: companyId, email: user, password: pass }),
+    })).json();
+    console.log("Login result:", result);
+
     const token = result?.data?.access_token || result?.access_token;
     if (token){
       AUTH.token = token;
       AUTH.apiOnline = true;
+      CFG.COMPANY_ID = result?.data?.user?.company_id || companyId;
       sessionStorage.setItem('vyaparpro_token', AUTH.token);
       try {
         const me = await apiFetch('/auth/me');
         const u = me?.data || me;
         AUTH.user = { name: u.full_name || user, role: u.role?.role_name || 'Staff' };
+        CFG.COMPANY_ID = u.company_id || CFG.COMPANY_ID;
       } catch (_) {
         AUTH.user = { name: user, role: 'User' };
       }
@@ -2158,8 +2726,9 @@ async function syncSidebarCompany() {
 }
 
 function bootApp() {
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('app').style.display         = 'flex';
+  document.getElementById('welcomeScreen').style.display = 'none';
+  document.getElementById('authScreen').style.display    = 'none';
+  document.getElementById('app').style.display          = 'flex';
   // Update UI with user info
   const u = AUTH.user || {};
   const initials = (u.name || 'U').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
@@ -2179,18 +2748,33 @@ function bootApp() {
   preloadRefData();
   initNewInvoice();
   initAI();
+  checkScheduledBackup();
   // Set today's date in header
   document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-IN', {day:'numeric',month:'long',year:'numeric'});
   if (!AUTH.apiOnline) showToast('⚠️ Running in demo mode — API offline', 'warn');
 }
 
+function clearAuthForms() {
+  ['suBusiness','suName','suEmail','suPhone','suGstin','suPass','suPass2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const loginPassEl = document.getElementById('loginPass');
+  if (loginPassEl) loginPassEl.value = '';
+  const loginErrEl = document.getElementById('loginErr');
+  if (loginErrEl) loginErrEl.textContent = '';
+  const signupErrEl = document.getElementById('signupErr');
+  if (signupErrEl) signupErrEl.textContent = '';
+}
+
 function doLogout() {
   AUTH = { token: null, user: null, apiOnline: false };
   sessionStorage.removeItem('vyaparpro_token');
-  document.getElementById('app').style.display          = 'none';
-  document.getElementById('loginScreen').style.display  = 'flex';
-  document.getElementById('loginPass').value            = '';
-  document.getElementById('loginErr').textContent       = '';
+  document.getElementById('app').style.display           = 'none';
+  document.getElementById('authScreen').style.display     = 'none';
+  document.getElementById('welcomeScreen').style.display  = 'flex';
+  document.getElementById('loginUser').value               = '';
+  clearAuthForms();
 }
 
 function setLiveStatus(online) {
@@ -2255,7 +2839,7 @@ function triggerModuleRefresh(id) {
     payments:    renderPayments,
     auditlog:    renderAuditLog,
     gst: loadGSTData,
-    branches:    renderBranches,
+    branches:    () => { renderBranches(); renderTransfers(); },
     einvoice:    () => { renderEInvoice(); renderEWBList(); },
     accounting:  renderAccounting,
     ai:          initAI,
@@ -2269,9 +2853,11 @@ function triggerModuleRefresh(id) {
 async function preloadRefData() {
   if (!AUTH.apiOnline) return;
   try {
-    const [cr, pr] = await Promise.allSettled([
+    const [cr, pr, br, vr] = await Promise.allSettled([
       apiFetch('/customers?page_size=200'),
       apiFetch('/products?page_size=200'),
+      apiFetch(`/companies/${CFG.COMPANY_ID}/branches`),
+      apiFetch('/vendors?page_size=200'),
     ]);
     if (cr.status === 'fulfilled') {
       const list = unwrapList(cr.value, 'data','items','customers','results');
@@ -2281,6 +2867,16 @@ async function preloadRefData() {
       const list = unwrapList(pr.value, 'data','items','products','results');
       if (list.length) PRODUCTS = list.map(normProduct);
     }
+    if (br.status === 'fulfilled') {
+      const list = (br.value.data || []).map(normBranch);
+      if (list.length) BRANCHES = list;
+    }
+    if (vr.status === 'fulfilled') {
+      const list = unwrapList(vr.value, 'data','items','vendors','results');
+      if (list.length) VENDORS = list.map(normVendor);
+    }
+    // Needed to resolve a selected Branch to its stock location on invoices/POs
+    await loadBranchWarehouses();
     // Refresh datalist in invoice form
     refreshCustomerDatalist();
   } catch (_) {}
@@ -3339,6 +3935,8 @@ const grandTotal = taxableAmt + totalGST;
     invoice_date:         getVal('invDate'),
     due_date:             getVal('invDue'),
     invoice_type: INVOICE_TYPE_SNAKE[getVal('invType')] || getVal('invType'),
+    branch_id:            getVal('invBranch') || undefined,
+    warehouse_id:         BRANCH_WAREHOUSES[getVal('invBranch')] || undefined,
     party_id:             selectedCustomerId || undefined,
     place_of_supply:      getVal('custState'),
     supply_type:          getVal('supplyType'),
@@ -3540,6 +4138,8 @@ async function saveDraft() {
     invoice_date:         getVal('invDate'),
     due_date:             getVal('invDue'),
     invoice_type: isReturn || INVOICE_TYPE_SNAKE[getVal('invType')] || getVal('invType'),
+    branch_id:            getVal('invBranch') || undefined,
+    warehouse_id:         BRANCH_WAREHOUSES[getVal('invBranch')] || undefined,
     party_id:             selectedCustomerId || undefined,
     place_of_supply:      getVal('custState'),
     supply_type:          getVal('supplyType'),
@@ -4449,7 +5049,7 @@ async function openAddProd() {
 
   // sensible defaults
   const gst = document.getElementById('pm_gst');
-  if (gst) gst.value = '18';
+  if (gst) gst.value = String(CURRENT_COMPANY?.settings?.default_gst_rate ?? 18);
 
   openModal('prodModal');
 }
@@ -5206,7 +5806,7 @@ async function renderPO(list) {
   if (!data) {
     if (AUTH.apiOnline) {
       try {
-        if (!VENDORS.length) await renderVendors();
+        await loadVendorsIfNeeded();
         const result = await apiFetch('/billing/purchase-orders?page_size=200');
         data = unwrapList(result).map(normPO);
         data.forEach(p => {
@@ -5271,10 +5871,17 @@ function updatePOStats(data) {
 }
 
 async function openNewPOModal() {
-  if (!VENDORS.length) await renderVendors();
+  await loadVendorsIfNeeded();
   const vendorSel = document.getElementById('poVendor');
   vendorSel.innerHTML = '<option value="">Select vendor…</option>' +
     VENDORS.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+  const branchSel = document.getElementById('poBranch');
+  if (branchSel) {
+    branchSel.innerHTML = BRANCHES.length
+      ? BRANCHES.map(b => `<option value="${b.id}">${b.name}</option>`).join('')
+      : '<option value="">— Single location —</option>';
+    if (AUTH.user?.branchId) branchSel.value = AUTH.user.branchId;
+  }
 
   setVal('poNo', 'PO-' + String((PO_DATA?.length || 0) + 1).padStart(4, '0'));
   setVal('poDate', new Date().toISOString().slice(0,10));
@@ -5377,9 +5984,12 @@ async function savePO() {
   });
   if (!items.length) { showToast('⚠️ Add at least one item','warn'); return; }
 
+  const branchId = getVal('poBranch');
   const payload = {
     po_date: getVal('poDate') || new Date().toISOString().slice(0,10),
     vendor_id: vendorId,
+    branch_id: branchId || undefined,
+    deliver_to_warehouse_id: BRANCH_WAREHOUSES[branchId] || undefined,
     expected_delivery: getVal('poExpDelivery') || null,
     payment_terms: getVal('poPaymentTerms'),
     notes: getVal('poNotes') || '',
@@ -5922,6 +6532,11 @@ async function renderPayments() {
   const data = await loadPaymentsIfNeeded();
   PAYMENTS_DATA = data;
 
+  const upiIdEl = document.getElementById('upiId');
+  if (upiIdEl && !upiIdEl.value) {
+    upiIdEl.value = (CURRENT_COMPANY?.settings?.upi_id) || '';
+  }
+
   const methodTotals = {};
   data.forEach(p => {
     if (p.type !== 'received') return;
@@ -6053,6 +6668,7 @@ async function savePayment() {
 
 async function renderBranches(list) {
   const g=document.getElementById('branchGrid'); if(!g)return;
+  g.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--text3)">Loading…</div>';
 
   let data = list;
   if (data === undefined || data === null) {
@@ -6061,6 +6677,18 @@ async function renderBranches(list) {
         const r = await apiFetch(`/companies/${CFG.COMPANY_ID}/branches`);
         data = (r.data || []).map(normBranch);
         BRANCHES = data;
+        await loadBranchWarehouses();
+        // Pull real stock/sales figures per branch — replaces hardcoded numbers
+        await Promise.all(data.map(async b => {
+          try {
+            const dash = await apiFetch(`/companies/${CFG.COMPANY_ID}/branches/${b.id}/dashboard`);
+            const d = dash.data || {};
+            b.items    = d.product_count || 0;
+            b.value    = parseFloat(d.stock_value || 0);
+            b.salesMtd = parseFloat(d.sales_mtd || 0);
+            b.lowStock = d.low_stock_count || 0;
+          } catch (e) { /* branch stays with defaults if this one call fails */ }
+        }));
       } catch (e) {
         data = BRANCHES;
         console.warn('[API] branches fallback:', e.message);
@@ -6070,22 +6698,180 @@ async function renderBranches(list) {
     }
   }
 
-
   g.innerHTML=data.map(b=>`<div class="card chov">
     <div style="font-size:22px;margin-bottom:8px">🏢</div>
     <div style="font-size:13px;font-weight:700;margin-bottom:4px">${b.name}</div>
     <div style="font-size:10px;color:var(--text3);margin-bottom:12px">${b.addr || '—'}</div>
     <div class="tr"><span style="font-size:11px;color:var(--text3)">Code</span><span style="font-size:11px;font-weight:600">${b.code || '—'}</span></div>
     <div class="tr"><span style="font-size:11px;color:var(--text3)">Products</span><span style="font-size:11px;font-weight:600;color:var(--accent)">${b.items}</span></div>
-    <div class="tr"><span style="font-size:11px;color:var(--text3)">Stock Value</span><span style="font-size:11px;font-weight:700;color:var(--green)">₹${(b.value/100000).toFixed(1)}L</span></div>
+    <div class="tr"><span style="font-size:11px;color:var(--text3)">Stock Value</span><span style="font-size:11px;font-weight:700;color:var(--green)">₹${((b.value||0)/100000).toFixed(1)}L</span></div>
+    <div class="tr"><span style="font-size:11px;color:var(--text3)">Sales (MTD)</span><span style="font-size:11px;font-weight:700">₹${fmt(b.salesMtd||0)}</span></div>
+    ${b.lowStock ? `<div class="tr"><span style="font-size:11px;color:var(--text3)">Low Stock Alerts</span><span class="sb sov">${b.lowStock}</span></div>` : ''}
     <div style="display:flex;gap:6px;margin-top:11px">
-      <button class="btn btn-o btn-sm" style="flex:1;justify-content:center" onclick="showToast('📦 Stock report')">View Stock</button>
+      <button class="btn btn-o btn-sm" style="flex:1;justify-content:center" onclick="viewBranchStock('${b.id}')">📦 View Stock</button>
       <button class="btn btn-o btn-sm" onclick="editBranch('${b.id}')">✏️</button>
       <button class="btn btn-d btn-sm" onclick="deleteBranch('${b.id}')">🗑</button>
     </div>
   </div>`).join('')+`<div class="card chov" style="display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;min-height:180px" onclick="openAddBranch()">
     <div style="font-size:32px;margin-bottom:8px">➕</div><div style="font-size:12px;font-weight:600;color:var(--text2)">Add Branch</div>
   </div>`;
+}
+
+// ── warehouse map: branch_id -> its default stock location ───
+async function loadBranchWarehouses() {
+  if (!AUTH.apiOnline) return;
+  try {
+    const r = await apiFetch(`/warehouses`);
+    ALL_WAREHOUSES = r.data || [];
+    BRANCH_WAREHOUSES = {};
+    ALL_WAREHOUSES.forEach(w => {
+      if (w.branch_id && (w.is_default || !BRANCH_WAREHOUSES[w.branch_id])) {
+        BRANCH_WAREHOUSES[w.branch_id] = w.id;
+      }
+    });
+  } catch (e) { console.warn('[API] warehouses fallback:', e.message); }
+}
+
+// ── real "View Stock" modal ───────────────────────────────────
+async function viewBranchStock(branchId) {
+  const b = BRANCHES.find(x => String(x.id) === String(branchId));
+  document.getElementById('stockModalTitle').textContent = `Stock — ${b ? b.name : ''}`;
+  const body = document.getElementById('stockModalBody');
+  body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)">Loading…</div>';
+  openModal('stockModal');
+  if (!AUTH.apiOnline) {
+    body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)">Connect to the API to see live stock.</div>';
+    return;
+  }
+  try {
+    const r = await apiFetch(`/companies/${CFG.COMPANY_ID}/branches/${branchId}/stock`);
+    const rows = r.data || [];
+    body.innerHTML = rows.length ? `<table style="width:100%;font-size:12px;border-collapse:collapse">
+      <thead><tr style="text-align:left;color:var(--text3)"><th style="padding:6px 4px">Product</th><th>Warehouse</th><th style="text-align:right">Qty</th><th style="text-align:right">Value</th></tr></thead>
+      <tbody>${rows.map(s => `<tr style="border-top:1px solid var(--border)">
+        <td style="padding:6px 4px"><div class="b">${s.product_name}</div><div style="font-size:10px;color:var(--text3)">${s.product_code||''}</div></td>
+        <td>${s.warehouse_name}</td>
+        <td style="text-align:right">${s.quantity}</td>
+        <td style="text-align:right">₹${fmt(s.stock_value)}</td>
+      </tr>`).join('')}</tbody></table>` : '<div style="text-align:center;padding:20px;color:var(--text3)">No stock recorded at this branch yet.</div>';
+  } catch (e) {
+    body.innerHTML = `<div style="text-align:center;padding:20px;color:var(--red)">⚠️ ${e.message}</div>`;
+  }
+}
+
+// ── inter-branch stock transfers ──────────────────────────────
+function transferStatusClass(s) {
+  return {draft:'spen', dispatched:'sov', in_transit:'sov', received:'sp', cancelled:'sdr'}[s] || 'spen';
+}
+
+function warehouseName(id) {
+  const w = ALL_WAREHOUSES.find(x => String(x.id) === String(id));
+  return w ? w.warehouse_name : '—';
+}
+
+async function renderTransfers() {
+  const b = document.getElementById('transferBody'); if (!b) return;
+  b.innerHTML = loadingRow(7);
+  if (!AUTH.apiOnline) {
+    b.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text3)">Connect to the API to see live transfers.</td></tr>';
+    return;
+  }
+  try {
+    if (!ALL_WAREHOUSES.length) await loadBranchWarehouses();
+    const r = await apiFetch(`/inventory/transfers?page_size=50`);
+    TRANSFERS = (r.data && r.data.items) || [];
+  } catch (e) {
+    b.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text3)">${e.message}</td></tr>`;
+    return;
+  }
+  b.innerHTML = TRANSFERS.length ? TRANSFERS.map(t => `<tr>
+    <td class="b mono">${t.transfer_no}</td>
+    <td>${fmtDate(t.transfer_date)}</td>
+    <td>${warehouseName(t.from_warehouse_id)}</td>
+    <td>${warehouseName(t.to_warehouse_id)}</td>
+    <td>${t.narration || '—'}</td>
+    <td><span class="sb ${transferStatusClass(t.status)}">${t.status.replace('_',' ')}</span></td>
+    <td><div style="display:flex;gap:3px">
+      ${t.status==='draft' ? `<button class="btn btn-o btn-sm" onclick="doTransferAction('${t.id}','dispatch')" title="Dispatch">🚚</button><button class="btn btn-d btn-sm" onclick="doTransferAction('${t.id}','cancel')" title="Cancel">✕</button>` : ''}
+      ${t.status==='dispatched' ? `<button class="btn btn-o btn-sm" onclick="doTransferAction('${t.id}','receive')" title="Receive">📥</button>` : ''}
+    </div></td>
+  </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text3)">No stock transfers yet</td></tr>';
+}
+
+async function doTransferAction(id, action) {
+  try {
+    await apiFetch(`/inventory/transfers/${id}/${action}`, { method: 'POST' });
+    const verb = {dispatch:'dispatched', receive:'received', cancel:'cancelled'}[action] || action;
+    showToast(`✅ Transfer ${verb}`);
+    addAuditEntry(action.toUpperCase(), 'Stock Transfer', `Transfer ${verb}: ${id}`);
+    renderTransfers();
+    renderBranches(); // stock levels changed
+  } catch (e) {
+    showToast('⚠️ ' + e.message, 'warn');
+  }
+}
+
+function openNewTransfer() {
+  if (!BRANCHES.length) { showToast('⚠️ Add a branch first', 'warn'); return; }
+  const fromSel = document.getElementById('trf_from');
+  const toSel = document.getElementById('trf_to');
+  const opts = BRANCHES.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+  fromSel.innerHTML = opts; toSel.innerHTML = opts;
+  document.getElementById('trf_date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('trf_narration').value = '';
+  document.getElementById('trfItemsWrap').innerHTML = '';
+  trfItemCount = 0;
+  addTransferItemRow();
+  openModal('transferModal');
+}
+
+function addTransferItemRow() {
+  trfItemCount++;
+  const id = trfItemCount;
+  const opts = PRODUCTS.map(p => `<option value="${p.id}">${p.name} (${p.sku})</option>`).join('');
+  const row = document.createElement('div');
+  row.id = `trfRow${id}`;
+  row.style.cssText = 'display:flex;gap:6px;margin-top:6px;align-items:center';
+  row.innerHTML = `<select class="fi" id="trfProd${id}" style="flex:2">${opts}</select>
+    <input class="fi" id="trfQty${id}" type="number" min="0.001" step="0.001" value="1" style="flex:1" placeholder="Qty"/>
+    <button class="btn btn-d btn-sm" onclick="document.getElementById('trfRow${id}').remove()">🗑</button>`;
+  document.getElementById('trfItemsWrap').appendChild(row);
+}
+
+async function saveTransfer() {
+  const fromBranch = getVal('trf_from');
+  const toBranch = getVal('trf_to');
+  if (!fromBranch || !toBranch) { showToast('⚠️ Select both branches', 'warn'); return; }
+  if (fromBranch === toBranch) { showToast('⚠️ From and To branch must differ', 'warn'); return; }
+  const fromWh = BRANCH_WAREHOUSES[fromBranch];
+  const toWh = BRANCH_WAREHOUSES[toBranch];
+  if (!fromWh || !toWh) { showToast('⚠️ Selected branch has no stock location yet', 'warn'); return; }
+
+  const items = [];
+  document.querySelectorAll('#trfItemsWrap > div').forEach(row => {
+    const idNum = row.id.replace('trfRow','');
+    const prodId = getVal(`trfProd${idNum}`);
+    const qty = parseFloat(getVal(`trfQty${idNum}`)) || 0;
+    if (prodId && qty > 0) items.push({ product_id: prodId, transfer_qty: qty });
+  });
+  if (!items.length) { showToast('⚠️ Add at least one item with a quantity', 'warn'); return; }
+
+  const payload = {
+    transfer_date: getVal('trf_date'),
+    from_warehouse_id: fromWh,
+    to_warehouse_id: toWh,
+    narration: getVal('trf_narration'),
+    items,
+  };
+  try {
+    await apiFetch(`/inventory/transfers`, { method: 'POST', body: JSON.stringify(payload) });
+    showToast('✅ Transfer created as draft — dispatch it to move stock');
+    addAuditEntry('CREATE', 'Stock Transfer', `Created transfer ${fromBranch} → ${toBranch}`);
+    closeModal('transferModal');
+    renderTransfers();
+  } catch (e) {
+    showToast('⚠️ ' + e.message, 'warn');
+  }
 }
 
 // ── open "Add Branch" modal with empty fields ────────────────
@@ -6361,6 +7147,7 @@ function initNewInvoice() {
   const due=new Date(Date.now()+15*864e5).toISOString().split('T')[0];
   setVal('invNo','INV-'+nextInvNo); setVal('invDate',today); setVal('invDue',due);
   setVal('invType','GST Invoice'); setVal('invState','27 - Maharashtra'); setVal('supplyType','intra'); setVal('invNotes','');
+  populateInvoiceBranchSelect();
   ['custName','custGst','custMobile','custAddr','custEmail','custState'].forEach(id=>setVal(id,''));
   selectedCustomerId = null;
   document.getElementById('invoiceItems').innerHTML=''; itemCounter=0;
@@ -6368,6 +7155,14 @@ function initNewInvoice() {
   refreshCustomerDatalist();
   setInvoiceEditRestrictions(false);
   calcTotals();
+}
+
+function populateInvoiceBranchSelect() {
+  const sel = document.getElementById('invBranch'); if (!sel) return;
+  sel.innerHTML = BRANCHES.length
+    ? BRANCHES.map(b => `<option value="${b.id}">${b.name}</option>`).join('')
+    : '<option value="">— Single location —</option>';
+  if (AUTH.user?.branchId) sel.value = AUTH.user.branchId;
 }
 
 function addItem() {
@@ -6490,7 +7285,11 @@ async function renderSettings() {
   paintSecurityToggle('two_factor_enabled', true);
   paintSecurityToggle('auto_backup_enabled', true);
   paintSecurityToggle('data_encryption_enabled', true);
+  paintTaxToggle('composition_scheme', false, 'On', 'Off');
+  paintTaxToggle('round_invoice_totals', true, 'On', 'Off');
   renderLastBackupTime();
+  renderBackupScheduleSelect();
+  renderBackupHistoryList();
 
   // ---- Company profile ----
   let company = {};
@@ -6535,6 +7334,14 @@ async function renderSettings() {
       paintSecurityToggle('two_factor_enabled', s.two_factor_enabled !== false); // default ON
       paintSecurityToggle('auto_backup_enabled', s.auto_backup_enabled !== false);
       paintSecurityToggle('data_encryption_enabled', s.data_encryption_enabled !== false);
+
+      // ---- Tax & GST defaults, also stored in company.settings JSON ----
+      setVal('taxDefaultGst', String(s.default_gst_rate ?? 18));
+      setVal('taxPriceType', s.price_type || 'exclusive');
+      setVal('taxFilingFreq', s.gstr_filing_frequency || 'monthly');
+      setVal('taxHsnDigits', String(s.hsn_digits ?? 6));
+      paintTaxToggle('composition_scheme', s.composition_scheme === true, 'On', 'Off');
+      paintTaxToggle('round_invoice_totals', s.round_invoice_totals !== false, 'On', 'Off');
     } catch (e) { console.warn('[Settings] company load failed:', e.message); }
 
     try {
@@ -6584,6 +7391,44 @@ function paintSecurityToggle(key, enabled) {
   el.textContent = enabled ? 'Active' : 'Disabled';
   el.className = 'chip ' + (enabled ? 'cgr' : 'cor');
   el.onclick = () => toggleSecuritySetting(key, enabled);
+}
+
+// ---- Tax & GST defaults ----
+let TAX_SETTINGS = { composition_scheme: false, round_invoice_totals: true };
+
+function paintTaxToggle(key, enabled, onLabel, offLabel) {
+  const el = document.getElementById('tax_' + key);
+  if (!el) return;
+  TAX_SETTINGS[key] = enabled;
+  el.textContent = enabled ? (onLabel || 'On') : (offLabel || 'Off');
+  el.className = 'chip ' + (enabled ? 'cgr' : 'cor');
+  el.onclick = () => paintTaxToggle(key, !enabled, onLabel, offLabel);
+}
+
+async function saveTaxSettings() {
+  if (!AUTH.apiOnline) {
+    showToast('⚠️ Not connected to server — tax settings were NOT saved.', 'warn');
+    return;
+  }
+  const payload = {
+    settings: {
+      ...(CURRENT_COMPANY.settings || {}),
+      default_gst_rate: parseFloat(getVal('taxDefaultGst')) || 0,
+      price_type: getVal('taxPriceType'),
+      gstr_filing_frequency: getVal('taxFilingFreq'),
+      hsn_digits: parseInt(getVal('taxHsnDigits'), 10) || 6,
+      composition_scheme: TAX_SETTINGS.composition_scheme,
+      round_invoice_totals: TAX_SETTINGS.round_invoice_totals,
+    },
+  };
+  try {
+    await apiFetch(`/companies/${CFG.COMPANY_ID}`, { method: 'PATCH', body: JSON.stringify(payload) });
+    CURRENT_COMPANY.settings = payload.settings;
+    showToast('✅ Tax & GST defaults saved!');
+    addAuditEntry('UPDATE', 'Settings', 'Updated tax & GST defaults');
+  } catch (e) {
+    showToast('❌ Could not save: ' + e.message);
+  }
 }
 
 async function saveCompanySettings() {
@@ -6663,6 +7508,11 @@ async function uploadCompanyLogo(input) {
 
 function openAddUserModal() {
   setVal('au_name', ''); setVal('au_email', ''); setVal('au_phone', ''); setVal('au_password', '');
+  const branchSel = document.getElementById('au_branch');
+  if (branchSel) {
+    branchSel.innerHTML = '<option value="">— No fixed branch (all-access) —</option>' +
+      BRANCHES.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+  }
   openModal('addUserModal');
 }
 
@@ -6673,7 +7523,9 @@ async function saveNewUser() {
     phone: getVal('au_phone'),
     password: getVal('au_password'),
     role_id: getVal('au_role'),
+    branch_id: getVal('au_branch') || undefined,
   };
+
   if (!payload.full_name || !payload.email || !payload.password || !payload.role_id) {
     showToast('⚠️ Fill in name, email, password and role', 'warn'); return;
   }
@@ -6868,7 +7720,348 @@ async function toggleSecuritySetting(key, currentlyEnabled) {
 // ============================================================
 //  LOCAL BACKUP — download a copy of the company's data to this device
 // ============================================================
-const LAST_BACKUP_KEY = 'vyaparpro_last_backup';
+const LAST_BACKUP_KEY     = 'vyaparpro_last_backup';
+const BACKUP_SCHEDULE_KEY = 'vyaparpro_backup_schedule';
+const BACKUP_HISTORY_KEY  = 'vyaparpro_backup_history';
+
+function renderLastBackupTime() {
+  const el = document.getElementById('lastBackupTime');
+  if (!el) return;
+  const ts = localStorage.getItem(LAST_BACKUP_KEY);
+  el.textContent = ts ? `${new Date(ts).toLocaleString('en-IN')} — saved to this device` : 'No backup taken yet on this device';
+}
+
+function markBackupTaken() {
+  localStorage.setItem(LAST_BACKUP_KEY, new Date().toISOString());
+  renderLastBackupTime();
+}
+
+// ---- Scheduled reminders ----
+function renderBackupScheduleSelect() {
+  const el = document.getElementById('backupSchedule');
+  if (el) el.value = localStorage.getItem(BACKUP_SCHEDULE_KEY) || 'off';
+}
+
+function saveBackupSchedule(val) {
+  localStorage.setItem(BACKUP_SCHEDULE_KEY, val);
+  showToast(val === 'off' ? 'Automatic backup reminders turned off' : `Automatic ${val} backups enabled on this device`);
+}
+
+// Runs once per app load. Only fires while the app is actually open in the
+// browser (there's no background process to run it otherwise) — same
+// limitation any desktop app's local scheduler has when it isn't running.
+async function checkScheduledBackup() {
+  const schedule = localStorage.getItem(BACKUP_SCHEDULE_KEY) || 'off';
+  if (schedule === 'off' || !AUTH.apiOnline) return;
+  const last = localStorage.getItem(LAST_BACKUP_KEY);
+  const dueMs = schedule === 'daily' ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
+  if (last && (Date.now() - new Date(last).getTime()) < dueMs) return;
+  showToast('💾 Running your scheduled backup…');
+  await downloadFullBackup(true);
+}
+
+// ---- History log ----
+function loadBackupHistory() {
+  try { return JSON.parse(localStorage.getItem(BACKUP_HISTORY_KEY) || '[]'); } catch (e) { return []; }
+}
+
+function logBackupHistory(entry) {
+  const hist = [{ ts: new Date().toISOString(), ...entry }, ...loadBackupHistory()].slice(0, 20);
+  localStorage.setItem(BACKUP_HISTORY_KEY, JSON.stringify(hist));
+  renderBackupHistoryList();
+}
+
+function renderBackupHistoryList() {
+  const el = document.getElementById('backupHistoryList');
+  if (!el) return;
+  const hist = loadBackupHistory();
+  if (!hist.length) {
+    el.innerHTML = `<div style="font-size:10.5px;color:var(--text3)">No backup or restore activity yet on this device.</div>`;
+    return;
+  }
+  el.innerHTML = hist.map(h => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--bg3);border-radius:var(--r2)">
+      <div>
+        <div style="font-size:11.5px;font-weight:600">${h.icon} ${h.label}</div>
+        <div style="font-size:9.5px;color:var(--text3)">${new Date(h.ts).toLocaleString('en-IN')}</div>
+      </div>
+      <span class="chip ${h.kind === 'restore' ? 'cor' : 'cgr'}">${h.detail}</span>
+    </div>`).join('');
+}
+
+// Pulls the freshest copy of each dataset when online, otherwise falls back
+// to whatever is already cached in memory so the backup still works offline.
+async function collectBackupData() {
+  const out = { company: CURRENT_COMPANY, customers: CUSTOMERS, vendors: VENDORS, products: PRODUCTS, invoices: INVOICES };
+  if (!AUTH.apiOnline) return out;
+  const [custR, vendR, prodR, invR] = await Promise.allSettled([
+    apiFetch('/customers?page_size=1000'),
+    apiFetch('/vendors?page_size=1000'),
+    apiFetch('/products?page_size=1000'),
+    apiFetch('/billing/invoices?page_size=1000'),
+  ]);
+  if (custR.status === 'fulfilled') out.customers = unwrapList(custR.value);
+  if (vendR.status === 'fulfilled') out.vendors   = unwrapList(vendR.value);
+  if (prodR.status === 'fulfilled') out.products  = unwrapList(prodR.value);
+  if (invR.status  === 'fulfilled') out.invoices  = unwrapList(invR.value).map(normInvoice);
+  return out;
+}
+
+async function downloadFullBackup(scheduled) {
+  if (!scheduled) showToast('💾 Preparing backup…');
+  try {
+    const data = await collectBackupData();
+    const backup = {
+      backup_type: 'vyaparpro_full_backup',
+      exported_at: new Date().toISOString(),
+      company_name: data.company?.legal_name || data.company?.trade_name || 'VyaparPro',
+      ...data,
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `vyaparpro_backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    markBackupTaken();
+    logBackupHistory({
+      icon: '📦', kind: 'backup', label: scheduled ? 'Scheduled Full Backup' : 'Full Backup (JSON)',
+      detail: `${data.customers.length + data.vendors.length + data.products.length + data.invoices.length} records`,
+    });
+    showToast(scheduled ? '⬇ Scheduled backup completed' : '⬇ Full backup downloaded');
+  } catch (e) {
+    showToast('❌ Backup failed: ' + e.message);
+  }
+}
+
+async function downloadCSVBackup() {
+  showToast('💾 Preparing CSV files…');
+  try {
+    const data = await collectBackupData();
+    const stamp = new Date().toISOString().slice(0,10);
+
+    downloadCSV(`vyaparpro_invoices_${stamp}.csv`,
+      [['Invoice No','Date','Customer','Type','Total','Status'],
+       ...data.invoices.map(i => [i.no, i.date, i.customer, i.type, i.total, i.status])]);
+
+    downloadCSV(`vyaparpro_customers_${stamp}.csv`,
+      [['Name','GSTIN','Email','Phone','City'],
+       ...data.customers.map(c => [c.name || c.legal_name, c.gstin, c.email, c.phone || c.mobile, c.city])]);
+
+    downloadCSV(`vyaparpro_vendors_${stamp}.csv`,
+      [['Name','GSTIN','Email','Phone','City'],
+       ...data.vendors.map(v => [v.name || v.legal_name, v.gstin, v.email, v.phone || v.mobile, v.city])]);
+
+    downloadCSV(`vyaparpro_products_${stamp}.csv`,
+      [['Name','SKU','Current Stock','Reorder Level'],
+       ...data.products.map(p => [p.name, p.sku, p.current_stock, p.reorder_level])]);
+
+    markBackupTaken();
+    logBackupHistory({
+      icon: '📊', kind: 'backup', label: 'CSV Files (4 files)',
+      detail: `${data.customers.length + data.vendors.length + data.products.length + data.invoices.length} records`,
+    });
+    showToast('⬇ CSV backup files downloaded');
+  } catch (e) {
+    showToast('❌ Backup failed: ' + e.message);
+  }
+}
+
+// ---- Restore ----
+let PENDING_RESTORE = null;
+let PENDING_RESTORE_JOBS = [];
+
+function handleRestoreFile(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    let data;
+    try { data = JSON.parse(reader.result); }
+    catch (e) { showToast('❌ That file is not a valid backup (invalid JSON)', 'warn'); input.value = ''; return; }
+    if (data.backup_type !== 'vyaparpro_full_backup') {
+      showToast('❌ That file doesn\'t look like a VyaparPro backup', 'warn'); input.value = ''; return;
+    }
+    await openRestorePreview(data);
+    input.value = ''; // allow re-selecting the same file later
+  };
+  reader.onerror = () => showToast('❌ Could not read that file', 'warn');
+  reader.readAsText(file);
+}
+
+// Refreshes the in-memory master lists so restore can accurately tell new
+// records apart from ones that already exist, regardless of which pages
+// have been visited this session.
+async function refreshMasterCaches() {
+  if (!AUTH.apiOnline) return;
+  const [c, v, p] = await Promise.allSettled([
+    apiFetch('/customers?page_size=1000'),
+    apiFetch('/vendors?page_size=1000'),
+    apiFetch('/products?page_size=1000'),
+  ]);
+  if (c.status === 'fulfilled') CUSTOMERS = unwrapList(c.value).map(normCustomer);
+  if (v.status === 'fulfilled') VENDORS   = unwrapList(v.value).map(normVendor);
+  if (p.status === 'fulfilled') PRODUCTS  = unwrapList(p.value).map(normProduct);
+}
+
+// Matches each backup record against existing data by GSTIN (parties) or
+// SKU (products), falling back to a name match. Returns one "job" per
+// record with existingId set when it should be an update instead of a create.
+function classifyRestoreJobs(records, existingList, matchKey, mapper, url) {
+  return records.map(r => {
+    const body = mapper(r);
+    const keyVal = String(matchKey === 'sku' ? (body.product_code || '') : (body.gstin || '')).trim().toUpperCase();
+    const nameVal = String(body.display_name || body.product_name || '').trim().toLowerCase();
+    const existing = keyVal
+      ? existingList.find(x => x[matchKey] && String(x[matchKey]).trim().toUpperCase() === keyVal)
+      : existingList.find(x => x.name && x.name.trim().toLowerCase() === nameVal);
+    return { url, body, existingId: existing ? existing.id : null };
+  });
+}
+
+async function openRestorePreview(data) {
+  PENDING_RESTORE = data;
+  document.getElementById('restoreModal').classList.remove('hidden');
+  document.getElementById('restoreSummary').innerHTML = `<div class="notif-empty">Analyzing backup…</div>`;
+  const btn = document.getElementById('restoreConfirmBtn');
+  btn.disabled = true; btn.textContent = 'Analyzing…';
+
+  await refreshMasterCaches();
+
+  const custJobs = classifyRestoreJobs(data.customers || [], CUSTOMERS, 'gstin', mapRestoreCustomer, '/customers');
+  const vendJobs = classifyRestoreJobs(data.vendors   || [], VENDORS,   'gstin', mapRestoreVendor,   '/vendors');
+  const prodJobs = classifyRestoreJobs(data.products  || [], PRODUCTS, 'sku',   mapRestoreProduct,   '/products');
+  PENDING_RESTORE_JOBS = [...custJobs, ...vendJobs, ...prodJobs];
+  const invN = (data.invoices || []).length;
+
+  const row = (label, jobs) => {
+    const create = jobs.filter(j => !j.existingId).length;
+    const update = jobs.filter(j => j.existingId).length;
+    const parts = [];
+    if (create) parts.push(`${create} new`);
+    if (update) parts.push(`${update} update${update > 1 ? 's' : ''}`);
+    return `<div style="display:flex;justify-content:space-between;padding:9px 12px;background:var(--bg3);border-radius:var(--r2)"><span>${label}</span><b>${parts.join(' · ') || '0'}</b></div>`;
+  };
+
+  document.getElementById('restoreSummary').innerHTML = `
+    <div style="font-size:11.5px;color:var(--text2);margin-bottom:14px;line-height:1.6">
+      Backup taken on <b>${data.exported_at ? new Date(data.exported_at).toLocaleString('en-IN') : 'an unknown date'}</b>
+      for <b>${data.company_name || 'your company'}</b>. Matched by GSTIN / SKU against what's already here —
+      matches will be updated, everything else added as new:
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+      ${row('👤 Customers', custJobs)}
+      ${row('🏭 Vendors', vendJobs)}
+      ${row('📦 Products', prodJobs)}
+    </div>
+    ${invN ? `<div style="font-size:10.5px;color:var(--orange);margin-bottom:10px">⚠️ ${invN} invoice(s) are in this file but aren't auto-restored — GST documents carry sequential numbers and need a manual check to avoid duplicate filings. Contact support if you need invoice data recovered.</div>` : ''}
+    <div style="font-size:10.5px;color:var(--text3)">Nothing already in your account is ever deleted. Large backups can take a moment.</div>
+  `;
+  btn.disabled = PENDING_RESTORE_JOBS.length === 0;
+  btn.textContent = 'Restore Data';
+}
+
+async function confirmRestore() {
+  if (!PENDING_RESTORE_JOBS.length) return;
+  if (!AUTH.apiOnline) { showToast('⚠️ Connect to the API to restore data', 'warn'); return; }
+
+  const jobs = PENDING_RESTORE_JOBS;
+  const btn = document.getElementById('restoreConfirmBtn');
+  btn.disabled = true;
+
+  let created = 0, updated = 0, failed = 0;
+  for (let i = 0; i < jobs.length; i++) {
+    btn.textContent = `Restoring ${i + 1}/${jobs.length}…`;
+    const job = jobs[i];
+    try {
+      if (job.existingId) {
+        await apiFetch(`${job.url}/${job.existingId}`, { method: 'PATCH', body: JSON.stringify(job.body) });
+        updated++;
+      } else {
+        await apiFetch(job.url, { method: 'POST', body: JSON.stringify(job.body) });
+        created++;
+      }
+    } catch (e) { failed++; }
+  }
+
+  closeModal('restoreModal');
+  PENDING_RESTORE = null;
+  PENDING_RESTORE_JOBS = [];
+
+  const detail = `${created} created, ${updated} updated${failed ? `, ${failed} failed` : ''}`;
+  addAuditEntry('CREATE', 'Settings', `Restored from backup — ${detail}`);
+  logBackupHistory({ icon: '📤', kind: 'restore', label: 'Restore from Backup', detail });
+  showToast(`✅ Restore complete — ${detail}`);
+
+  // Refresh cached lists so the newly restored records show up right away
+  await Promise.allSettled([renderCustomers?.(), renderVendors?.(), renderInventory?.()]);
+}
+
+// Accepts either a raw API record or the app's normalized local shape and
+// maps it back to the create/update payload each endpoint expects.
+function mapRestoreCustomer(r) {
+  return {
+    display_name:        r.display_name || r.name || r.legal_name || 'Unnamed customer',
+    legal_name:          r.legal_name || r.contact || undefined,
+    gstin:               r.gstin || undefined,
+    pan:                 r.pan || undefined,
+    party_category:      r.party_category || r.category || undefined,
+    phone:               r.phone || r.mobile || undefined,
+    alt_phone:           r.alt_phone || r.altMobile || undefined,
+    email:               r.email || undefined,
+    billing_city:        r.billing_city || r.city || undefined,
+    billing_state:       r.billing_state || r.state || undefined,
+    billing_state_code:  r.billing_state_code || r.stateCode || undefined,
+    billing_pincode:     r.billing_pincode || r.pincode || undefined,
+    billing_address:     r.billing_address || r.addr || undefined,
+    party_type:          'customer',
+    credit_limit:        r.credit_limit ?? r.credit ?? 0,
+    credit_days:         r.credit_days ?? r.creditDays ?? 0,
+    opening_balance:     r.opening_balance ?? r.openingBalance ?? 0,
+    balance_type:        r.balance_type || r.balanceType || 'Dr',
+    tds_applicable:      r.tds_applicable ?? r.tdsApplicable ?? false,
+    tds_section:         r.tds_section || r.tdsSection || null,
+    tds_rate:            r.tds_rate ?? r.tdsRate ?? 0,
+    notes:               r.notes || undefined,
+  };
+}
+
+function mapRestoreVendor(r) {
+  return {
+    display_name:    r.display_name || r.name || r.legal_name || 'Unnamed vendor',
+    legal_name:      r.legal_name || r.contact || '',
+    gstin:           r.gstin || '',
+    phone:           r.phone || r.mobile || '',
+    email:           r.email || undefined,
+    billing_city:    r.billing_city || r.city || '',
+    billing_address: r.billing_address || r.addr || '',
+    party_type:      'vendor',
+    credit_limit:    r.credit_limit ?? r.credit ?? 0,
+    payment_terms:   r.payment_terms || r.terms || 'Net 30',
+    tds_applicable:  r.tds_applicable ?? r.tdsApplicable ?? false,
+    tds_section:     r.tds_section || r.tdsSection || null,
+    tds_rate:        r.tds_rate ?? r.tdsRate ?? 0,
+  };
+}
+
+function mapRestoreProduct(p) {
+  return {
+    product_name:    p.product_name || p.name || 'Unnamed product',
+    product_code:    p.product_code || p.sku || ('PRD-' + Date.now() + '-' + Math.floor(Math.random() * 1000)),
+    description:     p.description || p.desc || '',
+    brand:           p.brand || '',
+    hsn_code:        p.hsn_code || p.hsn || '',
+    barcode:         p.barcode || '',
+    purchase_price:  p.purchase_price ?? p.pp ?? 0,
+    mrp:             p.mrp ?? 0,
+    selling_price:   p.selling_price ?? p.price ?? 0,
+    current_stock:   p.current_stock ?? p.stock ?? 0,
+    reorder_level:   p.reorder_level ?? p.reorder ?? 0,
+    gst_rate:        p.gst_rate ?? p.gst ?? 18,
+    uom_id:          p.uom_id || p.uomId || null,
+    track_inventory: true,
+  };
+}
 
 function renderLastBackupTime() {
   const el = document.getElementById('lastBackupTime');
@@ -6950,6 +8143,150 @@ async function downloadCSVBackup() {
   } catch (e) {
     showToast('❌ Backup failed: ' + e.message);
   }
+}
+
+// ---- Restore ----
+
+function handleRestoreFile(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let data;
+    try { data = JSON.parse(reader.result); }
+    catch (e) { showToast('❌ That file is not a valid backup (invalid JSON)', 'warn'); input.value = ''; return; }
+    if (data.backup_type !== 'vyaparpro_full_backup') {
+      showToast('❌ That file doesn\'t look like a VyaparPro backup', 'warn'); input.value = ''; return;
+    }
+    openRestorePreview(data);
+    input.value = ''; // allow re-selecting the same file later
+  };
+  reader.onerror = () => showToast('❌ Could not read that file', 'warn');
+  reader.readAsText(file);
+}
+
+function openRestorePreview(data) {
+  PENDING_RESTORE = data;
+  const custN = (data.customers || []).length;
+  const vendN = (data.vendors   || []).length;
+  const prodN = (data.products  || []).length;
+  const invN  = (data.invoices  || []).length;
+
+  document.getElementById('restoreSummary').innerHTML = `
+    <div style="font-size:11.5px;color:var(--text2);margin-bottom:14px;line-height:1.6">
+      Backup taken on <b>${data.exported_at ? new Date(data.exported_at).toLocaleString('en-IN') : 'an unknown date'}</b>
+      for <b>${data.company_name || 'your company'}</b>. This will add:
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;padding:9px 12px;background:var(--bg3);border-radius:var(--r2)"><span>👤 Customers</span><b>${custN}</b></div>
+      <div style="display:flex;justify-content:space-between;padding:9px 12px;background:var(--bg3);border-radius:var(--r2)"><span>🏭 Vendors</span><b>${vendN}</b></div>
+      <div style="display:flex;justify-content:space-between;padding:9px 12px;background:var(--bg3);border-radius:var(--r2)"><span>📦 Products</span><b>${prodN}</b></div>
+    </div>
+    ${invN ? `<div style="font-size:10.5px;color:var(--orange);margin-bottom:10px">⚠️ ${invN} invoice(s) are in this file but aren't auto-restored — GST documents need careful review to avoid duplicate filings. Contact support if you need invoice data recovered.</div>` : ''}
+    <div style="font-size:10.5px;color:var(--text3)">Records are added, not overwritten — nothing already in your account is deleted. Large backups can take a moment.</div>
+  `;
+  const btn = document.getElementById('restoreConfirmBtn');
+  btn.disabled = false; btn.textContent = 'Restore Data';
+  document.getElementById('restoreModal').classList.remove('hidden');
+}
+
+async function confirmRestore() {
+  if (!PENDING_RESTORE) return;
+  if (!AUTH.apiOnline) { showToast('⚠️ Connect to the API to restore data', 'warn'); return; }
+
+  const data = PENDING_RESTORE;
+  const jobs = [
+    ...(data.customers || []).map(c => ({ url: '/customers', body: mapRestoreCustomer(c) })),
+    ...(data.vendors   || []).map(v => ({ url: '/vendors',   body: mapRestoreVendor(v)   })),
+    ...(data.products  || []).map(p => ({ url: '/products',  body: mapRestoreProduct(p)  })),
+  ];
+  if (!jobs.length) { showToast('⚠️ Nothing restorable was found in that file', 'warn'); closeModal('restoreModal'); return; }
+
+  const btn = document.getElementById('restoreConfirmBtn');
+  btn.disabled = true;
+
+  let ok = 0, fail = 0;
+  for (let i = 0; i < jobs.length; i++) {
+    btn.textContent = `Restoring ${i + 1}/${jobs.length}…`;
+    try {
+      await apiFetch(jobs[i].url, { method: 'POST', body: JSON.stringify(jobs[i].body) });
+      ok++;
+    } catch (e) { fail++; }
+  }
+
+  closeModal('restoreModal');
+  PENDING_RESTORE = null;
+  addAuditEntry('CREATE', 'Settings', `Restored ${ok} record(s) from a backup file`);
+  showToast(fail ? `✅ Restored ${ok} record(s) — ${fail} failed` : `✅ Restored ${ok} record(s) from backup`);
+
+  // Refresh cached lists so the newly restored records show up right away
+  await Promise.allSettled([renderCustomers?.(), renderVendors?.(), renderInventory?.()]);
+}
+
+// Accepts either a raw API record or the app's normalized local shape and
+// maps it back to the POST payload each create endpoint expects.
+function mapRestoreCustomer(r) {
+  return {
+    display_name:        r.display_name || r.name || r.legal_name || 'Unnamed customer',
+    legal_name:          r.legal_name || r.contact || undefined,
+    gstin:               r.gstin || undefined,
+    pan:                 r.pan || undefined,
+    party_category:      r.party_category || r.category || undefined,
+    phone:               r.phone || r.mobile || undefined,
+    alt_phone:           r.alt_phone || r.altMobile || undefined,
+    email:               r.email || undefined,
+    billing_city:        r.billing_city || r.city || undefined,
+    billing_state:       r.billing_state || r.state || undefined,
+    billing_state_code:  r.billing_state_code || r.stateCode || undefined,
+    billing_pincode:     r.billing_pincode || r.pincode || undefined,
+    billing_address:     r.billing_address || r.addr || undefined,
+    party_type:          'customer',
+    credit_limit:        r.credit_limit ?? r.credit ?? 0,
+    credit_days:         r.credit_days ?? r.creditDays ?? 0,
+    opening_balance:     r.opening_balance ?? r.openingBalance ?? 0,
+    balance_type:        r.balance_type || r.balanceType || 'Dr',
+    tds_applicable:      r.tds_applicable ?? r.tdsApplicable ?? false,
+    tds_section:         r.tds_section || r.tdsSection || null,
+    tds_rate:            r.tds_rate ?? r.tdsRate ?? 0,
+    notes:               r.notes || undefined,
+  };
+}
+
+function mapRestoreVendor(r) {
+  return {
+    display_name:    r.display_name || r.name || r.legal_name || 'Unnamed vendor',
+    legal_name:      r.legal_name || r.contact || '',
+    gstin:           r.gstin || '',
+    phone:           r.phone || r.mobile || '',
+    email:           r.email || undefined,
+    billing_city:    r.billing_city || r.city || '',
+    billing_address: r.billing_address || r.addr || '',
+    party_type:      'vendor',
+    credit_limit:    r.credit_limit ?? r.credit ?? 0,
+    payment_terms:   r.payment_terms || r.terms || 'Net 30',
+    tds_applicable:  r.tds_applicable ?? r.tdsApplicable ?? false,
+    tds_section:     r.tds_section || r.tdsSection || null,
+    tds_rate:        r.tds_rate ?? r.tdsRate ?? 0,
+  };
+}
+
+function mapRestoreProduct(p) {
+  return {
+    product_name:    p.product_name || p.name || 'Unnamed product',
+    product_code:    p.product_code || p.sku || ('PRD-' + Date.now() + '-' + Math.floor(Math.random() * 1000)),
+    description:     p.description || p.desc || '',
+    brand:           p.brand || '',
+    hsn_code:        p.hsn_code || p.hsn || '',
+    barcode:         p.barcode || '',
+    purchase_price:  p.purchase_price ?? p.pp ?? 0,
+    mrp:             p.mrp ?? 0,
+    selling_price:   p.selling_price ?? p.price ?? 0,
+    current_stock:   p.current_stock ?? p.stock ?? 0,
+    reorder_level:   p.reorder_level ?? p.reorder ?? 0,
+    gst_rate:        p.gst_rate ?? p.gst ?? 18,
+    uom_id:          p.uom_id || p.uomId || null,
+    track_inventory: true,
+  };
 }
 
 // ============================================================
@@ -7109,7 +8446,32 @@ function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); 
 //  OTHER MODAL SAVE HANDLERS
 // ============================================================
 function openQuote()   { showToast('💡 Tip: Create Invoice → Type = Quotation'); setTimeout(()=>nav('create',null),600); }
-function genUPI()      { const amt=getVal('upiAmt'),uid=getVal('upiId'); if(!amt){showToast('⚠️ Enter amount','warn');return;} document.getElementById('upiQR').style.display='block'; document.getElementById('upiIdShow').textContent=uid; showToast('📱 UPI QR generated for ₹'+parseInt(amt).toLocaleString()); }
+function genUPI() {
+  const amt = getVal('upiAmt');
+  const uid = getVal('upiId');
+  const ref = getVal('upiRef');
+  const amtNum = parseFloat(amt);
+
+  if (!amtNum || amtNum <= 0) { showToast('⚠️ Enter a valid amount', 'warn'); return; }
+  if (!uid || !uid.includes('@')) { showToast('⚠️ Enter a valid UPI ID (e.g. name@bank)', 'warn'); return; }
+
+  const payeeName = (CURRENT_COMPANY?.trade_name || CURRENT_COMPANY?.legal_name || 'VyaparPro');
+  const upiParams = new URLSearchParams({
+    pa: uid,
+    pn: payeeName,
+    am: amtNum.toFixed(2),
+    cu: 'INR',
+  });
+  if (ref) upiParams.set('tn', ref);
+  const upiUri = 'upi://pay?' + upiParams.toString();
+  const qrImgUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(upiUri);
+
+  const wrap = document.getElementById('upiQRImgWrap');
+  wrap.innerHTML = `<img src="${qrImgUrl}" alt="UPI QR Code" width="220" height="220" style="border-radius:8px"/>`;
+  document.getElementById('upiQR').style.display = 'block';
+  document.getElementById('upiIdShow').textContent = uid + (ref ? ' · Ref: ' + ref : '');
+  showToast('📱 UPI QR generated for ₹' + amtNum.toLocaleString('en-IN'));
+}
 // ============================================================
 //  NOTIFICATIONS — real alerts pulled from live app data
 // ============================================================
@@ -7580,11 +8942,13 @@ function loadingRow(cols){ return `<tr><td colspan="${cols}" style="text-align:c
 //  BOOT — check for existing session before showing login
 // ============================================================
 window.onload = async () => {
-  // Show API health on login screen
-  const pill = document.getElementById('apiStatusPill');
-  const ok   = await checkApiHealth();
+  // Show API health on welcome + auth screens
+  const pill  = document.getElementById('apiStatusPill');
+  const pill2 = document.getElementById('welcomeApiPill');
+  const ok    = await checkApiHealth();
   if (ok) { pill.textContent='✅ API Online'; pill.className='api-status api-online'; }
   else    { pill.textContent='⚠️ API Offline (Demo mode available)'; pill.className='api-status api-offline'; }
+  if (pill2) { pill2.textContent = pill.textContent; pill2.className = pill.className; }
 
   // Restore existing session from sessionStorage
   const saved=sessionStorage.getItem('vyaparpro_token');
@@ -7594,7 +8958,8 @@ window.onload = async () => {
       try {
         const me = await apiFetch('/auth/me');
         const u = me?.data || me;
-        AUTH.user = { name: u.full_name || 'User', role: u.role?.role_name || 'Staff' };
+        AUTH.user = { name: u.full_name || 'User', role: u.role?.role_name || 'Staff', branchId: u.branch_id || null };
+        CFG.COMPANY_ID = u.company_id || CFG.COMPANY_ID;
         bootApp();
       } catch (_) {
         sessionStorage.removeItem('vyaparpro_token');

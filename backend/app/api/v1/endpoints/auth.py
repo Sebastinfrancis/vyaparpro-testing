@@ -13,13 +13,60 @@ from app.api.v1.dependencies import (
 from app.core.config import settings
 from app.schemas import (
     ChangePasswordRequest, ForgotPasswordRequest, LoginRequest,
-    RefreshRequest, ResetPasswordRequest, Setup2FAResponse,
-    TokenResponse, UserOut, Verify2FARequest,
+    RefreshRequest, RegisterRequest, ResetPasswordRequest,
+    Setup2FAResponse, TokenResponse, UserOut, Verify2FARequest,
 )
 from app.services import AuthService
-from app.utils.responses import ok
+from app.utils.responses import created, ok
 
 router = APIRouter()
+
+
+@router.post(
+    "/register",
+    summary="Public sign-up — creates a company, an Owner role, and the first user, then logs in",
+    status_code=201,
+)
+async def register(
+    payload: RegisterRequest,
+    request: Request,
+    db: DBDep,
+) -> ORJSONResponse:
+    svc = AuthService(db)
+    ip = request.client.host if request.client else None
+    result = await svc.register(payload, ip=ip)
+    return created(
+        data={
+            "access_token": result["access_token"],
+            "refresh_token": result["refresh_token"],
+            "token_type": "bearer",
+            "expires_in": result["expires_in"],
+            "company": {
+                "id": str(result["company"].id),
+                "legal_name": result["company"].legal_name,
+                "gstin": result["company"].gstin,
+            },
+            "user": {
+                "id": str(result["user"].id),
+                "full_name": result["user"].full_name,
+                "email": result["user"].email,
+                "company_id": str(result["user"].company_id),
+                "role_id": str(result["user"].role_id),
+                "is_2fa_enabled": result["user"].is_2fa_enabled,
+            },
+        },
+        message="Account created successfully.",
+    )
+
+
+@router.get(
+    "/resolve-company",
+    summary="Find which company/companies an email belongs to (used by the login screen)",
+)
+async def resolve_company(email: str, db: DBDep) -> ORJSONResponse:
+    svc = AuthService(db)
+    matches = await svc.resolve_companies(email)
+    return ok(data={"matches": matches})
 
 
 @router.post("/login", summary="Login with email + password (+ optional TOTP)")

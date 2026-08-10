@@ -13,7 +13,7 @@ from typing import Any, Optional
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import A4, A5
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import (
@@ -137,6 +137,10 @@ class PDFDocumentData:
     challan_date: Optional[date] = None
     upi_id: str = ""
     copy_label: str = "ORIGINAL FOR RECIPIENT"
+    # Invoice & PDF preferences (Settings → Invoice & PDF Preferences)
+    page_size: str = "A4"                    # "A4" | "A5"
+    show_upi_qr: bool = True                 # gate the UPI QR block, even if upi_id is set
+    signature_url: Optional[str] = None      # uploaded signature image, shown above "Authorised Signatory"
 
 
 def _fmt(v) -> str:
@@ -193,7 +197,7 @@ def _qr_drawing(data: str, size: float = 26*mm) -> Drawing:
 def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
     """Classic bordered-grid GST tax invoice — matches standard Indian invoicing format."""
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=8*mm, leftMargin=8*mm,
+    doc = SimpleDocTemplate(buffer, pagesize=(A5 if data.page_size == "A5" else A4), rightMargin=8*mm, leftMargin=8*mm,
                              topMargin=8*mm, bottomMargin=8*mm)
     styles = getSampleStyleSheet()
     BORDER = colors.black
@@ -459,7 +463,7 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
             [Paragraph("Acc. Number:", label8), Paragraph(data.bank_account_no or "-", body8), ""],
             [Paragraph("IFSC:", label8), Paragraph(data.bank_ifsc or "-", body8), ""],
         ]
-        if data.upi_id:
+        if data.upi_id and data.show_upi_qr:
             bank_lines.append([Paragraph("UPI ID:", label8), Paragraph(data.upi_id, body8), ""])
 
     if bank_lines:
@@ -469,7 +473,7 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
             ("LEFTPADDING",(0,0),(-1,-1),2), ("RIGHTPADDING",(0,0),(-1,-1),2),
             ("TOPPADDING",(0,0),(-1,-1),2), ("BOTTOMPADDING",(0,0),(-1,-1),2),
         ]
-        if data.upi_id:
+        if data.upi_id and data.show_upi_qr:
             bank_lines[0][2] = [
                 _qr_drawing(f"upi://pay?pa={data.upi_id}&pn={data.company_name}&am={float(data.total_amount):.2f}", 26*mm),
                 Paragraph("Pay using UPI", ParagraphStyle("payupi", fontName=FONT_BOLD, fontSize=7, alignment=TA_CENTER)),
@@ -489,14 +493,33 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
         ("TOPPADDING",(0,0),(-1,-1),4), ("BOTTOMPADDING",(0,0),(-1,-1),4),
     ]))
 
-    sig_box = Table([
+    sig_image = ""
+    if data.signature_url:
+        sig_path = ("app" + data.signature_url) if data.signature_url.startswith("/static/") else data.signature_url
+        if os.path.exists(sig_path):
+            try:
+                from PIL import Image as PILImage
+                with PILImage.open(sig_path) as im:
+                    iw, ih = im.size
+                max_w, max_h = 32 * mm, 14 * mm
+                scale = min(max_w / iw, max_h / ih)
+                sig_image = RLImage(sig_path, width=iw * scale, height=ih * scale)
+            except Exception:
+                sig_image = ""
+
+    sig_rows = [
         [Paragraph("Certified that the particulars given above are true and correct.", ParagraphStyle("cert", fontName=FONT_REGULAR, fontSize=7, alignment=TA_CENTER))],
         [Paragraph(f"<b>For {data.company_name}</b>", ParagraphStyle("forco", fontName=FONT_BOLD, fontSize=9, alignment=TA_CENTER))],
-        [Spacer(1, 6*mm)],
-        [Paragraph("This is a computer generated invoice.<br/>No signature required.", ParagraphStyle("stamp", fontName=FONT_REGULAR, fontSize=6.5, alignment=TA_CENTER, textColor=colors.HexColor("#999999")))],
-        [Paragraph("Authorised Signatory", ParagraphStyle("sig", fontName=FONT_REGULAR, fontSize=8, alignment=TA_CENTER))],
-    ], colWidths=[73*mm])
-    sig_box.setStyle(TableStyle([("TOPPADDING",(0,0),(-1,-1),5), ("BOTTOMPADDING",(0,0),(-1,-1),5)]))
+    ]
+    if sig_image:
+        sig_rows.append([sig_image])
+    else:
+        sig_rows.append([Spacer(1, 6*mm)])
+        sig_rows.append([Paragraph("This is a computer generated invoice.<br/>No signature required.", ParagraphStyle("stamp", fontName=FONT_REGULAR, fontSize=6.5, alignment=TA_CENTER, textColor=colors.HexColor("#999999")))])
+    sig_rows.append([Paragraph("Authorised Signatory", ParagraphStyle("sig", fontName=FONT_REGULAR, fontSize=8, alignment=TA_CENTER))])
+
+    sig_box = Table(sig_rows, colWidths=[73*mm])
+    sig_box.setStyle(TableStyle([("TOPPADDING",(0,0),(-1,-1),5), ("BOTTOMPADDING",(0,0),(-1,-1),5), ("ALIGN",(0,0),(-1,-1),"CENTER")]))
 
     bottom_row = Table([[bank_box, sig_box]], colWidths=[110*mm, 73*mm])
     bottom_row.setStyle(TableStyle([

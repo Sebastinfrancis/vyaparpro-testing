@@ -80,6 +80,29 @@ class LoginRequest(APIModel):
     device_info: Optional[dict] = None
 
 
+class RegisterRequest(APIModel):
+    """Public sign-up: creates Organization + Company + Owner Role + first User."""
+    business_name: str = Field(max_length=200)
+    full_name: str = Field(max_length=120)
+    email: EmailStr
+    phone: Optional[str] = Field(None, max_length=20)
+    password: str = Field(min_length=8)
+    confirm_password: str
+    gstin: Optional[str] = Field(None, max_length=15)
+    business_type: str = "retailer"
+
+    @field_validator("gstin")
+    @classmethod
+    def check_gstin(cls, v: str | None) -> str | None:
+        return validate_gstin(v)
+
+    @model_validator(mode="after")
+    def passwords_match(self) -> "RegisterRequest":
+        if self.password != self.confirm_password:
+            raise ValueError("Passwords do not match.")
+        return self
+
+
 class TokenResponse(APIModel):
     access_token: str
     refresh_token: str

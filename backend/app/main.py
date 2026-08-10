@@ -49,6 +49,7 @@ from app.api.v1.endpoints.reports import router as reports_router
 from app.api.v1.endpoints.gst import router as gst_router
 from app.api.v1.endpoints.audit import router as audit_router
 from app.api.v1.endpoints.ai_assistant import router as ai_assistant_router
+from app.api.v1.endpoints.inventory import router as inventory_router
 
 log = get_logger(__name__)
 
@@ -144,6 +145,7 @@ def create_app() -> FastAPI:
     app.include_router(gst_router, prefix=f"{prefix}/gst", tags=["GST"])
     app.include_router(audit_router, prefix=f"{prefix}/audit-log", tags=["Audit Log"])
     app.include_router(ai_assistant_router, prefix=f"{prefix}/ai", tags=["AI Assistant"])
+    app.include_router(inventory_router, prefix=prefix, tags=["Inventory / Warehouses"])
     
 
     # ── Health / readiness probes ─────────────────────────────────────

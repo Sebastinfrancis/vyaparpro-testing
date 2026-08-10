@@ -186,6 +186,7 @@ class PurchaseOrderCreate(APIModel):
     vendor_id: UUID
     vendor_ref_no: Optional[str] = None
     linked_jo_id: Optional[UUID] = None
+    branch_id: Optional[UUID] = None
     deliver_to_warehouse_id: Optional[UUID] = None
     expected_delivery: Optional[date] = None
     currency: str = "INR"
@@ -318,6 +319,7 @@ class InvoiceCreate(APIModel):
     is_export: bool = False
     export_type: Optional[str] = None
     supply_category: str = "taxable"  # taxable | nil_rated | exempt | non_gst
+    branch_id: Optional[UUID] = None
     warehouse_id: Optional[UUID] = None
     payment_terms: Optional[str] = None
     notes: Optional[str] = None
