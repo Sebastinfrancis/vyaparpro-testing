@@ -100,6 +100,8 @@ class QuotationOut(APIModel):
     billing_name: str
     billing_gstin: Optional[str]
     billing_address: Optional[str]
+    contact_phone: Optional[str] = None
+    contact_email: Optional[str] = None
     place_of_supply: str
     supply_type: str
     subtotal: Decimal

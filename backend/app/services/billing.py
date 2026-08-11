@@ -480,7 +480,12 @@ class PurchaseOrderService:
         vendor = await PartyRepository(self.session).get(payload.vendor_id)
         tds_amount = await self._calc_tds(company_id, vendor, payload.po_date, totals["taxable_amount"])
 
-        po_no = await self.seq.next_number(company_id, "po")
+        branch_code = None
+        if payload.branch_id:
+            from app.db.repositories import BranchRepository
+            branch = await BranchRepository(self.session).get(payload.branch_id)
+            branch_code = branch.branch_code if branch else None
+        po_no = await self.seq.next_number(company_id, "po", branch_id=payload.branch_id, branch_code=branch_code)
         po = await self.repo.create({
             "company_id": company_id,
             "po_no": po_no,
@@ -784,7 +789,12 @@ class InvoiceService:
                      tds_amount + payload.tcs_amount)
         rounded = raw_total.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
         round_off = rounded - raw_total + payload.round_off
-        inv_no = await self.seq.next_number(company_id, "invoice")
+        branch_code = None
+        if payload.branch_id:
+            from app.db.repositories import BranchRepository
+            branch = await BranchRepository(self.session).get(payload.branch_id)
+            branch_code = branch.branch_code if branch else None
+        inv_no = await self.seq.next_number(company_id, "invoice", branch_id=payload.branch_id, branch_code=branch_code)
         inv = await self.repo.create({
             "company_id": company_id,
             "invoice_no": inv_no,

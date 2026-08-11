@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date
 import calendar
 from app import db
+from uuid import UUID
 from fastapi import APIRouter, Query
 from fastapi.responses import ORJSONResponse
 from sqlalchemy import text
@@ -160,32 +161,44 @@ def _compute_setoff(outward: dict, itc: dict) -> dict:
 
 
 @router.get("/summary", summary="GST summary — output tax, ITC, rate-wise breakup")
-async def gst_summary(current: CurrentUserDep, db: DBDep, month: str = Query(...)) -> ORJSONResponse:
+async def gst_summary(
+    current: CurrentUserDep, db: DBDep, month: str = Query(...),
+    branch_id: UUID | None = Query(None, description="Filter to one branch/GSTIN — omit for company-wide"),
+) -> ORJSONResponse:
     cid = str(current.company_id)
     df, dt = _month_bounds(month)
+    bid = str(branch_id) if branch_id else None
+    # A branch-scoped user can only ever see their own branch's GST figures —
+    # each branch GSTIN files its own return, so cross-branch numbers would
+    # be meaningless (and, if the state differs, wrong) to show them anyway.
+    if current.branch_id is not None and not current.has_permission("branch.access_all"):
+        bid = str(current.branch_id)
 
     totals = (await db.execute(text(f"""
         SELECT {_signed('taxable_amount', 'sales_taxable')},
                {_signed('cgst_amount+sgst_amount+igst_amount', 'output_gst')}
         FROM invoices
         WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND status NOT IN ('draft','cancelled','void') AND invoice_type IN {_GST_INVOICE_TYPES}
           AND reverse_charge = false AND is_export = false AND supply_category = 'taxable'
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     itc = (await db.execute(text(f"""
         SELECT COALESCE(SUM({_ITC_CGST}+{_ITC_SGST}+{_ITC_IGST}),0) AS input_tax_credit
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
+          AND po.branch_id IS NOT DISTINCT FROM COALESCE(:bid, po.branch_id)
           AND poi.itc_eligible = true
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     itc_blocked = (await db.execute(text(f"""
         SELECT COALESCE(SUM({_ITC_CGST}+{_ITC_SGST}+{_ITC_IGST}),0) AS itc_ineligible
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
+          AND po.branch_id IS NOT DISTINCT FROM COALESCE(:bid, po.branch_id)
           AND poi.itc_eligible = false
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     rate_wise = (await db.execute(text(f"""
         SELECT ii.gst_rate, {_signed_ii('taxable_amount', 'taxable')},
@@ -194,10 +207,11 @@ async def gst_summary(current: CurrentUserDep, db: DBDep, month: str = Query(...
                {_signed_ii('cgst_amount+sgst_amount+igst_amount', 'total_tax')}
         FROM invoice_items ii JOIN invoices i ON i.id = ii.invoice_id
         WHERE i.company_id=:cid AND i.invoice_date BETWEEN :df AND :dt
+          AND i.branch_id IS NOT DISTINCT FROM COALESCE(:bid, i.branch_id)
           AND i.status NOT IN ('draft','cancelled','void') AND i.invoice_type IN {_GST_INVOICE_TYPES}
           AND i.reverse_charge = false AND i.is_export = false AND i.supply_category = 'taxable'
         GROUP BY ii.gst_rate ORDER BY ii.gst_rate
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().all()
 
     return ok(data=_clean({
         "sales_taxable": totals["sales_taxable"],
@@ -205,24 +219,32 @@ async def gst_summary(current: CurrentUserDep, db: DBDep, month: str = Query(...
         "input_tax_credit": itc["input_tax_credit"],
         "itc_ineligible": itc_blocked["itc_ineligible"],
         "rate_wise": [dict(r) for r in rate_wise],
+        "branch_id": bid,
     }))
 
 
 @router.get("/gstr1", summary="GSTR-1 — B2B, B2C, CDNR breakdown")
-async def gstr1(current: CurrentUserDep, db: DBDep, month: str = Query(...)) -> ORJSONResponse:
+async def gstr1(
+    current: CurrentUserDep, db: DBDep, month: str = Query(...),
+    branch_id: UUID | None = Query(None, description="Filter to one branch/GSTIN — omit for company-wide"),
+) -> ORJSONResponse:
     cid = str(current.company_id)
     df, dt = _month_bounds(month)
+    bid = str(branch_id) if branch_id else None
+    if current.branch_id is not None and not current.has_permission("branch.access_all"):
+        bid = str(current.branch_id)
 
     b2b = (await db.execute(text("""
         SELECT i.invoice_no, i.invoice_date, i.billing_name, i.billing_gstin,
                i.taxable_amount, i.cgst_amount, i.sgst_amount, i.igst_amount, i.total_amount
         FROM invoices i
         WHERE i.company_id=:cid AND i.invoice_date BETWEEN :df AND :dt
+          AND i.branch_id IS NOT DISTINCT FROM COALESCE(:bid, i.branch_id)
           AND i.status NOT IN ('draft','cancelled','void') AND i.invoice_type = 'tax_invoice'
           AND i.billing_gstin IS NOT NULL AND i.billing_gstin != ''
           AND is_export = false
         ORDER BY i.invoice_date
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().all()
 
     b2c = (await db.execute(text("""
         SELECT CASE WHEN i.supply_type = 'inter' AND i.total_amount > 250000 THEN 'B2CL' ELSE 'B2CS' END AS category,
@@ -230,11 +252,12 @@ async def gstr1(current: CurrentUserDep, db: DBDep, month: str = Query(...)) -> 
                SUM(i.cgst_amount+i.sgst_amount+i.igst_amount) AS total_tax
         FROM invoices i
         WHERE i.company_id=:cid AND i.invoice_date BETWEEN :df AND :dt
+          AND i.branch_id IS NOT DISTINCT FROM COALESCE(:bid, i.branch_id)
           AND i.status NOT IN ('draft','cancelled','void') AND i.invoice_type = 'tax_invoice'
           AND (i.billing_gstin IS NULL OR i.billing_gstin = '')
           AND is_export = false
         GROUP BY 1
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().all()
 
     cdnr = (await db.execute(text("""
         SELECT i.invoice_no, i.invoice_date, i.invoice_type, i.billing_name, i.billing_gstin,
@@ -242,31 +265,40 @@ async def gstr1(current: CurrentUserDep, db: DBDep, month: str = Query(...)) -> 
                i.against_invoice_id
         FROM invoices i
         WHERE i.company_id=:cid AND i.invoice_date BETWEEN :df AND :dt
+          AND i.branch_id IS NOT DISTINCT FROM COALESCE(:bid, i.branch_id)
           AND i.status NOT IN ('draft','cancelled','void')
           AND i.invoice_type IN ('credit_note','debit_note')
         ORDER BY i.invoice_date
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().all()
 
     exports = (await db.execute(text("""
         SELECT invoice_no, invoice_date, billing_name, export_type, taxable_amount, total_amount
         FROM invoices
         WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND status NOT IN ('draft','cancelled','void') AND invoice_type = 'tax_invoice' AND is_export = true
         ORDER BY invoice_date
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().all()
 
     return ok(data=_clean({
         "b2b": [dict(r) for r in b2b],
         "b2c": [dict(r) for r in b2c],
         "cdnr": [dict(r) for r in cdnr],
         "exports": [dict(r) for r in exports],
+        "branch_id": bid,
     }))
 
 
 @router.get("/gstr3b", summary="GSTR-3B — monthly summary return")
-async def gstr3b(current: CurrentUserDep, db: DBDep, month: str = Query(...)) -> ORJSONResponse:
+async def gstr3b(
+    current: CurrentUserDep, db: DBDep, month: str = Query(...),
+    branch_id: UUID | None = Query(None, description="Filter to one branch/GSTIN — omit for company-wide"),
+) -> ORJSONResponse:
     cid = str(current.company_id)
     df, dt = _month_bounds(month)
+    bid = str(branch_id) if branch_id else None
+    if current.branch_id is not None and not current.has_permission("branch.access_all"):
+        bid = str(current.branch_id)
 
     outward_taxable = (await db.execute(text(f"""
         SELECT
@@ -277,50 +309,56 @@ async def gstr3b(current: CurrentUserDep, db: DBDep, month: str = Query(...)) ->
             {_signed('cess_amount', 'cess')}
         FROM invoices
         WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+        AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
         AND status NOT IN ('draft','cancelled','void')
         AND invoice_type IN {_GST_INVOICE_TYPES}
         AND reverse_charge = false AND is_export = false AND supply_category = 'taxable'
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     outward_nil_exempt = (await db.execute(text("""
         SELECT COALESCE(SUM(taxable_amount),0) AS taxable
         FROM invoices
         WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+        AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
         AND status NOT IN ('draft','cancelled','void') AND invoice_type IN ('tax_invoice','debit_note')
         AND supply_category IN ('nil_rated','exempt')
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     outward_non_gst = (await db.execute(text("""
         SELECT COALESCE(SUM(taxable_amount),0) AS taxable
         FROM invoices
         WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+        AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
         AND status NOT IN ('draft','cancelled','void') AND invoice_type IN ('tax_invoice','debit_note')
         AND supply_category = 'non_gst'
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     outward_zero_rated = (await db.execute(text("""
         SELECT COALESCE(SUM(taxable_amount),0) AS taxable, COALESCE(SUM(cgst_amount),0) AS cgst,
                COALESCE(SUM(sgst_amount),0) AS sgst, COALESCE(SUM(igst_amount),0) AS igst
         FROM invoices
         WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+        AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
         AND status NOT IN ('draft','cancelled','void') AND invoice_type = 'tax_invoice' AND is_export = true
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     inward_rcm = (await db.execute(text("""
         SELECT COALESCE(SUM(taxable_amount),0) AS taxable, COALESCE(SUM(cgst_amount),0) AS cgst,
                COALESCE(SUM(sgst_amount),0) AS sgst, COALESCE(SUM(igst_amount),0) AS igst
         FROM purchase_orders
         WHERE company_id=:cid AND po_date BETWEEN :df AND :dt AND status != 'cancelled'
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND reverse_charge = true
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     itc_available = (await db.execute(text(f"""
         SELECT COALESCE(SUM({_ITC_CGST}),0) AS cgst, COALESCE(SUM({_ITC_SGST}),0) AS sgst,
                COALESCE(SUM({_ITC_IGST}),0) AS igst
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
+          AND po.branch_id IS NOT DISTINCT FROM COALESCE(:bid, po.branch_id)
           AND poi.itc_eligible = true
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     itc_ineligible = (await db.execute(text(f"""
         SELECT COALESCE(SUM({_ITC_CGST}),0) AS cgst, COALESCE(SUM({_ITC_SGST}),0) AS sgst,
@@ -328,8 +366,9 @@ async def gstr3b(current: CurrentUserDep, db: DBDep, month: str = Query(...)) ->
                COALESCE(SUM({_ITC_CGST}+{_ITC_SGST}+{_ITC_IGST}),0) AS total
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
+          AND po.branch_id IS NOT DISTINCT FROM COALESCE(:bid, po.branch_id)
           AND poi.itc_eligible = false
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     # WPAY exports (tax paid, later refunded) still count toward this month's
     # outward liability for set-off purposes — LUT/bond exports contribute 0
@@ -355,13 +394,20 @@ async def gstr3b(current: CurrentUserDep, db: DBDep, month: str = Query(...)) ->
         "itc_available": dict(itc_available),
         "itc_ineligible_blocked_17_5": dict(itc_ineligible),   # Table 4(B) — must be reversed, not claimed
         "net_tax_payable": net_payable,
+        "branch_id": bid,
     }))
 
 
 @router.get("/hsn-summary", summary="HSN/SAC-wise summary")
-async def hsn_summary(current: CurrentUserDep, db: DBDep, month: str = Query(...)) -> ORJSONResponse:
+async def hsn_summary(
+    current: CurrentUserDep, db: DBDep, month: str = Query(...),
+    branch_id: UUID | None = Query(None, description="Filter to one branch/GSTIN — omit for company-wide"),
+) -> ORJSONResponse:
     cid = str(current.company_id)
     df, dt = _month_bounds(month)
+    bid = str(branch_id) if branch_id else None
+    if current.branch_id is not None and not current.has_permission("branch.access_all"):
+        bid = str(current.branch_id)
 
     rows = (await db.execute(text(f"""
         SELECT COALESCE(ii.hsn_code, ii.sac_code, 'N/A') AS hsn, MIN(ii.description) AS description,
@@ -372,19 +418,26 @@ async def hsn_summary(current: CurrentUserDep, db: DBDep, month: str = Query(...
                {_signed_ii('cgst_amount+sgst_amount+igst_amount', 'total_tax')}
         FROM invoice_items ii JOIN invoices i ON i.id = ii.invoice_id
         WHERE i.company_id=:cid AND i.invoice_date BETWEEN :df AND :dt
+          AND i.branch_id IS NOT DISTINCT FROM COALESCE(:bid, i.branch_id)
           AND i.status NOT IN ('draft','cancelled','void') AND i.invoice_type IN {_GST_INVOICE_TYPES}
           AND i.reverse_charge = false AND i.is_export = false AND i.supply_category = 'taxable'
         GROUP BY COALESCE(ii.hsn_code, ii.sac_code, 'N/A'), ii.gst_rate
         ORDER BY taxable DESC
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().all()
 
-    return ok(data=_clean({"items": [dict(r) for r in rows]}))
+    return ok(data=_clean({"items": [dict(r) for r in rows], "branch_id": bid}))
 
 
 @router.get("/itc-ledger", summary="Input Tax Credit available this period")
-async def itc_ledger(current: CurrentUserDep, db: DBDep, month: str = Query(...)) -> ORJSONResponse:
+async def itc_ledger(
+    current: CurrentUserDep, db: DBDep, month: str = Query(...),
+    branch_id: UUID | None = Query(None, description="Filter to one branch/GSTIN — omit for company-wide"),
+) -> ORJSONResponse:
     cid = str(current.company_id)
     df, dt = _month_bounds(month)
+    bid = str(branch_id) if branch_id else None
+    if current.branch_id is not None and not current.has_permission("branch.access_all"):
+        bid = str(current.branch_id)
 
     by_vendor = (await db.execute(text(f"""
         SELECT COALESCE(p.display_name, 'Unknown') AS vendor_name, po.po_no, po.po_date,
@@ -396,10 +449,11 @@ async def itc_ledger(current: CurrentUserDep, db: DBDep, month: str = Query(...)
         JOIN purchase_orders po ON po.id = poi.po_id
         LEFT JOIN parties p ON p.id = po.vendor_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
+          AND po.branch_id IS NOT DISTINCT FROM COALESCE(:bid, po.branch_id)
           AND poi.itc_eligible = true
         GROUP BY p.display_name, po.po_no, po.po_date
         ORDER BY po.po_date
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().all()
 
     ineligible_by_vendor = (await db.execute(text(f"""
         SELECT COALESCE(p.display_name, 'Unknown') AS vendor_name, po.po_no, po.po_date,
@@ -409,10 +463,11 @@ async def itc_ledger(current: CurrentUserDep, db: DBDep, month: str = Query(...)
         JOIN purchase_orders po ON po.id = poi.po_id
         LEFT JOIN parties p ON p.id = po.vendor_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
+          AND po.branch_id IS NOT DISTINCT FROM COALESCE(:bid, po.branch_id)
           AND poi.itc_eligible = false
         GROUP BY p.display_name, po.po_no, po.po_date, poi.description, poi.itc_ineligible_reason
         ORDER BY po.po_date
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().all()
 
     totals = (await db.execute(text(f"""
         SELECT COALESCE(SUM({_ITC_CGST}),0) AS cgst, COALESCE(SUM({_ITC_SGST}),0) AS sgst,
@@ -420,8 +475,9 @@ async def itc_ledger(current: CurrentUserDep, db: DBDep, month: str = Query(...)
                COALESCE(SUM({_ITC_CGST}+{_ITC_SGST}+{_ITC_IGST}),0) AS total
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
+          AND po.branch_id IS NOT DISTINCT FROM COALESCE(:bid, po.branch_id)
           AND poi.itc_eligible = true
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     ineligible_totals = (await db.execute(text(f"""
         SELECT COALESCE(SUM({_ITC_CGST}),0) AS cgst, COALESCE(SUM({_ITC_SGST}),0) AS sgst,
@@ -429,8 +485,9 @@ async def itc_ledger(current: CurrentUserDep, db: DBDep, month: str = Query(...)
                COALESCE(SUM({_ITC_CGST}+{_ITC_SGST}+{_ITC_IGST}),0) AS total
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
+          AND po.branch_id IS NOT DISTINCT FROM COALESCE(:bid, po.branch_id)
           AND poi.itc_eligible = false
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     return ok(data=_clean({
         "totals": dict(totals),
@@ -438,19 +495,30 @@ async def itc_ledger(current: CurrentUserDep, db: DBDep, month: str = Query(...)
         "ineligible_totals": dict(ineligible_totals),
         "ineligible_by_vendor": [dict(r) for r in ineligible_by_vendor],
         "note": "Only itc_eligible line items are counted as claimable ITC. Ineligible items (Section 17(5) blocked credits) are shown separately and must be reversed, not claimed.",
+        "branch_id": bid,
     }))
 
 
 @router.post("/gstr3b/file", summary="File GSTR-3B for a period (snapshot + lock)")
-async def file_gstr3b(current: CurrentUserDep, db: DBDep, month: str = Query(...)) -> ORJSONResponse:
+async def file_gstr3b(
+    current: CurrentUserDep, db: DBDep, month: str = Query(...),
+    branch_id: UUID | None = Query(None, description="Branch/GSTIN this filing is for — omit for company-wide"),
+) -> ORJSONResponse:
     cid = current.company_id
     df, dt = _month_bounds(month)
+    bid_uuid = branch_id
+    if current.branch_id is not None and not current.has_permission("branch.access_all"):
+        bid_uuid = current.branch_id
+        from app.api.v1.dependencies import assert_branch_access
+        assert_branch_access(current, bid_uuid)
+    bid = str(bid_uuid) if bid_uuid else None
 
     existing = (await db.execute(text(
-        "SELECT status FROM gst_returns WHERE company_id=:cid AND return_type='GSTR-3B' AND period_from=:df"
-    ), {"cid": str(cid), "df": df})).scalar()
+        "SELECT status FROM gst_returns WHERE company_id=:cid AND branch_id IS NOT DISTINCT FROM :bid "
+        "AND return_type='GSTR-3B' AND period_from=:df"
+    ), {"cid": str(cid), "bid": bid, "df": df})).scalar()
     if existing == "filed":
-        return ok(message="This period is already filed.", data={"status": "filed"})
+        return ok(message="This period is already filed for this branch.", data={"status": "filed"})
 
     outward = (await db.execute(text(f"""
         SELECT
@@ -459,39 +527,44 @@ async def file_gstr3b(current: CurrentUserDep, db: DBDep, month: str = Query(...
             {_signed('sgst_amount', 'sgst')},
             {_signed('igst_amount', 'igst')}
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND status NOT IN ('draft','cancelled','void')
           AND invoice_type IN {_GST_INVOICE_TYPES}
           AND reverse_charge = false AND supply_category = 'taxable'
-    """), {"cid": str(cid), "df": df, "dt": dt})).mappings().one()
+    """), {"cid": str(cid), "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     nil_exempt = (await db.execute(text("""
         SELECT COALESCE(SUM(taxable_amount),0) AS taxable
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND status NOT IN ('draft','cancelled','void') AND invoice_type = 'tax_invoice'
           AND supply_category IN ('nil_rated','exempt')
-    """), {"cid": str(cid), "df": df, "dt": dt})).mappings().one()
+    """), {"cid": str(cid), "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     non_gst = (await db.execute(text("""
         SELECT COALESCE(SUM(taxable_amount),0) AS taxable
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND status NOT IN ('draft','cancelled','void') AND invoice_type = 'tax_invoice'
           AND supply_category = 'non_gst'
-    """), {"cid": str(cid), "df": df, "dt": dt})).mappings().one()
+    """), {"cid": str(cid), "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     inward_rcm = (await db.execute(text("""
         SELECT COALESCE(SUM(taxable_amount),0) AS taxable, COALESCE(SUM(cgst_amount),0) AS cgst,
                COALESCE(SUM(sgst_amount),0) AS sgst, COALESCE(SUM(igst_amount),0) AS igst
         FROM purchase_orders WHERE company_id=:cid AND po_date BETWEEN :df AND :dt AND status != 'cancelled'
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND reverse_charge = true
-    """), {"cid": str(cid), "df": df, "dt": dt})).mappings().one()
+    """), {"cid": str(cid), "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     itc = (await db.execute(text(f"""
         SELECT COALESCE(SUM({_ITC_CGST}),0) AS cgst, COALESCE(SUM({_ITC_SGST}),0) AS sgst,
                COALESCE(SUM({_ITC_IGST}),0) AS igst
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
+          AND po.branch_id IS NOT DISTINCT FROM COALESCE(:bid, po.branch_id)
           AND poi.itc_eligible = true
-    """), {"cid": str(cid), "df": df, "dt": dt})).mappings().one()
+    """), {"cid": str(cid), "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     itc_ineligible = (await db.execute(text(f"""
         SELECT COALESCE(SUM({_ITC_CGST}),0) AS cgst, COALESCE(SUM({_ITC_SGST}),0) AS sgst,
@@ -499,8 +572,9 @@ async def file_gstr3b(current: CurrentUserDep, db: DBDep, month: str = Query(...
                COALESCE(SUM({_ITC_CGST}+{_ITC_SGST}+{_ITC_IGST}),0) AS total
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
+          AND po.branch_id IS NOT DISTINCT FROM COALESCE(:bid, po.branch_id)
           AND poi.itc_eligible = false
-    """), {"cid": str(cid), "df": df, "dt": dt})).mappings().one()
+    """), {"cid": str(cid), "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     setoff = _compute_setoff(dict(outward), dict(itc))
     # RCM liability is always paid in cash — it is never netted against ITC.
@@ -508,7 +582,7 @@ async def file_gstr3b(current: CurrentUserDep, db: DBDep, month: str = Query(...
     total_payable = setoff["net_cgst"] + setoff["net_sgst"] + setoff["net_igst"] + rcm_cash
 
     gst_return = GSTReturn(
-        company_id=cid, return_type="GSTR-3B", period_from=df, period_to=dt,
+        company_id=cid, branch_id=bid_uuid, return_type="GSTR-3B", period_from=df, period_to=dt,
         financial_year=f"{df.year}-{str(df.year+1)[2:]}" if df.month >= 4 else f"{df.year-1}-{str(df.year)[2:]}",
         taxable_turnover=outward["taxable"],
         exempt_turnover=nil_exempt["taxable"],
@@ -534,27 +608,53 @@ async def file_gstr3b(current: CurrentUserDep, db: DBDep, month: str = Query(...
         "inward_rcm_liability": dict(inward_rcm) | {"cash_payable": rcm_cash},
         "itc_ineligible_17_5": dict(itc_ineligible),
         "total_cash_payable": total_payable,
-    }), message=f"GSTR-3B filed for {month}.")
+        "branch_id": bid,
+    }), message=f"GSTR-3B filed for {month}" + (f" (branch {bid})." if bid else "."))
 
 
 @router.get("/filed-returns", summary="History of filed GST returns")
-async def filed_returns(current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
+async def filed_returns(
+    current: CurrentUserDep, db: DBDep,
+    branch_id: UUID | None = Query(None, description="Filter to one branch/GSTIN — omit for company-wide"),
+) -> ORJSONResponse:
+    bid = str(branch_id) if branch_id else None
+    if current.branch_id is not None and not current.has_permission("branch.access_all"):
+        bid = str(current.branch_id)
+
     rows = (await db.execute(text("""
-        SELECT return_type, period_from, period_to, taxable_turnover, total_tax_payable,
+        SELECT return_type, branch_id, period_from, period_to, taxable_turnover, total_tax_payable,
                net_cgst_payable, net_sgst_payable, net_igst_payable, status, filed_at, arn
-        FROM gst_returns WHERE company_id=:cid ORDER BY period_from DESC
-    """), {"cid": str(current.company_id)})).mappings().all()
+        FROM gst_returns
+        WHERE company_id=:cid AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
+        ORDER BY period_from DESC
+    """), {"cid": str(current.company_id), "bid": bid})).mappings().all()
     return ok(data=_clean({"returns": [dict(r) for r in rows]}))
 
 @router.get("/report/pdf", summary="Download GST Compliance Report as PDF")
-async def gst_report_pdf(current: CurrentUserDep, db: DBDep, month: str = Query(...)) -> Response:
+async def gst_report_pdf(
+    current: CurrentUserDep, db: DBDep, month: str = Query(...),
+    branch_id: UUID | None = Query(None, description="Filter to one branch/GSTIN — omit for company-wide"),
+) -> Response:
     cid = str(current.company_id)
     df, dt = _month_bounds(month)
+    bid = str(branch_id) if branch_id else None
+    if current.branch_id is not None and not current.has_permission("branch.access_all"):
+        bid = str(current.branch_id)
 
-    company_row = (await db.execute(
-        text("SELECT legal_name, reg_address, gstin, phone, email, website FROM companies WHERE id = :cid"),
-        {"cid": cid}
-    )).mappings().one_or_none() or {}
+    if bid:
+        # A branch has its own GSTIN and address — the report header must show
+        # that branch's registration details, not the company's, or the PDF
+        # would carry the wrong GSTIN for whoever files it.
+        company_row = (await db.execute(
+            text("SELECT branch_name AS legal_name, address AS reg_address, gstin, phone, email, "
+                 "NULL AS website FROM branches WHERE id = :bid"),
+            {"bid": bid}
+        )).mappings().one_or_none() or {}
+    else:
+        company_row = (await db.execute(
+            text("SELECT legal_name, reg_address, gstin, phone, email, website FROM companies WHERE id = :cid"),
+            {"cid": cid}
+        )).mappings().one_or_none() or {}
 
     # 3.1(a) Taxable outward supplies — net of credit notes, whitelisted invoice types only
     outward = (await db.execute(text(f"""
@@ -562,9 +662,10 @@ async def gst_report_pdf(current: CurrentUserDep, db: DBDep, month: str = Query(
                {_signed('sgst_amount', 'sgst')}, {_signed('igst_amount', 'igst')},
                {_signed('cess_amount', 'cess')}
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND status NOT IN ('draft','cancelled','void') AND invoice_type IN {_GST_INVOICE_TYPES}
           AND reverse_charge = false AND is_export = false AND supply_category = 'taxable'
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
     totals = {"sales_taxable": outward["taxable"],
               "output_gst": float(outward["cgst"]) + float(outward["sgst"]) + float(outward["igst"])}
 
@@ -573,32 +674,36 @@ async def gst_report_pdf(current: CurrentUserDep, db: DBDep, month: str = Query(
         SELECT COALESCE(SUM(taxable_amount),0) AS taxable, COALESCE(SUM(cgst_amount),0) AS cgst,
                COALESCE(SUM(sgst_amount),0) AS sgst, COALESCE(SUM(igst_amount),0) AS igst
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND status NOT IN ('draft','cancelled','void') AND invoice_type = 'tax_invoice' AND is_export = true
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     # 3.1(c) Nil-rated / exempt supplies
     nil_exempt = (await db.execute(text("""
         SELECT COALESCE(SUM(taxable_amount),0) AS taxable
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND status NOT IN ('draft','cancelled','void') AND invoice_type IN ('tax_invoice','debit_note')
           AND supply_category IN ('nil_rated','exempt')
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     # 3.1(e) Non-GST supplies
     non_gst = (await db.execute(text("""
         SELECT COALESCE(SUM(taxable_amount),0) AS taxable
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND status NOT IN ('draft','cancelled','void') AND invoice_type IN ('tax_invoice','debit_note')
           AND supply_category = 'non_gst'
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     # 3.1(d) Inward supplies liable to reverse charge
     inward_rcm = (await db.execute(text("""
         SELECT COALESCE(SUM(taxable_amount),0) AS taxable, COALESCE(SUM(cgst_amount),0) AS cgst,
                COALESCE(SUM(sgst_amount),0) AS sgst, COALESCE(SUM(igst_amount),0) AS igst
         FROM purchase_orders WHERE company_id=:cid AND po_date BETWEEN :df AND :dt AND status != 'cancelled'
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND reverse_charge = true
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     # 4(A) Eligible ITC — from PO line items only, itc_eligible=true, net of any Rule-37
     # reversal for goods already returned to the vendor. (Was incorrectly pulling
@@ -608,8 +713,9 @@ async def gst_report_pdf(current: CurrentUserDep, db: DBDep, month: str = Query(
                COALESCE(SUM({_ITC_IGST}),0) AS igst
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
+          AND po.branch_id IS NOT DISTINCT FROM COALESCE(:bid, po.branch_id)
           AND poi.itc_eligible = true
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     # 4(B) Ineligible / blocked ITC (Section 17(5)) — must be reversed, never claimed
     itc_ineligible = (await db.execute(text(f"""
@@ -618,8 +724,9 @@ async def gst_report_pdf(current: CurrentUserDep, db: DBDep, month: str = Query(
                COALESCE(SUM({_ITC_CGST}+{_ITC_SGST}+{_ITC_IGST}),0) AS total
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id=:cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
+          AND po.branch_id IS NOT DISTINCT FROM COALESCE(:bid, po.branch_id)
           AND poi.itc_eligible = false
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().one()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().one()
 
     # Proper Section 49A/49B set-off order (IGST ITC first, CGST/SGST ITC never
     # cross-offset each other) — same helper used by /gstr3b and /gstr3b/file,
@@ -639,34 +746,38 @@ async def gst_report_pdf(current: CurrentUserDep, db: DBDep, month: str = Query(
     b2b = (await db.execute(text("""
         SELECT invoice_no, invoice_date, billing_name, billing_gstin, taxable_amount, total_amount
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND status NOT IN ('draft','cancelled','void') AND invoice_type = 'tax_invoice'
           AND billing_gstin IS NOT NULL AND billing_gstin != '' AND is_export = false
         ORDER BY invoice_date
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().all()
 
     b2c = (await db.execute(text("""
         SELECT CASE WHEN supply_type='inter' AND total_amount>250000 THEN 'B2CL' ELSE 'B2CS' END AS category,
                COUNT(*) AS invoice_count, SUM(taxable_amount) AS taxable,
                SUM(cgst_amount+sgst_amount+igst_amount) AS total_tax
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND status NOT IN ('draft','cancelled','void') AND invoice_type = 'tax_invoice'
           AND (billing_gstin IS NULL OR billing_gstin = '') AND is_export = false
         GROUP BY 1
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().all()
 
     cdnr = (await db.execute(text("""
         SELECT invoice_no, invoice_date, invoice_type, billing_name, taxable_amount, total_amount
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND status NOT IN ('draft','cancelled','void') AND invoice_type IN ('credit_note','debit_note')
         ORDER BY invoice_date
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().all()
 
     exports = (await db.execute(text("""
         SELECT invoice_no, invoice_date, billing_name, export_type, taxable_amount
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND status NOT IN ('draft','cancelled','void') AND invoice_type = 'tax_invoice' AND is_export = true
         ORDER BY invoice_date
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().all()
 
     hsn = (await db.execute(text(f"""
         SELECT COALESCE(ii.hsn_code, ii.sac_code, 'N/A') AS hsn, MIN(ii.description) AS description,
@@ -676,10 +787,11 @@ async def gst_report_pdf(current: CurrentUserDep, db: DBDep, month: str = Query(
                {_signed_ii('cgst_amount+sgst_amount+igst_amount', 'total_tax')}
         FROM invoice_items ii JOIN invoices i ON i.id = ii.invoice_id
         WHERE i.company_id=:cid AND i.invoice_date BETWEEN :df AND :dt
+          AND i.branch_id IS NOT DISTINCT FROM COALESCE(:bid, i.branch_id)
           AND i.status NOT IN ('draft','cancelled','void') AND i.invoice_type IN {_GST_INVOICE_TYPES}
           AND i.reverse_charge = false AND i.is_export = false AND i.supply_category = 'taxable'
         GROUP BY COALESCE(ii.hsn_code, ii.sac_code, 'N/A'), ii.gst_rate ORDER BY taxable DESC
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().all()
 
     pdf_bytes = generate_report_pdf(
         title="GST Compliance Report",
@@ -736,13 +848,28 @@ async def gst_report_pdf(current: CurrentUserDep, db: DBDep, month: str = Query(
                      headers={"Content-Disposition": f'attachment; filename="gst_report_{month}.pdf"'})
 
 @router.get("/gstr1/json", summary="Export GSTR-1 in GSTN Offline Utility JSON format")
-async def gstr1_json_export(current: CurrentUserDep, db: DBDep, month: str = Query(...)) -> Response:
+async def gstr1_json_export(
+    current: CurrentUserDep, db: DBDep, month: str = Query(...),
+    branch_id: UUID | None = Query(None, description="Branch/GSTIN to export — omit for company-wide"),
+) -> Response:
     cid = str(current.company_id)
     df, dt = _month_bounds(month)
+    bid = str(branch_id) if branch_id else None
+    if current.branch_id is not None and not current.has_permission("branch.access_all"):
+        bid = str(current.branch_id)
 
-    company_row = (await db.execute(
-        text("SELECT gstin FROM companies WHERE id = :cid"), {"cid": cid}
-    )).mappings().one_or_none() or {}
+    # The filing GSTIN must be the branch's own registration when one is
+    # selected — using the company's GSTIN here for a branch filing would
+    # produce a JSON file that gets rejected (or worse, silently misfiled)
+    # on the GSTN portal.
+    if bid:
+        company_row = (await db.execute(
+            text("SELECT gstin FROM branches WHERE id = :bid"), {"bid": bid}
+        )).mappings().one_or_none() or {}
+    else:
+        company_row = (await db.execute(
+            text("SELECT gstin FROM companies WHERE id = :cid"), {"cid": cid}
+        )).mappings().one_or_none() or {}
     gstin = company_row.get("gstin", "")
 
     def _fmt_date(d) -> str:
@@ -752,10 +879,11 @@ async def gstr1_json_export(current: CurrentUserDep, db: DBDep, month: str = Que
         SELECT invoice_no, invoice_date, billing_gstin, billing_state_code, total_amount,
                taxable_amount, cgst_amount, sgst_amount, igst_amount, cess_amount, supply_type
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND status NOT IN ('draft','cancelled','void') AND invoice_type = 'tax_invoice'
           AND billing_gstin IS NOT NULL AND billing_gstin != '' AND is_export = false
         ORDER BY billing_gstin, invoice_date
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().all()
 
     b2b_by_gstin: dict[str, list] = {}
     for r in b2b_rows:
@@ -784,10 +912,11 @@ async def gstr1_json_export(current: CurrentUserDep, db: DBDep, month: str = Que
                SUM(taxable_amount) AS txval, SUM(cgst_amount) AS camt,
                SUM(sgst_amount) AS samt, SUM(igst_amount) AS iamt
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND status NOT IN ('draft','cancelled','void') AND invoice_type = 'tax_invoice'
           AND (billing_gstin IS NULL OR billing_gstin = '') AND is_export = false
         GROUP BY billing_state_code, supply_type
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().all()
 
     b2cs = [{
         "sply_ty": "INTER" if r["supply_type"] == "inter" else "INTRA",
@@ -803,9 +932,10 @@ async def gstr1_json_export(current: CurrentUserDep, db: DBDep, month: str = Que
         SELECT invoice_no, invoice_date, invoice_type, billing_gstin, billing_state_code,
                total_amount, taxable_amount, cgst_amount, sgst_amount, igst_amount, cess_amount
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND status NOT IN ('draft','cancelled','void') AND invoice_type IN ('credit_note','debit_note')
         ORDER BY billing_gstin, invoice_date
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().all()
 
     # Real GSTR-1 has no bucket for credit/debit notes against unregistered
     # customers (CDNR is B2B-only by definition) — group those under a
@@ -836,9 +966,10 @@ async def gstr1_json_export(current: CurrentUserDep, db: DBDep, month: str = Que
     exp_rows = (await db.execute(text("""
         SELECT invoice_no, invoice_date, export_type, total_amount, taxable_amount, igst_amount
         FROM invoices WHERE company_id=:cid AND invoice_date BETWEEN :df AND :dt
+          AND branch_id IS NOT DISTINCT FROM COALESCE(:bid, branch_id)
           AND status NOT IN ('draft','cancelled','void') AND invoice_type = 'tax_invoice' AND is_export = true
         ORDER BY invoice_date
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().all()
 
     exp_by_type: dict[str, list] = {}
     for r in exp_rows:
@@ -857,10 +988,11 @@ async def gstr1_json_export(current: CurrentUserDep, db: DBDep, month: str = Que
                {_signed_ii('cgst_amount', 'camt')}, {_signed_ii('sgst_amount', 'samt')}, {_signed_ii('igst_amount', 'iamt')}
         FROM invoice_items ii JOIN invoices i ON i.id = ii.invoice_id
         WHERE i.company_id=:cid AND i.invoice_date BETWEEN :df AND :dt
+          AND i.branch_id IS NOT DISTINCT FROM COALESCE(:bid, i.branch_id)
           AND i.status NOT IN ('draft','cancelled','void') AND i.invoice_type IN {_GST_INVOICE_TYPES}
           AND i.reverse_charge = false AND i.is_export = false AND i.supply_category = 'taxable'
         GROUP BY COALESCE(ii.hsn_code, ii.sac_code, ''), ii.gst_rate
-    """), {"cid": cid, "df": df, "dt": dt})).mappings().all()
+    """), {"cid": cid, "df": df, "dt": dt, "bid": bid})).mappings().all()
 
     hsn_data = [{
         "num": i + 1, "hsn_sc": r["hsn"], "desc": r["desc"], "uqc": "NOS",

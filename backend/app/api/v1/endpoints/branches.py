@@ -30,6 +30,10 @@ async def list_branches(
 ) -> ORJSONResponse:
     svc = BranchService(db)
     branches = await svc.list_by_company(company_id)
+    # A branch-scoped user only needs to see (and pick from) their own branch —
+    # showing every branch would let them select one they can't transact for anyway.
+    if current.branch_id is not None and not current.has_permission("branch.access_all"):
+        branches = [b for b in branches if b.id == current.branch_id]
     return ok(data=[BranchOut.model_validate(b).model_dump(mode='json') for b in branches])
 
 

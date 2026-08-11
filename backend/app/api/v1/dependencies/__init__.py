@@ -96,6 +96,40 @@ def require_any_perm(*permissions: str) -> Callable:
     return Depends(_guard)
 
 
+# ── Branch-level access scoping ────────────────────────────────────────────
+# A user assigned to a specific branch (current.branch_id is set) should
+# only be able to transact against that branch, no matter what other
+# permissions their role grants — that's what "assigned to a branch" means
+# in a real ERP. Users with no branch assignment (branch_id is None) are
+# treated as company-wide staff (e.g. an owner/admin covering everything).
+# The 'branch.access_all' permission is an explicit escape hatch for roles
+# like a regional manager who legitimately needs to act across branches
+# despite having a "home" branch on their profile.
+
+def assert_branch_access(current: CurrentUser, branch_id: UUID | None) -> None:
+    if current.branch_id is None:
+        return  # company-wide user — no restriction
+    if current.has_permission("branch.access_all"):
+        return  # explicit override
+    if branch_id is None:
+        # A branch-scoped user must always specify a branch on transactions —
+        # letting it default away would let it silently land in the wrong
+        # place (or nowhere), which is worse than a clear rejection.
+        raise PermissionDeniedError("This action requires selecting a branch.")
+    if branch_id != current.branch_id:
+        raise PermissionDeniedError("You can only do this for your own assigned branch.")
+
+
+async def assert_warehouse_branch_access(db: AsyncSession, current: CurrentUser, warehouse_id: UUID) -> None:
+    """Same check, but starting from a warehouse_id (transfers deal in warehouses, not branches directly)."""
+    if current.branch_id is None or current.has_permission("branch.access_all"):
+        return
+    from app.db.repositories.inventory import WarehouseRepository
+    wh = await WarehouseRepository(db).get_or_raise(warehouse_id)
+    if wh.branch_id != current.branch_id:
+        raise PermissionDeniedError("You can only do this for your own assigned branch.")
+
+
 # ── Pagination ───────────────────────────────────────────────────────────────
 
 class PaginationParams:

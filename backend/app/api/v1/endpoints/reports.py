@@ -61,7 +61,7 @@ async def sales_report(
           AND i.status NOT IN ('draft','cancelled','void')
         GROUP BY COALESCE(i.party_id::text, lower(trim(i.billing_name)))
         HAVING COUNT(*) FILTER (WHERE i.invoice_type NOT IN ('credit_note','debit_note')) > 0
-        ORDER BY total DESC LIMIT 20
+        ORDER BY total DESC LIMIT 500
     """), {"cid": cid, "df": date_from, "dt": date_to})).mappings().all()
 
     by_product = (await db.execute(text("""
@@ -148,8 +148,11 @@ async def sales_report(
 
     return ok(data=_clean({
         "summary": dict(summary),
+        "sales_summary": dict(sales_summary),
+        "gst_summary": dict(gst_summary),
         "by_customer": [dict(r) for r in by_customer],
         "by_product": [dict(r) for r in by_product],
+        "period": {"date_from": date_from, "date_to": date_to},
     }))
 
 
@@ -175,7 +178,7 @@ async def purchase_report(
         FROM purchase_orders po LEFT JOIN parties p ON p.id = po.vendor_id
         WHERE po.company_id = :cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
         GROUP BY po.vendor_id, p.display_name
-        ORDER BY total DESC LIMIT 20
+        ORDER BY total DESC LIMIT 500
     """), {"cid": cid, "df": date_from, "dt": date_to})).mappings().all()
 
     by_product = (await db.execute(text("""
@@ -184,7 +187,7 @@ async def purchase_report(
         FROM purchase_order_items poi JOIN purchase_orders po ON po.id = poi.po_id
         WHERE po.company_id = :cid AND po.po_date BETWEEN :df AND :dt AND po.status != 'cancelled'
         GROUP BY poi.product_id, poi.description
-        ORDER BY amount DESC LIMIT 20
+        ORDER BY amount DESC LIMIT 500
     """), {"cid": cid, "df": date_from, "dt": date_to})).mappings().all()
 
     po_summary = (await db.execute(text("""
@@ -232,8 +235,10 @@ async def purchase_report(
 
     return ok(data=_clean({
         "summary": dict(summary),
+        "po_summary": dict(po_summary),
         "by_vendor": [dict(r) for r in by_vendor],
         "by_product": [dict(r) for r in by_product],
+        "period": {"date_from": date_from, "date_to": date_to},
     }))
 
 
@@ -259,7 +264,7 @@ async def inventory_report(current: CurrentUserDep, db: DBDep, as_pdf: bool = Qu
         FROM products
         WHERE company_id = :cid AND is_active = true AND is_service = false
         ORDER BY (current_stock <= reorder_level) DESC, stock_value DESC
-        LIMIT 100
+        LIMIT 2000
     """), {"cid": cid})).mappings().all()
 
     if as_pdf:
@@ -308,7 +313,7 @@ async def customer_report(current: CurrentUserDep, db: DBDep, as_pdf: bool = Que
         FROM parties p LEFT JOIN invoices i ON i.party_id = p.id AND i.status NOT IN ('cancelled','void','draft')
         WHERE p.company_id = :cid AND p.party_type = 'customer' AND p.is_active = true
         GROUP BY p.id, p.display_name, p.billing_city
-        ORDER BY total_business DESC LIMIT 50
+        ORDER BY total_business DESC LIMIT 500
     """), {"cid": cid})).mappings().all()
 
     summary = {
@@ -381,7 +386,12 @@ async def customer_report(current: CurrentUserDep, db: DBDep, as_pdf: bool = Que
         return Response(content=pdf_bytes, media_type="application/pdf",
                          headers={"Content-Disposition": f'attachment; filename="customer_report_{date.today()}.pdf"'})
 
-    return ok(data=_clean({"summary": summary, "customers": [dict(r) for r in rows]}))
+    return ok(data=_clean({
+        "summary": summary,
+        "customer_summary": dict(cust_summary),
+        "aging": dict(aging),
+        "customers": [dict(r) for r in rows],
+    }))
 
 
 @router.get("/{report_type}/pdf", summary="Download a report as PDF")

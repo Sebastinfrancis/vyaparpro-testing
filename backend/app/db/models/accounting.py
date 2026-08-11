@@ -290,6 +290,7 @@ class GSTReturn(Base, UUIDMixin, TimestampMixin):
     __table_args__ = (UniqueConstraint("company_id", "return_type", "period_from"),)
 
     company_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
+    branch_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("branches.id"), nullable=True)
     return_type: Mapped[str] = mapped_column(String(10), nullable=False)
     # GSTR-1 | GSTR-2A | GSTR-2B | GSTR-3B | GSTR-9 | GSTR-9C
     period_from: Mapped[date] = mapped_column(Date, nullable=False)

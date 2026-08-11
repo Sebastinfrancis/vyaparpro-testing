@@ -103,6 +103,7 @@ select.fi option{background:var(--bg2)}
 .cbl{font-size:8px;color:var(--text3);text-align:center;margin-top:3px}
 .iir{display:grid;grid-template-columns:2fr 70px 95px 70px 70px 95px 32px;gap:7px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
 .iih{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px}
+.ret-item-row{display:grid;grid-template-columns:2fr 90px 90px 100px;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
 .aip{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;height:390px}
 .aim{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
 .aimsg{max-width:82%;padding:9px 13px;border-radius:11px;font-size:12px;line-height:1.5}
@@ -896,6 +897,7 @@ select.fi option{background:var(--bg2)}
       <div class="sh" style="margin-top:8px">
         <div><div class="st">GST Compliance Center</div><div class="ss">GSTR-1, GSTR-3B, E-Invoice, HSN summary</div></div>
         <div style="display:flex;gap:7px">
+          <select class="fi" style="width:150px" id="gstBranch" onchange="loadGSTData()"></select>
           <select class="fi" style="width:130px" id="gstMonth" onchange="loadGSTData()"></select>
           <button class="btn btn-p btn-sm" onclick="exportGSTReportPDF()">📄 Export PDF</button>
           <button class="btn btn-s btn-sm" onclick="exportGSTJSON()">📤 Export JSON (GSTR-1)</button>
@@ -970,6 +972,14 @@ select.fi option{background:var(--bg2)}
       <div class="card"><div class="tw"><table>
         <thead><tr><th>Transfer No</th><th>Date</th><th>From</th><th>To</th><th>Note</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody id="transferBody"></tbody>
+      </table></div></div>
+
+      <div class="sh" style="margin-top:24px">
+        <div><div class="st">Low Stock Alerts — by branch</div><div class="ss">A branch can be out of stock even while company-wide totals look fine</div></div>
+      </div>
+      <div class="card"><div class="tw"><table>
+        <thead><tr><th>Product</th><th>Branch</th><th>Available</th><th>Reorder Level</th><th>Actions</th></tr></thead>
+        <tbody id="lowStockBody"></tbody>
       </table></div></div>
     </div>
 
@@ -1123,47 +1133,53 @@ select.fi option{background:var(--bg2)}
           <button class="btn btn-o btn-sm" onclick="clearAI()">🗑 Clear</button>
         </div>
       </div>
-      <div class="g2" style="gap:18px">
-        <div>
-          <div class="aip">
-            <div class="aim" id="aiMsgs"></div>
-            <div class="aiir">
-              <input class="aiin" id="aiIn" placeholder="Ask: What are today's sales? Which products are low?" onkeydown="if(event.key==='Enter')sendAI()"/>
-              <button class="aisd" onclick="sendAI()">➤</button>
-            </div>
-          </div>
-          <div style="margin-top:11px"><div style="font-size:9px;color:var(--text3);margin-bottom:7px;text-transform:uppercase;letter-spacing:1px">Quick Questions</div>
-          <div style="display:flex;flex-wrap:wrap;gap:5px" id="aiSug"></div></div>
+      <div class="g2" style="gap:18px;grid-template-columns:1.6fr 1fr;align-items:start;margin-top:14px">
 
-          <div style="margin-top:18px">
-            <div style="font-size:9px;color:var(--text3);margin-bottom:7px;text-transform:uppercase;letter-spacing:1px">What can I ask?</div>
-            <div class="card" style="padding:13px">
-              <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:5px">📍 Navigation &amp; Help</div>
-              <div style="font-size:11px;color:var(--text2);line-height:1.75;margin-bottom:12px">
-                "How do I add a customer / vendor / product?" · "Where is GST Settings / GST Reports?" ·
-                "How do I create an invoice?" · "Open Purchase Orders / Quotations / Returns" ·
-                "Where is E-Invoice / E-Way Bill?" · "Where are Reports / Audit Log / Settings?"
-              </div>
-              <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:5px">📊 Live Business Data</div>
-              <div style="font-size:11px;color:var(--text2);line-height:1.75;margin-bottom:12px">
-                "Show today's / this month's sales" · "Which products are low on stock?" ·
-                "Who are my top customers?" · "Show pending payments" ·
-                "How many open purchase orders?" · "How many customers do I have?"
-              </div>
-              <div style="font-size:11px;font-weight:700;color:var(--orange);margin-bottom:5px">👤 Customers, Vendors &amp; Leads</div>
-              <div style="font-size:11px;color:var(--text2);line-height:1.75">
-                Type a name — "about Kumar Electronics", "customer Bhuvanesh", "who is Metro Traders" —
-                to get their outstanding balance, GSTIN, contact info and last activity.
-              </div>
+        <!-- Chat panel — Quick Questions now lives inside it, not floating separately -->
+        <div class="aip" style="height:560px">
+          <div class="aim" id="aiMsgs"></div>
+          <div style="padding:10px 14px 0;border-top:1px solid var(--border)">
+            <div style="font-size:9px;color:var(--text3);margin-bottom:7px;text-transform:uppercase;letter-spacing:1px">Quick Questions</div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px;padding-bottom:10px" id="aiSug"></div>
+          </div>
+          <div class="aiir">
+            <input class="aiin" id="aiIn" placeholder="Ask: What are today's sales? Which products are low?" onkeydown="if(event.key==='Enter')sendAI()"/>
+            <button class="aisd" onclick="sendAI()">➤</button>
+          </div>
+        </div>
+
+        <!-- One unified sidebar panel — Predictions + Help, divided by hairlines instead of separate cards -->
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:15px 16px 13px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700">🔮 AI Predictions</div>
+          <div id="aiPreds" style="padding:13px 16px"></div>
+
+          <div style="padding:15px 16px 13px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:5px">📍 Navigation &amp; Help</div>
+            <div style="font-size:11px;color:var(--text2);line-height:1.75">
+              "How do I add a customer / vendor / product?" · "Where is GST Settings / GST Reports?" ·
+              "How do I create an invoice?" · "Open Purchase Orders / Quotations / Returns" ·
+              "Where is E-Invoice / E-Way Bill?" · "Where are Reports / Audit Log / Settings?"
+            </div>
+          </div>
+
+          <div style="padding:13px 16px;border-bottom:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:5px">📊 Live Business Data</div>
+            <div style="font-size:11px;color:var(--text2);line-height:1.75">
+              "Show today's / this month's sales" · "Which products are low on stock?" ·
+              "Who are my top customers?" · "Show pending payments" ·
+              "How many open purchase orders?" · "How many customers do I have?"
+            </div>
+          </div>
+
+          <div style="padding:13px 16px">
+            <div style="font-size:11px;font-weight:700;color:var(--orange);margin-bottom:5px">👤 Customers, Vendors &amp; Leads</div>
+            <div style="font-size:11px;color:var(--text2);line-height:1.75">
+              Type a name — "about Kumar Electronics", "customer Bhuvanesh", "who is Metro Traders" —
+              to get their outstanding balance, GSTIN, contact info and last activity.
             </div>
           </div>
         </div>
-        <div>
-          <div class="card">
-            <div style="font-size:13px;font-weight:700;margin-bottom:11px">🔮 AI Predictions</div>
-            <div id="aiPreds"></div>
-          </div>
-        </div>
+
       </div>
     </div>
 
@@ -1980,14 +1996,18 @@ select.fi option{background:var(--bg2)}
 
       <div id="retSalesSection">
         <div class="fg"><label class="fl">Against Invoice</label><select class="fi mono" id="retAgainstInv" onchange="onRetInvoiceChange()"><option value="">Select original invoice…</option></select></div>
-        <div class="fg"><label class="fl">Product</label><select class="fi" id="retProduct" onchange="onRetProductChange()"><option value="">Select product…</option></select></div>
-        <div class="fr c2">
-          <div class="fg"><label class="fl">Quantity</label><input class="fi" type="number" id="retQty" min="1" oninput="onRetQtyChange()"/></div>
-          <div class="fg"><label class="fl">Rate (₹)</label><input class="fi" type="number" id="retRate" readonly/></div>
-        </div>
         <div class="fr c2"><div class="fg"><label class="fl">Customer</label><input class="fi" id="retParty" readonly/></div>
           <div class="fg"><label class="fl">Date</label><input type="date" class="fi" id="retDate"/></div></div>
-        <div class="fg"><label class="fl">Amount (₹)</label><input class="fi" type="number" id="retAmount" readonly/></div>
+
+        <div class="card" style="margin-top:8px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:10px">Items to Return</div>
+          <div class="ret-item-row" style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;padding:3px 0 7px;border-bottom:none">
+            <span>Product</span><span>Invoiced Qty</span><span>Rate (₹)</span><span>Return Qty</span>
+          </div>
+          <div id="retSalesItems"><div style="color:var(--text3);font-size:12px">Select an invoice to see its items</div></div>
+        </div>
+
+        <div class="fg" style="margin-top:8px"><label class="fl">Total Return Amount (₹)</label><input class="fi" type="number" id="retAmount" readonly/></div>
         <div class="fg"><label class="fl">Reason</label><textarea class="fi" id="retReason" rows="2" placeholder="Reason for return…"></textarea></div>
       </div>
 
@@ -2050,6 +2070,22 @@ select.fi option{background:var(--bg2)}
       <div id="stockModalBody" style="max-height:60vh;overflow-y:auto">Loading…</div>
     </div>
     <div class="mf"><button class="btn btn-o" onclick="closeModal('stockModal')">Close</button></div>
+  </div>
+</div>
+
+<div id="openingStockModal" class="mo hidden" autocomplete="off">
+  <div class="md md-sm">
+    <div class="mh"><span class="mt2" id="osModalTitle">Opening Stock</span><button class="mc" onclick="closeModal('openingStockModal')">✕</button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl">Date</label><input class="fi" type="date" id="os_date"/></div>
+      <div class="fg"><label class="fl">Note</label><input class="fi" id="os_reason" value="Opening Balance" autocomplete="off"/></div>
+      <div class="fg">
+        <label class="fl">Items</label>
+        <div id="osItemsWrap"></div>
+        <button class="btn btn-o btn-sm" style="margin-top:6px" onclick="addOpeningStockItemRow()">➕ Add Item</button>
+      </div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('openingStockModal')">Cancel</button><button class="btn btn-p" onclick="saveOpeningStock()">Save Opening Stock</button></div>
   </div>
 </div>
 
@@ -2362,6 +2398,8 @@ function normQuote(q) {
     no: q.quote_no,
     date: (q.quote_date || '').slice(0,10),
     customer: q.billing_name,
+    custMobile: q.contact_phone || '',
+    custEmail: q.contact_email || '',
     amount: Number(q.total_amount || 0),
     valid: (q.valid_until || '').slice(0,10),
     status: q.status,
@@ -2422,19 +2460,6 @@ function normProduct(p) {
   };
 }
 
-// Normalise vendor
-function normVendor(v) {
-  return {
-    id:      v.id,
-    name:    v.display_name     || v.name          || '—',
-    gstin:   v.gstin_number     || v.gstin         || '',
-    mobile:  v.phone            || v.mobile        || '',
-    city:    v.city             || '',
-    total:   v.total_purchases  || v.total         || 0,
-    payable: v.payable_amount   || v.outstanding   || 0,
-    score:   v.performance_score || v.ai_score     || 0,
-  };
-}
 
 function normLead(l) {
   return {
@@ -2497,7 +2522,7 @@ let PO_DATA=[
   {no:'PO-0040',date:'25 May 2026',vendor:'LG Electronics India',amount:180000,gst:32400,total:212400,status:'pending'},
   {no:'PO-0039',date:'22 May 2026',vendor:'Lenovo India',amount:160000,gst:28800,total:188800,status:'received'},
 ];
-const QUOTES=[
+let QUOTES=[
   {no:'QT-0028',date:'30 May 2026',customer:'Deepak Traders',amount:480000,valid:'30 Jun 2026',status:'sent'},
   {no:'QT-0027',date:'27 May 2026',customer:'Anil Electronics',amount:195000,valid:'27 Jun 2026',status:'draft'},
   {no:'QT-0026',date:'24 May 2026',customer:'Metro Traders',amount:320000,valid:'24 Jun 2026',status:'accepted'},
@@ -2839,7 +2864,7 @@ function triggerModuleRefresh(id) {
     payments:    renderPayments,
     auditlog:    renderAuditLog,
     gst: loadGSTData,
-    branches:    () => { renderBranches(); renderTransfers(); },
+    branches:    () => { renderBranches(); renderTransfers(); renderLowStockAlerts(); },
     einvoice:    () => { renderEInvoice(); renderEWBList(); },
     accounting:  renderAccounting,
     ai:          initAI,
@@ -2997,29 +3022,181 @@ function downloadCSV(filename, rows) {
   URL.revokeObjectURL(a.href);
 }
 
+// ============================================================
+//  REPORT CSV EXPORT — full ERP-style export with company
+//  header, period, multi-section breakdowns, and grand totals.
+// ============================================================
+function csvRow(cols) { return cols.map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(','); }
+function csvSectionHeader(title) { return [csvRow([title]), csvRow([])]; }
+function csvNum(v) { return (Number(v) || 0).toFixed(2); }
+
 function exportReportCSV() {
   if (!currentReportData) { showToast('⚠️ Generate the report first','warn'); return; }
-  const rows = [];
   const type = currentReportType;
+  const data = currentReportData;
+  const lines = [];
+
+  const companyName = CURRENT_COMPANY?.legal_name || CURRENT_COMPANY?.trade_name || 'VyaparPro';
+  const companyGstin = CURRENT_COMPANY?.gstin || '—';
+  const generatedAt = new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+  const generatedBy = AUTH.user?.name || 'System';
+
+  const titles = { sales: 'Sales Report', purchases: 'Purchase Report', inventory: 'Inventory Report', customers: 'Customer Report' };
+  const period = (type === 'sales' || type === 'purchases')
+    ? `${getVal('reportFrom')} to ${getVal('reportTo')}`
+    : `As of ${new Date().toISOString().slice(0,10)}`;
+
+  // ---- Document header ----
+  lines.push(csvRow([companyName]));
+  lines.push(csvRow([`GSTIN: ${companyGstin}`]));
+  lines.push(csvRow([titles[type] || 'Report']));
+  lines.push(csvRow([`Period: ${period}`]));
+  lines.push(csvRow([`Generated: ${generatedAt}  |  By: ${generatedBy}`]));
+  lines.push(csvRow([]));
+
   if (type === 'sales') {
-    rows.push(['Customer','Invoices','Total']);
-    currentReportData.by_customer.forEach(c => rows.push([c.customer_name, c.invoice_count, c.total]));
+    const s = data.summary || {};
+    const ss = data.sales_summary || {};
+    const gst = data.gst_summary || {};
+
+    lines.push(...csvSectionHeader('SUMMARY'));
+    lines.push(csvRow(['Metric','Value']));
+    lines.push(csvRow(['Total Invoices', s.invoice_count]));
+    lines.push(csvRow(['Total Revenue', csvNum(s.total_revenue)]));
+    lines.push(csvRow(['Tax Collected', csvNum(s.total_tax)]));
+    lines.push(csvRow(['Average Invoice Value', csvNum(ss.avg_invoice)]));
+    lines.push(csvRow(['Highest Invoice', csvNum(ss.highest_invoice)]));
+    lines.push(csvRow(['Lowest Invoice', csvNum(ss.lowest_invoice)]));
+    lines.push(csvRow(['Sales Returns', csvNum(ss.sales_returns)]));
+    lines.push(csvRow(['Net Sales', csvNum((Number(s.total_revenue)||0) - (Number(ss.sales_returns)||0))]));
+    lines.push(csvRow(['Collected Amount', csvNum(ss.collected)]));
+    lines.push(csvRow(['Outstanding Receivables', csvNum(ss.outstanding)]));
+    lines.push(csvRow([]));
+
+    lines.push(...csvSectionHeader('GST SUMMARY'));
+    lines.push(csvRow(['Component','Amount']));
+    lines.push(csvRow(['Taxable Value', csvNum(gst.taxable)]));
+    lines.push(csvRow(['CGST', csvNum(gst.cgst)]));
+    lines.push(csvRow(['SGST', csvNum(gst.sgst)]));
+    lines.push(csvRow(['IGST', csvNum(gst.igst)]));
+    lines.push(csvRow(['CESS', csvNum(gst.cess)]));
+    lines.push(csvRow(['Total Tax', csvNum((Number(gst.cgst)||0)+(Number(gst.sgst)||0)+(Number(gst.igst)||0)+(Number(gst.cess)||0))]));
+    lines.push(csvRow([]));
+
+    lines.push(...csvSectionHeader('CUSTOMER-WISE SALES'));
+    lines.push(csvRow(['Customer','Invoices','Total Amount']));
+    let custTotal = 0, custInv = 0;
+    (data.by_customer||[]).forEach(c => {
+      custTotal += Number(c.total)||0; custInv += Number(c.invoice_count)||0;
+      lines.push(csvRow([c.customer_name || '—', c.invoice_count, csvNum(c.total)]));
+    });
+    lines.push(csvRow(['TOTAL', custInv, csvNum(custTotal)]));
+    lines.push(csvRow([]));
+
+    lines.push(...csvSectionHeader('PRODUCT-WISE SALES'));
+    lines.push(csvRow(['Product','Qty Sold','Revenue']));
+    let prodQty = 0, prodRev = 0;
+    (data.by_product||[]).forEach(p => {
+      prodQty += Number(p.qty_sold)||0; prodRev += Number(p.revenue)||0;
+      lines.push(csvRow([p.product_name || '—', Number(p.qty_sold).toFixed(2), csvNum(p.revenue)]));
+    });
+    lines.push(csvRow(['TOTAL', prodQty.toFixed(2), csvNum(prodRev)]));
+
   } else if (type === 'purchases') {
-    rows.push(['Vendor','POs','Total']);
-    currentReportData.by_vendor.forEach(v => rows.push([v.vendor_name, v.po_count, v.total]));
+    const s = data.summary || {};
+    const ps = data.po_summary || {};
+
+    lines.push(...csvSectionHeader('SUMMARY'));
+    lines.push(csvRow(['Metric','Value']));
+    lines.push(csvRow(['Purchase Orders', s.po_count]));
+    lines.push(csvRow(['Total Purchases', csvNum(s.total_purchases)]));
+    lines.push(csvRow(['Payable', csvNum(s.total_payable)]));
+    lines.push(csvRow(['Average Purchase', csvNum(ps.avg_po)]));
+    lines.push(csvRow(['Highest Purchase', csvNum(ps.highest_po)]));
+    lines.push(csvRow(['Paid Amount', csvNum(ps.paid)]));
+    lines.push(csvRow(['Pending Payables', csvNum(ps.outstanding)]));
+    lines.push(csvRow([]));
+
+    lines.push(...csvSectionHeader('VENDOR-WISE PURCHASES'));
+    lines.push(csvRow(['Vendor','Purchase Orders','Total Amount']));
+    let vendTotal = 0, vendPO = 0;
+    (data.by_vendor||[]).forEach(v => {
+      vendTotal += Number(v.total)||0; vendPO += Number(v.po_count)||0;
+      lines.push(csvRow([v.vendor_name || '—', v.po_count, csvNum(v.total)]));
+    });
+    lines.push(csvRow(['TOTAL', vendPO, csvNum(vendTotal)]));
+    lines.push(csvRow([]));
+
+    lines.push(...csvSectionHeader('PRODUCT-WISE PURCHASES'));
+    lines.push(csvRow(['Product','Qty Purchased','Amount']));
+    let pQty = 0, pAmt = 0;
+    (data.by_product||[]).forEach(p => {
+      pQty += Number(p.qty_purchased)||0; pAmt += Number(p.amount)||0;
+      lines.push(csvRow([p.product_name || '—', Number(p.qty_purchased).toFixed(2), csvNum(p.amount)]));
+    });
+    lines.push(csvRow(['TOTAL', pQty.toFixed(2), csvNum(pAmt)]));
+
   } else if (type === 'inventory') {
-    rows.push(['Product','Code','Stock','Reorder Level','Value','Status']);
-    currentReportData.items.forEach(i => rows.push([i.product_name, i.product_code, i.current_stock, i.reorder_level, i.stock_value, i.stock_status]));
+    const s = data.summary || {};
+
+    lines.push(...csvSectionHeader('SUMMARY'));
+    lines.push(csvRow(['Metric','Value']));
+    lines.push(csvRow(['Total Products', s.total_products]));
+    lines.push(csvRow(['Stock Value', csvNum(s.stock_value)]));
+    lines.push(csvRow(['Low Stock Items', s.low_stock_count]));
+    lines.push(csvRow(['Out of Stock Items', s.out_of_stock_count]));
+    lines.push(csvRow([]));
+
+    lines.push(...csvSectionHeader('STOCK DETAIL'));
+    lines.push(csvRow(['Product','Code','Current Stock','Reorder Level','Unit Cost (₹)','Stock Value (₹)','Status']));
+    let totalQty = 0, totalVal = 0;
+    (data.items||[]).forEach(i => {
+      totalQty += Number(i.current_stock)||0; totalVal += Number(i.stock_value)||0;
+      lines.push(csvRow([i.product_name, i.product_code, i.current_stock, i.reorder_level, csvNum(i.purchase_price), csvNum(i.stock_value), i.stock_status]));
+    });
+    lines.push(csvRow(['TOTAL','', totalQty, '', '', csvNum(totalVal), '']));
+
   } else if (type === 'customers') {
-    rows.push(['Customer','City','Invoices','Total Business','Outstanding','Last Purchase']);
-    currentReportData.customers.forEach(c => rows.push([c.name, c.city, c.invoice_count, c.total_business, c.outstanding, c.last_purchase]));
+    const s = data.summary || {};
+    const cs = data.customer_summary || {};
+    const ag = data.aging || {};
+
+    lines.push(...csvSectionHeader('SUMMARY'));
+    lines.push(csvRow(['Metric','Value']));
+    lines.push(csvRow(['Total Customers', s.total_customers]));
+    lines.push(csvRow(['Total Revenue', csvNum(s.total_revenue)]));
+    lines.push(csvRow(['Total Outstanding', csvNum(s.total_outstanding)]));
+    lines.push(csvRow(['Active Customers', cs.active_customers]));
+    lines.push(csvRow(['Inactive Customers', cs.inactive_customers]));
+    lines.push(csvRow(['New Customers (30d)', cs.new_customers]));
+    lines.push(csvRow(['Repeat Customers (90d)', cs.repeat_customers]));
+    lines.push(csvRow([]));
+
+    lines.push(...csvSectionHeader('OUTSTANDING AGING ANALYSIS'));
+    lines.push(csvRow(['Bucket','Invoices','Amount']));
+    lines.push(csvRow(['0-30 days', ag.b0_30 || 0, csvNum(ag.a0_30)]));
+    lines.push(csvRow(['31-60 days', ag.b31_60 || 0, csvNum(ag.a31_60)]));
+    lines.push(csvRow(['61-90 days', ag.b61_90 || 0, csvNum(ag.a61_90)]));
+    lines.push(csvRow(['90+ days', ag.b90plus || 0, csvNum(ag.a90plus)]));
+    lines.push(csvRow([]));
+
+    lines.push(...csvSectionHeader('CUSTOMER BREAKDOWN'));
+    lines.push(csvRow(['Customer','City','Invoices','Total Business (₹)','Outstanding (₹)','Last Purchase']));
+    let custTotal = 0, custOut = 0, custInv = 0;
+    (data.customers||[]).forEach(c => {
+      custTotal += Number(c.total_business)||0; custOut += Number(c.outstanding)||0; custInv += Number(c.invoice_count)||0;
+      lines.push(csvRow([c.name, c.city || '—', c.invoice_count, csvNum(c.total_business), csvNum(c.outstanding), c.last_purchase || '—']));
+    });
+    lines.push(csvRow(['TOTAL','', custInv, csvNum(custTotal), csvNum(custOut), '']));
   }
-  const csv = rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
+
+  const csv = lines.join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `${currentReportType}_report_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
+  URL.revokeObjectURL(a.href);
   showToast('⬇ CSV exported');
 }
 
@@ -3051,9 +3228,11 @@ async function exportReportPDF() {
 
 async function exportGSTReportPDF() {
   const month = getVal('gstMonth');
+  const branchId = getVal('gstBranch');
+  const bq = branchId ? `&branch_id=${branchId}` : '';
   try {
     showToast('⏳ Generating PDF…');
-    const res = await fetch(`${CFG.API_BASE}/gst/report/pdf?month=${month}`, {
+    const res = await fetch(`${CFG.API_BASE}/gst/report/pdf?month=${month}${bq}`, {
       headers: { 'Authorization': `Bearer ${AUTH.token}` }
     });
     if (!res.ok) throw new Error('Server returned ' + res.status);
@@ -3072,9 +3251,15 @@ async function exportGSTReportPDF() {
 
 async function exportGSTJSON() {
   const month = getVal('gstMonth');
+  const branchId = getVal('gstBranch');
+  const bq = branchId ? `&branch_id=${branchId}` : '';
+  if (!branchId && BRANCHES.length > 1) {
+    showToast('⚠️ Select a specific branch — GSTR-1 JSON is filed per GSTIN, not combined', 'warn');
+    return;
+  }
   try {
     showToast('⏳ Preparing GSTR-1 JSON…');
-    const res = await fetch(`${CFG.API_BASE}/gst/gstr1/json?month=${month}`, {
+    const res = await fetch(`${CFG.API_BASE}/gst/gstr1/json?month=${month}${bq}`, {
       headers: { 'Authorization': `Bearer ${AUTH.token}` }
     });
     if (!res.ok) throw new Error('Server returned ' + res.status);
@@ -3207,6 +3392,95 @@ async function downloadDocPDF(type, id) {
   }
 }
 
+// ============================================================
+//  WHATSAPP & EMAIL — "click to open" sharing.
+//  No backend sending, no API keys: this just launches
+//  WhatsApp Web/App or the user's email client, pre-filled.
+//  The PDF is downloaded alongside so the user can attach it.
+// ============================================================
+function companyDisplayName() {
+  return CURRENT_COMPANY?.trade_name || CURRENT_COMPANY?.legal_name || 'Us';
+}
+
+function shareViaWhatsApp(phone, message) {
+  let digits = String(phone || '').replace(/\D/g, '');
+  if (digits.length === 10) digits = '91' + digits;   // assume India if bare 10-digit number
+  const base = digits ? `https://wa.me/${digits}` : 'https://wa.me/';
+  window.open(`${base}?text=${encodeURIComponent(message)}`, '_blank');
+  if (!digits) showToast('ℹ️ No mobile number on file — pick a contact manually in WhatsApp', 'warn');
+}
+
+function shareViaEmail(to, subject, body) {
+  window.location.href = `mailto:${encodeURIComponent(to || '')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  if (!to) showToast('ℹ️ No email on file — enter one manually', 'warn');
+}
+
+// ---- Invoices / Credit & Debit Notes ----
+function shareInvoiceWhatsApp(id) {
+  const inv = INVOICES.find(i => String(i.id) === String(id));
+  if (!inv) { showToast('⚠️ Document not found', 'warn'); return; }
+  const msg = `Hi ${inv.customer || 'there'}, here's your ${inv.type || 'invoice'} *${inv.no}* dated ${fmtDate(inv.date)} for ₹${fmt(inv.total)}.` +
+              (inv.due ? ` Due date: ${fmtDate(inv.due)}.` : '') +
+              `\n\nRegards,\n${companyDisplayName()}`;
+  shareViaWhatsApp(inv.custMobile, msg);
+  downloadDocPDF('invoices', id);
+  showToast('📄 PDF downloaded — attach it in the WhatsApp chat that just opened');
+}
+
+function shareInvoiceEmail(id) {
+  const inv = INVOICES.find(i => String(i.id) === String(id));
+  if (!inv) { showToast('⚠️ Document not found', 'warn'); return; }
+  const subject = `${inv.type || 'Invoice'} ${inv.no} from ${companyDisplayName()}`;
+  const body = `Dear ${inv.customer || 'Customer'},\n\nPlease find attached ${inv.type || 'invoice'} ${inv.no} dated ${fmtDate(inv.date)} for ₹${fmt(inv.total)}.` +
+               (inv.due ? `\nDue date: ${fmtDate(inv.due)}` : '') +
+               `\n\nThank you for your business.\n\nRegards,\n${companyDisplayName()}`;
+  shareViaEmail(inv.custEmail, subject, body);
+  downloadDocPDF('invoices', id);
+  showToast('📄 PDF downloaded — attach it to the email that just opened');
+}
+
+// ---- Quotations ----
+function shareQuoteWhatsApp(id) {
+  const q = QUOTES.find(i => String(i.id) === String(id));
+  if (!q) { showToast('⚠️ Document not found', 'warn'); return; }
+  const msg = `Hi ${q.customer || 'there'}, here's your quotation *${q.no}* dated ${fmtDate(q.date)} for ₹${fmt(q.amount)}.\n\nRegards,\n${companyDisplayName()}`;
+  shareViaWhatsApp(q.custMobile, msg);
+  downloadDocPDF('quotations', id);
+  showToast('📄 PDF downloaded — attach it in the WhatsApp chat that just opened');
+}
+
+function shareQuoteEmail(id) {
+  const q = QUOTES.find(i => String(i.id) === String(id));
+  if (!q) { showToast('⚠️ Document not found', 'warn'); return; }
+  const subject = `Quotation ${q.no} from ${companyDisplayName()}`;
+  const body = `Dear ${q.customer || 'Customer'},\n\nPlease find attached quotation ${q.no} dated ${fmtDate(q.date)} for ₹${fmt(q.amount)}.\n\nRegards,\n${companyDisplayName()}`;
+  shareViaEmail(q.custEmail, subject, body);
+  downloadDocPDF('quotations', id);
+  showToast('📄 PDF downloaded — attach it to the email that just opened');
+}
+
+// ---- Purchase Orders (vendor contact resolved via VENDORS) ----
+function sharePOWhatsApp(id) {
+  const p = PO_DATA.find(x => String(x.id) === String(id));
+  if (!p) { showToast('⚠️ Document not found', 'warn'); return; }
+  const v = VENDORS.find(v => String(v.id) === String(p.vendorId));
+  const msg = `Hi ${p.vendor || 'there'}, please find our Purchase Order *${p.no}* dated ${fmtDate(p.date)} for ₹${fmt(p.total)}.\n\nRegards,\n${companyDisplayName()}`;
+  shareViaWhatsApp(v?.mobile, msg);
+  downloadDocPDF('purchase-orders', id);
+  showToast('📄 PDF downloaded — attach it in the WhatsApp chat that just opened');
+}
+
+function sharePOEmail(id) {
+  const p = PO_DATA.find(x => String(x.id) === String(id));
+  if (!p) { showToast('⚠️ Document not found', 'warn'); return; }
+  const v = VENDORS.find(v => String(v.id) === String(p.vendorId));
+  const subject = `Purchase Order ${p.no} from ${companyDisplayName()}`;
+  const body = `Dear ${p.vendor || 'Vendor'},\n\nPlease find attached Purchase Order ${p.no} dated ${fmtDate(p.date)} for ₹${fmt(p.total)}.\n\nRegards,\n${companyDisplayName()}`;
+  shareViaEmail(v?.email, subject, body);
+  downloadDocPDF('purchase-orders', id);
+  showToast('📄 PDF downloaded — attach it to the email that just opened');
+}
+
 function exportPL(fmt) {
   const from = getVal('plFrom'), to = getVal('plTo');
   downloadReport(`/accounting/reports/profit-and-loss?format=${fmt}&from_date=${from}&to_date=${to}`, `profit_and_loss_${from}_${to}.${fmt}`);
@@ -3293,6 +3567,8 @@ async function renderInvoices(list) {
           <button class="btn btn-o btn-sm" onclick="viewInvoice('${inv.id}')" title="View">👁</button>
           <button class="btn btn-o btn-sm" onclick="loadInvoiceToEdit('${inv.id}')" title="Edit">✏️</button>
           <button class="btn btn-o btn-sm" onclick="downloadDocPDF('invoices','${inv.id}')" title="PDF">📄</button>
+          <button class="btn btn-o btn-sm" onclick="shareInvoiceWhatsApp('${inv.id}')" title="Share via WhatsApp">💬</button>
+          <button class="btn btn-o btn-sm" onclick="shareInvoiceEmail('${inv.id}')" title="Share via Email">✉️</button>
           <button class="btn btn-d btn-sm" onclick="deleteInvoice('${inv.id}')" title="Delete">🗑</button>
         </div>
       </td>
@@ -3429,9 +3705,16 @@ function toggleExportType() {
 
 async function fileGSTR3B() {
   const month = getVal('gstMonth');
-  if (!confirm(`File GSTR-3B for ${month}? This locks the period's figures as a permanent filed record.`)) return;
+  const branchId = getVal('gstBranch');
+  if (!branchId && BRANCHES.length > 1) {
+    showToast('⚠️ Select a specific branch — each branch GSTIN files its own GSTR-3B', 'warn');
+    return;
+  }
+  const bq = branchId ? `&branch_id=${branchId}` : '';
+  const branchLabel = branchId ? (BRANCHES.find(b => String(b.id) === String(branchId))?.name || 'this branch') : 'the company';
+  if (!confirm(`File GSTR-3B for ${branchLabel}, ${month}? This locks the period's figures as a permanent filed record.`)) return;
   try {
-    const r = await apiFetch(`/gst/gstr3b/file?month=${month}`, { method: 'POST' });
+    const r = await apiFetch(`/gst/gstr3b/file?month=${month}${bq}`, { method: 'POST' });
     showToast('🔒 ' + r.message);
     loadFiledReturns();
   } catch (e) {
@@ -3441,8 +3724,10 @@ async function fileGSTR3B() {
 
 async function loadFiledReturns() {
   const el = document.getElementById('gstFiledHistory'); if (!el) return;
+  const branchId = getVal('gstBranch');
+  const bq = branchId ? `?branch_id=${branchId}` : '';
   try {
-    const r = await apiFetch('/gst/filed-returns');
+    const r = await apiFetch(`/gst/filed-returns${bq}`);
     const rows = r.data.returns.map(x => `<tr><td>${x.return_type}</td><td>${x.period_from} to ${x.period_to}</td>
       <td>₹${fmt(x.total_tax_payable)}</td><td><span class="sb ${x.status==='filed'?'sp':'sov'}">${x.status.toUpperCase()}</span></td>
       <td>${x.filed_at ? new Date(x.filed_at).toLocaleDateString() : '—'}</td></tr>`).join('');
@@ -4366,23 +4651,39 @@ function populateGSTMonths() {
   }
 }
 
+function populateGSTBranches() {
+  const sel = document.getElementById('gstBranch');
+  if (!sel) return;
+  const list = branchesForUser();
+  // Each branch/GSTIN files its own GST return — "All branches (combined)"
+  // is a convenience read-only view, never something you can file with,
+  // since a real GST filing must be per-GSTIN.
+  const combinedOption = (!AUTH.user?.branchId && BRANCHES.length > 1)
+    ? '<option value="">— All branches (combined view) —</option>' : '';
+  sel.innerHTML = combinedOption + list.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+  if (AUTH.user?.branchId) sel.value = AUTH.user.branchId;
+}
+
 async function loadGSTData() {
   populateGSTMonths();
+  populateGSTBranches();
   const month = getVal('gstMonth') || new Date().toISOString().slice(0, 7);
+  const branchId = getVal('gstBranch');
+  const bq = branchId ? `&branch_id=${branchId}` : '';
   try {
     const [summary, gstr1, gstr3b, hsn, itc] = await Promise.all([
-      apiFetch(`/gst/summary?month=${month}`),
-      apiFetch(`/gst/gstr1?month=${month}`),
-      apiFetch(`/gst/gstr3b?month=${month}`),
-      apiFetch(`/gst/hsn-summary?month=${month}`),
-      apiFetch(`/gst/itc-ledger?month=${month}`),
+      apiFetch(`/gst/summary?month=${month}${bq}`),
+      apiFetch(`/gst/gstr1?month=${month}${bq}`),
+      apiFetch(`/gst/gstr3b?month=${month}${bq}`),
+      apiFetch(`/gst/hsn-summary?month=${month}${bq}`),
+      apiFetch(`/gst/itc-ledger?month=${month}${bq}`),
     ]);
     renderGSTSummary(summary.data);
     renderGSTR1(gstr1.data);
     renderGSTR3B(gstr3b.data);
     renderHSNSummary(hsn.data);
     renderITCLedger(itc.data);
-    currentGSTData = { summary: summary.data, gstr1: gstr1.data, gstr3b: gstr3b.data, hsn: hsn.data, itc: itc.data, month };
+    currentGSTData = { summary: summary.data, gstr1: gstr1.data, gstr3b: gstr3b.data, hsn: hsn.data, itc: itc.data, month, branchId };
     loadFiledReturns();
   } catch (e) {
     showToast('⚠️ Could not load GST data: ' + e.message, 'warn');
@@ -4685,7 +4986,7 @@ function normVendor(v) {
     city:        v.billing_city      || v.city         || '',
     email:       v.email             || '',
     addr:        v.billing_address   || v.address      || '',
-    contact:     v.contact_person    || v.contact      || '',
+    contact:     v.legal_name        || '',
     credit:      v.credit_limit      || 0,
     terms:       v.payment_terms     || 'Net 30',
     total:       v.total_business    || 0,
@@ -5833,6 +6134,8 @@ async function renderPO(list) {
       <td><div style="display:flex;gap:3px">
         <button class="btn btn-o btn-sm" onclick="viewPO('${p.id}')" title="View">👁</button>
         <button class="btn btn-o btn-sm" onclick="downloadDocPDF('purchase-orders','${p.id}')" title="PDF">📄</button>
+        <button class="btn btn-o btn-sm" onclick="sharePOWhatsApp('${p.id}')" title="Share via WhatsApp">💬</button>
+        <button class="btn btn-o btn-sm" onclick="sharePOEmail('${p.id}')" title="Share via Email">✉️</button>
         <button class="btn btn-o btn-sm" onclick="openPOActions('${p.id}')" title="Change Status">🔄</button>
       </div></td></tr>`;
   }).join('') : '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text3)">No purchase orders found</td></tr>';
@@ -5877,8 +6180,9 @@ async function openNewPOModal() {
     VENDORS.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
   const branchSel = document.getElementById('poBranch');
   if (branchSel) {
-    branchSel.innerHTML = BRANCHES.length
-      ? BRANCHES.map(b => `<option value="${b.id}">${b.name}</option>`).join('')
+    const list = branchesForUser();
+    branchSel.innerHTML = list.length
+      ? list.map(b => `<option value="${b.id}">${b.name}</option>`).join('')
       : '<option value="">— Single location —</option>';
     if (AUTH.user?.branchId) branchSel.value = AUTH.user.branchId;
   }
@@ -6372,6 +6676,8 @@ async function renderQuotes() {
     <td><div style="display:flex;gap:3px">
       <button class="btn btn-o btn-sm" onclick="viewQuote('${q.id}')">👁</button>
       <button class="btn btn-o btn-sm" onclick="downloadDocPDF('quotations','${q.id}')" title="PDF">📄</button>
+      <button class="btn btn-o btn-sm" onclick="shareQuoteWhatsApp('${q.id}')" title="Share via WhatsApp">💬</button>
+      <button class="btn btn-o btn-sm" onclick="shareQuoteEmail('${q.id}')" title="Share via Email">✉️</button>
       <button class="btn btn-p btn-sm" onclick="convertQuote('${q.id}')">→ Invoice</button>
     </div></td></tr>`).join('');
 }
@@ -6709,6 +7015,7 @@ async function renderBranches(list) {
     ${b.lowStock ? `<div class="tr"><span style="font-size:11px;color:var(--text3)">Low Stock Alerts</span><span class="sb sov">${b.lowStock}</span></div>` : ''}
     <div style="display:flex;gap:6px;margin-top:11px">
       <button class="btn btn-o btn-sm" style="flex:1;justify-content:center" onclick="viewBranchStock('${b.id}')">📦 View Stock</button>
+      <button class="btn btn-o btn-sm" onclick="openOpeningStock('${b.id}')" title="Opening Stock">➕📦</button>
       <button class="btn btn-o btn-sm" onclick="editBranch('${b.id}')">✏️</button>
       <button class="btn btn-d btn-sm" onclick="deleteBranch('${b.id}')">🗑</button>
     </div>
@@ -6813,10 +7120,15 @@ async function doTransferAction(id, action) {
 
 function openNewTransfer() {
   if (!BRANCHES.length) { showToast('⚠️ Add a branch first', 'warn'); return; }
+  const fromList = branchesForUser();
+  if (!fromList.length) { showToast('⚠️ You have no branch to transfer stock from', 'warn'); return; }
   const fromSel = document.getElementById('trf_from');
   const toSel = document.getElementById('trf_to');
-  const opts = BRANCHES.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-  fromSel.innerHTML = opts; toSel.innerHTML = opts;
+  // "From" is limited to branches this user can dispatch from; "To" can be
+  // any branch — receiving is checked separately when the transfer is received.
+  fromSel.innerHTML = fromList.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+  toSel.innerHTML = BRANCHES.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+  if (AUTH.user?.branchId) fromSel.value = AUTH.user.branchId;
   document.getElementById('trf_date').value = new Date().toISOString().slice(0,10);
   document.getElementById('trf_narration').value = '';
   document.getElementById('trfItemsWrap').innerHTML = '';
@@ -6871,6 +7183,100 @@ async function saveTransfer() {
     renderTransfers();
   } catch (e) {
     showToast('⚠️ ' + e.message, 'warn');
+  }
+}
+
+// ── opening stock (uses the Stock Adjustment backend — create, then post immediately) ──
+let osItemCount = 0;
+let osTargetBranchId = null;
+
+function openOpeningStock(branchId) {
+  osTargetBranchId = branchId;
+  const b = BRANCHES.find(x => String(x.id) === String(branchId));
+  const wh = BRANCH_WAREHOUSES[branchId];
+  if (!wh) { showToast('⚠️ This branch has no stock location yet', 'warn'); return; }
+  document.getElementById('osModalTitle').textContent = `Opening Stock — ${b ? b.name : ''}`;
+  document.getElementById('os_date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('os_reason').value = 'Opening Balance';
+  document.getElementById('osItemsWrap').innerHTML = '';
+  osItemCount = 0;
+  addOpeningStockItemRow();
+  openModal('openingStockModal');
+}
+
+function addOpeningStockItemRow() {
+  osItemCount++;
+  const id = osItemCount;
+  const opts = PRODUCTS.map(p => `<option value="${p.id}">${p.name} (${p.sku})</option>`).join('');
+  const row = document.createElement('div');
+  row.id = `osRow${id}`;
+  row.style.cssText = 'display:flex;gap:6px;margin-top:6px;align-items:center';
+  row.innerHTML = `<select class="fi" id="osProd${id}" style="flex:2">${opts}</select>
+    <input class="fi" id="osQty${id}" type="number" min="0.001" step="0.001" value="1" style="flex:1" placeholder="Qty"/>
+    <input class="fi" id="osCost${id}" type="number" min="0" step="0.01" placeholder="Cost/unit" style="flex:1"/>
+    <button class="btn btn-d btn-sm" onclick="document.getElementById('osRow${id}').remove()">🗑</button>`;
+  document.getElementById('osItemsWrap').appendChild(row);
+}
+
+async function saveOpeningStock() {
+  const wh = BRANCH_WAREHOUSES[osTargetBranchId];
+  if (!wh) { showToast('⚠️ This branch has no stock location yet', 'warn'); return; }
+
+  const items = [];
+  document.querySelectorAll('#osItemsWrap > div').forEach(row => {
+    const idNum = row.id.replace('osRow','');
+    const prodId = getVal(`osProd${idNum}`);
+    const qty = parseFloat(getVal(`osQty${idNum}`)) || 0;
+    const cost = parseFloat(getVal(`osCost${idNum}`)) || 0;
+    // system_qty is always 0 here — this is a fresh opening balance, not a
+    // correction to existing stock. The adjustment posts the full quantity in.
+    if (prodId && qty > 0) items.push({ product_id: prodId, system_qty: 0, physical_qty: qty, cost_price: cost });
+  });
+  if (!items.length) { showToast('⚠️ Add at least one item with a quantity', 'warn'); return; }
+
+  const payload = {
+    adjustment_date: getVal('os_date'),
+    adjustment_type: 'opening_balance',
+    warehouse_id: wh,
+    reason: getVal('os_reason'),
+    items,
+  };
+  try {
+    const res = await apiFetch(`/inventory/adjustments`, { method: 'POST', body: JSON.stringify(payload) });
+    const adjId = res.data.id;
+    // Opening stock should be reflected immediately, not sit as an unposted
+    // draft someone has to remember to come back and confirm.
+    await apiFetch(`/inventory/adjustments/${adjId}/post`, { method: 'POST' });
+    showToast('✅ Opening stock recorded');
+    addAuditEntry('CREATE', 'Opening Stock', `Opening stock posted for branch ${osTargetBranchId}`);
+    closeModal('openingStockModal');
+    renderBranches();
+    renderLowStockAlerts();
+  } catch (e) {
+    showToast('⚠️ ' + e.message, 'warn');
+  }
+}
+
+// ── low stock alerts (branch-aware) ─────────────────────────────
+async function renderLowStockAlerts() {
+  const b = document.getElementById('lowStockBody'); if (!b) return;
+  b.innerHTML = loadingRow(5);
+  if (!AUTH.apiOnline) {
+    b.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text3)">Connect to the API to see live stock alerts.</td></tr>';
+    return;
+  }
+  try {
+    const r = await apiFetch(`/inventory/low-stock`);
+    const rows = r.data || [];
+    b.innerHTML = rows.length ? rows.map(row => `<tr>
+      <td class="b">${row.product_name}<div style="font-size:10px;color:var(--text3)">${row.product_code||''}</div></td>
+      <td>${row.warehouse_name || '—'}</td>
+      <td style="color:${parseFloat(row.available_qty) <= 0 ? 'var(--red)' : 'var(--amber, #d97706)'}">${row.available_qty}</td>
+      <td>${row.reorder_level}</td>
+      <td><button class="btn btn-o btn-sm" onclick="openNewTransfer()">🔁 Transfer Stock</button></td>
+    </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text3)">No branches are below reorder level 🎉</td></tr>';
+  } catch (e) {
+    b.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text3)">${e.message}</td></tr>`;
   }
 }
 
@@ -7157,10 +7563,21 @@ function initNewInvoice() {
   calcTotals();
 }
 
+function branchesForUser() {
+  // Backend stays authoritative — this just keeps branch-scoped staff from
+  // seeing options they'd be rejected for anyway. Owners/admins with no
+  // fixed branch see everything, matching the server-side rule.
+  if (AUTH.user?.branchId) {
+    return BRANCHES.filter(b => String(b.id) === String(AUTH.user.branchId));
+  }
+  return BRANCHES;
+}
+
 function populateInvoiceBranchSelect() {
   const sel = document.getElementById('invBranch'); if (!sel) return;
-  sel.innerHTML = BRANCHES.length
-    ? BRANCHES.map(b => `<option value="${b.id}">${b.name}</option>`).join('')
+  const list = branchesForUser();
+  sel.innerHTML = list.length
+    ? list.map(b => `<option value="${b.id}">${b.name}</option>`).join('')
     : '<option value="">— Single location —</option>';
   if (AUTH.user?.branchId) sel.value = AUTH.user.branchId;
 }
@@ -8623,42 +9040,39 @@ function onRetDocTypeChange() {
 function onRetInvoiceChange() {
   const id = getVal('retAgainstInv');
   const inv = INVOICES.find(i => String(i.id) === String(id));
-  const prodSel = document.getElementById('retProduct');
-  prodSel.innerHTML = '<option value="">Select product…</option>';
-  ['retQty','retRate','retAmount'].forEach(f => document.getElementById(f).value = '');
-  if (!inv) return;
-  document.getElementById('retParty').value = inv.customer || '';
-  (inv.items || []).forEach((it, idx) => {
-    prodSel.innerHTML += `<option value="${idx}">${it.prod || 'Item '+(idx+1)} (max qty: ${it.qty}, ₹${it.rate})</option>`;
-  });
-}
-
-function onRetProductChange() {
-  const inv = INVOICES.find(i => String(i.id) === String(getVal('retAgainstInv')));
-  const item = inv?.items?.[getVal('retProduct')];
-  if (!item) return;
-  document.getElementById('retQty').max = item.qty;
-  document.getElementById('retQty').value = item.qty;
-  document.getElementById('retRate').value = item.rate;
-  updateRetAmount();
-}
-
-function onRetQtyChange() {
-  const inv = INVOICES.find(i => String(i.id) === String(getVal('retAgainstInv')));
-  const item = inv?.items?.[getVal('retProduct')];
-  let qty = parseFloat(getVal('retQty')) || 0;
-  if (item && qty > item.qty) {
-    qty = item.qty;
-    document.getElementById('retQty').value = qty;
-    showToast('⚠️ Max returnable quantity is ' + item.qty, 'warn');
+  const wrap = document.getElementById('retSalesItems');
+  document.getElementById('retParty').value = inv?.customer || '';
+  document.getElementById('retAmount').value = '';
+  if (!inv || !(inv.items || []).length) {
+    wrap.innerHTML = '<div style="color:var(--text3);font-size:12px">Select an invoice to see its items</div>';
+    wrap.dataset.count = 0;
+    return;
   }
-  updateRetAmount();
+  wrap.innerHTML = inv.items.map((it, idx) => `
+    <div class="ret-item-row" id="ret-sales-row-${idx}" data-qty="${it.qty}" data-rate="${it.rate}" data-product-id="${it.productId || ''}" data-hsn="${it.hsn || ''}" data-gst="${it.gst ?? 18}" data-name="${(it.prod || '').replace(/"/g,'&quot;')}">
+      <span>${it.prod || 'Item ' + (idx+1)}</span>
+      <span>${it.qty}</span>
+      <span>₹${it.rate}</span>
+      <input type="number" class="fi" style="padding:6px 7px;font-size:11px" id="ret-sales-qty-${idx}" value="0" min="0" max="${it.qty}" oninput="updateRetSalesAmount()"/>
+    </div>`).join('');
+  wrap.dataset.count = inv.items.length;
+  updateRetSalesAmount();
 }
 
-function updateRetAmount() {
-  const qty = parseFloat(getVal('retQty')) || 0;
-  const rate = parseFloat(getVal('retRate')) || 0;
-  document.getElementById('retAmount').value = (qty * rate).toFixed(2);
+function updateRetSalesAmount() {
+  const wrap = document.getElementById('retSalesItems');
+  const count = +wrap.dataset.count || 0;
+  let total = 0;
+  for (let i = 0; i < count; i++) {
+    const row = document.getElementById('ret-sales-row-' + i);
+    const qtyEl = document.getElementById('ret-sales-qty-' + i);
+    if (!row || !qtyEl) continue;
+    const max = parseFloat(row.dataset.qty) || 0;
+    let qty = parseFloat(qtyEl.value) || 0;
+    if (qty > max) { qty = max; qtyEl.value = max; showToast('⚠️ Max returnable quantity is ' + max, 'warn'); }
+    total += qty * (parseFloat(row.dataset.rate) || 0);
+  }
+  document.getElementById('retAmount').value = total.toFixed(2);
 }
 
 function onRetPOChange() {
@@ -8720,23 +9134,34 @@ async function saveReturn() {
 
   // Sales Return / Credit Note
   const againstId = getVal('retAgainstInv');
-  const prodIdx   = getVal('retProduct');
   const date      = getVal('retDate') || new Date().toISOString().slice(0,10);
-  const qty       = parseFloat(getVal('retQty')) || 0;
-  const rate      = parseFloat(getVal('retRate')) || 0;
   const reason    = getVal('retReason');
 
-  if (!againstId)      { showToast('⚠️ Select the original invoice', 'warn'); return; }
-  if (prodIdx === '')  { showToast('⚠️ Select a product', 'warn'); return; }
-  if (qty <= 0)        { showToast('⚠️ Enter a valid quantity', 'warn'); return; }
+  if (!againstId) { showToast('⚠️ Select the original invoice', 'warn'); return; }
 
-  const inv  = INVOICES.find(i => String(i.id) === String(againstId));
-  const item = inv?.items?.[prodIdx];
-
-  if (!inv || !item) {
-    showToast('⚠️ Could not load the original invoice line — please reopen this invoice and try again', 'warn');
+  const inv = INVOICES.find(i => String(i.id) === String(againstId));
+  if (!inv) {
+    showToast('⚠️ Could not load the original invoice — please reopen this invoice and try again', 'warn');
     return;
   }
+
+  const wrap = document.getElementById('retSalesItems');
+  const count = +wrap.dataset.count || 0;
+  const items = [];
+  for (let i = 0; i < count; i++) {
+    const row = document.getElementById('ret-sales-row-' + i);
+    const qty = parseFloat(getVal('ret-sales-qty-' + i)) || 0;
+    if (qty <= 0) continue;
+    items.push({
+      product_id: row.dataset.productId || null,
+      description: row.dataset.name,
+      hsn_code: row.dataset.hsn || '',
+      quantity: qty,
+      rate: parseFloat(row.dataset.rate) || 0,
+      gst_rate: parseFloat(row.dataset.gst) || 18,
+    });
+  }
+  if (!items.length) { showToast('⚠️ Enter a return quantity for at least one item', 'warn'); return; }
 
   const payload = {
     invoice_type: 'credit_note',
@@ -8747,14 +9172,7 @@ async function saveReturn() {
     supply_type: inv?.supply || 'intra',
     place_of_supply: inv?.custState || '27',
     notes: reason || '',
-    items: [{
-      product_id: item.productId || null,
-      description: item.prod,
-      hsn_code: item.hsn || '',
-      quantity: qty,
-      rate: rate,
-      gst_rate: item.gst ?? 18,
-    }],
+    items,
   };
 
   try {

@@ -130,10 +130,16 @@ async def get_stock(
     "/inventory/low-stock", summary="Products at/below reorder level",
     dependencies=[require_perm("inventory.read")],  # type: ignore[list-item]
 )
-async def get_low_stock(current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
+async def get_low_stock(
+    current: CurrentUserDep, db: DBDep,
+    branch_id: UUID | None = Query(None, description="Filter to one branch — omit for company-wide"),
+) -> ORJSONResponse:
     from app.db.repositories.inventory import InventoryStockRepository
+    bid = branch_id
+    if current.branch_id is not None and not current.has_permission("branch.access_all"):
+        bid = current.branch_id
     repo = InventoryStockRepository(db)
-    rows = await repo.get_low_stock(current.company_id)
+    rows = await repo.get_low_stock(current.company_id, branch_id=bid)
     return ok(data=rows)
 
 
@@ -171,6 +177,8 @@ async def get_valuation(current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
 async def create_adjustment(
     payload: StockAdjustmentCreate, current: CurrentUserDep, db: DBDep,
 ) -> ORJSONResponse:
+    from app.api.v1.dependencies import assert_warehouse_branch_access
+    await assert_warehouse_branch_access(db, current, payload.warehouse_id)
     svc = InventoryService(db)
     adj = await svc.create_adjustment(current.company_id, payload, current.user_id)
     return created(data=StockAdjustmentOut.model_validate(adj).model_dump(mode="json"), message="Adjustment created as draft.")
@@ -195,6 +203,10 @@ async def list_adjustments(current: CurrentUserDep, db: DBDep, pg: PaginationDep
 async def post_adjustment(
     adjustment_id: UUID, current: CurrentUserDep, db: DBDep,
 ) -> ORJSONResponse:
+    from app.db.repositories.inventory import StockAdjustmentRepository
+    from app.api.v1.dependencies import assert_warehouse_branch_access
+    adj = await StockAdjustmentRepository(db).get_or_raise(adjustment_id)
+    await assert_warehouse_branch_access(db, current, adj.warehouse_id)
     svc = InventoryService(db)
     await svc.post_adjustment(adjustment_id, current.company_id, current.user_id)
     return ok(message="Adjustment posted — stock updated.")
@@ -213,6 +225,10 @@ async def create_transfer(
 ) -> ORJSONResponse:
     if payload.from_warehouse_id == payload.to_warehouse_id:
         raise BusinessError("Source and destination warehouse must be different.")
+    from app.api.v1.dependencies import assert_warehouse_branch_access
+    # A branch-scoped user may only send stock OUT of their own branch —
+    # receiving is a separate, explicit action gated at /receive instead.
+    await assert_warehouse_branch_access(db, current, payload.from_warehouse_id)
     svc = InventoryService(db)
     trf = await svc.create_transfer(current.company_id, payload, current.user_id)
     return created(data=StockTransferOut.model_validate(trf).model_dump(mode="json"), message="Transfer created as draft.")
@@ -256,6 +272,10 @@ async def get_transfer(transfer_id: UUID, current: CurrentUserDep, db: DBDep) ->
     dependencies=[require_perm("inventory.transfer")],  # type: ignore[list-item]
 )
 async def dispatch_transfer(transfer_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
+    from app.db.repositories.inventory import StockTransferRepository
+    from app.api.v1.dependencies import assert_warehouse_branch_access
+    trf = await StockTransferRepository(db).get_or_raise(transfer_id)
+    await assert_warehouse_branch_access(db, current, trf.from_warehouse_id)
     svc = InventoryService(db)
     await svc.dispatch_transfer(transfer_id, current.company_id, current.user_id)
     return ok(message="Transfer dispatched — stock deducted from source branch.")
@@ -266,6 +286,10 @@ async def dispatch_transfer(transfer_id: UUID, current: CurrentUserDep, db: DBDe
     dependencies=[require_perm("inventory.transfer_receive")],  # type: ignore[list-item]
 )
 async def receive_transfer(transfer_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
+    from app.db.repositories.inventory import StockTransferRepository
+    from app.api.v1.dependencies import assert_warehouse_branch_access
+    trf = await StockTransferRepository(db).get_or_raise(transfer_id)
+    await assert_warehouse_branch_access(db, current, trf.to_warehouse_id)
     svc = InventoryService(db)
     await svc.receive_transfer(transfer_id, current.company_id, current.user_id)
     return ok(message="Transfer received — stock added to destination branch.")
@@ -276,6 +300,10 @@ async def receive_transfer(transfer_id: UUID, current: CurrentUserDep, db: DBDep
     dependencies=[require_perm("inventory.transfer")],  # type: ignore[list-item]
 )
 async def cancel_transfer(transfer_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
+    from app.db.repositories.inventory import StockTransferRepository
+    from app.api.v1.dependencies import assert_warehouse_branch_access
+    trf = await StockTransferRepository(db).get_or_raise(transfer_id)
+    await assert_warehouse_branch_access(db, current, trf.from_warehouse_id)
     svc = InventoryService(db)
     await svc.cancel_transfer(transfer_id, current.company_id, current.user_id)
     return ok(message="Transfer cancelled.")

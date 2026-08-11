@@ -18,24 +18,36 @@ from app.db.repositories.base import BaseRepository, Pagination
 class DocumentSequenceRepository(BaseRepository[DocumentSequence]):
     model = DocumentSequence
 
-    async def next_number(self, company_id: UUID, doc_type: str, branch_id: UUID | None = None) -> str:
+    async def next_number(self, company_id: UUID, doc_type: str, branch_id: UUID | None = None,
+                          branch_code: str | None = None) -> str:
         from datetime import date as dt
         from sqlalchemy import text as t_
         today = dt.today()
         fy = f"{today.year}-{str(today.year+1)[2:]}" if today.month >= 4 else f"{today.year-1}-{str(today.year)[2:]}"
+        # IMPORTANT: match branch_id exactly, including NULL — "IS NOT DISTINCT FROM"
+        # is Postgres's null-safe equality. Without this, every branch would
+        # collide onto the same counter the moment one existed for that doc_type.
         stmt = t_("""
             UPDATE document_sequences
             SET current_no = current_no + 1, last_used_at = NOW()
-            WHERE company_id=:cid AND doc_type=:dt AND (financial_year=:fy OR reset_on_fy=FALSE)
+            WHERE company_id=:cid AND doc_type=:dt AND branch_id IS NOT DISTINCT FROM :bid
+              AND (financial_year=:fy OR reset_on_fy=FALSE)
             RETURNING prefix, current_no, pad_length, suffix
         """)
-        result = await self.session.execute(stmt, {"cid": str(company_id), "dt": doc_type, "fy": fy})
+        result = await self.session.execute(
+            stmt, {"cid": str(company_id), "dt": doc_type, "bid": str(branch_id) if branch_id else None, "fy": fy}
+        )
         row = result.mappings().one_or_none()
         if not row:
             prefix_map = {"invoice":"INV","po":"PO","jo":"JO","quote":"QT","grn":"GRN","dc":"DC","payment":"PAY","adjustment":"ADJ","transfer":"TRF"}
-            prefix = prefix_map.get(doc_type, doc_type.upper()[:3])
+            doc_prefix = prefix_map.get(doc_type, doc_type.upper()[:3])
+            # Branch-code prefix (e.g. "ANA-INV-0001") lets each location's
+            # documents be told apart at a glance — standard practice once a
+            # business has more than one GST registration issuing the same
+            # document type in parallel.
+            prefix = f"{branch_code}-{doc_prefix}-" if branch_code else f"{doc_prefix}-"
             seq = await self.create({"company_id": company_id, "branch_id": branch_id, "doc_type": doc_type,
-                                     "prefix": f"{prefix}-", "current_no": 1, "pad_length": 4,
+                                     "prefix": prefix, "current_no": 1, "pad_length": 4,
                                      "financial_year": fy, "reset_on_fy": True})
             return f"{seq.prefix}{str(1).zfill(seq.pad_length)}"
         return f"{row['prefix']}{str(row['current_no']).zfill(row['pad_length'])}{row['suffix'] or ''}"

@@ -135,6 +135,8 @@ async def list_purchase_orders(current: CurrentUserDep, db: DBDep, pg: Paginatio
 @router.post("/purchase-orders", status_code=201, summary="Create purchase order")
 async def create_purchase_order(payload: PurchaseOrderCreate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.schemas.billing import PurchaseOrderOut
+    from app.api.v1.dependencies import assert_branch_access
+    assert_branch_access(current, payload.branch_id)
     svc = PurchaseOrderService(db)
     po = await svc.create(current.company_id, payload, current.user_id)
     return created(PurchaseOrderOut.model_validate(po).model_dump(mode='json'), "Purchase order created.")
@@ -312,6 +314,8 @@ async def list_invoices(
 @router.post("/invoices", status_code=201, summary="Create invoice (draft)")
 async def create_invoice(payload: InvoiceCreate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.schemas.billing import InvoiceOut
+    from app.api.v1.dependencies import assert_branch_access
+    assert_branch_access(current, payload.branch_id)
     svc = InvoiceService(db)
     inv = await svc.create(current.company_id, payload, current.user_id)
     return created(InvoiceOut.model_validate(inv).model_dump(mode='json'), "Invoice created.")

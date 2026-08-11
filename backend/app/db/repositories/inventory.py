@@ -47,19 +47,45 @@ class InventoryStockRepository(BaseRepository[InventoryStock]):
             stmt = stmt.where(InventoryStock.warehouse_id == warehouse_id)
         return list((await self.session.execute(stmt)).scalars().all())
 
-    async def get_low_stock(self, company_id: UUID) -> list[dict]:
+    async def get_low_stock(self, company_id: UUID, branch_id: UUID | None = None) -> list[dict]:
+        # available_qty is a Python-only property on the model (quantity - reserved_qty),
+        # not a real column — computing it in SQL instead of referencing it directly.
         stmt = text("""
             SELECT s.product_id, p.product_name, p.product_code, p.reorder_level,
-                   SUM(s.quantity) AS total_qty, SUM(s.available_qty) AS available_qty
+                   w.id AS warehouse_id, w.warehouse_name, w.branch_id,
+                   SUM(s.quantity) AS total_qty, SUM(s.quantity - s.reserved_qty) AS available_qty
             FROM inventory_stock s
             JOIN products p ON p.id = s.product_id
+            JOIN warehouses w ON w.id = s.warehouse_id
             WHERE s.company_id = :cid AND p.track_inventory = TRUE
-            GROUP BY s.product_id, p.product_name, p.product_code, p.reorder_level
+              AND w.branch_id IS NOT DISTINCT FROM COALESCE(:bid, w.branch_id)
+            GROUP BY s.product_id, p.product_name, p.product_code, p.reorder_level, w.id, w.warehouse_name, w.branch_id
             HAVING SUM(s.quantity) <= p.reorder_level
             ORDER BY p.product_name
         """)
-        rows = (await self.session.execute(stmt, {"cid": str(company_id)})).mappings().all()
-        return [dict(r) for r in rows]
+        rows = (await self.session.execute(
+            stmt, {"cid": str(company_id), "bid": str(branch_id) if branch_id else None}
+        )).mappings().all()
+        # asyncpg returns its own UUID type (asyncpg.pgproto.pgproto.UUID), which
+        # looks like Python's uuid.UUID but isn't the same class — orjson doesn't
+        # recognize it and throws "Type is not JSON serializable" on raw dicts
+        # built straight from .mappings(). Stringify explicitly rather than relying
+        # on the response layer to know how to handle it.
+        # Same goes for decimal.Decimal (reorder_level, total_qty, available_qty
+        # come back as Decimal from Postgres) — orjson has no default encoder for
+        # it either, so cast the numeric columns to float before returning.
+        return [
+            {
+                **dict(r),
+                "product_id": str(r["product_id"]),
+                "warehouse_id": str(r["warehouse_id"]),
+                "branch_id": str(r["branch_id"]) if r["branch_id"] else None,
+                "reorder_level": float(r["reorder_level"]) if r["reorder_level"] is not None else None,
+                "total_qty": float(r["total_qty"]) if r["total_qty"] is not None else None,
+                "available_qty": float(r["available_qty"]) if r["available_qty"] is not None else None,
+            }
+            for r in rows
+        ]
 
     async def get_expiring_soon(self, company_id: UUID, days: int = 30) -> list[InventoryStock]:
         from datetime import timedelta
