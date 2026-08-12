@@ -304,7 +304,7 @@ async def customer_report(current: CurrentUserDep, db: DBDep, as_pdf: bool = Que
     cid = str(current.company_id)
 
     rows = (await db.execute(text("""
-        SELECT p.id, p.display_name AS name, p.billing_city AS city,
+        SELECT p.id, p.display_name AS name, p.billing_city AS city, p.gstin AS gstin,
                COALESCE(SUM(i.total_amount) FILTER (WHERE i.invoice_type != 'credit_note'), 0) AS total_business,
                COALESCE(SUM(i.total_amount - i.paid_amount) FILTER (
                    WHERE i.status NOT IN ('paid','cancelled','void','draft') AND i.invoice_type != 'credit_note'
@@ -312,7 +312,7 @@ async def customer_report(current: CurrentUserDep, db: DBDep, as_pdf: bool = Que
                MAX(i.invoice_date) AS last_purchase, COUNT(i.id) AS invoice_count
         FROM parties p LEFT JOIN invoices i ON i.party_id = p.id AND i.status NOT IN ('cancelled','void','draft')
         WHERE p.company_id = :cid AND p.party_type = 'customer' AND p.is_active = true
-        GROUP BY p.id, p.display_name, p.billing_city
+        GROUP BY p.id, p.display_name, p.billing_city, p.gstin
         ORDER BY total_business DESC LIMIT 500
     """), {"cid": cid})).mappings().all()
 

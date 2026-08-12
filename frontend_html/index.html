@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 :root{--bg:#0a0e1a;--bg2:#111827;--bg3:#1a2235;--bg4:#1e2d45;--card:#131c2e;--border:#1e3050;--border2:#243a5e;--accent:#00d4ff;--accent2:#0099cc;--green:#00e676;--green2:#00c853;--orange:#ff9100;--red:#ff4444;--yellow:#ffd600;--purple:#7c4dff;--text:#e8f0fe;--text2:#8ba3c7;--text3:#4a6080;--shadow:0 4px 24px rgba(0,212,255,.08);--r:12px;--r2:8px}
+:root[data-theme="light"]{--bg:#f4f6fb;--bg2:#ffffff;--bg3:#eef1f8;--bg4:#e3e8f2;--card:#ffffff;--border:#dde3ef;--border2:#c9d2e3;--accent:#0090c7;--accent2:#0077a8;--green:#00a152;--green2:#008c46;--orange:#c76a00;--red:#d32f2f;--yellow:#b38600;--purple:#6a3fd6;--text:#101828;--text2:#48566e;--text3:#7c8aa5;--shadow:0 4px 24px rgba(16,24,40,.08)}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
@@ -720,9 +721,10 @@ select.fi option{background:var(--bg2)}
       <div style="display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap">
         <input class="fi" style="width:220px" id="prodSearch" placeholder="🔍 Search products…" oninput="filterProds()"/>
         <select class="fi" style="width:130px" id="prodStockF" onchange="filterProds()"><option value="">All Stock</option><option value="low">Low Stock</option><option value="out">Out of Stock</option><option value="in">In Stock</option></select>
+        <select class="fi" style="width:170px" id="prodBranchF" onchange="onBranchFilterChange()"><option value="">All Branches (total)</option></select>
       </div>
       <div class="card"><div class="tw"><table>
-        <thead><tr><th>SKU</th><th>Product</th><th>HSN</th><th>MRP</th><th>Price</th><th>Stock</th><th>Reorder</th><th>GST%</th><th>Status</th><th>Actions</th></tr></thead>
+        <thead><tr><th></th><th>SKU</th><th>Product</th><th>HSN</th><th>MRP</th><th>Price</th><th id="stockColHead">Stock</th><th>Reorder</th><th>GST%</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody id="invBody2"></tbody>
       </table></div></div>
     </div>
@@ -1237,6 +1239,14 @@ select.fi option{background:var(--bg2)}
       </div>
       <div class="smi-arrow">›</div>
     </div>
+    <div class="settings-menu-item" onclick="openSettingsSection('notif')">
+      <div class="smi-icon">🔔</div>
+      <div class="smi-text">
+        <div class="smi-title">Notifications & Reminders</div>
+        <div class="smi-sub">Low-stock threshold, due-date reminders</div>
+      </div>
+      <div class="smi-arrow">›</div>
+    </div>
     <div class="settings-menu-item" onclick="openSettingsSection('bank')">
       <div class="smi-icon">🏦</div>
       <div class="smi-text">
@@ -1274,6 +1284,22 @@ select.fi option{background:var(--bg2)}
       <div class="smi-text">
         <div class="smi-title">Roles & Permissions</div>
         <div class="smi-sub">Define role-based access levels</div>
+      </div>
+      <div class="smi-arrow">›</div>
+    </div>
+    <div class="settings-menu-item" onclick="openSettingsSection('prefs')">
+      <div class="smi-icon">🎨</div>
+      <div class="smi-text">
+        <div class="smi-title">Preferences</div>
+        <div class="smi-sub">Theme, number format, date format — just for you</div>
+      </div>
+      <div class="smi-arrow">›</div>
+    </div>
+    <div class="settings-menu-item" onclick="settingsLogoutClick()">
+      <div class="smi-icon">🚪</div>
+      <div class="smi-text">
+        <div class="smi-title">Log Out</div>
+        <div class="smi-sub">Sign out of this VyaparPro session</div>
       </div>
       <div class="smi-arrow">›</div>
     </div>
@@ -1417,6 +1443,132 @@ select.fi option{background:var(--bg2)}
         </div>
 
         <button class="btn btn-p btn-sm" onclick="saveTaxSettings()">Save Tax & GST Defaults</button>
+      </div>
+    </div>
+
+    <div id="settingsSection-numbering" class="settings-section hidden">
+      <div class="settings-section-header">
+        <div class="ssh-icon">🔢</div>
+        <div>
+          <div class="ssh-title">Document Numbering</div>
+          <div class="ssh-sub">Prefix, starting number and format for each document type</div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6">
+          Controls the numbers your invoices, quotations, purchase orders and payment vouchers get when
+          created. Credit and debit notes share the invoice series. Changing the next number here only
+          affects documents created after you save — existing document numbers are never changed.
+        </div>
+
+        <div class="fg" style="max-width:340px">
+          <label class="fl">Configure Numbering For</label>
+          <select class="fi" id="docSeqBranch" onchange="renderDocumentSequences()">
+            <option value="">Head Office / Default (no branch)</option>
+          </select>
+        </div>
+        <div style="font-size:10.5px;color:var(--text3);margin-bottom:18px">
+          Each branch can have its own prefix and counter — handy once more than one location issues the
+          same kind of document. A branch that hasn't configured its own numbering yet automatically gets
+          "<span class="mono">BRANCHCODE-</span>" added in front of the default prefix the first time it
+          issues a document.
+        </div>
+
+        <div id="docSeqList"><div class="notif-empty">Loading…</div></div>
+      </div>
+    </div>
+
+    <div id="settingsSection-pdf" class="settings-section hidden">
+      <div class="settings-section-header">
+        <div class="ssh-icon">🖨️</div>
+        <div>
+          <div class="ssh-title">Invoice & PDF Preferences</div>
+          <div class="ssh-sub">How your invoices, POs and quotations look when printed or downloaded</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="fr c2">
+          <div class="fg"><label class="fl">PDF Page Size</label>
+            <select class="fi" id="pdfPageSize">
+              <option value="A4">A4 (standard)</option>
+              <option value="A5">A5 (half-page)</option>
+            </select>
+          </div>
+          <div class="fg"><label class="fl">Default Copy Label</label>
+            <select class="fi" id="pdfCopyLabel">
+              <option value="ORIGINAL FOR RECIPIENT">Original for Recipient</option>
+              <option value="DUPLICATE FOR TRANSPORTER">Duplicate for Transporter</option>
+              <option value="TRIPLICATE FOR SUPPLIER">Triplicate for Supplier</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="div"></div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2);margin-bottom:18px">
+          <div><div style="font-size:12px;font-weight:600">Show UPI QR Code on Invoice</div>
+            <div style="font-size:10px;color:var(--text3)">Uses the UPI ID from Bank Details & Terms — turn off to keep it configured but hidden from the printed PDF</div>
+          </div>
+          <span class="chip cgr" id="pdf_show_upi_qr" style="cursor:pointer">On</span>
+        </div>
+
+        <div style="font-size:12px;font-weight:700;margin-bottom:6px">Authorised Signatory Signature</div>
+        <div style="font-size:10.5px;color:var(--text3);margin-bottom:12px;line-height:1.6">
+          Upload a signature image to print above "Authorised Signatory" on your documents. Without one, the
+          PDF shows "Computer generated invoice — no signature required" instead.
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+          <img id="pdfSigPreview" src="" style="width:80px;height:40px;border-radius:8px;object-fit:contain;background:var(--bg3);border:1px solid var(--border);display:none"/>
+          <div id="pdfSigPlaceholder" style="width:80px;height:40px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3)">No signature</div>
+          <div>
+            <input type="file" id="pdfSigFile" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="uploadSignature(this)"/>
+            <button class="btn btn-o btn-sm" onclick="document.getElementById('pdfSigFile').click()">Upload Signature</button>
+            <div style="font-size:10px;color:var(--text3);margin-top:4px">PNG/JPEG/WebP, max 1MB — a transparent PNG looks best</div>
+          </div>
+        </div>
+
+        <button class="btn btn-p btn-sm" onclick="savePdfPreferences()">Save PDF Preferences</button>
+      </div>
+    </div>
+
+    <div id="settingsSection-notif" class="settings-section hidden">
+      <div class="settings-section-header">
+        <div class="ssh-icon">🔔</div>
+        <div>
+          <div class="ssh-title">Notifications & Reminders</div>
+          <div class="ssh-sub">What shows up in your notification bell, and when</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="fg"><label class="fl">Default Reorder Level for New Products</label>
+          <input class="fi" type="number" min="0" id="notifDefaultReorder" placeholder="e.g. 10"/>
+        </div>
+        <div style="font-size:10.5px;color:var(--text3);margin-bottom:18px">
+          Applied automatically as the starting Reorder Level whenever you add a new product — you can
+          still change it per product. Low-stock alerts fire once a product's stock drops to this level.
+        </div>
+
+        <div class="div"></div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg3);border-radius:var(--r2);margin-bottom:12px">
+          <div><div style="font-size:12px;font-weight:600">Upcoming Due-Date Reminders</div>
+            <div style="font-size:10px;color:var(--text3)">Shows invoices approaching their due date in the notification bell, before they go overdue</div>
+          </div>
+          <span class="chip cgr" id="notif_due_soon_enabled" style="cursor:pointer">On</span>
+        </div>
+        <div class="fg"><label class="fl">Remind Me This Many Days Before Due Date</label>
+          <input class="fi" type="number" min="1" max="30" id="notifReminderDays" placeholder="3"/>
+        </div>
+
+        <div class="div"></div>
+
+        <div style="font-size:11px;color:var(--muted);line-height:1.6">
+          Reminders currently appear in the in-app notification bell (top right) only. This app doesn't send
+          outgoing email, SMS or WhatsApp messages yet, so those channel toggles aren't shown here — a
+          switch that doesn't actually deliver anything would be more confusing than helpful.
+        </div>
+
+        <button class="btn btn-p btn-sm" style="margin-top:18px" onclick="saveNotificationSettings()">Save Notification Settings</button>
       </div>
     </div>
 
@@ -1589,6 +1741,42 @@ select.fi option{background:var(--bg2)}
           <thead><tr><th>Role</th><th>Level</th><th>Description</th><th>Permissions</th><th>Actions</th></tr></thead>
           <tbody id="settingsRolesBody"></tbody>
         </table></div>
+      </div>
+    </div>
+
+    <div id="settingsSection-prefs" class="settings-section hidden">
+      <div class="settings-section-header">
+        <div class="ssh-icon">🎨</div>
+        <div>
+          <div class="ssh-title">Preferences</div>
+          <div class="ssh-sub">Personal display settings — saved on this device for your login only</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="fg"><label class="fl">Theme</label>
+          <select class="fi" id="prefTheme">
+            <option value="dark">Dark (default)</option>
+            <option value="light">Light</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Number Format</label>
+          <select class="fi" id="prefNumberFormat">
+            <option value="en-IN">Indian — 1,23,456.00</option>
+            <option value="en-US">International — 123,456.00</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Date Format</label>
+          <select class="fi" id="prefDateFormat">
+            <option value="DMY">17 Aug 2026</option>
+            <option value="DDMMYYYY">17/08/2026 (DD/MM/YYYY)</option>
+            <option value="MMDDYYYY">08/17/2026 (MM/DD/YYYY)</option>
+          </select>
+        </div>
+        <div style="font-size:10.5px;color:var(--text3);margin-bottom:18px">
+          These apply only to your own login on this device — other users on this company account keep
+          their own theme and format choices.
+        </div>
+        <button class="btn btn-p btn-sm" onclick="savePreferences()">Save Preferences</button>
       </div>
     </div>
 
@@ -2718,7 +2906,7 @@ async function doLogin() {
       try {
         const me = await apiFetch('/auth/me');
         const u = me?.data || me;
-        AUTH.user = { name: u.full_name || user, role: u.role?.role_name || 'Staff' };
+        AUTH.user = { id: u.id, email: u.email || user, name: u.full_name || user, role: u.role?.role_name || 'Staff' };
         CFG.COMPANY_ID = u.company_id || CFG.COMPANY_ID;
       } catch (_) {
         AUTH.user = { name: user, role: 'User' };
@@ -2754,6 +2942,7 @@ function bootApp() {
   document.getElementById('welcomeScreen').style.display = 'none';
   document.getElementById('authScreen').style.display    = 'none';
   document.getElementById('app').style.display          = 'flex';
+  loadPreferences();
   // Update UI with user info
   const u = AUTH.user || {};
   const initials = (u.name || 'U').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
@@ -2800,6 +2989,51 @@ function doLogout() {
   document.getElementById('welcomeScreen').style.display  = 'flex';
   document.getElementById('loginUser').value               = '';
   clearAuthForms();
+}
+
+function settingsLogoutClick() {
+  if (confirm('Log out of VyaparPro?')) doLogout();
+}
+
+let PREFS = { theme: 'dark', numberFormat: 'en-IN', dateFormat: 'DMY' };
+
+function prefsKey() {
+  const id = (AUTH.user && (AUTH.user.id || AUTH.user.email || AUTH.user.name)) || 'default';
+  return 'vyaparpro_prefs_' + id;
+}
+
+function applyTheme(theme) {
+  if (theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+  else document.documentElement.removeAttribute('data-theme');
+}
+
+function loadPreferences() {
+  try {
+    PREFS = Object.assign(
+      { theme: 'dark', numberFormat: 'en-IN', dateFormat: 'DMY' },
+      JSON.parse(localStorage.getItem(prefsKey()) || '{}')
+    );
+  } catch (e) {
+    PREFS = { theme: 'dark', numberFormat: 'en-IN', dateFormat: 'DMY' };
+  }
+  applyTheme(PREFS.theme);
+  const themeEl = document.getElementById('prefTheme');
+  const numEl   = document.getElementById('prefNumberFormat');
+  const dateEl  = document.getElementById('prefDateFormat');
+  if (themeEl) themeEl.value = PREFS.theme;
+  if (numEl)   numEl.value   = PREFS.numberFormat;
+  if (dateEl)  dateEl.value  = PREFS.dateFormat;
+}
+
+function savePreferences() {
+  PREFS = {
+    theme:        document.getElementById('prefTheme').value,
+    numberFormat: document.getElementById('prefNumberFormat').value,
+    dateFormat:   document.getElementById('prefDateFormat').value,
+  };
+  localStorage.setItem(prefsKey(), JSON.stringify(PREFS));
+  applyTheme(PREFS.theme);
+  showToast('✅ Preferences saved');
 }
 
 function setLiveStatus(online) {
@@ -2878,11 +3112,12 @@ function triggerModuleRefresh(id) {
 async function preloadRefData() {
   if (!AUTH.apiOnline) return;
   try {
-    const [cr, pr, br, vr] = await Promise.allSettled([
+    const [cr, pr, br, vr, co] = await Promise.allSettled([
       apiFetch('/customers?page_size=200'),
       apiFetch('/products?page_size=200'),
       apiFetch(`/companies/${CFG.COMPANY_ID}/branches`),
       apiFetch('/vendors?page_size=200'),
+      apiFetch(`/companies/${CFG.COMPANY_ID}`),
     ]);
     if (cr.status === 'fulfilled') {
       const list = unwrapList(cr.value, 'data','items','customers','results');
@@ -2899,6 +3134,10 @@ async function preloadRefData() {
     if (vr.status === 'fulfilled') {
       const list = unwrapList(vr.value, 'data','items','vendors','results');
       if (list.length) VENDORS = list.map(normVendor);
+    }
+    if (co.status === 'fulfilled') {
+      const company = co.value?.data || co.value || {};
+      if (company.id) CURRENT_COMPANY = company;
     }
     // Needed to resolve a selected Branch to its stock location on invoices/POs
     await loadBranchWarehouses();
@@ -3181,13 +3420,13 @@ function exportReportCSV() {
     lines.push(csvRow([]));
 
     lines.push(...csvSectionHeader('CUSTOMER BREAKDOWN'));
-    lines.push(csvRow(['Customer','City','Invoices','Total Business (₹)','Outstanding (₹)','Last Purchase']));
+    lines.push(csvRow(['Customer','GSTIN','City','Invoices','Total Business (₹)','Outstanding (₹)','Last Purchase']));
     let custTotal = 0, custOut = 0, custInv = 0;
     (data.customers||[]).forEach(c => {
       custTotal += Number(c.total_business)||0; custOut += Number(c.outstanding)||0; custInv += Number(c.invoice_count)||0;
-      lines.push(csvRow([c.name, c.city || '—', c.invoice_count, csvNum(c.total_business), csvNum(c.outstanding), c.last_purchase || '—']));
+      lines.push(csvRow([c.name, c.gstin || 'Unregistered', c.city || '—', c.invoice_count, csvNum(c.total_business), csvNum(c.outstanding), c.last_purchase || '—']));
     });
-    lines.push(csvRow(['TOTAL','', custInv, csvNum(custTotal), csvNum(custOut), '']));
+    lines.push(csvRow(['TOTAL','','', custInv, csvNum(custTotal), csvNum(custOut), '']));
   }
 
   const csv = lines.join('\n');
@@ -3696,7 +3935,10 @@ function autofillAgainstInvoice() {
   document.getElementById('custName').value = inv.customer;
   document.getElementById('custGst').value = inv.custGst || '';
   document.getElementById('custState').value = inv.custState || '27';
-  document.getElementById('billAddr').value = inv.custAddr || '';
+  document.getElementById('custAddr').value = inv.custAddr || '';
+  document.getElementById('custMobile').value = inv.custMobile || '';
+  document.getElementById('custEmail').value = inv.custEmail || '';
+  selectedCustomerId = inv.party_id || null;
 }
 
 function toggleExportType() {
@@ -5272,11 +5514,73 @@ function normProduct(p) {
   };
 }
 
+// ── branch filter state: branch_id -> {product_id -> {quantity, branch_name}} ──
+let BRANCH_STOCK_FILTER = '';           // currently selected branch_id ('' = all branches / total)
+let BRANCH_STOCK_OVERRIDE = {};         // product_id -> quantity, populated when a branch is selected
+let EXPANDED_STOCK_ROW = null;          // product_id currently showing its branch breakdown
+
+function populateProdBranchFilter() {
+  const sel = document.getElementById('prodBranchF'); if (!sel) return;
+  const list = branchesForUser();
+  const keep = sel.value;
+  sel.innerHTML = '<option value="">All Branches (total)</option>' +
+    list.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+  if (list.some(b => String(b.id) === String(keep))) sel.value = keep;
+}
+
+async function onBranchFilterChange() {
+  BRANCH_STOCK_FILTER = document.getElementById('prodBranchF')?.value || '';
+  EXPANDED_STOCK_ROW = null;
+  BRANCH_STOCK_OVERRIDE = {};
+  const head = document.getElementById('stockColHead');
+
+  if (!BRANCH_STOCK_FILTER) {
+    if (head) head.textContent = 'Stock';
+    filterProds();
+    return;
+  }
+  if (!AUTH.apiOnline) { showToast('⚠️ Connect to the API to see branch-wise stock', 'warn'); return; }
+
+  const branchName = (BRANCHES.find(b => String(b.id) === String(BRANCH_STOCK_FILTER)) || {}).name || 'Branch';
+  if (head) head.textContent = `Stock (${branchName})`;
+  try {
+    const r = await apiFetch(`/inventory/branch-stock-matrix?branch_id=${BRANCH_STOCK_FILTER}`);
+    (r.data || []).forEach(row => { BRANCH_STOCK_OVERRIDE[row.product_id] = Number(row.quantity); });
+  } catch (e) {
+    showToast(`⚠️ ${e.message}`, 'warn');
+  }
+  filterProds();
+}
+
+// ── expandable per-product branch breakdown ────────────────────
+async function toggleBranchBreakdown(productId) {
+  if (EXPANDED_STOCK_ROW === productId) { EXPANDED_STOCK_ROW = null; filterProds(); return; }
+  EXPANDED_STOCK_ROW = productId;
+  filterProds(); // paints the row with a "Loading…" state first
+
+  const cell = document.getElementById(`branchBreak_${productId}`);
+  if (!cell) return;
+  if (!AUTH.apiOnline) { cell.innerHTML = 'Connect to the API to see branch-wise stock.'; return; }
+  try {
+    const r = await apiFetch(`/inventory/branch-stock-matrix?product_id=${productId}`);
+    const rows = (r.data || []).filter(x => Number(x.quantity) > 0 || (BRANCHES.length <= 6));
+    cell.innerHTML = rows.length
+      ? rows.map(x => `<span style="display:inline-flex;gap:5px;align-items:center;margin:2px 10px 2px 0">
+          <span style="color:var(--text3)">${x.branch_name}:</span>
+          <span class="b" style="color:${Number(x.quantity) === 0 ? 'var(--red)' : 'var(--green)'}">${Number(x.quantity)}</span>
+        </span>`).join('')
+      : 'No stock recorded at any branch yet.';
+  } catch (e) {
+    cell.innerHTML = `<span style="color:var(--red)">⚠️ ${e.message}</span>`;
+  }
+}
+
 // ── render ───────────────────────────────────────────────────
 async function renderInventory(list) {
   const b = document.getElementById('invBody2');
   if (!b) return;
   b.innerHTML = loadingRow(10);
+  populateProdBranchFilter();
 
   let data = list;
   if (data === undefined || data === null) {
@@ -5294,35 +5598,70 @@ async function renderInventory(list) {
     }
   }
 
-  const total = data.length;
-  const low   = data.filter(p => p.status === 'low').length;
-  const out   = data.filter(p => p.status === 'out').length;
-  const val   = data.reduce((a, p) => a + (p.pp * p.stock), 0);
+  // when a branch is selected, show that branch's quantity + status instead of the company-wide total
+  const branchMode = !!BRANCH_STOCK_FILTER;
+  const rows = data.map(p => {
+    const stock = branchMode ? (BRANCH_STOCK_OVERRIDE[p.id] ?? 0) : p.stock;
+    const status = stock === 0 ? 'out' : stock <= p.reorder ? 'low' : 'in';
+    return { ...p, displayStock: stock, displayStatus: status };
+  });
+
+  const total = rows.length;
+  const low   = rows.filter(p => p.displayStatus === 'low').length;
+  const out   = rows.filter(p => p.displayStatus === 'out').length;
+  const val   = rows.reduce((a, p) => a + (p.pp * p.displayStock), 0);
 
   setTxt('totalProds',  total);
   setTxt('lowProds',    low);
   setTxt('outProds',    out);
   setTxt('stockValue',  '₹' + (val / 100000).toFixed(1) + 'L');
 
-  b.innerHTML = data.length
-    ? data.map(p => `<tr>
+  b.innerHTML = rows.length
+    ? rows.map(p => {
+        const expanded = EXPANDED_STOCK_ROW === p.id;
+        const breakdownRow = expanded ? `<tr><td></td><td colspan="9" style="padding:8px 4px 12px;font-size:11px;background:var(--bg2,rgba(0,0,0,.02))" id="branchBreak_${p.id}">Loading…</td></tr>` : '';
+        return `<tr>
+        <td><button class="btn btn-o btn-sm" style="padding:2px 7px" onclick="toggleBranchBreakdown('${p.id}')" title="Branch-wise stock">${expanded ? '▾' : '▸'}</button></td>
         <td class="b mono">${p.sku || '—'}</td>
         <td class="b">${p.name}</td>
         <td class="mono">${p.hsn || '—'}</td>
         <td>₹${fmt(p.mrp)}</td>
         <td class="b">₹${fmt(p.price)}</td>
-        <td class="b" style="color:${p.stock === 0 ? 'var(--red)' : p.stock <= p.reorder ? 'var(--orange)' : 'var(--green)'}">${Number(p.stock)}</td>
+        <td class="b" style="color:${p.displayStock === 0 ? 'var(--red)' : p.displayStock <= p.reorder ? 'var(--orange)' : 'var(--green)'}">${Number(p.displayStock)}</td>
         <td>${Number(p.reorder)}</td>
         <td>${p.gst}%</td>
-        <td><span class="sb ${p.status === 'out' ? 'sov' : p.status === 'low' ? 'spen' : 'sp'}">${p.status === 'out' ? 'Out' : p.status === 'low' ? 'Low' : 'In Stock'}</span></td>
+        <td><span class="sb ${p.displayStatus === 'out' ? 'sov' : p.displayStatus === 'low' ? 'spen' : 'sp'}">${p.displayStatus === 'out' ? 'Out' : p.displayStatus === 'low' ? 'Low' : 'In Stock'}</span></td>
         <td>
           <div style="display:flex;gap:3px">
             <button class="btn btn-o btn-sm" onclick="editProd('${p.id}')">✏️</button>
             <button class="btn btn-d btn-sm" onclick="deleteProd('${p.id}')">🗑</button>
           </div>
         </td>
-      </tr>`).join('')
+      </tr>${breakdownRow}`;
+      }).join('')
     : '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text3)">No products found</td></tr>';
+
+  if (EXPANDED_STOCK_ROW) toggleBranchBreakdownFill(EXPANDED_STOCK_ROW);
+}
+
+// fills the already-rendered "Loading…" cell without re-triggering the toggle
+async function toggleBranchBreakdownFill(productId) {
+  const cell = document.getElementById(`branchBreak_${productId}`);
+  if (!cell || cell.dataset.filled) return;
+  cell.dataset.filled = '1';
+  if (!AUTH.apiOnline) { cell.innerHTML = 'Connect to the API to see branch-wise stock.'; return; }
+  try {
+    const r = await apiFetch(`/inventory/branch-stock-matrix?product_id=${productId}`);
+    const rows = r.data || [];
+    cell.innerHTML = rows.length
+      ? rows.map(x => `<span style="display:inline-flex;gap:5px;align-items:center;margin:2px 10px 2px 0">
+          <span style="color:var(--text3)">${x.branch_name}:</span>
+          <span class="b" style="color:${Number(x.quantity) === 0 ? 'var(--red)' : 'var(--green)'}">${Number(x.quantity)}</span>
+        </span>`).join('')
+      : 'No stock recorded at any branch yet.';
+  } catch (e) {
+    cell.innerHTML = `<span style="color:var(--red)">⚠️ ${e.message}</span>`;
+  }
 }
 
 // ── filter ───────────────────────────────────────────────────
@@ -5332,7 +5671,7 @@ function filterProds() {
   renderInventory(
     PRODUCTS.filter(p =>
       (!q   || (p.name || '').toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q)) &&
-      (!stk || p.status === stk)
+      (!stk || (BRANCH_STOCK_FILTER ? ((BRANCH_STOCK_OVERRIDE[p.id] ?? 0) === 0 ? 'out' : (BRANCH_STOCK_OVERRIDE[p.id] ?? 0) <= p.reorder ? 'low' : 'in') : p.status) === stk)
     )
   );
 }
@@ -5351,6 +5690,8 @@ async function openAddProd() {
   // sensible defaults
   const gst = document.getElementById('pm_gst');
   if (gst) gst.value = String(CURRENT_COMPANY?.settings?.default_gst_rate ?? 18);
+  const reorder = document.getElementById('pm_reorder');
+  if (reorder) reorder.value = String(CURRENT_COMPANY?.settings?.default_reorder_level ?? '');
 
   openModal('prodModal');
 }
@@ -7684,6 +8025,7 @@ function openSettingsSection(key) {
   document.getElementById('settingsDetail')?.classList.remove('hidden');
   document.querySelectorAll('#settingsDetail .settings-section').forEach(el => el.classList.add('hidden'));
   document.getElementById(`settingsSection-${key}`)?.classList.remove('hidden');
+  if (key === 'numbering') initDocumentSequences();
 }
 
 // Return to the settings menu (list of headings).
@@ -7704,6 +8046,8 @@ async function renderSettings() {
   paintSecurityToggle('data_encryption_enabled', true);
   paintTaxToggle('composition_scheme', false, 'On', 'Off');
   paintTaxToggle('round_invoice_totals', true, 'On', 'Off');
+  paintPdfToggle('show_upi_qr', true);
+  paintNotifToggle('due_soon_enabled', true);
   renderLastBackupTime();
   renderBackupScheduleSelect();
   renderBackupHistoryList();
@@ -7759,6 +8103,17 @@ async function renderSettings() {
       setVal('taxHsnDigits', String(s.hsn_digits ?? 6));
       paintTaxToggle('composition_scheme', s.composition_scheme === true, 'On', 'Off');
       paintTaxToggle('round_invoice_totals', s.round_invoice_totals !== false, 'On', 'Off');
+
+      // ---- Invoice & PDF preferences, also stored in company.settings JSON ----
+      setVal('pdfPageSize', s.pdf_page_size || 'A4');
+      setVal('pdfCopyLabel', s.default_copy_label || 'ORIGINAL FOR RECIPIENT');
+      paintPdfToggle('show_upi_qr', s.show_upi_qr !== false);
+      renderSignaturePreview(s.signature_url || '');
+
+      // ---- Notifications & Reminders, also stored in company.settings JSON ----
+      setVal('notifDefaultReorder', s.default_reorder_level ?? '');
+      setVal('notifReminderDays', s.reminder_days ?? 3);
+      paintNotifToggle('due_soon_enabled', s.due_soon_enabled !== false);
     } catch (e) { console.warn('[Settings] company load failed:', e.message); }
 
     try {
@@ -7848,6 +8203,113 @@ async function saveTaxSettings() {
   }
 }
 
+// ---- Document Numbering ----
+let DOC_SEQ_BRANCHES_LOADED = false;
+
+// Populates the branch selector once per Settings visit (branches rarely
+// change while this page is open), then renders numbering for whichever
+// branch is currently selected.
+async function initDocumentSequences() {
+  const sel = document.getElementById('docSeqBranch');
+  if (!sel) return;
+  if (!DOC_SEQ_BRANCHES_LOADED && AUTH.apiOnline) {
+    try {
+      const r = await apiFetch(`/companies/${CFG.COMPANY_ID}/branches`);
+      const branches = unwrapList(r);
+      branches.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.id;
+        opt.textContent = `${b.branch_name} (${b.branch_code})`;
+        sel.appendChild(opt);
+      });
+      DOC_SEQ_BRANCHES_LOADED = true;
+    } catch (e) { console.warn('[Settings] branch load failed:', e.message); }
+  }
+  await renderDocumentSequences();
+}
+
+async function renderDocumentSequences() {
+  const el = document.getElementById('docSeqList');
+  if (!el) return;
+  if (!AUTH.apiOnline) {
+    el.innerHTML = `<div class="notif-empty">Connect to the API to manage document numbering.</div>`;
+    return;
+  }
+  const branchId = getVal('docSeqBranch');
+  el.innerHTML = `<div class="notif-empty">Loading…</div>`;
+  try {
+    const qs = branchId ? `?branch_id=${branchId}` : '';
+    const r = await apiFetch(`/billing/document-sequences${qs}`);
+    const rows = r?.data || r || [];
+    if (!rows.length) { el.innerHTML = `<div class="notif-empty">No document types found.</div>`; return; }
+    el.innerHTML = rows.map(docSeqRowHTML).join('');
+    rows.forEach(row => updateDocSeqPreview(document.querySelector(`#docSeqList [data-doctype="${row.doc_type}"]`)));
+  } catch (e) {
+    el.innerHTML = `<div class="notif-empty">Could not load document numbering: ${e.message}</div>`;
+  }
+}
+
+function docSeqRowHTML(row) {
+  return `
+    <div style="padding:14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);margin-bottom:12px" data-doctype="${row.doc_type}">
+      <div style="font-size:12px;font-weight:700;margin-bottom:10px">${row.label}</div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Prefix</label><input class="fi ds-prefix" value="${row.prefix || ''}" oninput="updateDocSeqPreview(this.closest('[data-doctype]'))"/></div>
+        <div class="fg"><label class="fl">Suffix (optional)</label><input class="fi ds-suffix" value="${row.suffix || ''}" oninput="updateDocSeqPreview(this.closest('[data-doctype]'))"/></div>
+      </div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Next Number</label><input class="fi ds-next" type="number" min="1" value="${row.next_number}" oninput="updateDocSeqPreview(this.closest('[data-doctype]'))"/></div>
+        <div class="fg"><label class="fl">Number Padding</label>
+          <select class="fi ds-pad" onchange="updateDocSeqPreview(this.closest('[data-doctype]'))">
+            ${[3,4,5,6].map(n => `<option value="${n}" ${row.pad_length === n ? 'selected' : ''}>${n} digits</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:10.5px;color:var(--text3)">Preview: <span class="mono ds-preview">—</span></div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);cursor:pointer">
+          <input type="checkbox" class="ds-reset" ${row.reset_on_fy ? 'checked' : ''}/> Reset to 1 every financial year
+        </label>
+      </div>
+      <button class="btn btn-p btn-sm" onclick="saveDocSequence(this)">Save</button>
+    </div>`;
+}
+
+function updateDocSeqPreview(card) {
+  if (!card) return;
+  const prefix = card.querySelector('.ds-prefix').value;
+  const suffix = card.querySelector('.ds-suffix').value;
+  const next = parseInt(card.querySelector('.ds-next').value, 10) || 1;
+  const pad = parseInt(card.querySelector('.ds-pad').value, 10) || 4;
+  card.querySelector('.ds-preview').textContent = `${prefix}${String(next).padStart(pad, '0')}${suffix}`;
+}
+
+async function saveDocSequence(btn) {
+  const card = btn.closest('[data-doctype]');
+  const docType = card.dataset.doctype;
+  const branchId = getVal('docSeqBranch');
+  const payload = {
+    prefix: card.querySelector('.ds-prefix').value.trim(),
+    suffix: card.querySelector('.ds-suffix').value.trim() || null,
+    next_number: parseInt(card.querySelector('.ds-next').value, 10) || 1,
+    pad_length: parseInt(card.querySelector('.ds-pad').value, 10) || 4,
+    reset_on_fy: card.querySelector('.ds-reset').checked,
+  };
+  if (!payload.prefix) { showToast('⚠️ Prefix is required', 'warn'); return; }
+
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const qs = branchId ? `?branch_id=${branchId}` : '';
+    await apiFetch(`/billing/document-sequences/${docType}${qs}`, { method: 'PATCH', body: JSON.stringify(payload) });
+    addAuditEntry('UPDATE', 'Settings', `Updated document numbering for ${docType}${branchId ? ' (branch)' : ''}`);
+    showToast('✅ Document numbering saved');
+  } catch (e) {
+    showToast('❌ Could not save: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save';
+  }
+}
+
 async function saveCompanySettings() {
   const payload = {
     legal_name: getVal('setLegalName'),
@@ -7920,6 +8382,107 @@ async function uploadCompanyLogo(input) {
     showToast('✅ Logo uploaded');
   } catch (e) {
     showToast('❌ ' + e.message);
+  }
+}
+
+// ---- Invoice & PDF Preferences ----
+let PDF_PREFS = { show_upi_qr: true };
+
+function paintPdfToggle(key, enabled) {
+  const el = document.getElementById('pdf_' + key);
+  if (!el) return;
+  PDF_PREFS[key] = enabled;
+  el.textContent = enabled ? 'On' : 'Off';
+  el.className = 'chip ' + (enabled ? 'cgr' : 'cor');
+  el.onclick = () => paintPdfToggle(key, !enabled);
+}
+
+function renderSignaturePreview(url) {
+  const img = document.getElementById('pdfSigPreview');
+  const ph  = document.getElementById('pdfSigPlaceholder');
+  if (!img || !ph) return;
+  if (url) {
+    img.src = CFG.API_BASE.replace('/api/v1','') + url + '?t=' + Date.now();
+    img.style.display = 'block';
+    ph.style.display = 'none';
+  } else {
+    img.style.display = 'none';
+    ph.style.display = 'flex';
+  }
+}
+
+async function uploadSignature(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 1024 * 1024) { showToast('⚠️ Signature image must be under 1MB', 'warn'); return; }
+  const form = new FormData();
+  form.append('file', file);
+  try {
+    const r = await apiFetch(`/companies/${CFG.COMPANY_ID}/signature`, { method: 'POST', body: form });
+    const sigUrl = (r?.data || r)?.signature_url;
+    CURRENT_COMPANY.settings = { ...(CURRENT_COMPANY.settings || {}), signature_url: sigUrl };
+    renderSignaturePreview(sigUrl);
+    showToast('✅ Signature uploaded');
+  } catch (e) {
+    showToast('❌ ' + e.message);
+  }
+}
+
+async function savePdfPreferences() {
+  if (!AUTH.apiOnline) {
+    showToast('⚠️ Not connected to server — PDF preferences were NOT saved.', 'warn');
+    return;
+  }
+  const payload = {
+    settings: {
+      ...(CURRENT_COMPANY.settings || {}),
+      pdf_page_size: getVal('pdfPageSize'),
+      default_copy_label: getVal('pdfCopyLabel'),
+      show_upi_qr: PDF_PREFS.show_upi_qr,
+    },
+  };
+  try {
+    await apiFetch(`/companies/${CFG.COMPANY_ID}`, { method: 'PATCH', body: JSON.stringify(payload) });
+    CURRENT_COMPANY.settings = payload.settings;
+    showToast('✅ PDF preferences saved!');
+    addAuditEntry('UPDATE', 'Settings', 'Updated invoice & PDF preferences');
+  } catch (e) {
+    showToast('❌ Could not save: ' + e.message);
+  }
+}
+
+// ---- Notifications & Reminders ----
+let NOTIF_SETTINGS = { due_soon_enabled: true };
+
+function paintNotifToggle(key, enabled) {
+  const el = document.getElementById('notif_' + key);
+  if (!el) return;
+  NOTIF_SETTINGS[key] = enabled;
+  el.textContent = enabled ? 'On' : 'Off';
+  el.className = 'chip ' + (enabled ? 'cgr' : 'cor');
+  el.onclick = () => paintNotifToggle(key, !enabled);
+}
+
+async function saveNotificationSettings() {
+  if (!AUTH.apiOnline) {
+    showToast('⚠️ Not connected to server — notification settings were NOT saved.', 'warn');
+    return;
+  }
+  const payload = {
+    settings: {
+      ...(CURRENT_COMPANY.settings || {}),
+      default_reorder_level: parseFloat(getVal('notifDefaultReorder')) || 0,
+      due_soon_enabled: NOTIF_SETTINGS.due_soon_enabled,
+      reminder_days: parseInt(getVal('notifReminderDays'), 10) || 3,
+    },
+  };
+  try {
+    await apiFetch(`/companies/${CFG.COMPANY_ID}`, { method: 'PATCH', body: JSON.stringify(payload) });
+    CURRENT_COMPANY.settings = payload.settings;
+    showToast('✅ Notification settings saved!');
+    addAuditEntry('UPDATE', 'Settings', 'Updated notification & reminder settings');
+  } catch (e) {
+    showToast('❌ Could not save: ' + e.message);
   }
 }
 
@@ -8920,10 +9483,13 @@ async function loadNotifications() {
   }
   list.innerHTML = `<div class="notif-empty">Loading…</div>`;
 
-  const [statsR, invR, paidR] = await Promise.allSettled([
+  const dueSoonEnabled = CURRENT_COMPANY?.settings?.due_soon_enabled !== false;
+
+  const [statsR, invR, paidR, dueSoonR] = await Promise.allSettled([
     apiFetch('/billing/invoices/stats'),
     apiFetch('/reports/inventory'),
     apiFetch('/billing/invoices?page_size=5&status=paid'),
+    dueSoonEnabled ? apiFetch('/billing/invoices?page_size=100') : Promise.resolve(null),
   ]);
   const stats = statsR.status === 'fulfilled' ? (statsR.value?.data || {}) : {};
   const inv   = invR.status   === 'fulfilled' ? (invR.value?.data || {})   : {};
@@ -8935,6 +9501,21 @@ async function loadNotifications() {
   const outstanding  = Number(stats.outstanding || 0);
   if (overdueCount) {
     items.push({ icon: '⚠️', text: `${overdueCount} invoice(s) overdue — ₹${fmt(outstanding)} outstanding`, navId: 'invoices' });
+  }
+
+  if (dueSoonEnabled && dueSoonR.status === 'fulfilled' && dueSoonR.value) {
+    const reminderDays = Number(CURRENT_COMPANY?.settings?.reminder_days ?? 3);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const horizon = new Date(today); horizon.setDate(horizon.getDate() + reminderDays);
+    const dueSoon = unwrapList(dueSoonR.value).map(normInvoice).filter(i => {
+      if (!i.due || ['paid', 'cancelled', 'draft', 'overdue'].includes(i.status)) return false;
+      const d = new Date(i.due);
+      return d >= today && d <= horizon;
+    });
+    dueSoon.slice(0, 4).forEach(i => {
+      const daysLeft = Math.ceil((new Date(i.due) - today) / 86400000);
+      items.push({ icon: '⏰', text: `${i.no} due in ${daysLeft} day${daysLeft === 1 ? '' : 's'} — ${i.customer}`, navId: 'invoices' });
+    });
   }
 
   const lowStockItems = (inv.items || []).filter(i => i.stock_status !== 'OK');
@@ -9169,6 +9750,11 @@ async function saveReturn() {
     against_invoice_id: againstId,
     party_id: inv?.party_id || undefined,
     billing_name: inv?.customer || '',
+    billing_gstin: inv?.custGst || '',
+    billing_address: inv?.custAddr || '',
+    billing_state_code: inv?.custState || '27',
+    contact_phone: inv?.custMobile || '',
+    contact_email: inv?.custEmail || '',
     supply_type: inv?.supply || 'intra',
     place_of_supply: inv?.custState || '27',
     notes: reason || '',
@@ -9351,8 +9937,22 @@ function showToast(msg,type) {
 function setVal(id,v) { const el=document.getElementById(id); if(el)el.value=v; }
 function getVal(id)   { const el=document.getElementById(id); return el?el.value:''; }
 function setTxt(id,v) { const el=document.getElementById(id); if(el)el.textContent=v; }
-function fmt(n)       { return (n||0).toLocaleString('en-IN'); }
-function fmtDate(d)   { if(!d)return'—'; try{return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}catch(e){return d;} }
+function fmt(n) {
+  const num = Number(n) || 0;
+  const locale = (typeof PREFS !== 'undefined' && PREFS.numberFormat) || 'en-IN';
+  return num.toLocaleString(locale);
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  try {
+    const dt = new Date(d);
+    const df = (typeof PREFS !== 'undefined' && PREFS.dateFormat) || 'DMY';
+    const p2 = (x) => String(x).padStart(2, '0');
+    if (df === 'DDMMYYYY') return `${p2(dt.getDate())}/${p2(dt.getMonth() + 1)}/${dt.getFullYear()}`;
+    if (df === 'MMDDYYYY') return `${p2(dt.getMonth() + 1)}/${p2(dt.getDate())}/${dt.getFullYear()}`;
+    return dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch (e) { return d; }
+}
 function statusClass(s){ return s==='paid'?'sp':s==='pending'?'spen':s==='overdue'?'sov':'sdr'; }
 function loadingRow(cols){ return `<tr><td colspan="${cols}" style="text-align:center;padding:30px;color:var(--text3)"><div class="ld" style="display:inline-block;margin-right:8px"></div>Loading…</td></tr>`; }
 

@@ -11,6 +11,7 @@ PATCH  /warehouses/{id}                          — update a warehouse
 DELETE /warehouses/{id}                          — deactivate a warehouse
 
 GET    /inventory/stock                          — current stock (optional ?warehouse_id=&product_id=)
+GET    /inventory/branch-stock-matrix            — per-branch stock for all products, or one product/branch
 GET    /inventory/low-stock                      — products at/below reorder level
 GET    /inventory/expiring                       — batches expiring soon (?days=30)
 GET    /inventory/valuation                       — total stock value + breakdown
@@ -124,6 +125,58 @@ async def get_stock(
     repo = InventoryStockRepository(db)
     rows = await repo.get_stock(current.company_id, product_id=product_id, warehouse_id=warehouse_id)
     return ok(data=[StockOut.model_validate(r).model_dump(mode="json") for r in rows])
+
+
+@router.get(
+    "/inventory/branch-stock-matrix",
+    summary="Stock quantity per branch — for products x branches, or one product's branch split",
+    dependencies=[require_perm("inventory.read")],  # type: ignore[list-item]
+)
+async def get_branch_stock_matrix(
+    current: CurrentUserDep,
+    db: DBDep,
+    product_id: UUID | None = Query(None, description="Limit to one product (for row-level breakdown)"),
+    branch_id: UUID | None = Query(None, description="Limit to one branch (for the branch filter dropdown)"),
+) -> ORJSONResponse:
+    from sqlalchemy import text
+
+    # A branch-scoped user can only ever see their own branch's numbers —
+    # matches the same rule used for /branches and /inventory/low-stock.
+    bid = branch_id
+    if current.branch_id is not None and not current.has_permission("branch.access_all"):
+        bid = current.branch_id
+
+    stmt = text("""
+        SELECT p.id AS product_id, p.product_name, p.product_code, p.reorder_level,
+               b.id AS branch_id, b.branch_name, b.branch_code,
+               COALESCE(SUM(s.quantity), 0) AS quantity,
+               COALESCE(SUM(s.quantity * s.cost_price), 0) AS stock_value
+        FROM products p
+        CROSS JOIN branches b
+        LEFT JOIN warehouses w ON w.branch_id = b.id AND w.company_id = p.company_id AND w.is_active = TRUE
+        LEFT JOIN inventory_stock s ON s.product_id = p.id AND s.warehouse_id = w.id
+        WHERE p.company_id = :cid AND b.company_id = :cid
+          AND p.is_active = TRUE AND b.is_active = TRUE
+          AND (CAST(:product_id AS uuid) IS NULL OR p.id = :product_id)
+          AND (CAST(:branch_id AS uuid) IS NULL OR b.id = :branch_id)
+        GROUP BY p.id, p.product_name, p.product_code, p.reorder_level, b.id, b.branch_name, b.branch_code
+        ORDER BY p.product_name, b.branch_name
+    """)
+    rows = (await db.execute(stmt, {
+        "cid": str(current.company_id),
+        "product_id": str(product_id) if product_id else None,
+        "branch_id": str(bid) if bid else None,
+    })).mappings().all()
+
+    return ok(data=[
+        {
+            "product_id": str(r["product_id"]), "product_name": r["product_name"],
+            "product_code": r["product_code"], "reorder_level": str(r["reorder_level"]) if r["reorder_level"] is not None else None,
+            "branch_id": str(r["branch_id"]), "branch_name": r["branch_name"], "branch_code": r["branch_code"],
+            "quantity": str(r["quantity"]), "stock_value": str(r["stock_value"]),
+        }
+        for r in rows
+    ])
 
 
 @router.get(

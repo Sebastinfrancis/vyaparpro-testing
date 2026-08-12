@@ -18,12 +18,89 @@ from app.db.repositories.base import BaseRepository, Pagination
 class DocumentSequenceRepository(BaseRepository[DocumentSequence]):
     model = DocumentSequence
 
+    # Document types exposed in Settings → Document Numbering. (jo/grn/dc exist
+    # in the DB too but aren't surfaced there since they aren't part of the
+    # day-to-day billing flow.)
+    DOC_TYPE_LABELS = {
+        "invoice": "Invoices, Credit & Debit Notes",
+        "quote": "Quotations",
+        "po": "Purchase Orders",
+        "payment": "Payment Vouchers",
+    }
+
+    @staticmethod
+    def _current_fy() -> str:
+        from datetime import date as dt
+        today = dt.today()
+        return f"{today.year}-{str(today.year+1)[2:]}" if today.month >= 4 else f"{today.year-1}-{str(today.year)[2:]}"
+
+    async def list_for_company(self, company_id: UUID, branch_id: UUID | None = None) -> list[dict]:
+        """One row per configurable doc type, scoped to a single branch (or the
+        company-wide/head-office series when branch_id is None). Returns a live
+        DB row if one exists for the current financial year, otherwise the same
+        defaults next_number() would fall back to, so the settings screen
+        always has something sane to show even before a branch has issued its
+        first document."""
+        fy = self._current_fy()
+        stmt = select(DocumentSequence).where(
+            DocumentSequence.company_id == company_id,
+            DocumentSequence.doc_type.in_(list(self.DOC_TYPE_LABELS)),
+            DocumentSequence.branch_id.is_(None) if branch_id is None else DocumentSequence.branch_id == branch_id,
+        )
+        rows = {
+            r.doc_type: r for r in (await self.session.execute(stmt)).scalars().all()
+            if r.financial_year == fy or not r.reset_on_fy
+        }
+        defaults = {"invoice": "INV-", "quote": "QT-", "po": "PO-", "payment": "PAY-"}
+        out = []
+        for doc_type, label in self.DOC_TYPE_LABELS.items():
+            row = rows.get(doc_type)
+            if row:
+                out.append({
+                    "doc_type": doc_type, "label": label, "branch_id": row.branch_id,
+                    "prefix": row.prefix, "suffix": row.suffix, "next_number": row.current_no + 1,
+                    "pad_length": row.pad_length, "reset_on_fy": row.reset_on_fy, "financial_year": row.financial_year,
+                })
+            else:
+                out.append({
+                    "doc_type": doc_type, "label": label, "branch_id": branch_id, "prefix": defaults[doc_type],
+                    "suffix": None, "next_number": 1, "pad_length": 4, "reset_on_fy": True, "financial_year": fy,
+                })
+        return out
+
+    async def upsert(self, company_id: UUID, doc_type: str, branch_id: UUID | None, data: dict) -> dict:
+        """Creates or updates this year's row for one doc type, scoped to a
+        single branch (or the head-office series when branch_id is None).
+        `next_number` from the API is the number the *next* generated document
+        should get, so it's stored internally as current_no = next_number - 1
+        (next_number() does current_no + 1 when it actually issues a number)."""
+        fy = self._current_fy()
+        stmt = select(DocumentSequence).where(
+            DocumentSequence.company_id == company_id,
+            DocumentSequence.doc_type == doc_type,
+            DocumentSequence.branch_id.is_(None) if branch_id is None else DocumentSequence.branch_id == branch_id,
+        )
+        row = (await self.session.execute(stmt)).scalars().first()
+        values = {
+            "prefix": data["prefix"], "suffix": data.get("suffix"),
+            "current_no": max(data["next_number"] - 1, 0), "pad_length": data["pad_length"],
+            "reset_on_fy": data["reset_on_fy"], "financial_year": fy,
+        }
+        if row:
+            row = await self.update(row, values)
+        else:
+            row = await self.create({"company_id": company_id, "branch_id": branch_id, "doc_type": doc_type, **values})
+        return {
+            "doc_type": row.doc_type, "label": self.DOC_TYPE_LABELS.get(row.doc_type, row.doc_type),
+            "branch_id": row.branch_id, "prefix": row.prefix, "suffix": row.suffix,
+            "next_number": row.current_no + 1, "pad_length": row.pad_length,
+            "reset_on_fy": row.reset_on_fy, "financial_year": row.financial_year,
+        }
+
     async def next_number(self, company_id: UUID, doc_type: str, branch_id: UUID | None = None,
                           branch_code: str | None = None) -> str:
-        from datetime import date as dt
         from sqlalchemy import text as t_
-        today = dt.today()
-        fy = f"{today.year}-{str(today.year+1)[2:]}" if today.month >= 4 else f"{today.year-1}-{str(today.year)[2:]}"
+        fy = self._current_fy()
         # IMPORTANT: match branch_id exactly, including NULL — "IS NOT DISTINCT FROM"
         # is Postgres's null-safe equality. Without this, every branch would
         # collide onto the same counter the moment one existed for that doc_type.
@@ -39,17 +116,40 @@ class DocumentSequenceRepository(BaseRepository[DocumentSequence]):
         )
         row = result.mappings().one_or_none()
         if not row:
-            prefix_map = {"invoice":"INV","po":"PO","jo":"JO","quote":"QT","grn":"GRN","dc":"DC","payment":"PAY","adjustment":"ADJ","transfer":"TRF"}
-            doc_prefix = prefix_map.get(doc_type, doc_type.upper()[:3])
-            # Branch-code prefix (e.g. "ANA-INV-0001") lets each location's
-            # documents be told apart at a glance — standard practice once a
-            # business has more than one GST registration issuing the same
-            # document type in parallel.
-            prefix = f"{branch_code}-{doc_prefix}-" if branch_code else f"{doc_prefix}-"
+            # No row for this branch + doc type this FY (first document ever
+            # for this branch, or a fresh year rolled over on a
+            # reset_on_fy=True series). Inherit prefix/suffix/padding/reset-rule
+            # from this same branch's most recent prior row — e.g. what was
+            # configured in Settings → Document Numbering — so a custom
+            # numbering format (including a branch-code prefix) survives the
+            # financial-year rollover instead of reverting to the generic
+            # default below.
+            prior_stmt = (
+                select(DocumentSequence)
+                .where(
+                    DocumentSequence.company_id == company_id,
+                    DocumentSequence.doc_type == doc_type,
+                    DocumentSequence.branch_id.is_(None) if branch_id is None else DocumentSequence.branch_id == branch_id,
+                )
+                .order_by(DocumentSequence.financial_year.desc().nullslast(), DocumentSequence.created_at.desc())
+                .limit(1)
+            )
+            prior = (await self.session.execute(prior_stmt)).scalars().first()
+            if prior:
+                prefix, suffix, pad_length, reset_on_fy = prior.prefix, prior.suffix, prior.pad_length, prior.reset_on_fy
+            else:
+                prefix_map = {"invoice":"INV","po":"PO","jo":"JO","quote":"QT","grn":"GRN","dc":"DC","payment":"PAY","adjustment":"ADJ","transfer":"TRF"}
+                doc_prefix = prefix_map.get(doc_type, doc_type.upper()[:3])
+                # Branch-code prefix (e.g. "ANA-INV-0001") lets each location's
+                # documents be told apart at a glance — standard practice once a
+                # business has more than one GST registration issuing the same
+                # document type in parallel.
+                prefix = f"{branch_code}-{doc_prefix}-" if branch_code else f"{doc_prefix}-"
+                suffix, pad_length, reset_on_fy = None, 4, True
             seq = await self.create({"company_id": company_id, "branch_id": branch_id, "doc_type": doc_type,
-                                     "prefix": prefix, "current_no": 1, "pad_length": 4,
-                                     "financial_year": fy, "reset_on_fy": True})
-            return f"{seq.prefix}{str(1).zfill(seq.pad_length)}"
+                                     "prefix": prefix, "suffix": suffix, "current_no": 1, "pad_length": pad_length,
+                                     "financial_year": fy, "reset_on_fy": reset_on_fy})
+            return f"{seq.prefix}{str(1).zfill(seq.pad_length)}{seq.suffix or ''}"
         return f"{row['prefix']}{str(row['current_no']).zfill(row['pad_length'])}{row['suffix'] or ''}"
 
 

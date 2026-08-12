@@ -456,6 +456,7 @@ class PartyUpdate(APIModel):
     billing_address: Optional[str] = None
     billing_city: Optional[str] = None
     billing_state: Optional[str] = None
+    billing_state_code: Optional[str] = Field(None, max_length=2)
     billing_pincode: Optional[str] = None
     shipping_address: Optional[str] = None
     credit_limit: Optional[Decimal] = None

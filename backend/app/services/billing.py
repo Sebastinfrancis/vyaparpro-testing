@@ -453,6 +453,7 @@ class PurchaseOrderService:
             company_pan=(company.pan or "") if company else "", company_logo_url=(company.logo_url or "") if company else "",
             party_name=vendor.display_name if vendor else "", party_gstin=(vendor.gstin or "") if vendor else "",
             party_address=(vendor.billing_address or "") if vendor else "",
+            party_phone=(vendor.phone or "") if vendor else "",
             po_no=po.po_no, po_date=po.po_date, items=items_data,
             taxable_amount=total_taxable, cgst_amount=total_cgst, sgst_amount=total_sgst,
             igst_amount=total_igst, total_amount=jv.total_debit,
@@ -1058,11 +1059,21 @@ class InvoiceService:
             }
             for i, it in enumerate(inv.items)
         ]
+        against_invoice_no = None
+        against_invoice_date = None
+        if inv.against_invoice_id:
+            ref_inv = await self.repo.get(inv.against_invoice_id)
+            if ref_inv:
+                against_invoice_no = ref_inv.invoice_no
+                against_invoice_date = ref_inv.invoice_date
+
         data = PDFDocumentData(
             doc_type=inv.invoice_type if inv.invoice_type in ("credit_note", "debit_note") else "invoice",
             doc_no=inv.invoice_no,
             doc_date=inv.invoice_date,
             due_date=inv.due_date,
+            against_invoice_no=against_invoice_no,
+            against_invoice_date=against_invoice_date,
             company_name=company.legal_name if company else "",
             company_tagline=((company.settings or {}).get("tagline", "") if company else ""),
             company_gstin=company.gstin or "" if company else "",

@@ -90,6 +90,8 @@ class PDFDocumentData:
     po_no: Optional[str] = None
     po_date: Optional[date] = None
     jo_no: Optional[str] = None
+    against_invoice_no: Optional[str] = None
+    against_invoice_date: Optional[date] = None
     # Purchase-order-specific
     expected_delivery: Optional[date] = None
     delivery_address: str = ""
@@ -337,6 +339,7 @@ def generate_invoice_pdf(data: PDFDocumentData) -> bytes:
     if data.transporter_id: meta_rows.append(["Transport ID:", data.transporter_id, "", ""])
     if data.vehicle_no: meta_rows.append(["Vehicle No:", data.vehicle_no, "", ""])
     if data.po_no: meta_rows.append(["PO No:", data.po_no, "PO Date:", str(data.po_date or "")])
+    if data.against_invoice_no: meta_rows.append(["Against Invoice:", data.against_invoice_no, "Invoice Date:", str(data.against_invoice_date or "")])
     meta_table_rows = [[Paragraph(c, label8) if i%2==0 else Paragraph(c, body8) for i,c in enumerate(row)] for row in meta_rows]
     meta_inner = Table(meta_table_rows, colWidths=[32*mm,16*mm,22*mm,22*mm])
     meta_span_style = [

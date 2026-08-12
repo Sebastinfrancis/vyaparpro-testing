@@ -469,3 +469,21 @@ class EInvoiceRecordIn(APIModel):
     ewb_valid_till: Optional[datetime] = None
     transporter_id: Optional[str] = None
     vehicle_no: Optional[str] = None
+
+class DocumentSequenceOut(APIModel):
+    doc_type: str
+    label: str
+    branch_id: Optional[UUID] = None
+    prefix: str
+    suffix: Optional[str] = None
+    next_number: int
+    pad_length: int
+    reset_on_fy: bool
+    financial_year: Optional[str] = None
+
+class DocumentSequenceUpdate(APIModel):
+    prefix: str = Field(min_length=1, max_length=20)
+    suffix: Optional[str] = Field(default=None, max_length=20)
+    next_number: int = Field(ge=1)
+    pad_length: int = Field(ge=1, le=10)
+    reset_on_fy: bool = True

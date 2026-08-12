@@ -11,7 +11,7 @@ from app.api.v1.dependencies import CacheDep, CurrentUserDep, DBDep, PaginationD
 from app.schemas.billing import (
     DeliveryChallanCreate, InvoiceCreate, InvoiceCancelRequest, InvoiceUpdate,
     JobOrderCreate, JobOrderUpdate, PaymentCreate,
-    PurchaseOrderCreate, QuotationCreate,
+    PurchaseOrderCreate, QuotationCreate, DocumentSequenceUpdate,
 )
 from app.schemas.billing import InvoiceOut
 from app.services.billing import (
@@ -558,3 +558,32 @@ async def download_po_pdf(po_id: UUID, current: CurrentUserDep, db: DBDep) -> Re
     pdf_bytes = await svc.get_pdf_data(po_id, current.company_id)
     return Response(content=pdf_bytes, media_type="application/pdf",
                      headers={"Content-Disposition": f'attachment; filename="po-{po_id}.pdf"'})
+
+
+# ═══════════════════════════════════════════════════════════════════
+# DOCUMENT NUMBERING  (Settings → Document Numbering)
+# ═══════════════════════════════════════════════════════════════════
+
+@router.get("/document-sequences", summary="List document numbering settings for a branch (or head office)")
+async def list_document_sequences(
+    current: CurrentUserDep, db: DBDep,
+    branch_id: UUID | None = Query(None, description="Omit for the head-office / default series"),
+) -> ORJSONResponse:
+    from app.db.repositories.billing import DocumentSequenceRepository
+    repo = DocumentSequenceRepository(db)
+    rows = await repo.list_for_company(current.company_id, branch_id)
+    return ok(rows)
+
+
+@router.patch("/document-sequences/{doc_type}", summary="Update document numbering for one document type / branch")
+async def update_document_sequence(
+    doc_type: str, payload: DocumentSequenceUpdate,
+    current: CurrentUserDep, db: DBDep,
+    branch_id: UUID | None = Query(None, description="Omit for the head-office / default series"),
+) -> ORJSONResponse:
+    from app.db.repositories.billing import DocumentSequenceRepository
+    if doc_type not in DocumentSequenceRepository.DOC_TYPE_LABELS:
+        raise BusinessError(f"Unknown document type: {doc_type}")
+    repo = DocumentSequenceRepository(db)
+    row = await repo.upsert(current.company_id, doc_type, branch_id, payload.model_dump())
+    return ok(row, "Document numbering updated.")
