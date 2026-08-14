@@ -38,6 +38,14 @@ _CATEGORY_FALLBACK: list[tuple[str, str]] = [
     ("payment", "data.pending_payments"),
     ("due", "data.pending_payments"),
     ("outstanding", "data.pending_payments"),
+    ("receivable", "data.pending_payments"),
+    ("debtor", "data.pending_payments"),
+    ("payable", "data.total_payables"),
+    ("creditor", "data.total_payables"),
+    ("cash", "data.cash_balance"),
+    ("bank", "data.bank_balance"),
+    ("branch", "data.branch_performance"),
+    ("account", "data.accounts_summary"),
     ("purchase order", "nav.purchase_orders"),
     ("vendor", "nav.add_vendor"),
     ("product", "nav.add_product"),
@@ -53,6 +61,26 @@ _PARTY_LOOKUP_PREFIXES: list[str] = [
     "who is ", "who's ", "info on ", "info about ",
     "show me ", "show ", "search for ", "search ", "lookup ", "look up ",
     "about ", "customer ", "vendor ", "party ", "lead ",
+]
+
+# Same idea, but for "branch X" / "about branch X" style questions. Checked
+# BEFORE _PARTY_LOOKUP_PREFIXES so "about branch Chennai" routes to the
+# branch, not a generic party lookup for "branch chennai".
+_BRANCH_LOOKUP_PREFIXES: list[str] = [
+    "branch performance of ", "performance of branch ",
+    "about branch ", "details about branch ", "details of branch ",
+    "info on branch ", "info about branch ", "tell me about branch ",
+    "branch ",
+]
+
+# "account X" / "ledger of X" / "balance of X" style questions. Checked
+# before _PARTY_LOOKUP_PREFIXES for the same reason as above.
+_ACCOUNT_LOOKUP_PREFIXES: list[str] = [
+    "account balance of ", "account balance for ", "balance of account ",
+    "ledger balance of ", "ledger entries for ", "ledger entries of ",
+    "show ledger of ", "show ledger for ", "show the ledger of ", "show the ledger for ",
+    "ledger of ", "ledger for ", "balance of ", "balance for ",
+    "account ", "ledger ",
 ]
 
 # A message that starts with one of these is a question, not a bare name —
@@ -74,6 +102,25 @@ def _extract_party_name(query: str) -> str | None:
                 text = text[len(prefix):].strip()
                 changed = True
     return text or None
+
+
+def _strip_leading_prefixes(query: str, prefixes: list[str]) -> str | None:
+    """
+    Like `_extract_party_name` but for an arbitrary prefix list. Returns None
+    if the query doesn't start with ANY prefix in the list (no match at all),
+    so callers can tell "didn't match" apart from "matched, but name is empty".
+    """
+    if not any(query.startswith(p) for p in prefixes):
+        return None
+    text = query
+    changed = True
+    while changed:
+        changed = False
+        for prefix in prefixes:
+            if text.startswith(prefix):
+                text = text[len(prefix):].strip()
+                changed = True
+    return text
 
 
 class RuleBasedIntentEngine:
@@ -100,7 +147,21 @@ class RuleBasedIntentEngine:
             intent_type = "navigation" if best_id.startswith("nav.") else "data_query"
             return IntentMatch(intent_id=best_id, intent_type=intent_type, confidence=0.9)
 
-        # Stage 2 — explicit "about X / who is X / customer X" style lookups.
+        # Stage 2a — "branch X" / "about branch X" style lookups. Checked
+        # ahead of the generic party stage below so these don't get treated
+        # as a customer/vendor named "branch X".
+        branch_name = _strip_leading_prefixes(query, _BRANCH_LOOKUP_PREFIXES)
+        if branch_name:
+            return IntentMatch(intent_id="branch.lookup", intent_type="branch_lookup",
+                                confidence=0.85, query=branch_name)
+
+        # Stage 2b — "account X" / "ledger of X" / "balance of X" style lookups.
+        account_name = _strip_leading_prefixes(query, _ACCOUNT_LOOKUP_PREFIXES)
+        if account_name:
+            return IntentMatch(intent_id="account.lookup", intent_type="account_lookup",
+                                confidence=0.85, query=account_name)
+
+        # Stage 2c — explicit "about X / who is X / customer X" style lookups.
         if any(query.startswith(p) for p in _PARTY_LOOKUP_PREFIXES):
             name = _extract_party_name(query)
             if name:

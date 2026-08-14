@@ -125,8 +125,14 @@ NAV_KB: dict[str, dict] = {
     },
     "nav.branches": {
         "page": "branches",
-        "keywords": ["branch", "branches", "add branch", "multi-branch", "new branch"],
-        "answer": "Branches are managed under **Branches** in the sidebar.",
+        "keywords": [
+            "add branch", "new branch", "create branch", "multi-branch", "manage branches",
+            "where is branches", "where are branches", "branches screen", "branches page",
+        ],
+        "answer": (
+            "Branches are managed under **Branches** in the sidebar — add, edit, or view "
+            "each branch's manager, monthly target and stock from there."
+        ),
     },
     "nav.crm": {
         "page": "crm",
@@ -136,8 +142,9 @@ NAV_KB: dict[str, dict] = {
     "nav.accounting": {
         "page": "accounting",
         "keywords": [
-            "ledger", "accounting", "journal", "balance sheet", "profit and loss", "p&l",
-            "chart of accounts",
+            "accounting", "journal", "balance sheet", "profit and loss", "p&l",
+            "where is ledger", "ledger screen", "ledger book",
+            "cash book", "bank book", "financial statements",
         ],
         "answer": (
             "Ledgers, journal vouchers and financial statements are under "
@@ -206,7 +213,7 @@ DATA_KB: dict[str, dict] = {
         "handler": "pending_payments",
         "keywords": [
             "pending payments", "outstanding payments", "dues", "amount due", "overdue invoices",
-            "unpaid invoices",
+            "unpaid invoices", "total receivables", "sundry debtors", "amount receivable",
         ],
     },
     "data.open_purchase_orders": {
@@ -219,5 +226,44 @@ DATA_KB: dict[str, dict] = {
     "data.customer_count": {
         "handler": "customer_count",
         "keywords": ["how many customers", "total customers", "number of customers"],
+    },
+    "data.branch_list": {
+        "handler": "branch_list",
+        "keywords": [
+            "list branches", "show branches", "show all branches", "all branches",
+            "how many branches", "branch list", "list of branches", "view branches",
+        ],
+    },
+    "data.branch_performance": {
+        "handler": "branch_performance",
+        "keywords": [
+            "branch performance", "branch wise sales", "branch-wise sales", "sales by branch",
+            "which branch is best", "which branch is performing", "best performing branch",
+            "top branch", "compare branches", "branch comparison", "branch sales",
+        ],
+    },
+    "data.total_payables": {
+        "handler": "total_payables",
+        "keywords": [
+            "total payables", "total payable", "sundry creditors", "amount payable to vendors",
+            "vendor dues", "how much do i owe vendors", "creditors", "payables",
+        ],
+    },
+    "data.cash_balance": {
+        "handler": "cash_balance",
+        "keywords": ["cash balance", "cash in hand", "how much cash do i have", "cash on hand"],
+    },
+    "data.bank_balance": {
+        "handler": "bank_balance",
+        "keywords": [
+            "bank balance", "bank balances", "how much money in bank", "money in the bank",
+        ],
+    },
+    "data.accounts_summary": {
+        "handler": "accounts_summary",
+        "keywords": [
+            "chart of accounts", "how many accounts", "list of accounts", "accounts summary",
+            "account groups",
+        ],
     },
 }

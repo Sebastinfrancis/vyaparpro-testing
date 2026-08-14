@@ -51,7 +51,7 @@ router = APIRouter()
 # WAREHOUSES (branch stock points)
 # ═══════════════════════════════════════════════════════════════════
 
-@router.get("/warehouses", summary="List warehouses / branch stock points")
+@router.get("/warehouses", summary="List warehouses / branch stock points", dependencies=[require_perm("warehouse.read")])
 async def list_warehouses(
     current: CurrentUserDep,
     db: DBDep,

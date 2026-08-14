@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import Optional
 
 from sqlalchemy import Date, DateTime, ForeignKey, Numeric, String, Text, func
-from sqlalchemy.dialects.postgresql import UUID
+from app.db.types import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, func, or_, select, text
 from sqlalchemy.orm import selectinload
 
 from app.db.models import (
@@ -73,6 +73,45 @@ class BranchRepository(BaseRepository[Branch]):
 
     async def get_by_code(self, company_id: UUID, branch_code: str) -> Branch | None:
         return await self.get_by(company_id=company_id, branch_code=branch_code)
+
+    async def get_head_office(self, company_id: UUID) -> Branch | None:
+        return await self.get_by(company_id=company_id, is_head_office=True)
+
+    async def user_counts_by_branch(self, company_id: UUID) -> dict[UUID, int]:
+        """Gap #7 — active staff count per branch, for the branch card."""
+        stmt = (
+            select(User.branch_id, func.count(User.id))
+            .where(User.company_id == company_id, User.is_active == True, User.branch_id.isnot(None))
+            .group_by(User.branch_id)
+        )
+        rows = (await self.session.execute(stmt)).all()
+        return {row[0]: row[1] for row in rows}
+
+    async def deactivation_blockers(self, branch_id: UUID) -> dict[str, int]:
+        """Gap #8 — everything that must be empty/zero before a branch can be
+        safely deactivated: open stock, pending invoices, active staff."""
+        stock_stmt = text("""
+            SELECT COALESCE(SUM(s.quantity), 0) AS qty
+            FROM inventory_stock s
+            JOIN warehouses w ON w.id = s.warehouse_id
+            WHERE w.branch_id = :bid AND s.quantity > 0
+        """)
+        open_stock = (await self.session.execute(stock_stmt, {"bid": str(branch_id)})).scalar_one()
+
+        invoice_stmt = text("""
+            SELECT COUNT(*) FROM invoices
+            WHERE branch_id = :bid AND status IN ('draft', 'finalized', 'sent', 'partial', 'overdue')
+        """)
+        pending_invoices = (await self.session.execute(invoice_stmt, {"bid": str(branch_id)})).scalar_one()
+
+        users_stmt = select(func.count(User.id)).where(User.branch_id == branch_id, User.is_active == True)
+        active_users = (await self.session.execute(users_stmt)).scalar_one()
+
+        return {
+            "open_stock_units": int(open_stock),
+            "pending_invoices": int(pending_invoices),
+            "active_users": int(active_users),
+        }
 
 
 # ═══════════════════════════════════════════════════════════════════

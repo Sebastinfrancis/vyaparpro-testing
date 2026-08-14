@@ -28,7 +28,10 @@ router = APIRouter()
 _TTL = 120  # 2-minute cache for company reads
 
 
-@router.get("", summary="Search / list companies")
+@router.get(
+    "", summary="Search / list companies",
+    dependencies=[require_perm("company.read")],  # type: ignore[list-item]
+)
 async def list_companies(
     current: CurrentUserDep,
     db: DBDep,
@@ -75,7 +78,10 @@ async def create_company(
     )
 
 
-@router.get("/{company_id}", summary="Get company by ID")
+@router.get(
+    "/{company_id}", summary="Get company by ID",
+    dependencies=[require_perm("company.read")],  # type: ignore[list-item]
+)
 async def get_company(
     company_id: UUID,
     current: CurrentUserDep,
@@ -135,7 +141,7 @@ async def delete_company(
     return ok(message="Company deactivated.")
 
 
-@router.post("/{company_id}/logo", summary="Upload company logo (multipart)")
+@router.post("/{company_id}/logo", summary="Upload company logo (multipart)", dependencies=[require_perm("company.update")])
 async def upload_logo(
     company_id: UUID,
     file: UploadFile,
@@ -167,7 +173,7 @@ async def upload_logo(
     return ok(data={"logo_url": logo_url}, message="Logo uploaded.")
 
 
-@router.post("/{company_id}/signature", summary="Upload authorised-signatory signature image (multipart)")
+@router.post("/{company_id}/signature", summary="Upload authorised-signatory signature image (multipart)", dependencies=[require_perm("company.update")])
 async def upload_signature(
     company_id: UUID,
     file: UploadFile,
@@ -199,7 +205,10 @@ async def upload_signature(
     return ok(data={"signature_url": signature_url}, message="Signature uploaded.")
 
 
-@router.get("/{company_id}/summary", summary="Company dashboard KPI summary")
+@router.get(
+    "/{company_id}/summary", summary="Company dashboard KPI summary",
+    dependencies=[require_perm("company.read")],  # type: ignore[list-item]
+)
 async def company_summary(
     company_id: UUID,
     current: CurrentUserDep,

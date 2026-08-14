@@ -8,7 +8,7 @@ from fastapi import APIRouter, Query
 from fastapi.responses import ORJSONResponse
 from sqlalchemy import text
 
-from app.api.v1.dependencies import CurrentUserDep, DBDep
+from app.api.v1.dependencies import CurrentUserDep, DBDep, require_perm
 from app.utils.responses import ok
 from datetime import datetime as dt_now
 from app.db.models.accounting import GSTReturn
@@ -160,7 +160,7 @@ def _compute_setoff(outward: dict, itc: dict) -> dict:
     }
 
 
-@router.get("/summary", summary="GST summary — output tax, ITC, rate-wise breakup")
+@router.get("/summary", summary="GST summary — output tax, ITC, rate-wise breakup", dependencies=[require_perm("gst.read")])
 async def gst_summary(
     current: CurrentUserDep, db: DBDep, month: str = Query(...),
     branch_id: UUID | None = Query(None, description="Filter to one branch/GSTIN — omit for company-wide"),
@@ -223,7 +223,7 @@ async def gst_summary(
     }))
 
 
-@router.get("/gstr1", summary="GSTR-1 — B2B, B2C, CDNR breakdown")
+@router.get("/gstr1", summary="GSTR-1 — B2B, B2C, CDNR breakdown", dependencies=[require_perm("gst.read")])
 async def gstr1(
     current: CurrentUserDep, db: DBDep, month: str = Query(...),
     branch_id: UUID | None = Query(None, description="Filter to one branch/GSTIN — omit for company-wide"),
@@ -289,7 +289,7 @@ async def gstr1(
     }))
 
 
-@router.get("/gstr3b", summary="GSTR-3B — monthly summary return")
+@router.get("/gstr3b", summary="GSTR-3B — monthly summary return", dependencies=[require_perm("gst.read")])
 async def gstr3b(
     current: CurrentUserDep, db: DBDep, month: str = Query(...),
     branch_id: UUID | None = Query(None, description="Filter to one branch/GSTIN — omit for company-wide"),
@@ -398,7 +398,7 @@ async def gstr3b(
     }))
 
 
-@router.get("/hsn-summary", summary="HSN/SAC-wise summary")
+@router.get("/hsn-summary", summary="HSN/SAC-wise summary", dependencies=[require_perm("gst.read")])
 async def hsn_summary(
     current: CurrentUserDep, db: DBDep, month: str = Query(...),
     branch_id: UUID | None = Query(None, description="Filter to one branch/GSTIN — omit for company-wide"),
@@ -428,7 +428,7 @@ async def hsn_summary(
     return ok(data=_clean({"items": [dict(r) for r in rows], "branch_id": bid}))
 
 
-@router.get("/itc-ledger", summary="Input Tax Credit available this period")
+@router.get("/itc-ledger", summary="Input Tax Credit available this period", dependencies=[require_perm("gst.read")])
 async def itc_ledger(
     current: CurrentUserDep, db: DBDep, month: str = Query(...),
     branch_id: UUID | None = Query(None, description="Filter to one branch/GSTIN — omit for company-wide"),
@@ -499,7 +499,7 @@ async def itc_ledger(
     }))
 
 
-@router.post("/gstr3b/file", summary="File GSTR-3B for a period (snapshot + lock)")
+@router.post("/gstr3b/file", summary="File GSTR-3B for a period (snapshot + lock)", dependencies=[require_perm("gst.file")])
 async def file_gstr3b(
     current: CurrentUserDep, db: DBDep, month: str = Query(...),
     branch_id: UUID | None = Query(None, description="Branch/GSTIN this filing is for — omit for company-wide"),
@@ -612,7 +612,7 @@ async def file_gstr3b(
     }), message=f"GSTR-3B filed for {month}" + (f" (branch {bid})." if bid else "."))
 
 
-@router.get("/filed-returns", summary="History of filed GST returns")
+@router.get("/filed-returns", summary="History of filed GST returns", dependencies=[require_perm("gst.read")])
 async def filed_returns(
     current: CurrentUserDep, db: DBDep,
     branch_id: UUID | None = Query(None, description="Filter to one branch/GSTIN — omit for company-wide"),
@@ -630,7 +630,7 @@ async def filed_returns(
     """), {"cid": str(current.company_id), "bid": bid})).mappings().all()
     return ok(data=_clean({"returns": [dict(r) for r in rows]}))
 
-@router.get("/report/pdf", summary="Download GST Compliance Report as PDF")
+@router.get("/report/pdf", summary="Download GST Compliance Report as PDF", dependencies=[require_perm("gst.export")])
 async def gst_report_pdf(
     current: CurrentUserDep, db: DBDep, month: str = Query(...),
     branch_id: UUID | None = Query(None, description="Filter to one branch/GSTIN — omit for company-wide"),
@@ -847,7 +847,7 @@ async def gst_report_pdf(
     return Response(content=pdf_bytes, media_type="application/pdf",
                      headers={"Content-Disposition": f'attachment; filename="gst_report_{month}.pdf"'})
 
-@router.get("/gstr1/json", summary="Export GSTR-1 in GSTN Offline Utility JSON format")
+@router.get("/gstr1/json", summary="Export GSTR-1 in GSTN Offline Utility JSON format", dependencies=[require_perm("gst.export")])
 async def gstr1_json_export(
     current: CurrentUserDep, db: DBDep, month: str = Query(...),
     branch_id: UUID | None = Query(None, description="Branch/GSTIN to export — omit for company-wide"),

@@ -13,7 +13,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
-    AccountLockedError, AlreadyExistsError, InvalidCredentialsError,
+    AccountLockedError, AlreadyExistsError, BusinessError, InvalidCredentialsError,
     NotFoundError, PasswordValidationError, PermissionDeniedError,
     TwoFactorInvalidError, TwoFactorRequiredError,
 )
@@ -392,6 +392,14 @@ class BranchService:
             raise AlreadyExistsError(f"Branch code '{payload.branch_code}' already exists.")
         data = payload.model_dump()
         data["company_id"] = company_id
+        # Gap #3 — only one Head Office per company. If this is flagged as
+        # HO, demote whichever branch currently holds that flag instead of
+        # silently ending up with two (the DB's partial unique index would
+        # reject two anyway, but this gives a clean, expected outcome).
+        if data.get("is_head_office"):
+            current_ho = await self.branches.get_head_office(company_id)
+            if current_ho is not None:
+                await self.branches.update(current_ho, {"is_head_office": False})
         branch = await self.branches.create(data)
 
         # Every branch needs at least one stock location to hold inventory,
@@ -424,7 +432,13 @@ class BranchService:
 
     async def update(self, branch_id: UUID, payload: BranchUpdate, company_id: UUID, user_id: UUID) -> Branch:
         branch = await self.branches.get_or_raise(branch_id)
-        updated = await self.branches.update(branch, payload.model_dump(exclude_unset=True))
+        changes = payload.model_dump(exclude_unset=True)
+        # Gap #3 — same single-Head-Office rule on update.
+        if changes.get("is_head_office") is True:
+            current_ho = await self.branches.get_head_office(company_id)
+            if current_ho is not None and current_ho.id != branch_id:
+                await self.branches.update(current_ho, {"is_head_office": False})
+        updated = await self.branches.update(branch, changes)
         await self.audit.log(
             company_id=company_id, action="UPDATE", module="branch",
             user_id=user_id, entity_type="branches", entity_id=branch_id,
@@ -432,7 +446,45 @@ class BranchService:
         return updated
 
     async def list_by_company(self, company_id: UUID) -> list[Branch]:
-        return await self.branches.get_by_company(company_id)
+        branches = await self.branches.get_by_company(company_id)
+        # Gap #7 — attach live staff counts so BranchOut can surface them.
+        counts = await self.branches.user_counts_by_branch(company_id)
+        for b in branches:
+            b.user_count = counts.get(b.id, 0)
+        return branches
+
+    async def get_with_user_count(self, branch_id: UUID, company_id: UUID) -> Branch:
+        branch = await self.branches.get_or_raise(branch_id)
+        counts = await self.branches.user_counts_by_branch(company_id)
+        branch.user_count = counts.get(branch.id, 0)
+        return branch
+
+    async def deactivate(self, branch_id: UUID, company_id: UUID, user_id: UUID, force: bool = False) -> None:
+        """Gap #8 — refuse to deactivate a branch that still has open stock,
+        pending invoices, or active staff, unless explicitly forced."""
+        branch = await self.branches.get_or_raise(branch_id)
+        if branch.is_head_office:
+            raise BusinessError("The Head Office branch cannot be deactivated.")
+        if not force:
+            blockers = await self.branches.deactivation_blockers(branch_id)
+            reasons = []
+            if blockers["open_stock_units"] > 0:
+                reasons.append(f"{blockers['open_stock_units']} units of open stock")
+            if blockers["pending_invoices"] > 0:
+                reasons.append(f"{blockers['pending_invoices']} pending invoice(s)")
+            if blockers["active_users"] > 0:
+                reasons.append(f"{blockers['active_users']} active staff still assigned")
+            if reasons:
+                raise BusinessError(
+                    "Cannot deactivate branch: " + "; ".join(reasons) +
+                    ". Resolve these first, or pass force=true to override.",
+                    blockers=blockers,
+                )
+        await self.branches.soft_delete(branch_id)
+        await self.audit.log(
+            company_id=company_id, action="DELETE", module="branch",
+            user_id=user_id, entity_type="branches", entity_id=branch_id,
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════

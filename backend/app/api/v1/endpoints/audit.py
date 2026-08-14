@@ -4,7 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import ORJSONResponse
 
-from app.api.v1.dependencies import CurrentUserDep, DBDep
+from app.api.v1.dependencies import CurrentUserDep, DBDep, require_perm
 from app.db.repositories import AuditLogRepository, UserRepository
 from app.schemas import AuditLogCreate, AuditLogOut
 from app.utils.responses import created, paginated
@@ -12,7 +12,7 @@ from app.utils.responses import created, paginated
 router = APIRouter()
 
 
-@router.get("", summary="List audit log entries")
+@router.get("", summary="List audit log entries", dependencies=[require_perm("audit.read")])
 async def list_audit_log(
     current: CurrentUserDep, db: DBDep,
     module: str | None = Query(None),

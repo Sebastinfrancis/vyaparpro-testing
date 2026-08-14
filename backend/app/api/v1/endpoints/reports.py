@@ -7,7 +7,7 @@ from sqlalchemy import text
 from fastapi import Response
 from app.utils.pdf_generator import generate_report_pdf
 
-from app.api.v1.dependencies import CurrentUserDep, DBDep
+from app.api.v1.dependencies import CurrentUserDep, DBDep, require_perm
 from app.utils.responses import ok
 import uuid
 from decimal import Decimal
@@ -30,7 +30,7 @@ def _clean(obj):
 router = APIRouter()
 
 
-@router.get("/sales", summary="Sales report — revenue by customer & product",response_model=None)
+@router.get("/sales", summary="Sales report — revenue by customer & product", response_model=None, dependencies=[require_perm("report.read")])
 async def sales_report(
     current: CurrentUserDep, db: DBDep,
     date_from: date = Query(default_factory=lambda: date.today().replace(day=1)),
@@ -156,7 +156,7 @@ async def sales_report(
     }))
 
 
-@router.get("/purchases", summary="Purchase report — spend by vendor & product",response_model=None)
+@router.get("/purchases", summary="Purchase report — spend by vendor & product", response_model=None, dependencies=[require_perm("report.read")])
 async def purchase_report(
     current: CurrentUserDep, db: DBDep,
     date_from: date = Query(default_factory=lambda: date.today().replace(day=1)),
@@ -242,7 +242,7 @@ async def purchase_report(
     }))
 
 
-@router.get("/inventory", summary="Inventory report — stock valuation & reorder alerts", response_model=None)
+@router.get("/inventory", summary="Inventory report — stock valuation & reorder alerts", response_model=None, dependencies=[require_perm("report.read")])
 async def inventory_report(current: CurrentUserDep, db: DBDep, as_pdf: bool = Query(False)) -> ORJSONResponse | Response:
     cid = str(current.company_id)
 
@@ -299,7 +299,7 @@ async def inventory_report(current: CurrentUserDep, db: DBDep, as_pdf: bool = Qu
     return ok(data=_clean({"summary": dict(summary), "items": [dict(r) for r in items]}))
 
 
-@router.get("/customers", summary="Customer report — outstanding, LTV, activity",response_model=None)
+@router.get("/customers", summary="Customer report — outstanding, LTV, activity", response_model=None, dependencies=[require_perm("report.read")])
 async def customer_report(current: CurrentUserDep, db: DBDep, as_pdf: bool = Query(False)) -> ORJSONResponse | Response:
     cid = str(current.company_id)
 
@@ -394,7 +394,7 @@ async def customer_report(current: CurrentUserDep, db: DBDep, as_pdf: bool = Que
     }))
 
 
-@router.get("/{report_type}/pdf", summary="Download a report as PDF")
+@router.get("/{report_type}/pdf", summary="Download a report as PDF", dependencies=[require_perm("report.export")])
 async def download_report_pdf(
     report_type: str, current: CurrentUserDep, db: DBDep,
     date_from: date = Query(default_factory=lambda: date.today().replace(day=1)),

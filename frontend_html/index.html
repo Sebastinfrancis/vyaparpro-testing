@@ -341,6 +341,9 @@ select.fi option{background:var(--bg2)}
       <div class="fg"><label class="fl">Password</label>
         <input class="fi" type="password" id="loginPass" placeholder="••••••••" value="admin123"
           onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div class="fg hidden" id="loginTotpGroup"><label class="fl">6-digit code from your authenticator app</label>
+        <input class="fi" id="loginTotp" placeholder="123456" maxlength="6" inputmode="numeric"
+          onkeydown="if(event.key==='Enter')doLogin()"/></div>
       <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px" onclick="doLogin()" id="loginBtn">
         Sign In
       </button>
@@ -963,7 +966,10 @@ select.fi option{background:var(--bg2)}
       <div class="bc">Inventory / <span>Branches</span></div>
       <div class="sh" style="margin-top:8px">
         <div><div class="st">Branch Management</div><div class="ss">Branch-wise stock, inter-branch transfers</div></div>
-        <button class="btn btn-p btn-sm" onclick="openAddBranch()">➕ Add Branch</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-o btn-sm" onclick="openBranchCompare()">📊 Target vs Actual</button>
+          <button class="btn btn-p btn-sm" onclick="openAddBranch()">➕ Add Branch</button>
+        </div>
       </div>
       <div class="g3" id="branchGrid"></div>
 
@@ -1001,6 +1007,7 @@ select.fi option{background:var(--bg2)}
         <button class="tabb" onclick="switchTab(this,'acc','ledger')">Ledger</button>
         <button class="tabb" onclick="switchTab(this,'acc','cashbook')">Cash Book</button>
         <button class="tabb" onclick="switchTab(this,'acc','bank')">Bank Book</button>
+        <button class="tabb" onclick="switchTab(this,'acc','bankaccounts')">🏦 Bank Accounts</button>
       </div>
       <div id="acc-pl"><div class="card">
         <div class="sh" style="margin-bottom:14px">
@@ -1077,6 +1084,16 @@ select.fi option{background:var(--bg2)}
         <thead><tr><th>Date</th><th>Narration</th><th>Debit</th><th>Credit</th><th>Balance</th></tr></thead>
         <tbody id="bankBody"></tbody>
       </table></div></div></div>
+      <div id="acc-bankaccounts" class="hidden"><div class="card">
+        <div class="sh" style="margin-bottom:14px">
+          <div><div style="font-size:13px;font-weight:700">Bank Accounts</div><div style="font-size:10px;color:var(--text3)">Scope a bank account to one branch, or leave it company-wide — invoices from a branch without its own account fall back to the company-wide one</div></div>
+          <button class="btn btn-p btn-sm" onclick="openAddBankAccount()">➕ Add Bank Account</button>
+        </div>
+        <div class="tw"><table>
+          <thead><tr><th>Account</th><th>Branch</th><th>Bank</th><th>Account No.</th><th>IFSC</th><th style="text-align:right">Balance</th><th></th></tr></thead>
+          <tbody id="bankAccountsBody"><tr><td colspan="7" style="text-align:center;color:var(--text3)">Loading…</td></tr></tbody>
+        </table></div>
+      </div></div>
     </div>
 
     <!-- ======== PAYMENTS ======== -->
@@ -1145,7 +1162,7 @@ select.fi option{background:var(--bg2)}
             <div style="display:flex;flex-wrap:wrap;gap:5px;padding-bottom:10px" id="aiSug"></div>
           </div>
           <div class="aiir">
-            <input class="aiin" id="aiIn" placeholder="Ask: What are today's sales? Which products are low?" onkeydown="if(event.key==='Enter')sendAI()"/>
+            <input class="aiin" id="aiIn" placeholder="Ask: What are today's sales? Branch performance? Ledger of HDFC Bank?" onkeydown="if(event.key==='Enter')sendAI()"/>
             <button class="aisd" onclick="sendAI()">➤</button>
           </div>
         </div>
@@ -1170,6 +1187,15 @@ select.fi option{background:var(--bg2)}
               "Show today's / this month's sales" · "Which products are low on stock?" ·
               "Who are my top customers?" · "Show pending payments" ·
               "How many open purchase orders?" · "How many customers do I have?"
+            </div>
+          </div>
+
+          <div style="padding:13px 16px;border-bottom:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:700;color:var(--purple);margin-bottom:5px">🏢 Branches, Accounts &amp; Ledger</div>
+            <div style="font-size:11px;color:var(--text2);line-height:1.75">
+              "List branches" · "Branch performance" · "Branch Chennai" ·
+              "Cash balance" · "Bank balance" · "Total payables" · "Chart of accounts" ·
+              "Ledger of HDFC Bank" · "Balance of Cash Account"
             </div>
           </div>
 
@@ -2031,6 +2057,30 @@ select.fi option{background:var(--bg2)}
   </div>
 </div>
 
+<div id="twoFactorModal" class="mo hidden">
+  <div class="md md-md">
+    <div class="mh"><span class="mt2" id="tfaModalTitle">Enable Two-Factor Authentication</span><button class="mc" onclick="closeModal('twoFactorModal')">✕</button></div>
+    <div class="mb">
+      <div id="tfaSetupStep">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:14px;line-height:1.6">
+          Scan this QR code with Google Authenticator, Authy, or any TOTP app, then enter the 6-digit code it shows to confirm setup.
+        </div>
+        <div style="display:flex;justify-content:center;margin-bottom:14px">
+          <img id="tfaQrImg" src="" alt="2FA QR code" style="width:200px;height:200px;border:1px solid var(--border);border-radius:var(--r2);background:#fff;padding:8px"/>
+        </div>
+        <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:14px">
+          Can't scan? Enter this key manually: <span class="mono b" id="tfaSecretText" style="user-select:all"></span>
+        </div>
+      </div>
+      <div class="fg"><label class="fl" id="tfaCodeLabel">6-digit code from your authenticator app</label>
+        <input class="fi" id="tfaCodeInput" placeholder="123456" maxlength="6" inputmode="numeric"
+          onkeydown="if(event.key==='Enter')confirmTwoFactorAction()"/></div>
+      <div id="tfaModalErr" style="color:var(--red);font-size:11px;margin-top:6px"></div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('twoFactorModal')">Cancel</button><button class="btn btn-p" id="tfaConfirmBtn" onclick="confirmTwoFactorAction()">Verify & Enable</button></div>
+  </div>
+</div>
+
 <div id="addUserModal" class="mo hidden">
   <div class="md md-md">
     <div class="mh"><span class="mt2">Add User</span><button class="mc" onclick="closeModal('addUserModal')">✕</button></div>
@@ -2246,6 +2296,17 @@ select.fi option{background:var(--bg2)}
           <option value="showroom">Showroom</option>
         </select>
       </div>
+      <div class="fg">
+        <label class="fl" style="display:flex;align-items:center;gap:6px;cursor:pointer">
+          <input type="checkbox" id="br_is_ho" style="width:auto"/> This is the Head Office
+        </label>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px">Only one branch can be Head Office — checking this un-checks it on whichever branch currently holds it.</div>
+      </div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Manager Name</label><input class="fi" id="br_manager_name" placeholder="Store manager" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">Manager Phone</label><input class="fi" id="br_manager_phone" placeholder="9876543210" autocomplete="off"/></div>
+      </div>
+      <div class="fg"><label class="fl">Monthly Sales Target (₹)</label><input class="fi" type="number" id="br_target" placeholder="500000" autocomplete="off"/></div>
     </div>
     <div class="mf"><button class="btn btn-o" onclick="closeModal('branchModal')">Cancel</button><button class="btn btn-p" onclick="saveBranch()">Save Branch</button></div>
   </div>
@@ -2258,6 +2319,61 @@ select.fi option{background:var(--bg2)}
       <div id="stockModalBody" style="max-height:60vh;overflow-y:auto">Loading…</div>
     </div>
     <div class="mf"><button class="btn btn-o" onclick="closeModal('stockModal')">Close</button></div>
+  </div>
+</div>
+
+<div id="bankAccountModal" class="mo hidden" autocomplete="off">
+  <div class="md md-sm">
+    <div class="mh"><span class="mt2" id="bankAccountModalTitle">Add Bank Account</span><button class="mc" onclick="closeModal('bankAccountModal')">✕</button></div>
+    <div class="mb">
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Account Name</label><input class="fi" id="ba_name" placeholder="e.g. ICICI — Andheri" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">Account Code</label><input class="fi mono" id="ba_code" placeholder="2002" autocomplete="off"/></div>
+      </div>
+      <div class="fg"><label class="fl">Branch <span style="color:var(--text3);font-weight:400">(optional — leave blank for company-wide)</span></label>
+        <select class="fi" id="ba_branch_id"><option value="">— Company-wide (Head Office) —</option></select>
+      </div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Bank Name</label><input class="fi" id="ba_bank_name" placeholder="ICICI Bank" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">Bank Branch (location)</label><input class="fi" id="ba_bank_branch" placeholder="Andheri West" autocomplete="off"/></div>
+      </div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Account Number</label><input class="fi mono" id="ba_account_no" autocomplete="off"/></div>
+        <div class="fg"><label class="fl">IFSC</label><input class="fi mono uc-field" id="ba_ifsc" autocomplete="off"/></div>
+      </div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Account Type</label>
+          <select class="fi" id="ba_account_type">
+            <option value="current">Current</option>
+            <option value="savings">Savings</option>
+            <option value="od">Overdraft (OD)</option>
+            <option value="cc">Cash Credit (CC)</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Opening Balance (₹)</label><input class="fi" type="number" id="ba_opening_balance" placeholder="0" autocomplete="off"/></div>
+      </div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('bankAccountModal')">Cancel</button><button class="btn btn-p" onclick="saveBankAccount()">Save Bank Account</button></div>
+  </div>
+</div>
+
+<div id="branchCompareModal" class="mo hidden" autocomplete="off">
+  <div class="md md-sm">
+    <div class="mh"><span class="mt2">Target vs Actual — All Branches</span><button class="mc" onclick="closeModal('branchCompareModal')">✕</button></div>
+    <div class="mb">
+      <div id="branchCompareBody" style="max-height:60vh;overflow-y:auto">Loading…</div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('branchCompareModal')">Close</button></div>
+  </div>
+</div>
+
+<div id="stockAgingModal" class="mo hidden" autocomplete="off">
+  <div class="md md-sm">
+    <div class="mh"><span class="mt2" id="stockAgingModalTitle">Stock Aging</span><button class="mc" onclick="closeModal('stockAgingModal')">✕</button></div>
+    <div class="mb">
+      <div id="stockAgingModalBody" style="max-height:60vh;overflow-y:auto">Loading…</div>
+    </div>
+    <div class="mf"><button class="btn btn-o" onclick="closeModal('stockAgingModal')">Close</button></div>
   </div>
 </div>
 
@@ -2476,8 +2592,15 @@ async function apiFetch(path, opts = {}) {
   }
   if (!res.ok) {
     let msg = `HTTP ${res.status}`;
-    try { const body = await res.json(); msg = body.detail || body.message || msg; } catch (_) {}
-    throw new Error(msg);
+    let detail = null;
+    try {
+      const body = await res.json();
+      msg = body.message || (typeof body.detail === 'string' ? body.detail : msg);
+      detail = (body.detail && typeof body.detail === 'object') ? body.detail : null;
+    } catch (_) {}
+    const err = new Error(msg);
+    err.detail = detail; // e.g. { blockers: { open_stock_units, pending_invoices, active_users } }
+    throw err;
   }
   // 204 No Content
   if (res.status === 204) return null;
@@ -2735,20 +2858,25 @@ let trfItemCount = 0;
 // ── normalise API response → local shape ────────────────────
 function normBranch(b) {
   return {
-    id:        b.id,
-    name:      b.branch_name  || b.name || '—',
-    code:      b.branch_code  || b.code || '',
-    addr:      b.address      || b.addr || '',
-    city:      b.city         || '',
-    state:     b.state        || '',
-    stateCode: b.state_code   || '',
-    pincode:   b.pincode      || '',
-    gstin:     b.gstin        || '',
-    phone:     b.phone        || '',
-    email:     b.email        || '',
-    type:      b.branch_type  || b.type || 'branch',
-    items:     b.items ?? b.product_count ?? 0,
-    value:     b.value ?? b.stock_value   ?? 0,
+    id:            b.id,
+    name:          b.branch_name  || b.name || '—',
+    code:          b.branch_code  || b.code || '',
+    addr:          b.address      || b.addr || '',
+    city:          b.city         || '',
+    state:         b.state        || '',
+    stateCode:     b.state_code   || '',
+    pincode:       b.pincode      || '',
+    gstin:         b.gstin        || '',
+    phone:         b.phone        || '',
+    email:         b.email        || '',
+    type:          b.branch_type  || b.type || 'branch',
+    items:         b.items ?? b.product_count ?? 0,
+    value:         b.value ?? b.stock_value   ?? 0,
+    isHeadOffice:  b.is_head_office  ?? b.isHeadOffice  ?? false,
+    managerName:   b.manager_name    ?? b.managerName   ?? '',
+    managerPhone:  b.manager_phone   ?? b.managerPhone  ?? '',
+    monthlyTarget: parseFloat(b.monthly_target ?? b.monthlyTarget ?? 0),
+    userCount:     b.user_count      ?? b.userCount     ?? 0,
   };
 }
 let AUDIT_LOG = JSON.parse(localStorage.getItem('vyaparpro_audit_log') || 'null') || [
@@ -2890,10 +3018,16 @@ async function doLogin() {
       // Lookup endpoint unreachable — fall back to demo company_id below.
     }
 
+    const totpGroup = document.getElementById('loginTotpGroup');
+    const totpCode  = document.getElementById('loginTotp')?.value.trim();
+
+    const loginBody = { company_id: companyId, email: user, password: pass };
+    if (totpCode) loginBody.totp_code = totpCode;
+
     const result = await (await fetch(CFG.API_BASE + CFG.LOGIN_PATH, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ company_id: companyId, email: user, password: pass }),
+      body: JSON.stringify(loginBody),
     })).json();
     console.log("Login result:", result);
 
@@ -2906,7 +3040,7 @@ async function doLogin() {
       try {
         const me = await apiFetch('/auth/me');
         const u = me?.data || me;
-        AUTH.user = { id: u.id, email: u.email || user, name: u.full_name || user, role: u.role?.role_name || 'Staff' };
+        AUTH.user = { id: u.id, email: u.email || user, name: u.full_name || user, role: u.role?.role_name || 'Staff', is2FA: !!u.is_2fa_enabled };
         CFG.COMPANY_ID = u.company_id || CFG.COMPANY_ID;
       } catch (_) {
         AUTH.user = { name: user, role: 'User' };
@@ -2914,6 +3048,20 @@ async function doLogin() {
       bootApp();
       return;
     }
+
+    // 2FA is enabled on this account — reveal the code field and stop here
+    if (result?.error_code === '2FA_REQUIRED') {
+      totpGroup?.classList.remove('hidden');
+      err.textContent = 'Enter the 6-digit code from your authenticator app.';
+      document.getElementById('loginTotp')?.focus();
+      return;
+    }
+    if (result?.error_code === '2FA_INVALID') {
+      err.textContent = 'Invalid code. Please try again.';
+      document.getElementById('loginTotp')?.focus();
+      return;
+    }
+
     // API returned something without a token — wrong credentials
     err.textContent = result.detail || result.message || 'Invalid credentials.';
   } catch (e) {
@@ -6123,7 +6271,136 @@ async function renderAccounting() {
   if (document.getElementById('plTo')   && !getVal('plTo'))   setVal('plTo', today);
   if (document.getElementById('bsAsOf') && !getVal('bsAsOf')) setVal('bsAsOf', today);
 
-  await Promise.all([loadPL(), loadBS(), loadCashbook(), loadBankbook()]);
+  await Promise.all([loadPL(), loadBS(), loadCashbook(), loadBankbook(), renderBankAccounts()]);
+}
+
+// ── Bank Accounts — gap #4 ─────────────────────────────────────
+let BANK_ACCOUNTS = [];
+let BANK_ACCOUNT_GROUP_ID = null; // resolved lazily from the seeded "Bank Accounts" group
+let editingBankAccountId = null;
+
+async function ensureBankAccountGroupId() {
+  if (BANK_ACCOUNT_GROUP_ID) return BANK_ACCOUNT_GROUP_ID;
+  const r = await apiFetch('/accounting/groups');
+  const flat = [];
+  const walk = (nodes) => (nodes || []).forEach(n => { flat.push(n); walk(n.children); });
+  walk(r.data || r);
+  const bankGroup = flat.find(g => g.group_code === 'A01-BANK') || flat.find(g => /bank/i.test(g.group_name || ''));
+  if (!bankGroup) throw new Error('No "Bank Accounts" group found — run chart-of-accounts seeding first (Settings → Accounting → Seed).');
+  BANK_ACCOUNT_GROUP_ID = bankGroup.id;
+  return BANK_ACCOUNT_GROUP_ID;
+}
+
+function branchNameById(id) {
+  if (!id) return 'Company-wide (Head Office)';
+  const b = BRANCHES.find(x => String(x.id) === String(id));
+  return b ? b.name : '—';
+}
+
+async function renderBankAccounts() {
+  const tbody = document.getElementById('bankAccountsBody');
+  if (!tbody) return;
+  if (!AUTH.apiOnline) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3)">Connect to the API to manage bank accounts.</td></tr>';
+    return;
+  }
+  try {
+    const r = await apiFetch('/accounting/accounts?account_type=bank&page_size=200');
+    BANK_ACCOUNTS = r?.data?.items || r?.data || r?.items || [];
+    tbody.innerHTML = BANK_ACCOUNTS.length ? BANK_ACCOUNTS.map(a => `<tr>
+      <td><div class="b">${a.account_name}</div><div style="font-size:10px;color:var(--text3)">${a.account_code}${a.is_active === false ? ' · inactive' : ''}</div></td>
+      <td>${branchNameById(a.branch_id)}</td>
+      <td>${a.bank_name || '—'}</td>
+      <td class="mono">${a.bank_account_no || '—'}</td>
+      <td class="mono">${a.bank_ifsc || '—'}</td>
+      <td style="text-align:right;font-weight:700">${fmtINR(a.current_balance ?? a.opening_balance ?? 0)}</td>
+      <td style="text-align:right"><button class="btn btn-o btn-sm" onclick="editBankAccount('${a.id}')">✏️</button></td>
+    </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text3)">No bank accounts yet — add one to start settling invoices from a specific branch.</td></tr>';
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--red)">${e.message}</td></tr>`;
+  }
+}
+
+function populateBankAccountBranchSelect() {
+  const sel = document.getElementById('ba_branch_id');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Company-wide (Head Office) —</option>' +
+    BRANCHES.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+}
+
+function openAddBankAccount() {
+  editingBankAccountId = null;
+  document.getElementById('bankAccountModalTitle').textContent = 'Add Bank Account';
+  ['ba_name','ba_code','ba_bank_name','ba_bank_branch','ba_account_no','ba_ifsc','ba_opening_balance']
+    .forEach(id => setVal(id, ''));
+  setVal('ba_account_type', 'current');
+  populateBankAccountBranchSelect();
+  setVal('ba_branch_id', '');
+  openModal('bankAccountModal');
+}
+
+function editBankAccount(id) {
+  const a = BANK_ACCOUNTS.find(x => String(x.id) === String(id));
+  if (!a) return;
+  editingBankAccountId = id;
+  document.getElementById('bankAccountModalTitle').textContent = 'Edit Bank Account';
+  populateBankAccountBranchSelect();
+  setVal('ba_name', a.account_name || '');
+  setVal('ba_code', a.account_code || '');
+  setVal('ba_branch_id', a.branch_id || '');
+  setVal('ba_bank_name', a.bank_name || '');
+  setVal('ba_bank_branch', a.bank_branch || '');
+  setVal('ba_account_no', a.bank_account_no || '');
+  setVal('ba_ifsc', a.bank_ifsc || '');
+  setVal('ba_account_type', a.bank_account_type || 'current');
+  setVal('ba_opening_balance', a.opening_balance ?? '');
+  openModal('bankAccountModal');
+}
+
+async function saveBankAccount() {
+  const name = getVal('ba_name');
+  if (!name.trim()) { showToast('⚠️ Account name required', 'warn'); return; }
+  if (!AUTH.apiOnline) { showToast('❌ Connect to the API to save bank accounts'); return; }
+
+  try {
+    if (editingBankAccountId) {
+      const payload = {
+        account_name: name,
+        branch_id: getVal('ba_branch_id') || null,
+        bank_name: getVal('ba_bank_name') || '',
+        bank_branch: getVal('ba_bank_branch') || '',
+        bank_account_no: getVal('ba_account_no') || '',
+        bank_ifsc: getVal('ba_ifsc') || '',
+      };
+      await apiFetch(`/accounting/accounts/${editingBankAccountId}`, { method: 'PATCH', body: JSON.stringify(payload) });
+      showToast('✅ Bank account updated');
+    } else {
+      const groupId = await ensureBankAccountGroupId();
+      const payload = {
+        group_id: groupId,
+        account_code: getVal('ba_code') || ('BANK-' + Date.now()),
+        account_name: name,
+        account_type: 'bank',
+        opening_balance: parseFloat(getVal('ba_opening_balance')) || 0,
+        opening_balance_type: 'Dr',
+        branch_id: getVal('ba_branch_id') || null,
+        bank_name: getVal('ba_bank_name') || '',
+        bank_branch: getVal('ba_bank_branch') || '',
+        bank_account_no: getVal('ba_account_no') || '',
+        bank_ifsc: getVal('ba_ifsc') || '',
+        bank_account_type: getVal('ba_account_type') || 'current',
+        is_reconcilable: true,
+      };
+      await apiFetch('/accounting/accounts', { method: 'POST', body: JSON.stringify(payload) });
+      showToast('✅ Bank account added');
+    }
+    editingBankAccountId = null;
+    closeModal('bankAccountModal');
+    ACCOUNTS = []; // force loadAccountsIfNeeded() to refetch so JE/ledger dropdowns pick up the new account
+    await renderBankAccounts();
+  } catch (e) {
+    showToast('❌ ' + e.message);
+  }
 }
 
 async function loadPL() {
@@ -7345,24 +7622,98 @@ async function renderBranches(list) {
     }
   }
 
-  g.innerHTML=data.map(b=>`<div class="card chov">
-    <div style="font-size:22px;margin-bottom:8px">🏢</div>
+  g.innerHTML=data.map(b=>{
+    const pct = b.monthlyTarget > 0 ? Math.min(100, Math.round((b.salesMtd||0) / b.monthlyTarget * 100)) : null;
+    return `<div class="card chov">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div style="font-size:22px;margin-bottom:8px">🏢</div>
+      ${b.isHeadOffice ? `<span class="sb sp" style="font-size:9px">HEAD OFFICE</span>` : ''}
+    </div>
     <div style="font-size:13px;font-weight:700;margin-bottom:4px">${b.name}</div>
-    <div style="font-size:10px;color:var(--text3);margin-bottom:12px">${b.addr || '—'}</div>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:8px">${b.addr || '—'}</div>
+    ${b.managerName ? `<div style="font-size:10px;color:var(--text2);margin-bottom:8px">👤 ${b.managerName}${b.managerPhone ? ' · ' + b.managerPhone : ''}</div>` : ''}
     <div class="tr"><span style="font-size:11px;color:var(--text3)">Code</span><span style="font-size:11px;font-weight:600">${b.code || '—'}</span></div>
+    <div class="tr"><span style="font-size:11px;color:var(--text3)">Staff</span><span style="font-size:11px;font-weight:600">${b.userCount || 0}</span></div>
     <div class="tr"><span style="font-size:11px;color:var(--text3)">Products</span><span style="font-size:11px;font-weight:600;color:var(--accent)">${b.items}</span></div>
     <div class="tr"><span style="font-size:11px;color:var(--text3)">Stock Value</span><span style="font-size:11px;font-weight:700;color:var(--green)">₹${((b.value||0)/100000).toFixed(1)}L</span></div>
     <div class="tr"><span style="font-size:11px;color:var(--text3)">Sales (MTD)</span><span style="font-size:11px;font-weight:700">₹${fmt(b.salesMtd||0)}</span></div>
+    ${pct !== null ? `<div class="tr"><span style="font-size:11px;color:var(--text3)">Target (${pct}%)</span><span style="font-size:11px;font-weight:700;color:${pct>=100?'var(--green)':'var(--text2)'}">₹${fmt(b.monthlyTarget)}</span></div>
+    <div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin:2px 0 6px"><div style="height:100%;width:${pct}%;background:${pct>=100?'var(--green)':'var(--accent)'}"></div></div>` : ''}
     ${b.lowStock ? `<div class="tr"><span style="font-size:11px;color:var(--text3)">Low Stock Alerts</span><span class="sb sov">${b.lowStock}</span></div>` : ''}
-    <div style="display:flex;gap:6px;margin-top:11px">
-      <button class="btn btn-o btn-sm" style="flex:1;justify-content:center" onclick="viewBranchStock('${b.id}')">📦 View Stock</button>
+    <div style="display:flex;gap:6px;margin-top:11px;flex-wrap:wrap">
+      <button class="btn btn-o btn-sm" style="flex:1;justify-content:center" onclick="viewBranchStock('${b.id}')">📦 Stock</button>
+      <button class="btn btn-o btn-sm" onclick="viewStockAging('${b.id}')" title="Stock Aging">⏳</button>
       <button class="btn btn-o btn-sm" onclick="openOpeningStock('${b.id}')" title="Opening Stock">➕📦</button>
       <button class="btn btn-o btn-sm" onclick="editBranch('${b.id}')">✏️</button>
       <button class="btn btn-d btn-sm" onclick="deleteBranch('${b.id}')">🗑</button>
     </div>
-  </div>`).join('')+`<div class="card chov" style="display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;min-height:180px" onclick="openAddBranch()">
+  </div>`;
+  }).join('')+`<div class="card chov" style="display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;min-height:180px" onclick="openAddBranch()">
     <div style="font-size:32px;margin-bottom:8px">➕</div><div style="font-size:12px;font-weight:600;color:var(--text2)">Add Branch</div>
   </div>`;
+}
+
+// ── target vs actual — every branch side by side (gap #5) ────
+async function openBranchCompare() {
+  const body = document.getElementById('branchCompareBody');
+  body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)">Loading…</div>';
+  openModal('branchCompareModal');
+  if (!AUTH.apiOnline) {
+    body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)">Connect to the API to see live figures.</div>';
+    return;
+  }
+  try {
+    const r = await apiFetch(`/companies/${CFG.COMPANY_ID}/branches/compare`);
+    const rows = r.data || [];
+    body.innerHTML = rows.length ? `<table style="width:100%;font-size:12px;border-collapse:collapse">
+      <thead><tr style="text-align:left;color:var(--text3)"><th style="padding:6px 4px">Branch</th><th style="text-align:right">Target</th><th style="text-align:right">Sales MTD</th><th style="text-align:right">Achv.</th></tr></thead>
+      <tbody>${rows.map(x => `<tr style="border-top:1px solid var(--border)">
+        <td style="padding:6px 4px">${x.branch_name}</td>
+        <td style="text-align:right">₹${fmt(parseFloat(x.monthly_target))}</td>
+        <td style="text-align:right">₹${fmt(parseFloat(x.sales_mtd))}</td>
+        <td style="text-align:right;font-weight:700;color:${x.achievement_pct !== null && x.achievement_pct >= 100 ? 'var(--green)' : 'var(--text2)'}">${x.achievement_pct !== null ? x.achievement_pct + '%' : '—'}</td>
+      </tr>`).join('')}</tbody>
+    </table>` : '<div style="text-align:center;padding:20px;color:var(--text3)">No branches yet.</div>';
+  } catch (e) {
+    body.innerHTML = `<div style="text-align:center;padding:20px;color:var(--red)">${e.message}</div>`;
+  }
+}
+
+// ── stock aging / dead stock — one branch (gap #6) ────────────
+async function viewStockAging(branchId) {
+  const b = BRANCHES.find(x => String(x.id) === String(branchId));
+  document.getElementById('stockAgingModalTitle').textContent = `Stock Aging — ${b ? b.name : ''}`;
+  const body = document.getElementById('stockAgingModalBody');
+  body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)">Loading…</div>';
+  openModal('stockAgingModal');
+  if (!AUTH.apiOnline) {
+    body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)">Connect to the API to see live stock.</div>';
+    return;
+  }
+  try {
+    const r = await apiFetch(`/companies/${CFG.COMPANY_ID}/branches/${branchId}/stock-aging`);
+    const { summary, buckets } = r.data || { summary: {}, buckets: {} };
+    const labels = { '0_30': '0–30 days', '31_60': '31–60 days', '61_90': '61–90 days', '90_plus': '90+ days (dead stock)' };
+    body.innerHTML = Object.keys(labels).map(key => {
+      const items = buckets[key] || [];
+      const s = summary[key] || { item_count: 0, stock_value: 0 };
+      return `<div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:6px;${key==='90_plus'?'color:var(--red)':''}">
+          <span>${labels[key]}</span><span>${s.item_count} items · ₹${fmt(parseFloat(s.stock_value))}</span>
+        </div>
+        ${items.length ? `<table style="width:100%;font-size:11px;border-collapse:collapse">
+          <tbody>${items.map(i => `<tr style="border-top:1px solid var(--border)">
+            <td style="padding:4px">${i.product_name}<div style="font-size:9px;color:var(--text3)">${i.product_code||''} · ${i.warehouse_name}</div></td>
+            <td style="text-align:right;padding:4px">${i.quantity}</td>
+            <td style="text-align:right;padding:4px">${i.days_since_movement}d</td>
+            <td style="text-align:right;padding:4px">₹${fmt(parseFloat(i.stock_value))}</td>
+          </tr>`).join('')}</tbody>
+        </table>` : `<div style="font-size:11px;color:var(--text3)">None</div>`}
+      </div>`;
+    }).join('');
+  } catch (e) {
+    body.innerHTML = `<div style="text-align:center;padding:20px;color:var(--red)">${e.message}</div>`;
+  }
 }
 
 // ── warehouse map: branch_id -> its default stock location ───
@@ -7626,8 +7977,10 @@ function openAddBranch() {
   editingBranchId = null;
   document.getElementById('branchModalTitle').textContent = 'Add Branch';
   ['br_name','br_code','br_address','br_city','br_state','br_state_code',
-   'br_pincode','br_gstin','br_phone','br_email'].forEach(id => setVal(id, ''));
+   'br_pincode','br_gstin','br_phone','br_email','br_manager_name',
+   'br_manager_phone','br_target'].forEach(id => setVal(id, ''));
   setVal('br_type', 'branch');
+  document.getElementById('br_is_ho').checked = false;
   openModal('branchModal');
 }
 
@@ -7639,17 +7992,21 @@ function editBranch(id) {
   editingBranchId = id;
   document.getElementById('branchModalTitle').textContent = 'Edit Branch';
 
-  setVal('br_name',       b.name      || '');
-  setVal('br_code',       b.code      || '');
-  setVal('br_address',    b.addr      || '');
-  setVal('br_city',       b.city      || '');
-  setVal('br_state',      b.state     || '');
-  setVal('br_state_code', b.stateCode || '');
-  setVal('br_pincode',    b.pincode   || '');
-  setVal('br_gstin',      b.gstin     || '');
-  setVal('br_phone',      b.phone     || '');
-  setVal('br_email',      b.email     || '');
-  setVal('br_type',       b.type      || 'branch');
+  setVal('br_name',           b.name          || '');
+  setVal('br_code',           b.code          || '');
+  setVal('br_address',        b.addr          || '');
+  setVal('br_city',           b.city          || '');
+  setVal('br_state',          b.state         || '');
+  setVal('br_state_code',     b.stateCode     || '');
+  setVal('br_pincode',        b.pincode       || '');
+  setVal('br_gstin',          b.gstin         || '');
+  setVal('br_phone',          b.phone         || '');
+  setVal('br_email',          b.email         || '');
+  setVal('br_type',           b.type          || 'branch');
+  setVal('br_manager_name',   b.managerName   || '');
+  setVal('br_manager_phone',  b.managerPhone  || '');
+  setVal('br_target',         b.monthlyTarget || '');
+  document.getElementById('br_is_ho').checked = !!b.isHeadOffice;
 
   openModal('branchModal');
 }
@@ -7660,17 +8017,21 @@ async function saveBranch() {
   if (!name.trim()) { showToast('⚠️ Branch name required', 'warn'); return; }
 
   const payload = {
-    branch_code: getVal('br_code')       || 'BR-' + Date.now(),
-    branch_name: name,
-    gstin:       getVal('br_gstin')      || '',
-    address:     getVal('br_address')    || '',
-    city:        getVal('br_city')       || '',
-    state:       getVal('br_state')      || '',
-    state_code:  getVal('br_state_code') || '',
-    pincode:     getVal('br_pincode')    || '',
-    phone:       getVal('br_phone')      || '',
-    email:       getVal('br_email')      || '',
-    branch_type: getVal('br_type')       || 'branch',
+    branch_code:      getVal('br_code')          || 'BR-' + Date.now(),
+    branch_name:      name,
+    gstin:             getVal('br_gstin')         || '',
+    address:           getVal('br_address')       || '',
+    city:              getVal('br_city')          || '',
+    state:             getVal('br_state')         || '',
+    state_code:        getVal('br_state_code')    || '',
+    pincode:           getVal('br_pincode')        || '',
+    phone:             getVal('br_phone')          || '',
+    email:             getVal('br_email')          || '',
+    branch_type:       getVal('br_type')           || 'branch',
+    is_head_office:    document.getElementById('br_is_ho').checked,
+    manager_name:      getVal('br_manager_name')   || '',
+    manager_phone:     getVal('br_manager_phone')  || '',
+    monthly_target:    parseFloat(getVal('br_target')) || 0,
   };
 
   // local shape — keys match normBranch output
@@ -7679,6 +8040,8 @@ async function saveBranch() {
     address: payload.address, city: payload.city, state: payload.state,
     state_code: payload.state_code, pincode: payload.pincode, gstin: payload.gstin,
     phone: payload.phone, email: payload.email, branch_type: payload.branch_type,
+    is_head_office: payload.is_head_office, manager_name: payload.manager_name,
+    manager_phone: payload.manager_phone, monthly_target: payload.monthly_target,
   });
 
   try {
@@ -7734,13 +8097,34 @@ async function saveBranch() {
 }
 
 // ── delete ───────────────────────────────────────────────────
-async function deleteBranch(id) {
-  if (!confirm('Deactivate this branch?')) return;
+async function deleteBranch(id, force = false) {
+  if (!confirm(force ? 'Force-deactivate this branch anyway? This may leave stock/invoices/staff pointing at an inactive branch.' : 'Deactivate this branch?')) return;
+
   if (AUTH.apiOnline) {
     try {
-      await apiFetch(`/companies/${CFG.COMPANY_ID}/branches/${id}`, { method: 'DELETE' });
-    } catch (_) {}
+      const q = force ? '?force=true' : '';
+      await apiFetch(`/companies/${CFG.COMPANY_ID}/branches/${id}${q}`, { method: 'DELETE' });
+    } catch (e) {
+      // Gap #8 — the backend now genuinely refuses when the branch still has
+      // open stock, pending invoices, or active staff. Show why, and offer
+      // an explicit override instead of silently deleting locally.
+      if (e.detail && e.detail.blockers) {
+        const b = e.detail.blockers;
+        const reasons = [];
+        if (b.open_stock_units) reasons.push(`${b.open_stock_units} units of open stock`);
+        if (b.pending_invoices) reasons.push(`${b.pending_invoices} pending invoice(s)`);
+        if (b.active_users) reasons.push(`${b.active_users} active staff still assigned`);
+        showToast('⚠️ ' + (e.message || 'Cannot deactivate branch'), 'warn');
+        if (reasons.length && confirm(`Blocked: ${reasons.join('; ')}.\n\nForce-deactivate anyway?`)) {
+          return deleteBranch(id, true);
+        }
+        return; // do NOT remove from local list — the branch is still active server-side
+      }
+      showToast('❌ ' + (e.message || 'Failed to deactivate branch'));
+      return;
+    }
   }
+
   BRANCHES = BRANCHES.filter(b => String(b.id) !== String(id));
   showToast('🗑 Branch deactivated');
   renderBranches(BRANCHES);
@@ -8041,7 +8425,9 @@ async function renderSettings() {
 
   // Paint security toggles with sensible defaults right away, so they're
   // clickable even before company data loads (or if that fetch ever fails).
-  paintSecurityToggle('two_factor_enabled', true);
+  // Two-Factor Auth reflects the logged-in user's own account, not a
+  // company-wide setting — Auto Backup / Data Encryption stay company-wide.
+  paintSecurityToggle('two_factor_enabled', !!AUTH.user?.is2FA);
   paintSecurityToggle('auto_backup_enabled', true);
   paintSecurityToggle('data_encryption_enabled', true);
   paintTaxToggle('composition_scheme', false, 'On', 'Off');
@@ -8090,11 +8476,21 @@ async function renderSettings() {
         ph.style.display = 'flex';
       }
 
-      // ---- Security toggles, stored in company.settings JSON ----
+      // ---- Security toggles ----
+      // Auto Backup / Data Encryption are company-wide flags stored in settings JSON.
+      // Two-Factor Auth is per-user real TOTP — refresh it from /auth/me so it's
+      // always accurate even if AUTH.user was set before 2FA was toggled.
       const s = company.settings || {};
-      paintSecurityToggle('two_factor_enabled', s.two_factor_enabled !== false); // default ON
       paintSecurityToggle('auto_backup_enabled', s.auto_backup_enabled !== false);
       paintSecurityToggle('data_encryption_enabled', s.data_encryption_enabled !== false);
+      try {
+        const meR = await apiFetch('/auth/me');
+        const meU = meR?.data || meR;
+        if (AUTH.user) AUTH.user.is2FA = !!meU.is_2fa_enabled;
+        paintSecurityToggle('two_factor_enabled', !!meU.is_2fa_enabled);
+      } catch (_) {
+        paintSecurityToggle('two_factor_enabled', !!AUTH.user?.is2FA);
+      }
 
       // ---- Tax & GST defaults, also stored in company.settings JSON ----
       setVal('taxDefaultGst', String(s.default_gst_rate ?? 18));
@@ -8162,7 +8558,75 @@ function paintSecurityToggle(key, enabled) {
   if (!el) return;
   el.textContent = enabled ? 'Active' : 'Disabled';
   el.className = 'chip ' + (enabled ? 'cgr' : 'cor');
-  el.onclick = () => toggleSecuritySetting(key, enabled);
+  // Two-Factor Auth is a real per-user security feature (TOTP), wired to
+  // /auth/2fa/* — it must NOT go through the generic company.settings
+  // toggle used by Auto Backup / Data Encryption, which are cosmetic flags.
+  el.onclick = key === 'two_factor_enabled'
+    ? () => openTwoFactorFlow(enabled)
+    : () => toggleSecuritySetting(key, enabled);
+}
+
+// ============================================================
+//  TWO-FACTOR AUTH (real TOTP, wired to /auth/2fa/*)
+// ============================================================
+let TFA_MODE = null; // 'enable' | 'disable'
+
+function openTwoFactorFlow(currentlyEnabled) {
+  if (!AUTH.apiOnline) { showToast('⚠️ Connect to the API to manage 2FA', 'warn'); return; }
+  document.getElementById('tfaModalErr').textContent = '';
+  document.getElementById('tfaCodeInput').value = '';
+
+  if (currentlyEnabled) {
+    // Disabling just needs a valid current code — no QR step
+    TFA_MODE = 'disable';
+    document.getElementById('tfaModalTitle').textContent = 'Disable Two-Factor Authentication';
+    document.getElementById('tfaSetupStep').classList.add('hidden');
+    document.getElementById('tfaCodeLabel').textContent = 'Enter your current 6-digit code to confirm';
+    document.getElementById('tfaConfirmBtn').textContent = 'Disable 2FA';
+    openModal('twoFactorModal');
+    return;
+  }
+
+  // Enabling: fetch a fresh secret + QR first
+  TFA_MODE = 'enable';
+  document.getElementById('tfaModalTitle').textContent = 'Enable Two-Factor Authentication';
+  document.getElementById('tfaSetupStep').classList.remove('hidden');
+  document.getElementById('tfaCodeLabel').textContent = 'Enter the 6-digit code shown by your app';
+  document.getElementById('tfaConfirmBtn').textContent = 'Verify & Enable';
+  document.getElementById('tfaQrImg').src = '';
+  document.getElementById('tfaSecretText').textContent = 'Loading…';
+  openModal('twoFactorModal');
+
+  apiFetch('/auth/2fa/setup', { method: 'POST' }).then(r => {
+    const data = r?.data || r;
+    document.getElementById('tfaSecretText').textContent = data.secret || '';
+    document.getElementById('tfaQrImg').src =
+      'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(data.qr_uri || '');
+  }).catch(e => {
+    document.getElementById('tfaModalErr').textContent = e.message || 'Could not start 2FA setup.';
+  });
+}
+
+async function confirmTwoFactorAction() {
+  const code = document.getElementById('tfaCodeInput')?.value.trim();
+  const errEl = document.getElementById('tfaModalErr');
+  errEl.textContent = '';
+  if (!code || code.length < 6) { errEl.textContent = 'Enter the 6-digit code.'; return; }
+
+  try {
+    if (TFA_MODE === 'enable') {
+      await apiFetch('/auth/2fa/verify', { method: 'POST', body: JSON.stringify({ totp_code: code }) });
+      showToast('✅ Two-factor authentication enabled');
+    } else {
+      await apiFetch('/auth/2fa/disable', { method: 'POST', body: JSON.stringify({ totp_code: code }) });
+      showToast('✅ Two-factor authentication disabled');
+    }
+    if (AUTH.user) AUTH.user.is2FA = (TFA_MODE === 'enable');
+    paintSecurityToggle('two_factor_enabled', TFA_MODE === 'enable');
+    closeModal('twoFactorModal');
+  } catch (e) {
+    errEl.textContent = e.message || 'Invalid code — please try again.';
+  }
 }
 
 // ---- Tax & GST defaults ----
@@ -9276,7 +9740,7 @@ function initAI() {
   const m=document.getElementById('aiMsgs'); if(!m||m.children.length>0)return;
   addAIMsg('bot','👋 Vanakkam! I\'m your AI Business Assistant. Ask me anything about your business.');
   const s=document.getElementById('aiSug');
-  if (s) s.innerHTML=['Today\'s sales','Low stock','Top customers','Pending payments','How do I add a customer?','Where is GST Settings?','Open Purchase Orders'].map(x=>`<button class="chip cbl2" style="cursor:pointer;padding:5px 11px;font-size:11px" onclick="askAI('${x}')">${x}</button>`).join('');
+  if (s) s.innerHTML=['Today\'s sales','Low stock','Top customers','Pending payments','Branch performance','Cash balance','Bank balance','Total payables','How do I add a customer?','Where is GST Settings?','Open Purchase Orders'].map(x=>`<button class="chip cbl2" style="cursor:pointer;padding:5px 11px;font-size:11px" onclick="askAI('${x}')">${x}</button>`).join('');
   const p=document.getElementById('aiPreds');
   if (p) p.innerHTML='<div style="font-size:11px;color:var(--text3)"><div class="ld" style="display:inline-block;margin-right:6px"></div>Loading predictions…</div>';
   loadAIPredictions();

@@ -61,6 +61,9 @@ class AccountCreate(APIModel):
     opening_balance: Decimal = Decimal("0")
     opening_balance_type: str = "Dr"
     currency: str = "INR"
+    # Gap #4 — leave unset for a company-wide account; set to scope a bank
+    # account (typically) to one branch for per-branch settlement.
+    branch_id: Optional[UUID] = None
     bank_name: Optional[str] = None
     bank_account_no: Optional[str] = None
     bank_ifsc: Optional[str] = None
@@ -76,6 +79,7 @@ class AccountUpdate(APIModel):
     account_name: Optional[str] = None
     group_id: Optional[UUID] = None
     opening_balance: Optional[Decimal] = None
+    branch_id: Optional[UUID] = None
     bank_name: Optional[str] = None
     bank_account_no: Optional[str] = None
     bank_ifsc: Optional[str] = None
@@ -95,6 +99,7 @@ class AccountOut(APIModel):
     opening_balance: Decimal
     opening_balance_type: str
     currency: str
+    branch_id: Optional[UUID]
     bank_name: Optional[str]
     bank_account_no: Optional[str]
     bank_ifsc: Optional[str]

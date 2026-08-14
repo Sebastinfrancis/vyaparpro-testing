@@ -138,7 +138,7 @@ async def delete_user(
     return ok(message="User deactivated.")
 
 
-@router.post("/{user_id}/activate", summary="Re-activate a deactivated user")
+@router.post("/{user_id}/activate", summary="Re-activate a deactivated user", dependencies=[require_perm("user.update")])
 async def activate_user(
     user_id: UUID,
     current: CurrentUserDep,

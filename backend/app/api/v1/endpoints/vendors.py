@@ -31,7 +31,7 @@ from app.db.models import Party
 router = APIRouter()
 
 
-@router.get("", summary="Search / list vendors")
+@router.get("", summary="Search / list vendors", dependencies=[require_perm("vendor.read")])
 async def list_vendors(
     current: CurrentUserDep,
     db: DBDep,
@@ -118,7 +118,7 @@ async def create_vendor(
     )
 
 
-@router.get("/{vendor_id}", summary="Get vendor by ID")
+@router.get("/{vendor_id}", summary="Get vendor by ID", dependencies=[require_perm("vendor.read")])
 async def get_vendor(
     vendor_id: UUID,
     current: CurrentUserDep,
@@ -179,7 +179,7 @@ async def delete_vendor(
     return ok(message="Vendor deactivated.")
 
 
-@router.post("/{vendor_id}/contacts", summary="Add contact person to vendor")
+@router.post("/{vendor_id}/contacts", summary="Add contact person to vendor", dependencies=[require_perm("vendor.update")])
 async def add_contact(
     vendor_id: UUID,
     payload: PartyContactCreate,
@@ -197,7 +197,7 @@ async def add_contact(
     )
 
 
-@router.get("/{vendor_id}/payables", summary="Vendor outstanding payables summary")
+@router.get("/{vendor_id}/payables", summary="Vendor outstanding payables summary", dependencies=[require_perm("vendor.read")])
 async def vendor_payables(
     vendor_id: UUID,
     current: CurrentUserDep,

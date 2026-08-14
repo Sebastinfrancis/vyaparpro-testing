@@ -270,6 +270,11 @@ class BranchCreate(APIModel):
     phone: Optional[str] = None
     email: Optional[EmailStr] = None
     branch_type: str = "branch"
+    is_head_office: bool = False
+    manager_user_id: Optional[UUID] = None
+    manager_name: Optional[str] = Field(None, max_length=120)
+    manager_phone: Optional[str] = Field(None, max_length=20)
+    monthly_target: Decimal = Decimal("0")
 
     @field_validator("gstin")
     @classmethod
@@ -288,6 +293,11 @@ class BranchUpdate(APIModel):
     email: Optional[EmailStr] = None
     branch_type: Optional[str] = None
     is_active: Optional[bool] = None
+    is_head_office: Optional[bool] = None
+    manager_user_id: Optional[UUID] = None
+    manager_name: Optional[str] = None
+    manager_phone: Optional[str] = None
+    monthly_target: Optional[Decimal] = None
 
 
 class BranchOut(APIModel):
@@ -305,7 +315,15 @@ class BranchOut(APIModel):
     email: Optional[str]
     branch_type: str
     is_active: bool
+    is_head_office: bool
+    manager_user_id: Optional[UUID]
+    manager_name: Optional[str]
+    manager_phone: Optional[str]
+    monthly_target: Decimal
     created_at: datetime
+    # Computed, not a DB column — gap #7. Attached onto the ORM object by
+    # BranchService before model_validate(); defaults to 0 elsewhere.
+    user_count: int = 0
 
 
 # ════════════════════════════════════════════════════════════════════

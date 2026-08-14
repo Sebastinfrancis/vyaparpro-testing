@@ -14,7 +14,7 @@ from sqlalchemy import (
     Integer, Numeric, SmallInteger, String, Text, UniqueConstraint,
     func, text,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, INET, JSONB, UUID
+from app.db.types import ARRAY, INET, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
@@ -102,7 +102,11 @@ class Company(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
 
 class Branch(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "branches"
-    __table_args__ = (UniqueConstraint("company_id", "branch_code"),)
+    __table_args__ = (
+        UniqueConstraint("company_id", "branch_code"),
+        # Only one Head Office per company — enforced at the DB level via a
+        # partial unique index (see migration), not just in application code.
+    )
 
     company_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
     branch_code: Mapped[str] = mapped_column(String(20), nullable=False)
@@ -116,9 +120,21 @@ class Branch(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
     phone: Mapped[Optional[str]] = mapped_column(String(20))
     email: Mapped[Optional[str]] = mapped_column(String(150))
     branch_type: Mapped[str] = mapped_column(String(20), default="branch")
+    # Gap #3 — explicit Head Office flag driving real business rules
+    # (default branch for company-wide docs, cannot be deleted).
+    is_head_office: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    # Gap #2 — who runs this branch. manager_user_id links to an onboarded
+    # staff account (preferred); manager_name/phone are a fallback for when
+    # the manager hasn't been created as a system user yet.
+    manager_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    manager_name: Mapped[Optional[str]] = mapped_column(String(120))
+    manager_phone: Mapped[Optional[str]] = mapped_column(String(20))
+    # Gap #5 — monthly sales target for target-vs-actual comparison.
+    monthly_target: Mapped[Decimal] = mapped_column(Numeric(15, 2), default=Decimal("0"), server_default="0")
 
     company: Mapped["Company"] = relationship("Company", back_populates="branches")
-    users: Mapped[list["User"]] = relationship("User", back_populates="branch")
+    users: Mapped[list["User"]] = relationship("User", back_populates="branch", foreign_keys="User.branch_id")
+    manager: Mapped[Optional["User"]] = relationship("User", foreign_keys=[manager_user_id])
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -185,7 +201,7 @@ class User(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
     preferences: Mapped[dict] = mapped_column(JSONB, default=dict)
 
     company: Mapped["Company"] = relationship("Company", back_populates="users")
-    branch: Mapped[Optional["Branch"]] = relationship("Branch", back_populates="users")
+    branch: Mapped[Optional["Branch"]] = relationship("Branch", back_populates="users", foreign_keys=[branch_id])
     role: Mapped["Role"] = relationship("Role", back_populates="users")
     sessions: Mapped[list["UserSession"]] = relationship("UserSession", back_populates="user")
 

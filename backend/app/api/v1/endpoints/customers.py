@@ -31,7 +31,7 @@ from app.db.models import Party
 router = APIRouter()
 
 
-@router.get("", summary="Search / list customers with filters")
+@router.get("", summary="Search / list customers with filters", dependencies=[require_perm("customer.read")])
 async def list_customers(
     current: CurrentUserDep,
     db: DBDep,
@@ -131,7 +131,7 @@ async def create_customer(
     )
 
 
-@router.get("/{customer_id}", summary="Get customer by ID")
+@router.get("/{customer_id}", summary="Get customer by ID", dependencies=[require_perm("customer.read")])
 async def get_customer(
     customer_id: UUID,
     current: CurrentUserDep,
@@ -193,7 +193,7 @@ async def delete_customer(
     return ok(message="Customer deactivated.")
 
 
-@router.post("/{customer_id}/contacts", summary="Add a contact person to customer")
+@router.post("/{customer_id}/contacts", summary="Add a contact person to customer", dependencies=[require_perm("customer.update")])
 async def add_contact(
     customer_id: UUID,
     payload: PartyContactCreate,
@@ -211,7 +211,7 @@ async def add_contact(
     )
 
 
-@router.get("/{customer_id}/statement", summary="Customer account statement summary")
+@router.get("/{customer_id}/statement", summary="Customer account statement summary", dependencies=[require_perm("customer.read")])
 async def customer_statement(
     customer_id: UUID,
     current: CurrentUserDep,

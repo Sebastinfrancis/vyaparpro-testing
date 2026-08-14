@@ -22,14 +22,14 @@ from app.utils.responses import created, ok
 router = APIRouter()
 
 
-@router.get("", summary="List all branches for a company")
+@router.get("", summary="List all branches for a company", dependencies=[require_perm("branch.read")])
 async def list_branches(
     company_id: UUID,
     current: CurrentUserDep,
     db: DBDep,
 ) -> ORJSONResponse:
     svc = BranchService(db)
-    branches = await svc.list_by_company(company_id)
+    branches = await svc.list_by_company(company_id)  # includes user_count — gap #7
     # A branch-scoped user only needs to see (and pick from) their own branch —
     # showing every branch would let them select one they can't transact for anyway.
     if current.branch_id is not None and not current.has_permission("branch.access_all"):
@@ -54,16 +54,55 @@ async def create_branch(
     return created(data=BranchOut.model_validate(branch).model_dump(mode='json'), message="Branch created.")
 
 
-@router.get("/{branch_id}", summary="Get branch by ID")
+@router.get("/compare", summary="Target vs actual sales — every branch, side by side", dependencies=[require_perm("branch.read")])
+async def compare_branches(
+    company_id: UUID,
+    current: CurrentUserDep,
+    db: DBDep,
+) -> ORJSONResponse:
+    """Gap #5 — dashboard had actuals but no target field or branch-vs-branch
+    comparison view. Pulls each branch's monthly_target against its real MTD
+    sales figure, live from billing."""
+    from sqlalchemy import text
+    svc = BranchService(db)
+    branches = await svc.list_by_company(company_id)
+
+    stmt = text("""
+        SELECT branch_id,
+               COALESCE(SUM(total_amount) FILTER (
+                   WHERE invoice_date >= date_trunc('month', CURRENT_DATE)
+               ), 0) AS sales_mtd
+        FROM invoices
+        WHERE company_id = :cid AND status != 'cancelled' AND branch_id IS NOT NULL
+        GROUP BY branch_id
+    """)
+    rows = (await db.execute(stmt, {"cid": str(company_id)})).mappings().all()
+    sales_by_branch = {r["branch_id"]: r["sales_mtd"] for r in rows}
+
+    data = []
+    for b in branches:
+        actual = sales_by_branch.get(b.id, 0)
+        target = b.monthly_target or 0
+        achievement_pct = round(float(actual) / float(target) * 100, 1) if target else None
+        data.append({
+            "branch_id": str(b.id),
+            "branch_name": b.branch_name,
+            "monthly_target": str(target),
+            "sales_mtd": str(actual),
+            "achievement_pct": achievement_pct,
+        })
+    return ok(data=data)
+
+
+@router.get("/{branch_id}", summary="Get branch by ID", dependencies=[require_perm("branch.read")])
 async def get_branch(
     company_id: UUID,
     branch_id: UUID,
     current: CurrentUserDep,
     db: DBDep,
 ) -> ORJSONResponse:
-    from app.db.repositories import BranchRepository
-    repo = BranchRepository(db)
-    branch = await repo.get_or_raise(branch_id)
+    svc = BranchService(db)
+    branch = await svc.get_with_user_count(branch_id, company_id)  # gap #7
     return ok(data=BranchOut.model_validate(branch).model_dump(mode='json'))
 
 
@@ -94,13 +133,15 @@ async def delete_branch(
     branch_id: UUID,
     current: CurrentUserDep,
     db: DBDep,
+    force: bool = False,
 ) -> ORJSONResponse:
-    from app.db.repositories import BranchRepository
-    repo = BranchRepository(db)
-    await repo.soft_delete(branch_id)
+    # Gap #8 — real safety checks: refuses if open stock, pending invoices,
+    # or active staff are still tied to this branch, unless force=true.
+    svc = BranchService(db)
+    await svc.deactivate(branch_id, company_id, current.user_id, force=force)
     return ok(message="Branch deactivated.")
 
-@router.get("/{branch_id}/dashboard", summary="Branch performance dashboard (real stock + sales figures)")
+@router.get("/{branch_id}/dashboard", summary="Branch performance dashboard (real stock + sales figures)", dependencies=[require_perm("branch.read")])
 async def branch_dashboard(
     company_id: UUID,
     branch_id: UUID,
@@ -193,7 +234,7 @@ async def branch_dashboard(
     })
 
 
-@router.get("/{branch_id}/stock", summary="Live stock at this branch (all warehouses)")
+@router.get("/{branch_id}/stock", summary="Live stock at this branch (all warehouses)", dependencies=[require_perm("branch.read")])
 async def branch_stock(
     company_id: UUID,
     branch_id: UUID,
@@ -224,3 +265,49 @@ async def branch_stock(
         }
         for r in rows
     ])
+
+
+
+@router.get("/{branch_id}/stock-aging", summary="Stock aging / dead-stock report for this branch", dependencies=[require_perm("branch.read")])
+async def branch_stock_aging(
+    company_id: UUID,
+    branch_id: UUID,
+    current: CurrentUserDep,
+    db: DBDep,
+) -> ORJSONResponse:
+    """Gap #6 — current stock was visible but not how long it's been sitting.
+    Buckets every stock line by days since its last movement
+    (inventory_stock.last_updated, touched on every purchase/sale/transfer)."""
+    from sqlalchemy import text
+    stmt = text("""
+        SELECT s.product_id, p.product_name, p.product_code,
+               w.id AS warehouse_id, w.warehouse_name,
+               s.quantity, s.cost_price, s.last_updated,
+               (CURRENT_DATE - s.last_updated::date) AS days_since_movement
+        FROM inventory_stock s
+        JOIN warehouses w ON w.id = s.warehouse_id
+        JOIN products p ON p.id = s.product_id
+        WHERE w.branch_id = :bid AND s.quantity > 0
+        ORDER BY days_since_movement DESC
+    """)
+    rows = (await db.execute(stmt, {"bid": str(branch_id)})).mappings().all()
+
+    buckets = {"0_30": [], "31_60": [], "61_90": [], "90_plus": []}
+    for r in rows:
+        days = r["days_since_movement"] or 0
+        bucket = "0_30" if days <= 30 else "31_60" if days <= 60 else "61_90" if days <= 90 else "90_plus"
+        buckets[bucket].append({
+            "product_id": str(r["product_id"]), "product_name": r["product_name"],
+            "product_code": r["product_code"], "warehouse_name": r["warehouse_name"],
+            "quantity": str(r["quantity"]), "days_since_movement": days,
+            "stock_value": str((r["quantity"] or 0) * (r["cost_price"] or 0)),
+        })
+
+    summary = {
+        k: {
+            "item_count": len(v),
+            "stock_value": str(sum(float(i["stock_value"]) for i in v)),
+        }
+        for k, v in buckets.items()
+    }
+    return ok(data={"summary": summary, "buckets": buckets})

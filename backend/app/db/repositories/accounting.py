@@ -66,6 +66,25 @@ class AccountRepository(BaseRepository[Account]):
     async def get_bank_accounts(self, company_id: UUID) -> list[Account]:
         return await self.get_by_type(company_id, "bank")
 
+    async def get_bank_accounts_for_branch(self, company_id: UUID, branch_id: UUID | None) -> list[Account]:
+        """Gap #4 — a branch's own bank account(s) first, falling back to the
+        company-wide account(s) (branch_id IS NULL) so branches that don't
+        settle separately still get a valid account on their invoices."""
+        if branch_id is None:
+            return await self.get_bank_accounts(company_id)
+        stmt = (
+            select(Account)
+            .where(
+                Account.company_id == company_id,
+                Account.account_type == "bank",
+                Account.is_active == True,
+                or_(Account.branch_id == branch_id, Account.branch_id.is_(None)),
+            )
+            .order_by(Account.branch_id.is_(None), Account.account_name)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
     async def search(
         self,
         company_id: UUID,

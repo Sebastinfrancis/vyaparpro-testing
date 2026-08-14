@@ -24,13 +24,13 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai_assistant.classifier import get_intent_engine
-from app.ai_assistant.data_queries import HANDLERS, party_lookup
+from app.ai_assistant.data_queries import HANDLERS, party_lookup, branch_lookup, account_lookup
 from app.ai_assistant.knowledge_base import DATA_KB, NAV_KB
 
 _FALLBACK_ANSWER = (
     "I'm not sure about that yet — I can help with things like *\"How do I add a "
-    "customer?\"*, *\"Where is GST Settings?\"*, *\"Show today's sales\"* or "
-    "*\"Open Purchase Orders\"*."
+    "customer?\"*, *\"Where is GST Settings?\"*, *\"Show today's sales\"*, "
+    "*\"Branch performance\"*, *\"Ledger of HDFC Bank\"* or *\"Open Purchase Orders\"*."
 )
 
 
@@ -91,5 +91,25 @@ async def get_assistant_response(
                 "search directly in Customers / Vendors / CRM."
             )
         return AssistantResponse(answer=answer, intent="party_lookup", source="database")
+
+    if match.intent_type == "branch_lookup":
+        try:
+            answer = await branch_lookup(db, company_id, match.query or "")
+        except Exception:
+            answer = (
+                "I couldn't look that branch up just now — please try again, or "
+                "check directly under **Branches**."
+            )
+        return AssistantResponse(answer=answer, intent="branch_lookup", source="database")
+
+    if match.intent_type == "account_lookup":
+        try:
+            answer = await account_lookup(db, company_id, match.query or "")
+        except Exception:
+            answer = (
+                "I couldn't look that account up just now — please try again, or "
+                "check directly under **Ledger & Books**."
+            )
+        return AssistantResponse(answer=answer, intent="account_lookup", source="database")
 
     return AssistantResponse(answer=_FALLBACK_ANSWER, intent="unknown", source="fallback")

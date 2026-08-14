@@ -39,7 +39,7 @@ from fastapi.responses import ORJSONResponse
 
 from fastapi import Response
 
-from app.api.v1.dependencies import CurrentUserDep, DBDep, PaginationDep
+from app.api.v1.dependencies import CurrentUserDep, DBDep, PaginationDep, require_perm
 from app.core.exceptions import NotFoundError, PermissionDeniedError
 from app.utils.accounting_report_export import (
     build_balance_sheet_tables, build_ledger_like_tables, build_pl_tables,
@@ -70,21 +70,21 @@ router = APIRouter()
 # ACCOUNT GROUPS
 # ════════════════════════════════════════════════════════════════════
 
-@router.get("/groups", summary="Get full account group tree")
+@router.get("/groups", summary="Get full account group tree", dependencies=[require_perm("accounting.read")])
 async def get_account_groups(current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = AccountGroupService(db)
     groups = await svc.get_tree(current.company_id)
     return ok([AccountGroupOut.model_validate(g).model_dump(mode='json') for g in groups])
 
 
-@router.post("/groups", status_code=201, summary="Create a custom account group")
+@router.post("/groups", status_code=201, summary="Create a custom account group", dependencies=[require_perm("accounting.create")])
 async def create_account_group(payload: AccountGroupCreate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = AccountGroupService(db)
     group = await svc.create(current.company_id, payload, current.user_id)
     return created(AccountGroupOut.model_validate(group).model_dump(mode='json'), "Account group created.")
 
 
-@router.patch("/groups/{group_id}", summary="Update an account group (non-system only)")
+@router.patch("/groups/{group_id}", summary="Update an account group (non-system only)", dependencies=[require_perm("accounting.update")])
 async def update_account_group(group_id: UUID, payload: AccountGroupUpdate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = AccountGroupService(db)
     group = await svc.update(group_id, payload, current.company_id)
@@ -95,7 +95,7 @@ async def update_account_group(group_id: UUID, payload: AccountGroupUpdate, curr
 # SEEDING
 # ════════════════════════════════════════════════════════════════════
 
-@router.post("/seed", summary="Seed the standard chart of accounts (safe to call more than once)")
+@router.post("/seed", summary="Seed the standard chart of accounts (safe to call more than once)", dependencies=[require_perm("accounting.create")])
 async def seed_chart_of_accounts(current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = ChartOfAccountsService(db)
     await svc.seed_default_accounts(current.company_id, current.user_id)
@@ -106,7 +106,7 @@ async def seed_chart_of_accounts(current: CurrentUserDep, db: DBDep) -> ORJSONRe
 # CHART OF ACCOUNTS
 # ════════════════════════════════════════════════════════════════════
 
-@router.get("/accounts", summary="Search / filter accounts with pagination")
+@router.get("/accounts", summary="Search / filter accounts with pagination", dependencies=[require_perm("accounting.read")])
 async def list_accounts(
     current: CurrentUserDep,
     db: DBDep,
@@ -125,13 +125,13 @@ async def list_accounts(
     return paginated(items, result.total, result.page, result.page_size, result.pages)
 
 
-@router.post("/accounts", status_code=201, summary="Create an account")
+@router.post("/accounts", status_code=201, summary="Create an account", dependencies=[require_perm("accounting.create")])
 async def create_account(payload: AccountCreate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = ChartOfAccountsService(db)
     account = await svc.create(current.company_id, payload, current.user_id)
     return created(AccountOut.model_validate(account).model_dump(mode='json'), "Account created.")
 
-@router.get("/accounts/{account_id}/ledger", response_model=None, summary="Per-account ledger — opening/closing balance + entries")
+@router.get("/accounts/{account_id}/ledger", response_model=None, summary="Per-account ledger — opening/closing balance + entries", dependencies=[require_perm("accounting.read")])
 async def get_account_ledger(
     account_id: UUID,
     current: CurrentUserDep,
@@ -166,14 +166,14 @@ async def get_account_ledger(
     return ok(ledger.model_dump(mode='json'))
 
 
-@router.get("/accounts/{account_id}", summary="Get one account with its current balance")
+@router.get("/accounts/{account_id}", summary="Get one account with its current balance", dependencies=[require_perm("accounting.read")])
 async def get_account(account_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = ChartOfAccountsService(db)
     account = await svc.get_with_balance(account_id, current.company_id)
     return ok(AccountOut.model_validate(account).model_dump(mode='json'))
 
 
-@router.patch("/accounts/{account_id}", summary="Update an account")
+@router.patch("/accounts/{account_id}", summary="Update an account", dependencies=[require_perm("accounting.update")])
 async def update_account(account_id: UUID, payload: AccountUpdate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = ChartOfAccountsService(db)
     account = await svc.update(account_id, payload, current.company_id)
@@ -184,7 +184,7 @@ async def update_account(account_id: UUID, payload: AccountUpdate, current: Curr
 # JOURNAL VOUCHERS
 # ════════════════════════════════════════════════════════════════════
 
-@router.get("/vouchers", summary="Search / filter journal vouchers with pagination")
+@router.get("/vouchers", summary="Search / filter journal vouchers with pagination", dependencies=[require_perm("accounting.read")])
 async def list_vouchers(
     current: CurrentUserDep,
     db: DBDep,
@@ -209,42 +209,42 @@ async def list_vouchers(
     return paginated(items, result.total, result.page, result.page_size, result.pages)
 
 
-@router.post("/vouchers", status_code=201, summary="Create a manual journal voucher (draft, unposted)")
+@router.post("/vouchers", status_code=201, summary="Create a manual journal voucher (draft, unposted)", dependencies=[require_perm("accounting.create")])
 async def create_voucher(payload: JournalVoucherCreate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = JournalVoucherService(db)
     jv = await svc.create(current.company_id, payload, current.user_id)
     return created(JournalVoucherOut.model_validate(jv).model_dump(mode='json'), "Journal voucher created.")
 
 
-@router.post("/vouchers/quick/payment", status_code=201, summary="Quick Payment voucher (auto-posted)")
+@router.post("/vouchers/quick/payment", status_code=201, summary="Quick Payment voucher (auto-posted)", dependencies=[require_perm("accounting.create")])
 async def create_payment_voucher(payload: PaymentVoucherCreate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = JournalVoucherService(db)
     jv = await svc.create_payment(current.company_id, payload, current.user_id)
     return created(JournalVoucherOut.model_validate(jv).model_dump(mode='json'), "Payment recorded.")
 
 
-@router.post("/vouchers/quick/receipt", status_code=201, summary="Quick Receipt voucher (auto-posted)")
+@router.post("/vouchers/quick/receipt", status_code=201, summary="Quick Receipt voucher (auto-posted)", dependencies=[require_perm("accounting.create")])
 async def create_receipt_voucher(payload: ReceiptVoucherCreate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = JournalVoucherService(db)
     jv = await svc.create_receipt(current.company_id, payload, current.user_id)
     return created(JournalVoucherOut.model_validate(jv).model_dump(mode='json'), "Receipt recorded.")
 
 
-@router.post("/vouchers/quick/contra", status_code=201, summary="Quick Contra voucher (auto-posted)")
+@router.post("/vouchers/quick/contra", status_code=201, summary="Quick Contra voucher (auto-posted)", dependencies=[require_perm("accounting.create")])
 async def create_contra_voucher(payload: ContraVoucherCreate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = JournalVoucherService(db)
     jv = await svc.create_contra(current.company_id, payload, current.user_id)
     return created(JournalVoucherOut.model_validate(jv).model_dump(mode='json'), "Contra entry recorded.")
 
 
-@router.post("/vouchers/quick/capital", status_code=201, summary="Quick Capital transaction (auto-posted)")
+@router.post("/vouchers/quick/capital", status_code=201, summary="Quick Capital transaction (auto-posted)", dependencies=[require_perm("accounting.create")])
 async def create_capital_voucher(payload: CapitalVoucherCreate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = JournalVoucherService(db)
     jv = await svc.create_capital_transaction(current.company_id, payload, current.user_id)
     return created(JournalVoucherOut.model_validate(jv).model_dump(mode='json'), "Capital transaction recorded.")
 
 
-@router.get("/vouchers/{jv_id}", summary="Get one journal voucher with its entries")
+@router.get("/vouchers/{jv_id}", summary="Get one journal voucher with its entries", dependencies=[require_perm("accounting.read")])
 async def get_voucher(jv_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = JournalVoucherService(db)
     jv = await svc.jv_repo.get_with_entries(jv_id)
@@ -255,14 +255,14 @@ async def get_voucher(jv_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSON
     return ok(JournalVoucherOut.model_validate(jv).model_dump(mode='json'))
 
 
-@router.post("/vouchers/{jv_id}/post", summary="Post a voucher — writes running-balance ledger rows")
+@router.post("/vouchers/{jv_id}/post", summary="Post a voucher — writes running-balance ledger rows", dependencies=[require_perm("accounting.post")])
 async def post_voucher(jv_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = JournalVoucherService(db)
     jv = await svc.post(jv_id, current.company_id, current.user_id)
     return ok(JournalVoucherOut.model_validate(jv).model_dump(mode='json'), "Voucher posted.")
 
 
-@router.post("/vouchers/{jv_id}/reverse", summary="Reverse a posted voucher with a mirror-image entry")
+@router.post("/vouchers/{jv_id}/reverse", summary="Reverse a posted voucher with a mirror-image entry", dependencies=[require_perm("accounting.reverse")])
 async def reverse_voucher(jv_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = JournalVoucherService(db)
     jv = await svc.reverse(jv_id, current.company_id, current.user_id)
@@ -270,7 +270,7 @@ async def reverse_voucher(jv_id: UUID, current: CurrentUserDep, db: DBDep) -> OR
 
 
 
-@router.get("/reports/cashbook", response_model=None, summary="All cash-account entries across the company")
+@router.get("/reports/cashbook", response_model=None, summary="All cash-account entries across the company", dependencies=[require_perm("accounting.read")])
 async def get_cashbook(
     current: CurrentUserDep, db: DBDep, pg: PaginationDep,
     from_date: str | None = Query(None), to_date: str | None = Query(None),
@@ -303,7 +303,7 @@ async def get_cashbook(
     return paginated(items, result.total, result.page, result.page_size, result.pages)
 
 
-@router.get("/reports/bankbook", response_model=None, summary="Bank-account entries, optionally filtered to one account")
+@router.get("/reports/bankbook", response_model=None, summary="Bank-account entries, optionally filtered to one account", dependencies=[require_perm("accounting.read")])
 async def get_bankbook(
     current: CurrentUserDep, db: DBDep, pg: PaginationDep,
     account_id: UUID | None = Query(None),
@@ -359,7 +359,7 @@ async def _enrich_with_account_names(db, entries) -> list[dict]:
 
 
 
-@router.get("/reports/trial-balance", response_model=None, summary="Trial Balance for a date range")
+@router.get("/reports/trial-balance", response_model=None, summary="Trial Balance for a date range", dependencies=[require_perm("accounting.read")])
 async def get_trial_balance(
     current: CurrentUserDep, db: DBDep,
     from_date: str = Query(...), to_date: str = Query(...),
@@ -379,7 +379,7 @@ async def get_trial_balance(
     return ok(result.model_dump(mode='json'))
 
 
-@router.get("/reports/profit-and-loss", response_model=None, summary="Profit & Loss for a date range")
+@router.get("/reports/profit-and-loss", response_model=None, summary="Profit & Loss for a date range", dependencies=[require_perm("accounting.read")])
 async def get_profit_and_loss(
     current: CurrentUserDep, db: DBDep,
     from_date: str = Query(...), to_date: str = Query(...),
@@ -399,7 +399,7 @@ async def get_profit_and_loss(
     return ok(result.model_dump(mode='json'))
 
 
-@router.get("/reports/balance-sheet", response_model=None, summary="Balance Sheet as of a given date")
+@router.get("/reports/balance-sheet", response_model=None, summary="Balance Sheet as of a given date", dependencies=[require_perm("accounting.read")])
 async def get_balance_sheet(
     current: CurrentUserDep, db: DBDep,
     as_of_date: str = Query(...),

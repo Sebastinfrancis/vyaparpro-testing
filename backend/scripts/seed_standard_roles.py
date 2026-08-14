@@ -24,6 +24,9 @@ ROLES = {
             "warehouse.create", "warehouse.read", "warehouse.update", "warehouse.delete",
             "inventory.read", "inventory.adjust", "inventory.transfer", "inventory.transfer_receive",
             "report.read", "report.export",
+            "accounting.create", "accounting.read", "accounting.update", "accounting.post", "accounting.reverse",
+            "gst.read", "gst.file", "gst.export",
+            "audit.read",
         ],
     },
     "Accountant": {
@@ -35,6 +38,8 @@ ROLES = {
             "vendor.create", "vendor.read", "vendor.update",
             "product.read", "report.read", "report.export",
             "company.read", "branch.read",
+            "accounting.create", "accounting.read", "accounting.update", "accounting.post", "accounting.reverse",
+            "gst.read", "gst.file", "gst.export",
         ],
     },
     "Purchase Manager": {
@@ -88,14 +93,16 @@ ROLES = {
             "warehouse.read", "inventory.read", "inventory.transfer", "inventory.transfer_receive",
             "invoice.create", "invoice.read", "invoice.update", "invoice.approve", "invoice.print",
             "report.read", "report.export", "company.read",
+            "accounting.read", "gst.read",
         ],
     },
-    "Viewer": {
+     "Viewer": {
         "role_level": 8,
         "description": "Read-only access across the system. Cannot create, edit or delete anything.",
         "perms": [
             "company.read", "branch.read", "customer.read", "vendor.read",
             "product.read", "invoice.read", "report.read", "report.export",
+            "accounting.read", "gst.read", "audit.read",
         ],
     },
 }

@@ -29,7 +29,7 @@ router = APIRouter()
 # QUOTATIONS
 # ═══════════════════════════════════════════════════════════════════
 
-@router.get("/quotations", summary="List quotations")
+@router.get("/quotations", summary="List quotations", dependencies=[require_perm("invoice.read")])
 async def list_quotations(current: CurrentUserDep, db: DBDep, pg: PaginationDep,
                           q: str | None = Query(None), status: str | None = Query(None),
                           from_date: date | None = Query(None), to_date: date | None = Query(None)) -> ORJSONResponse:
@@ -40,14 +40,14 @@ async def list_quotations(current: CurrentUserDep, db: DBDep, pg: PaginationDep,
     return paginated([QuotationOut.model_validate(r).model_dump(mode='json') for r in result.items],
                      result.total, result.page, result.page_size, result.pages)
 
-@router.post("/quotations", status_code=201, summary="Create quotation")
+@router.post("/quotations", status_code=201, summary="Create quotation", dependencies=[require_perm("invoice.create")])
 async def create_quotation(payload: QuotationCreate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.schemas.billing import QuotationOut
     svc = QuotationService(db)
     q = await svc.create(current.company_id, payload, current.user_id)
     return created(QuotationOut.model_validate(q).model_dump(mode='json'), "Quotation created.")
 
-@router.get("/quotations/{quote_id}", summary="Get quotation")
+@router.get("/quotations/{quote_id}", summary="Get quotation", dependencies=[require_perm("invoice.read")])
 async def get_quotation(quote_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories.billing import QuotationRepository
     from app.schemas.billing import QuotationOut
@@ -58,7 +58,7 @@ async def get_quotation(quote_id: UUID, current: CurrentUserDep, db: DBDep) -> O
         raise NotFoundError("Quotation not found.")
     return ok(QuotationOut.model_validate(q).model_dump(mode='json'))
 
-@router.post("/quotations/{quote_id}/convert-to-invoice", summary="Convert quotation to invoice")
+@router.post("/quotations/{quote_id}/convert-to-invoice", summary="Convert quotation to invoice", dependencies=[require_perm("invoice.create")])
 async def quotation_to_invoice(quote_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.schemas.billing import InvoiceOut
     svc = QuotationService(db)
@@ -70,7 +70,7 @@ async def quotation_to_invoice(quote_id: UUID, current: CurrentUserDep, db: DBDe
 # JOB ORDERS
 # ═══════════════════════════════════════════════════════════════════
 
-@router.get("/job-orders", summary="List job orders")
+@router.get("/job-orders", summary="List job orders", dependencies=[require_perm("invoice.read")])
 async def list_job_orders(current: CurrentUserDep, db: DBDep, pg: PaginationDep,
                           q: str | None = Query(None), status: str | None = Query(None),
                           from_date: date | None = Query(None), to_date: date | None = Query(None)) -> ORJSONResponse:
@@ -81,14 +81,14 @@ async def list_job_orders(current: CurrentUserDep, db: DBDep, pg: PaginationDep,
     return paginated([JobOrderOut.model_validate(r).model_dump(mode='json') for r in result.items],
                      result.total, result.page, result.page_size, result.pages)
 
-@router.post("/job-orders", status_code=201, summary="Create job order")
+@router.post("/job-orders", status_code=201, summary="Create job order", dependencies=[require_perm("invoice.create")])
 async def create_job_order(payload: JobOrderCreate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.schemas.billing import JobOrderOut
     svc = JobOrderService(db)
     jo = await svc.create(current.company_id, payload, current.user_id)
     return created(JobOrderOut.model_validate(jo).model_dump(mode='json'), "Job order created.")
 
-@router.get("/job-orders/{jo_id}", summary="Get job order")
+@router.get("/job-orders/{jo_id}", summary="Get job order", dependencies=[require_perm("invoice.read")])
 async def get_job_order(jo_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories.billing import JobOrderRepository
     from app.schemas.billing import JobOrderOut
@@ -99,7 +99,7 @@ async def get_job_order(jo_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJS
         raise NotFoundError("Job order not found.")
     return ok(JobOrderOut.model_validate(jo).model_dump(mode='json'))
 
-@router.patch("/job-orders/{jo_id}", summary="Update job order")
+@router.patch("/job-orders/{jo_id}", summary="Update job order", dependencies=[require_perm("invoice.update")])
 async def update_job_order(jo_id: UUID, payload: JobOrderUpdate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories.billing import JobOrderRepository
     from app.schemas.billing import JobOrderOut
@@ -108,7 +108,7 @@ async def update_job_order(jo_id: UUID, payload: JobOrderUpdate, current: Curren
     updated = await repo.update(jo, payload.model_dump(exclude_unset=True, exclude={"items"}))
     return ok(JobOrderOut.model_validate(updated).model_dump(mode='json'), "Job order updated.")
 
-@router.post("/job-orders/{jo_id}/convert-to-invoice", summary="Convert job order to invoice")
+@router.post("/job-orders/{jo_id}/convert-to-invoice", summary="Convert job order to invoice", dependencies=[require_perm("invoice.create")])
 async def jo_to_invoice(jo_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.schemas.billing import InvoiceOut
     svc = JobOrderService(db)
@@ -120,7 +120,7 @@ async def jo_to_invoice(jo_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJS
 # PURCHASE ORDERS
 # ═══════════════════════════════════════════════════════════════════
 
-@router.get("/purchase-orders", summary="List purchase orders")
+@router.get("/purchase-orders", summary="List purchase orders", dependencies=[require_perm("invoice.read")])
 async def list_purchase_orders(current: CurrentUserDep, db: DBDep, pg: PaginationDep,
                                q: str | None = Query(None), status: str | None = Query(None),
                                vendor_id: UUID | None = Query(None),
@@ -132,7 +132,7 @@ async def list_purchase_orders(current: CurrentUserDep, db: DBDep, pg: Paginatio
     return paginated([PurchaseOrderOut.model_validate(r).model_dump(mode='json') for r in result.items],
                      result.total, result.page, result.page_size, result.pages)
 
-@router.post("/purchase-orders", status_code=201, summary="Create purchase order")
+@router.post("/purchase-orders", status_code=201, summary="Create purchase order", dependencies=[require_perm("invoice.create")])
 async def create_purchase_order(payload: PurchaseOrderCreate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.schemas.billing import PurchaseOrderOut
     from app.api.v1.dependencies import assert_branch_access
@@ -141,7 +141,7 @@ async def create_purchase_order(payload: PurchaseOrderCreate, current: CurrentUs
     po = await svc.create(current.company_id, payload, current.user_id)
     return created(PurchaseOrderOut.model_validate(po).model_dump(mode='json'), "Purchase order created.")
 
-@router.get("/purchase-orders/{po_id}", summary="Get purchase order")
+@router.get("/purchase-orders/{po_id}", summary="Get purchase order", dependencies=[require_perm("invoice.read")])
 async def get_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories.billing import PurchaseOrderRepository
     from app.schemas.billing import PurchaseOrderOut
@@ -152,7 +152,7 @@ async def get_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep) ->
         raise NotFoundError("Purchase order not found.")
     return ok(PurchaseOrderOut.model_validate(po).model_dump(mode='json'))
 
-@router.post("/purchase-orders/{po_id}/approve", summary="Approve purchase order")
+@router.post("/purchase-orders/{po_id}/approve", summary="Approve purchase order", dependencies=[require_perm("invoice.approve")])
 async def approve_po(po_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories.billing import PurchaseOrderRepository
     from datetime import datetime, timezone
@@ -162,7 +162,7 @@ async def approve_po(po_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONR
                            "approved_at": datetime.now(timezone.utc), "status": "sent"})
     return ok(message="Purchase order approved.")
 
-@router.post("/purchase-orders/{po_id}/receive", summary="Receive goods against a PO (updates stock)")
+@router.post("/purchase-orders/{po_id}/receive", summary="Receive goods against a PO (updates stock)", dependencies=[require_perm("invoice.update")])
 async def receive_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep,
                                   payload: dict | None = None) -> ORJSONResponse:
     from app.schemas.billing import PurchaseOrderOut
@@ -171,7 +171,7 @@ async def receive_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep
     po = await svc.receive(po_id, current.company_id, current.user_id, items)
     return ok(PurchaseOrderOut.model_validate(po).model_dump(mode='json'), "Goods received; stock updated.")
 
-@router.post("/purchase-orders/{po_id}/return", summary="Return previously-received goods to the vendor")
+@router.post("/purchase-orders/{po_id}/return", summary="Return previously-received goods to the vendor", dependencies=[require_perm("invoice.update")])
 async def return_po_goods(po_id: UUID, current: CurrentUserDep, db: DBDep, payload: dict) -> ORJSONResponse:
     from app.schemas.billing import PurchaseOrderOut
     svc = PurchaseOrderService(db)
@@ -181,14 +181,14 @@ async def return_po_goods(po_id: UUID, current: CurrentUserDep, db: DBDep, paylo
     po = await svc.return_goods(po_id, current.company_id, current.user_id, items)
     return ok(PurchaseOrderOut.model_validate(po).model_dump(mode='json'), "Goods returned; stock and books updated.")
 
-@router.get("/purchase-orders/{po_id}/returns/{jv_id}/pdf", summary="Download purchase return as PDF")
+@router.get("/purchase-orders/{po_id}/returns/{jv_id}/pdf", summary="Download purchase return as PDF", dependencies=[require_perm("invoice.print")])
 async def download_purchase_return_pdf(po_id: UUID, jv_id: UUID, current: CurrentUserDep, db: DBDep) -> Response:
     svc = PurchaseOrderService(db)
     pdf_bytes = await svc.get_return_pdf_data(po_id, jv_id, current.company_id)
     return Response(content=pdf_bytes, media_type="application/pdf",
                      headers={"Content-Disposition": f'attachment; filename="purchase-return-{jv_id}.pdf"'})
 
-@router.patch("/purchase-orders/{po_id}", summary="Partially update purchase order (e.g. status)")
+@router.patch("/purchase-orders/{po_id}", summary="Partially update purchase order (e.g. status)", dependencies=[require_perm("invoice.update")])
 async def patch_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep, payload: dict) -> ORJSONResponse:
     from app.db.repositories.billing import PurchaseOrderRepository
     from app.schemas.billing import PurchaseOrderOut
@@ -202,7 +202,7 @@ async def patch_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep, 
     updated = await repo.get_detail(po_id)
     return ok(PurchaseOrderOut.model_validate(updated).model_dump(mode='json'), "Purchase order updated.")
 
-@router.delete("/purchase-orders/{po_id}", status_code=204, summary="Delete purchase order")
+@router.delete("/purchase-orders/{po_id}", status_code=204, summary="Delete purchase order", dependencies=[require_perm("invoice.delete")])
 async def delete_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep) -> Response:
     from app.db.repositories.billing import PurchaseOrderRepository
     repo = PurchaseOrderRepository(db)
@@ -210,14 +210,14 @@ async def delete_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep)
     await repo.delete(po)
     return Response(status_code=204)
 
-@router.post("/purchase-orders/{po_id}/return/{jv_id}/undo", summary="Reverse one specific past purchase return")
+@router.post("/purchase-orders/{po_id}/return/{jv_id}/undo", summary="Reverse one specific past purchase return", dependencies=[require_perm("invoice.update")])
 async def undo_po_return(po_id: UUID, jv_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.schemas.billing import PurchaseOrderOut
     svc = PurchaseOrderService(db)
     po = await svc.delete_return(po_id, jv_id, current.company_id, current.user_id)
     return ok(PurchaseOrderOut.model_validate(po).model_dump(mode='json'), "Return reversed — stock and books restored.")
 
-@router.get("/purchase-orders/{po_id}/returns/{jv_id}", summary="Get one purchase return as a printable document")
+@router.get("/purchase-orders/{po_id}/returns/{jv_id}", summary="Get one purchase return as a printable document", dependencies=[require_perm("invoice.read")])
 async def get_purchase_return_detail(po_id: UUID, jv_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.models.accounting import JournalVoucher
     from app.db.models import Party
@@ -292,7 +292,7 @@ async def get_purchase_return_detail(po_id: UUID, jv_id: UUID, current: CurrentU
 # INVOICES
 # ═══════════════════════════════════════════════════════════════════
 
-@router.get("/invoices", summary="Search invoices with full filters")
+@router.get("/invoices", summary="Search invoices with full filters", dependencies=[require_perm("invoice.read")])
 async def list_invoices(
     current: CurrentUserDep, db: DBDep, pg: PaginationDep,
     q: str | None = Query(None),
@@ -311,7 +311,7 @@ async def list_invoices(
     return paginated([InvoiceOut.model_validate(r).model_dump(mode='json') for r in result.items],
                      result.total, result.page, result.page_size, result.pages)
 
-@router.post("/invoices", status_code=201, summary="Create invoice (draft)")
+@router.post("/invoices", status_code=201, summary="Create invoice (draft)", dependencies=[require_perm("invoice.create")])
 async def create_invoice(payload: InvoiceCreate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.schemas.billing import InvoiceOut
     from app.api.v1.dependencies import assert_branch_access
@@ -320,21 +320,21 @@ async def create_invoice(payload: InvoiceCreate, current: CurrentUserDep, db: DB
     inv = await svc.create(current.company_id, payload, current.user_id)
     return created(InvoiceOut.model_validate(inv).model_dump(mode='json'), "Invoice created.")
 
-@router.post("/invoices/preview", summary="Generate a preview PDF from unsaved invoice data (no DB write)")
+@router.post("/invoices/preview", summary="Generate a preview PDF from unsaved invoice data (no DB write)", dependencies=[require_perm("invoice.create")])
 async def preview_invoice_pdf(payload: InvoiceCreate, current: CurrentUserDep, db: DBDep) -> Response:
     svc = InvoiceService(db)
     pdf_bytes = await svc.preview_pdf(current.company_id, payload)
     return Response(content=pdf_bytes, media_type="application/pdf",
                     headers={"Content-Disposition": 'inline; filename="preview.pdf"'})
 
-@router.get("/invoices/stats", summary="Invoice dashboard statistics")
+@router.get("/invoices/stats", summary="Invoice dashboard statistics", dependencies=[require_perm("invoice.read")])
 async def invoice_stats(current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories.billing import InvoiceRepository
     repo = InvoiceRepository(db)
     stats = await repo.get_dashboard_stats(current.company_id)
     return ok(jsonable_encoder(stats))
 
-@router.get("/invoices/{invoice_id}", summary="Get invoice by ID")
+@router.get("/invoices/{invoice_id}", summary="Get invoice by ID", dependencies=[require_perm("invoice.read")])
 async def get_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories.billing import InvoiceRepository
     from app.schemas.billing import InvoiceOut
@@ -345,14 +345,14 @@ async def get_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> O
         raise NotFoundError("Invoice not found.")
     return ok(InvoiceOut.model_validate(inv).model_dump(mode='json'))
 
-@router.put("/invoices/{invoice_id}", summary="Update invoice (full edit if draft, limited fields otherwise)")
+@router.put("/invoices/{invoice_id}", summary="Update invoice (full edit if draft, limited fields otherwise)", dependencies=[require_perm("invoice.update")])
 async def update_invoice(invoice_id: UUID, payload: InvoiceUpdate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.schemas.billing import InvoiceOut
     svc = InvoiceService(db)
     updated = await svc.update(invoice_id, current.company_id, payload, current.user_id)
     return ok(InvoiceOut.model_validate(updated).model_dump(mode='json'), "Invoice updated.")
 
-@router.patch("/invoices/{invoice_id}", summary="Partially update invoice (e.g. status)")
+@router.patch("/invoices/{invoice_id}", summary="Partially update invoice (e.g. status)", dependencies=[require_perm("invoice.update")])
 async def patch_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep, payload: dict) -> ORJSONResponse:
     from app.db.repositories.billing import InvoiceRepository
     from app.schemas.billing import InvoiceOut
@@ -364,7 +364,7 @@ async def patch_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep, pa
     updated = await repo.update(inv, {k: v for k, v in payload.items() if k in allowed})
     return ok(InvoiceOut.model_validate(updated).model_dump(mode='json'), "Invoice updated.")
 
-@router.delete("/invoices/{invoice_id}", status_code=204, summary="Delete invoice (draft only — use /cancel for finalized documents)")
+@router.delete("/invoices/{invoice_id}", status_code=204, summary="Delete invoice (draft only — use /cancel for finalized documents)", dependencies=[require_perm("invoice.delete")])
 async def delete_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> Response:
     from app.db.repositories.billing import InvoiceRepository
     repo = InvoiceRepository(db)
@@ -377,14 +377,14 @@ async def delete_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -
     await repo.delete(inv)
     return Response(status_code=204)
 
-@router.post("/invoices/{invoice_id}/finalize", summary="Finalize invoice (locks it, triggers accounting)")
+@router.post("/invoices/{invoice_id}/finalize", summary="Finalize invoice (locks it, triggers accounting)", dependencies=[require_perm("invoice.update")])
 async def finalize_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.schemas.billing import InvoiceOut
     svc = InvoiceService(db)
     inv = await svc.finalize(invoice_id, current.company_id, current.user_id)
     return ok(InvoiceOut.model_validate(inv).model_dump(mode='json'), "Invoice finalized.")
 
-@router.post("/invoices/{invoice_id}/cancel", summary="Cancel invoice")
+@router.post("/invoices/{invoice_id}/cancel", summary="Cancel invoice", dependencies=[require_perm("invoice.update")])
 async def cancel_invoice(invoice_id: UUID, payload: InvoiceCancelRequest,
                          current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.schemas.billing import InvoiceOut
@@ -392,19 +392,19 @@ async def cancel_invoice(invoice_id: UUID, payload: InvoiceCancelRequest,
     inv = await svc.cancel(invoice_id, current.company_id, payload.reason, current.user_id)
     return ok(InvoiceOut.model_validate(inv).model_dump(mode='json'), "Invoice cancelled.")
 
-@router.get("/invoices/{invoice_id}/pdf", summary="Download invoice as PDF")
+@router.get("/invoices/{invoice_id}/pdf", summary="Download invoice as PDF", dependencies=[require_perm("invoice.print")])
 async def download_invoice_pdf(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> Response:
     svc = InvoiceService(db)
     pdf_bytes = await svc.get_pdf_data(invoice_id, current.company_id)
     return Response(content=pdf_bytes, media_type="application/pdf",
                     headers={"Content-Disposition": f'attachment; filename="invoice-{invoice_id}.pdf"'})
 
-@router.post("/invoices/{invoice_id}/send-email", summary="Email invoice to customer")
+@router.post("/invoices/{invoice_id}/send-email", summary="Email invoice to customer", dependencies=[require_perm("invoice.print")])
 async def send_invoice_email(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     # Wire to email task when SMTP configured
     return ok(message="Invoice queued for email delivery.")
 
-@router.post("/invoices/{invoice_id}/whatsapp", summary="Share invoice via WhatsApp link")
+@router.post("/invoices/{invoice_id}/whatsapp", summary="Share invoice via WhatsApp link", dependencies=[require_perm("invoice.print")])
 async def share_invoice_whatsapp(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories.billing import InvoiceRepository
     repo = InvoiceRepository(db)
@@ -417,7 +417,7 @@ async def share_invoice_whatsapp(invoice_id: UUID, current: CurrentUserDep, db: 
 # PAYMENTS
 # ═══════════════════════════════════════════════════════════════════
 
-@router.get("/payments", summary="List payments")
+@router.get("/payments", summary="List payments", dependencies=[require_perm("invoice.read")])
 async def list_payments(current: CurrentUserDep, db: DBDep, pg: PaginationDep,
                         payment_type: str | None = Query(None),
                         from_date: date | None = Query(None), to_date: date | None = Query(None)) -> ORJSONResponse:
@@ -428,7 +428,7 @@ async def list_payments(current: CurrentUserDep, db: DBDep, pg: PaginationDep,
     return paginated([PaymentOut.model_validate(r).model_dump(mode='json') for r in result.items],
                      result.total, result.page, result.page_size, result.pages)
 
-@router.post("/payments", status_code=201, summary="Record a payment / receipt")
+@router.post("/payments", status_code=201, summary="Record a payment / receipt", dependencies=[require_perm("invoice.create")])
 async def create_payment(payload: PaymentCreate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.schemas.billing import PaymentOut
     svc = PaymentService(db)
@@ -440,7 +440,7 @@ async def create_payment(payload: PaymentCreate, current: CurrentUserDep, db: DB
 # DELIVERY CHALLANS
 # ═══════════════════════════════════════════════════════════════════
 
-@router.get("/delivery-challans", summary="List delivery challans")
+@router.get("/delivery-challans", summary="List delivery challans", dependencies=[require_perm("invoice.read")])
 async def list_challans(current: CurrentUserDep, db: DBDep, pg: PaginationDep,
                         q: str | None = Query(None)) -> ORJSONResponse:
     from app.db.repositories.billing import DeliveryChallanRepository
@@ -450,7 +450,7 @@ async def list_challans(current: CurrentUserDep, db: DBDep, pg: PaginationDep,
     return paginated([DeliveryChallanOut.model_validate(r).model_dump(mode='json') for r in result.items],
                      result.total, result.page, result.page_size, result.pages)
 
-@router.post("/delivery-challans", status_code=201, summary="Create delivery challan")
+@router.post("/delivery-challans", status_code=201, summary="Create delivery challan", dependencies=[require_perm("invoice.create")])
 async def create_challan(payload: DeliveryChallanCreate, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories.billing import DeliveryChallanRepository, DocumentSequenceRepository
     from app.db.models.billing import DeliveryChallan, DeliveryChallanItem
@@ -494,7 +494,7 @@ async def create_challan(payload: DeliveryChallanCreate, current: CurrentUserDep
 
 from app.schemas.billing import EInvoiceRecordIn
 
-@router.post("/invoices/{invoice_id}/einvoice", summary="Record a manually-generated IRN for this invoice")
+@router.post("/invoices/{invoice_id}/einvoice", summary="Record a manually-generated IRN for this invoice", dependencies=[require_perm("invoice.update")])
 async def record_einvoice(invoice_id: UUID, payload: EInvoiceRecordIn, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories.billing import InvoiceRepository
     from app.db.models.billing import EInvoiceLog
@@ -520,7 +520,7 @@ async def record_einvoice(invoice_id: UUID, payload: EInvoiceRecordIn, current: 
     return ok(InvoiceOut.model_validate(updated).model_dump(mode="json"), "IRN recorded.")
 
 
-@router.delete("/invoices/{invoice_id}/einvoice", summary="Clear/cancel the recorded IRN for this invoice")
+@router.delete("/invoices/{invoice_id}/einvoice", summary="Clear/cancel the recorded IRN for this invoice", dependencies=[require_perm("invoice.update")])
 async def cancel_einvoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories.billing import InvoiceRepository
     from app.db.models.billing import EInvoiceLog
@@ -544,7 +544,7 @@ async def cancel_einvoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) 
     return ok(InvoiceOut.model_validate(updated).model_dump(mode="json"), "IRN cleared.")
 
 
-@router.get("/quotations/{quote_id}/pdf", summary="Download quotation as PDF")
+@router.get("/quotations/{quote_id}/pdf", summary="Download quotation as PDF", dependencies=[require_perm("invoice.print")])
 async def download_quotation_pdf(quote_id: UUID, current: CurrentUserDep, db: DBDep) -> Response:
     svc = QuotationService(db)
     pdf_bytes = await svc.get_pdf_data(quote_id, current.company_id)
@@ -552,7 +552,7 @@ async def download_quotation_pdf(quote_id: UUID, current: CurrentUserDep, db: DB
                      headers={"Content-Disposition": f'attachment; filename="quotation-{quote_id}.pdf"'})
 
 
-@router.get("/purchase-orders/{po_id}/pdf", summary="Download purchase order as PDF")
+@router.get("/purchase-orders/{po_id}/pdf", summary="Download purchase order as PDF", dependencies=[require_perm("invoice.print")])
 async def download_po_pdf(po_id: UUID, current: CurrentUserDep, db: DBDep) -> Response:
     svc = PurchaseOrderService(db)
     pdf_bytes = await svc.get_pdf_data(po_id, current.company_id)
@@ -564,7 +564,7 @@ async def download_po_pdf(po_id: UUID, current: CurrentUserDep, db: DBDep) -> Re
 # DOCUMENT NUMBERING  (Settings → Document Numbering)
 # ═══════════════════════════════════════════════════════════════════
 
-@router.get("/document-sequences", summary="List document numbering settings for a branch (or head office)")
+@router.get("/document-sequences", summary="List document numbering settings for a branch (or head office)", dependencies=[require_perm("company.read")])
 async def list_document_sequences(
     current: CurrentUserDep, db: DBDep,
     branch_id: UUID | None = Query(None, description="Omit for the head-office / default series"),
@@ -575,7 +575,7 @@ async def list_document_sequences(
     return ok(rows)
 
 
-@router.patch("/document-sequences/{doc_type}", summary="Update document numbering for one document type / branch")
+@router.patch("/document-sequences/{doc_type}", summary="Update document numbering for one document type / branch", dependencies=[require_perm("company.update")])
 async def update_document_sequence(
     doc_type: str, payload: DocumentSequenceUpdate,
     current: CurrentUserDep, db: DBDep,

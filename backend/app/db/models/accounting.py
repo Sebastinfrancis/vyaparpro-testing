@@ -14,7 +14,7 @@ from sqlalchemy import (
     Boolean, CheckConstraint, Date, DateTime, ForeignKey,
     Integer, Numeric, SmallInteger, String, Text, UniqueConstraint, func,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from app.db.types import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
@@ -75,6 +75,13 @@ class Account(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
     )
     group_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("account_groups.id"), nullable=False
+    )
+    # Gap #4 — optional branch scoping. NULL = company-wide account (old
+    # behaviour, still the default for cash/expense/etc). A "bank" account
+    # with branch_id set is that branch's own settlement account so
+    # multi-branch/multi-GSTIN businesses can settle invoices per branch.
+    branch_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("branches.id"), nullable=True
     )
     account_code: Mapped[str] = mapped_column(String(20), nullable=False)
     account_name: Mapped[str] = mapped_column(String(150), nullable=False)

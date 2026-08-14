@@ -33,7 +33,7 @@ router = APIRouter()
 _TTL = 120
 
 
-@router.get("", summary="Search / filter products with pagination")
+@router.get("", summary="Search / filter products with pagination", dependencies=[require_perm("product.read")])
 async def list_products(
     current: CurrentUserDep,
     db: DBDep,
@@ -101,7 +101,7 @@ async def create_product(
     )
 
 
-@router.get("/barcode/{barcode}", summary="Lookup product by barcode (fast POS scan)")
+@router.get("/barcode/{barcode}", summary="Lookup product by barcode (fast POS scan)", dependencies=[require_perm("product.read")])
 async def get_by_barcode(
     barcode: str,
     current: CurrentUserDep,
@@ -131,7 +131,7 @@ async def get_by_barcode(
     return ok(data=data)
 
 
-@router.get("/{product_id}", summary="Get product by ID")
+@router.get("/{product_id}", summary="Get product by ID", dependencies=[require_perm("product.read")])
 async def get_product(
     product_id: UUID,
     current: CurrentUserDep,
@@ -191,7 +191,7 @@ async def delete_product(
     return ok(message="Product deactivated.")
 
 
-@router.post("/{product_id}/image", summary="Upload product image")
+@router.post("/{product_id}/image", summary="Upload product image", dependencies=[require_perm("product.update")])
 async def upload_image(
     product_id: UUID,
     file: UploadFile,
@@ -209,7 +209,7 @@ async def upload_image(
     return ok(data={"image_url": image_url}, message="Image uploaded.")
 
 
-@router.get("/{product_id}/stock", summary="Current stock across all warehouses")
+@router.get("/{product_id}/stock", summary="Current stock across all warehouses", dependencies=[require_perm("product.read")])
 async def product_stock(
     product_id: UUID,
     current: CurrentUserDep,
@@ -221,7 +221,7 @@ async def product_stock(
 
 # ── Variants ────────────────────────────────────────────────────────────────
 
-@router.get("/{product_id}/variants", summary="List product variants")
+@router.get("/{product_id}/variants", summary="List product variants", dependencies=[require_perm("product.read")])
 async def list_variants(product_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from sqlalchemy import select
     from app.db.models import ProductVariant
@@ -235,7 +235,7 @@ async def list_variants(product_id: UUID, current: CurrentUserDep, db: DBDep) ->
     return ok(data=[ProductVariantOut.model_validate(v).model_dump(mode='json') for v in variants])
 
 
-@router.post("/{product_id}/variants", summary="Add a product variant", status_code=201)
+@router.post("/{product_id}/variants", summary="Add a product variant", status_code=201, dependencies=[require_perm("product.update")])
 async def create_variant(
     product_id: UUID,
     payload: ProductVariantCreate,
