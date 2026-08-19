@@ -27,7 +27,18 @@ class Settings(BaseSettings):
     SECRET_KEY: str = secrets.token_urlsafe(64)
     API_V1_PREFIX: str = "/api/v1"
     ALLOWED_HOSTS: list[str] = ["*"]
-    ALLOWED_ORIGINS: list[AnyHttpUrl | str] = ["http://localhost:3000", "http://localhost:8080"]
+    ALLOWED_ORIGINS: list[AnyHttpUrl | str] = [
+        "http://localhost:3000", "http://localhost:8080",
+        "tauri://localhost",        # macOS / Linux Tauri webview
+        "http://tauri.localhost",   # Windows Tauri webview (WebView2)
+        "https://tauri.localhost",
+    ]
+
+    #------LICENSING--------------------------
+    LICENSE_SERVER_URL: str = "https://license.vyaparpro.in/api/v1"
+    LICENSE_PUBLIC_KEY: str = "91fc41abe83f60e044cf820d68bf41bd4e55f292bf3cb881d3e1c9242673e75e"
+    LICENSE_GRACE_DAYS: int = 10
+    LICENSE_CHECK_INTERVAL_HOURS: int = 24
 
     # ── JWT ──────────────────────────────────────────────────────────
     JWT_SECRET_KEY: str = secrets.token_urlsafe(64)
@@ -46,9 +57,13 @@ class Settings(BaseSettings):
     POSTGRES_MAX_OVERFLOW: int = 10
     POSTGRES_POOL_TIMEOUT: int = 30
     POSTGRES_ECHO: bool = False
+    DB_ENGINE: Literal["postgresql", "sqlite"] = "postgresql"
+    SQLITE_PATH: str = "vyaparpro.db"
 
     @property
     def ASYNC_DATABASE_URL(self) -> str:
+        if self.DB_ENGINE == "sqlite":
+            return f"sqlite+aiosqlite:///{self.SQLITE_PATH}"
         return (
             f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
@@ -56,6 +71,8 @@ class Settings(BaseSettings):
 
     @property
     def SYNC_DATABASE_URL(self) -> str:
+        if self.DB_ENGINE == "sqlite":
+            return f"sqlite:///{self.SQLITE_PATH}"
         return (
             f"postgresql+psycopg2://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"

@@ -77,7 +77,7 @@ class AccountGroupService:
         return await self.repo.get_tree(company_id)
 
     async def update(self, group_id: UUID, payload: Any, company_id: UUID) -> AccountGroup:
-        group = await self.repo.get_or_raise(group_id)
+        group = await self.repo.get_or_raise_scoped(group_id, company_id=company_id)
         if group.is_system:
             raise PermissionDeniedError("System account groups cannot be modified.")
         return await self.repo.update(group, payload.model_dump(exclude_unset=True))
@@ -96,7 +96,7 @@ class ChartOfAccountsService:
         existing = await self.repo.get_by(company_id=company_id, account_code=payload.account_code)
         if existing:
             raise AlreadyExistsError(f"Account code '{payload.account_code}' already exists.")
-        group = await self.group_repo.get_or_raise(payload.group_id)
+        group = await self.group_repo.get_or_raise_scoped(payload.group_id, company_id=company_id)
         if group.company_id != company_id:
             raise PermissionDeniedError("Account group belongs to a different company.")
         data = payload.model_dump()
@@ -154,7 +154,7 @@ class ChartOfAccountsService:
         return await self.repo.search(company_id=company_id, **kwargs)
 
     async def get_with_balance(self, account_id: UUID, company_id: UUID) -> Account:
-        account = await self.repo.get_or_raise(account_id)
+        account = await self.repo.get_or_raise_scoped(account_id, company_id=company_id)
         balance, btype = await self.repo.get_balance(account_id)
         account.current_balance = balance  # type: ignore[attr-defined]
         account.balance_type = btype       # type: ignore[attr-defined]
@@ -165,9 +165,7 @@ class ChartOfAccountsService:
         from_date: date | None, to_date: date | None,
         page: int, page_size: int,
     ) -> LedgerOut:
-        account = await self.repo.get_or_raise(account_id)
-        if account.company_id != company_id:
-            raise PermissionDeniedError()
+        account = await self.repo.get_or_raise_scoped(account_id, company_id=company_id)
 
         ledger_repo = AccountLedgerRepository(self.repo.session)
 

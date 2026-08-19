@@ -24,7 +24,7 @@ from app.schemas import PartyContactCreate, PartyContactOut, PartyCreate, PartyO
 from app.services import PartyService
 from app.utils.responses import created, ok, paginated
 
-from sqlalchemy import select,text
+from sqlalchemy import select, bindparam, text
 from sqlalchemy.orm import selectinload
 from app.db.models import Party
 
@@ -81,9 +81,9 @@ async def list_customers(
                 ) FILTER (WHERE status NOT IN ('paid','cancelled','void','draft')), 0) AS outstanding,
                 MAX(invoice_date) FILTER (WHERE status NOT IN ('cancelled','void','draft')) AS last_purchase
             FROM invoices
-            WHERE company_id = :cid AND party_id = ANY(:pids)
+            WHERE company_id = :cid AND party_id IN :pids
             GROUP BY party_id
-        """)
+        """).bindparams(bindparam("pids", expanding=True))
         rows = (await db.execute(stmt, {"cid": str(current.company_id), "pids": [str(pid) for pid in party_ids]})).mappings().all()
         stats_by_party = {str(r["party_id"]): dict(r) for r in rows}
 
@@ -188,7 +188,7 @@ async def delete_customer(
 ) -> ORJSONResponse:
     from app.db.repositories import PartyRepository
     repo = PartyRepository(db)
-    await repo.soft_delete(customer_id)
+    await repo.soft_delete_scoped(customer_id, company_id=current.company_id)
     await cache.delete_pattern(f"customers:{current.company_id}:*")
     return ok(message="Customer deactivated.")
 

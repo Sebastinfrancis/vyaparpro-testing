@@ -226,6 +226,16 @@ class CompanyUpdate(APIModel):
     jo_prefix: Optional[str] = None
     settings: Optional[dict] = None
 
+    @field_validator("gstin")
+    @classmethod
+    def check_gstin(cls, v: str | None) -> str | None:
+        return validate_gstin(v)
+
+    @field_validator("pan")
+    @classmethod
+    def check_pan(cls, v: str | None) -> str | None:
+        return validate_pan(v)
+
 
 class CompanyOut(APIModel):
     id: UUID
@@ -298,6 +308,11 @@ class BranchUpdate(APIModel):
     manager_name: Optional[str] = None
     manager_phone: Optional[str] = None
     monthly_target: Optional[Decimal] = None
+
+    @field_validator("gstin")
+    @classmethod
+    def check_gstin(cls, v: str | None) -> str | None:
+        return validate_gstin(v)
 
 
 class BranchOut(APIModel):
@@ -468,6 +483,16 @@ class PartyUpdate(APIModel):
     gstin: Optional[str] = None
     pan: Optional[str] = None
     party_category: Optional[str] = None
+
+    @field_validator("gstin")
+    @classmethod
+    def check_gstin(cls, v: str | None) -> str | None:
+        return validate_gstin(v)
+
+    @field_validator("pan")
+    @classmethod
+    def check_pan(cls, v: str | None) -> str | None:
+        return validate_pan(v)
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     alt_phone: Optional[str] = None

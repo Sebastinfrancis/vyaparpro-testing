@@ -24,7 +24,7 @@ from app.schemas import PartyContactCreate, PartyContactOut, PartyCreate, PartyO
 from app.services import PartyService
 from app.utils.responses import created, ok, paginated
 
-from sqlalchemy import select,text
+from sqlalchemy import select, bindparam, text
 from sqlalchemy.orm import selectinload
 from app.db.models import Party
 
@@ -69,9 +69,9 @@ async def list_vendors(
                 COALESCE(SUM(total_amount - paid_amount) FILTER (WHERE status NOT IN ('cancelled')), 0) AS payable,
                 MAX(po_date) FILTER (WHERE status != 'cancelled') AS last_purchase
             FROM purchase_orders
-            WHERE company_id = :cid AND vendor_id = ANY(:pids)
+            WHERE company_id = :cid AND vendor_id IN :pids
             GROUP BY vendor_id
-        """)
+        """).bindparams(bindparam("pids", expanding=True))
         rows = (await db.execute(stmt, {"cid": str(current.company_id), "pids": [str(pid) for pid in party_ids]})).mappings().all()
         stats_by_vendor = {str(r["vendor_id"]): dict(r) for r in rows}
 
@@ -174,7 +174,7 @@ async def delete_vendor(
 ) -> ORJSONResponse:
     from app.db.repositories import PartyRepository
     repo = PartyRepository(db)
-    await repo.soft_delete(vendor_id)
+    await repo.soft_delete_scoped(vendor_id, company_id=current.company_id)
     await cache.delete_pattern(f"vendors:{current.company_id}:*")
     return ok(message="Vendor deactivated.")
 

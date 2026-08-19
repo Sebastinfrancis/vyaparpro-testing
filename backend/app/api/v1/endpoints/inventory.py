@@ -88,7 +88,7 @@ async def update_warehouse(
 ) -> ORJSONResponse:
     from app.db.repositories.inventory import WarehouseRepository
     repo = WarehouseRepository(db)
-    wh = await repo.get_or_raise(warehouse_id)
+    wh = await repo.get_or_raise_scoped(warehouse_id, company_id=current.company_id)
     wh = await repo.update(wh, payload.model_dump(exclude_unset=True))
     return ok(data=WarehouseOut.model_validate(wh).model_dump(mode="json"), message="Warehouse updated.")
 
@@ -102,7 +102,7 @@ async def delete_warehouse(
 ) -> ORJSONResponse:
     from app.db.repositories.inventory import WarehouseRepository
     repo = WarehouseRepository(db)
-    wh = await repo.get_or_raise(warehouse_id)
+    wh = await repo.get_or_raise_scoped(warehouse_id, company_id=current.company_id)
     await repo.update(wh, {"is_active": False})
     return ok(message="Warehouse deactivated.")
 
@@ -258,7 +258,7 @@ async def post_adjustment(
 ) -> ORJSONResponse:
     from app.db.repositories.inventory import StockAdjustmentRepository
     from app.api.v1.dependencies import assert_warehouse_branch_access
-    adj = await StockAdjustmentRepository(db).get_or_raise(adjustment_id)
+    adj = await StockAdjustmentRepository(db).get_or_raise_scoped(adjustment_id, company_id=current.company_id)
     await assert_warehouse_branch_access(db, current, adj.warehouse_id)
     svc = InventoryService(db)
     await svc.post_adjustment(adjustment_id, current.company_id, current.user_id)
@@ -306,7 +306,7 @@ async def list_transfers(current: CurrentUserDep, db: DBDep, pg: PaginationDep) 
 async def get_transfer(transfer_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories.inventory import StockTransferRepository
     repo = StockTransferRepository(db)
-    trf = await repo.get_or_raise(transfer_id)
+    trf = await repo.get_or_raise_scoped(transfer_id, company_id=current.company_id)
     data = StockTransferOut.model_validate(trf).model_dump(mode="json")
     data["items"] = [
         {
@@ -327,7 +327,7 @@ async def get_transfer(transfer_id: UUID, current: CurrentUserDep, db: DBDep) ->
 async def dispatch_transfer(transfer_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories.inventory import StockTransferRepository
     from app.api.v1.dependencies import assert_warehouse_branch_access
-    trf = await StockTransferRepository(db).get_or_raise(transfer_id)
+    trf = await StockTransferRepository(db).get_or_raise_scoped(transfer_id, company_id=current.company_id)
     await assert_warehouse_branch_access(db, current, trf.from_warehouse_id)
     svc = InventoryService(db)
     await svc.dispatch_transfer(transfer_id, current.company_id, current.user_id)
@@ -341,7 +341,7 @@ async def dispatch_transfer(transfer_id: UUID, current: CurrentUserDep, db: DBDe
 async def receive_transfer(transfer_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories.inventory import StockTransferRepository
     from app.api.v1.dependencies import assert_warehouse_branch_access
-    trf = await StockTransferRepository(db).get_or_raise(transfer_id)
+    trf = await StockTransferRepository(db).get_or_raise_scoped(transfer_id, company_id=current.company_id)
     await assert_warehouse_branch_access(db, current, trf.to_warehouse_id)
     svc = InventoryService(db)
     await svc.receive_transfer(transfer_id, current.company_id, current.user_id)
@@ -355,7 +355,7 @@ async def receive_transfer(transfer_id: UUID, current: CurrentUserDep, db: DBDep
 async def cancel_transfer(transfer_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories.inventory import StockTransferRepository
     from app.api.v1.dependencies import assert_warehouse_branch_access
-    trf = await StockTransferRepository(db).get_or_raise(transfer_id)
+    trf = await StockTransferRepository(db).get_or_raise_scoped(transfer_id, company_id=current.company_id)
     await assert_warehouse_branch_access(db, current, trf.from_warehouse_id)
     svc = InventoryService(db)
     await svc.cancel_transfer(transfer_id, current.company_id, current.user_id)

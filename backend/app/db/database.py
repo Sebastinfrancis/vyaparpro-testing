@@ -33,6 +33,12 @@ class Base(DeclarativeBase):
 # ── Engine ───────────────────────────────────────────────────────────────────
 
 def _build_engine() -> AsyncEngine:
+    if settings.DB_ENGINE == "sqlite":
+        return create_async_engine(
+            settings.ASYNC_DATABASE_URL,
+            echo=settings.POSTGRES_ECHO,
+            connect_args={"timeout": 30},
+        )
     pool_class = NullPool if settings.APP_ENV == "testing" else QueuePool
     return create_async_engine(
         settings.ASYNC_DATABASE_URL,
@@ -70,7 +76,12 @@ async def set_rls_context(
     user_id: UUID | None = None,
     device_id: UUID | None = None,
 ) -> None:
-    """Set PostgreSQL session-level config for RLS and audit triggers."""
+    """Set PostgreSQL session-level config for RLS and audit triggers.
+    No-op on SQLite — there's no equivalent session-scoped GUC, and the
+    desktop edition is single-tenant per install so this isolation isn't
+    needed there anyway."""
+    if settings.DB_ENGINE != "postgresql":
+        return
     stmts: list[str] = []
     if company_id:
         stmts.append(f"SET LOCAL myapp.current_company_id = '{company_id}'")

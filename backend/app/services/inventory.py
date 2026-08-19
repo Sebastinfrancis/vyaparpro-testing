@@ -76,9 +76,8 @@ class InventoryService:
         await self.session.flush()
 
         try:
-            from app.api.v1.dependencies import get_redis, CacheService
-            redis = await get_redis()
-            cache = CacheService(redis)
+            from app.api.v1.dependencies import get_cache
+            cache = await get_cache()
             await cache.delete_pattern(f"products:{company_id}:*")
         except Exception:
             pass
@@ -110,7 +109,7 @@ class InventoryService:
         return adj
 
     async def post_adjustment(self, adj_id: UUID, company_id: UUID, user_id: UUID):
-        adj = await self.adj_repo.get_or_raise(adj_id)
+        adj = await self.adj_repo.get_or_raise_scoped(adj_id, company_id=company_id)
         if adj.status != "draft":
             raise BusinessError("Only draft adjustments can be posted.")
         from sqlalchemy import select
@@ -161,7 +160,7 @@ class InventoryService:
         return trf
 
     async def dispatch_transfer(self, transfer_id: UUID, company_id: UUID, user_id: UUID):
-        trf = await self.transfer_repo.get_or_raise(transfer_id)
+        trf = await self.transfer_repo.get_or_raise_scoped(transfer_id, company_id=company_id)
         if trf.status != "draft":
             raise BusinessError("Only draft transfers can be dispatched.")
         from sqlalchemy import select
@@ -185,7 +184,7 @@ class InventoryService:
         })
 
     async def receive_transfer(self, transfer_id: UUID, company_id: UUID, user_id: UUID):
-        trf = await self.transfer_repo.get_or_raise(transfer_id)
+        trf = await self.transfer_repo.get_or_raise_scoped(transfer_id, company_id=company_id)
         if trf.status != "dispatched":
             raise BusinessError("Transfer must be dispatched before receiving.")
         from sqlalchemy import select
@@ -210,7 +209,7 @@ class InventoryService:
         })
 
     async def cancel_transfer(self, transfer_id: UUID, company_id: UUID, user_id: UUID):
-        trf = await self.transfer_repo.get_or_raise(transfer_id)
+        trf = await self.transfer_repo.get_or_raise_scoped(transfer_id, company_id=company_id)
         if trf.status not in ("draft",):
             raise BusinessError(
                 "Only draft transfers can be cancelled. A dispatched transfer must be "

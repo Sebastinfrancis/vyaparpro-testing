@@ -404,7 +404,7 @@ class PurchaseOrderService:
         if not jv or jv.company_id != company_id or jv.ref_type != "purchase_order" or str(jv.ref_id) != str(po_id):
             raise NotFoundError("Purchase return not found.")
 
-        po = await self.repo.get_or_raise(po_id)
+        po = await self.repo.get_or_raise_scoped(po_id, company_id=company_id)
         company = await CompanyRepository(self.session).get(company_id)
         vendor = await PartyRepository(self.session).get(po.vendor_id) if po.vendor_id else None
 
@@ -879,10 +879,7 @@ class InvoiceService:
         return await self.repo.get_detail(inv.id)
 
     async def finalize(self, invoice_id: UUID, company_id: UUID, user_id: UUID) -> Invoice:
-        inv = await self.repo.get_or_raise(invoice_id)
-        if inv.company_id != company_id:
-            from app.core.exceptions import PermissionDeniedError
-            raise PermissionDeniedError()
+        inv = await self.repo.get_or_raise_scoped(invoice_id, company_id=company_id)
         if inv.status not in ("draft",):
             raise BusinessError("Only draft invoices can be finalized.")
         updated = await self.repo.update(inv, {
@@ -944,7 +941,7 @@ class InvoiceService:
         return updated
 
     async def cancel(self, invoice_id: UUID, company_id: UUID, reason: str, user_id: UUID) -> Invoice:
-        inv = await self.repo.get_or_raise(invoice_id)
+        inv = await self.repo.get_or_raise_scoped(invoice_id, company_id=company_id)
         if inv.status in ("cancelled", "void"):
             raise BusinessError("Invoice is already cancelled.")
         if inv.paid_amount > 0:
@@ -1009,7 +1006,7 @@ class InvoiceService:
         })
 
     async def record_payment(self, invoice_id: UUID, amount: Decimal, company_id: UUID) -> Invoice:
-        inv = await self.repo.get_or_raise(invoice_id)
+        inv = await self.repo.get_or_raise_scoped(invoice_id, company_id=company_id)
         new_paid = inv.paid_amount + amount
         new_status = "paid" if new_paid >= inv.total_amount else "partial"
         return await self.repo.update(inv, {"paid_amount": new_paid, "status": new_status})

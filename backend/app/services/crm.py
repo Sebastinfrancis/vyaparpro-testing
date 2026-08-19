@@ -27,7 +27,7 @@ class CRMService:
         return lead
 
     async def update(self, lead_id: UUID, payload: LeadUpdate, company_id: UUID, user_id: UUID) -> Lead:
-        lead = await self.leads.get_or_raise(lead_id)
+        lead = await self.leads.get_or_raise_scoped(lead_id, company_id=company_id)
         updated = await self.leads.update(lead, payload.model_dump(exclude_unset=True))
         await self.audit.log(
             company_id=company_id, action="UPDATE", module="crm",

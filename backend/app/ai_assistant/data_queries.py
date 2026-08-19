@@ -25,6 +25,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.utils.pdf_generator import format_inr
+from app.db.sql_compat import month_start_sql
 
 _ACTIVE_INVOICE = "status NOT IN ('draft','cancelled','void') AND invoice_type != 'credit_note'"
 
@@ -46,7 +47,7 @@ async def month_sales(db: AsyncSession, company_id: UUID) -> str:
         SELECT COUNT(*) AS cnt, COALESCE(SUM(total_amount), 0) AS total
         FROM invoices
         WHERE company_id = :cid
-          AND invoice_date >= date_trunc('month', CURRENT_DATE)::date
+          AND invoice_date >= {month_start_sql()}
           AND {_ACTIVE_INVOICE}
     """), {"cid": str(company_id)})).mappings().one()
 
@@ -156,7 +157,7 @@ async def branch_performance(db: AsyncSession, company_id: UUID) -> str:
         FROM branches b
         LEFT JOIN invoices i ON i.branch_id = b.id AND i.company_id = b.company_id
           AND {_ACTIVE_INVOICE}
-          AND i.invoice_date >= date_trunc('month', CURRENT_DATE)::date
+          AND i.invoice_date >= {month_start_sql()}
         WHERE b.company_id = :cid AND b.is_active = TRUE
         GROUP BY b.branch_name
         ORDER BY total DESC
@@ -274,7 +275,7 @@ async def branch_lookup(db: AsyncSession, company_id: UUID, name: str) -> str:
         SELECT COUNT(*) AS cnt, COALESCE(SUM(total_amount), 0) AS total
         FROM invoices
         WHERE company_id = :cid AND branch_id = :bid
-          AND invoice_date >= date_trunc('month', CURRENT_DATE)::date
+          AND invoice_date >= {month_start_sql()}
           AND {_ACTIVE_INVOICE}
     """), {"cid": str(company_id), "bid": str(bid)})).mappings().one()
 
@@ -375,7 +376,7 @@ async def party_lookup(db: AsyncSession, company_id: UUID, name: str) -> str:
         SELECT id, display_name, party_type, gstin, phone, billing_city
         FROM parties
         WHERE company_id = :cid AND is_active = TRUE
-          AND (display_name ILIKE :pat OR legal_name ILIKE :pat)
+          AND (LOWER(display_name) LIKE LOWER(:pat) OR LOWER(legal_name) LIKE LOWER(:pat))
         ORDER BY (LOWER(display_name) = :exact) DESC, display_name ASC
         LIMIT 1
     """), {"cid": str(company_id), "pat": f"%{name}%", "exact": name.lower()})).mappings().one_or_none()
@@ -418,7 +419,7 @@ async def party_lookup(db: AsyncSession, company_id: UUID, name: str) -> str:
         SELECT lead_name, company_name, stage, value, follow_up_date
         FROM crm_leads
         WHERE company_id = :cid AND is_active = TRUE
-          AND (lead_name ILIKE :pat OR company_name ILIKE :pat)
+          AND (LOWER(lead_name) LIKE LOWER(:pat) OR LOWER(company_name) LIKE LOWER(:pat))
         ORDER BY (LOWER(lead_name) = :exact) DESC
         LIMIT 1
     """), {"cid": str(company_id), "pat": f"%{name}%", "exact": name.lower()})).mappings().one_or_none()

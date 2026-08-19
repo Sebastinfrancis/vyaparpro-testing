@@ -13,6 +13,7 @@ from app.db.models.billing import (
     PurchaseOrder, PurchaseOrderItem, Quotation, QuotationItem,
 )
 from app.db.repositories.base import BaseRepository, Pagination
+from app.db.sql_compat import month_start_sql
 
 
 class DocumentSequenceRepository(BaseRepository[DocumentSequence]):
@@ -106,7 +107,7 @@ class DocumentSequenceRepository(BaseRepository[DocumentSequence]):
         # collide onto the same counter the moment one existed for that doc_type.
         stmt = t_("""
             UPDATE document_sequences
-            SET current_no = current_no + 1, last_used_at = NOW()
+            SET current_no = current_no + 1, last_used_at = CURRENT_TIMESTAMP
             WHERE company_id=:cid AND doc_type=:dt AND branch_id IS NOT DISTINCT FROM :bid
               AND (financial_year=:fy OR reset_on_fy=FALSE)
             RETURNING prefix, current_no, pad_length, suffix
@@ -342,13 +343,13 @@ class InvoiceRepository(BaseRepository[Invoice]):
         return list(result.scalars().all())
 
     async def get_dashboard_stats(self, company_id: UUID) -> dict:
-        stmt = text("""
+        stmt = text(f"""
             SELECT
                 COUNT(*) FILTER (WHERE status NOT IN ('cancelled','void','draft')) AS total_invoices,
                 COALESCE(SUM(total_amount) FILTER (WHERE status NOT IN ('cancelled','void','draft')), 0) AS total_value,
                 COALESCE(SUM(total_amount - paid_amount) FILTER (WHERE status NOT IN ('paid','cancelled','void','draft')), 0) AS outstanding,
                 COUNT(*) FILTER (WHERE due_date < CURRENT_DATE AND status NOT IN ('paid','cancelled','void','draft')) AS overdue_count,
-                COALESCE(SUM(total_amount) FILTER (WHERE invoice_date >= date_trunc('month', CURRENT_DATE)), 0) AS mtd_sales
+                COALESCE(SUM(total_amount) FILTER (WHERE invoice_date >= {month_start_sql()}), 0) AS mtd_sales
             FROM invoices WHERE company_id = :cid
         """)
         row = (await self.session.execute(stmt, {"cid": str(company_id)})).mappings().one()

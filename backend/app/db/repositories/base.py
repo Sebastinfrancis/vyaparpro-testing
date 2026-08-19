@@ -61,6 +61,39 @@ class BaseRepository(Generic[ModelT]):
             raise exc or NotFoundError(f"{self.model.__name__} {id} not found.")
         return obj
 
+    # ── Tenant-scoped variants ───────────────────────────────────────
+    # Use these for any model with a company_id (or other tenant) column.
+    # They filter company_id INTO the query, so a record from another
+    # company can never be fetched/edited/deleted just by knowing its UUID.
+    async def get_scoped(self, id: UUID, **scope: Any) -> ModelT | None:
+        stmt = select(self.model).filter_by(id=id, **scope)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_or_raise_scoped(self, id: UUID, exc: Exception | None = None, **scope: Any) -> ModelT:
+        obj = await self.get_scoped(id, **scope)
+        if obj is None:
+            raise exc or NotFoundError(f"{self.model.__name__} {id} not found.")
+        return obj
+
+    async def update_by_id_scoped(self, id: UUID, obj_in: dict[str, Any], **scope: Any) -> ModelT:
+        db_obj = await self.get_or_raise_scoped(id, **scope)
+        return await self.update(db_obj, obj_in)
+
+    async def soft_delete_scoped(self, id: UUID, **scope: Any) -> None:
+        await self.get_or_raise_scoped(id, **scope)  # 404s on wrong tenant instead of silently no-op'ing
+        stmt = (
+            update(self.model)
+            .where(self.model.id == id)  # type: ignore[attr-defined]
+            .values(is_active=False)
+        )
+        await self.session.execute(stmt)
+
+    async def delete_scoped(self, id: UUID, **scope: Any) -> None:
+        db_obj = await self.get_or_raise_scoped(id, **scope)
+        await self.session.delete(db_obj)
+        await self.session.flush()
+
     async def get_by(self, **kwargs: Any) -> ModelT | None:
         stmt = select(self.model).filter_by(**kwargs)
         result = await self.session.execute(stmt)

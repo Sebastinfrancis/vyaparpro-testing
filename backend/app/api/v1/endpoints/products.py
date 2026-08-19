@@ -186,7 +186,7 @@ async def delete_product(
 ) -> ORJSONResponse:
     from app.db.repositories import ProductRepository
     repo = ProductRepository(db)
-    await repo.soft_delete(product_id)
+    await repo.soft_delete_scoped(product_id, company_id=current.company_id)
     await cache.delete_pattern(f"products:{current.company_id}:*")
     return ok(message="Product deactivated.")
 
@@ -204,7 +204,7 @@ async def upload_image(
     image_url = f"/static/products/{product_id}.png"
     from app.db.repositories import ProductRepository
     repo = ProductRepository(db)
-    product = await repo.get_or_raise(product_id)
+    product = await repo.get_or_raise_scoped(product_id, company_id=current.company_id)
     await repo.update(product, {"image_url": image_url})
     return ok(data={"image_url": image_url}, message="Image uploaded.")
 

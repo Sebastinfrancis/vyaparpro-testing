@@ -94,6 +94,9 @@ async def get_company(
         return ORJSONResponse(content={"success": True, "data": cached})
 
     from app.db.repositories import CompanyRepository
+    from app.core.exceptions import PermissionDeniedError
+    if company_id != current.company_id:
+        raise PermissionDeniedError("You can only view your own company.")
     repo = CompanyRepository(db)
     company = await repo.get_or_raise(company_id)
     data = CompanyOut.model_validate(company).model_dump()
@@ -114,6 +117,9 @@ async def update_company(
     db: DBDep,
     cache: CacheDep,
 ) -> ORJSONResponse:
+    from app.core.exceptions import PermissionDeniedError
+    if company_id != current.company_id:
+        raise PermissionDeniedError("You can only update your own company.")
     svc = CompanyService(db)
     company = await svc.update(company_id, payload, user_id=current.user_id)
     safe_data = jsonable_encoder(CompanyOut.model_validate(company).model_dump())
@@ -134,6 +140,9 @@ async def delete_company(
     cache: CacheDep,
 ) -> ORJSONResponse:
     from app.db.repositories import CompanyRepository
+    from app.core.exceptions import PermissionDeniedError
+    if company_id != current.company_id:
+        raise PermissionDeniedError("You can only deactivate your own company.")
     repo = CompanyRepository(db)
     await repo.soft_delete(company_id)
     await cache.delete(cache.cache_key("company", str(company_id)))
@@ -148,9 +157,12 @@ async def upload_logo(
     current: CurrentUserDep,
     db: DBDep,
 ) -> ORJSONResponse:
+    from app.core.exceptions import PermissionDeniedError, ValidationError
+    if company_id != current.company_id:
+        raise PermissionDeniedError("You can only update your own company.")
+
     # Validate file type
     if file.content_type not in ("image/jpeg", "image/png", "image/webp"):
-        from app.core.exceptions import ValidationError
         raise ValidationError("Only JPEG, PNG, or WebP images are accepted.")
     import os
     from pathlib import Path
@@ -161,7 +173,6 @@ async def upload_logo(
     dest = static_dir / f"{company_id}.{ext}"
     contents = await file.read()
     if len(contents) > 2 * 1024 * 1024:
-        from app.core.exceptions import ValidationError
         raise ValidationError("Logo must be under 2MB.")
     with open(dest, "wb") as f:
         f.write(contents)
@@ -180,9 +191,12 @@ async def upload_signature(
     current: CurrentUserDep,
     db: DBDep,
 ) -> ORJSONResponse:
+    from app.core.exceptions import PermissionDeniedError, ValidationError
+    if company_id != current.company_id:
+        raise PermissionDeniedError("You can only update your own company.")
+
     # Validate file type
     if file.content_type not in ("image/jpeg", "image/png", "image/webp"):
-        from app.core.exceptions import ValidationError
         raise ValidationError("Only JPEG, PNG, or WebP images are accepted.")
     from pathlib import Path
 
@@ -192,7 +206,6 @@ async def upload_signature(
     dest = static_dir / f"{company_id}.{ext}"
     contents = await file.read()
     if len(contents) > 1 * 1024 * 1024:
-        from app.core.exceptions import ValidationError
         raise ValidationError("Signature image must be under 1MB.")
     with open(dest, "wb") as f:
         f.write(contents)
@@ -235,5 +248,8 @@ async def company_summary(
         "vendors": 0,
         "products": await count(Product, company_id=company_id, is_active=True),
     }
+    from app.core.exceptions import PermissionDeniedError
+    if company_id != current.company_id:
+        raise PermissionDeniedError("You can only view your own company.")
     await cache.set(cache_key, summary, ttl=60)
     return ok(data=summary)

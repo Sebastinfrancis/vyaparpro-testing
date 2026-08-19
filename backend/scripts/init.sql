@@ -78,6 +78,15 @@ INSERT INTO permissions (id, perm_code, module, action, description) VALUES
   (uuid_generate_v4(),'product.read',    'inventory', 'read',  'View products'),
   (uuid_generate_v4(),'product.update',  'inventory', 'update','Update products'),
   (uuid_generate_v4(),'product.delete',  'inventory', 'delete','Deactivate products'),
+  -- Warehouse / Inventory
+  (uuid_generate_v4(),'warehouse.create','inventory', 'create','Create warehouses'),
+  (uuid_generate_v4(),'warehouse.read',  'inventory', 'read',  'View warehouses'),
+  (uuid_generate_v4(),'warehouse.update','inventory', 'update','Update warehouses'),
+  (uuid_generate_v4(),'warehouse.delete','inventory', 'delete','Deactivate warehouses'),
+  (uuid_generate_v4(),'inventory.read',  'inventory', 'read',  'View stock levels'),
+  (uuid_generate_v4(),'inventory.adjust','inventory', 'update','Adjust stock quantities'),
+  (uuid_generate_v4(),'inventory.transfer','inventory','update','Send inter-branch stock transfers'),
+  (uuid_generate_v4(),'inventory.transfer_receive','inventory','update','Receive inter-branch stock transfers'),
   -- Invoice
   (uuid_generate_v4(),'invoice.create',  'invoice',   'create','Create invoices'),
   (uuid_generate_v4(),'invoice.read',    'invoice',   'read',  'View invoices'),

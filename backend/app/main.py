@@ -50,6 +50,8 @@ from app.api.v1.endpoints.gst import router as gst_router
 from app.api.v1.endpoints.audit import router as audit_router
 from app.api.v1.endpoints.ai_assistant import router as ai_assistant_router
 from app.api.v1.endpoints.inventory import router as inventory_router
+from app.api.v1.endpoints.license import router as license_router
+from app.core.license import license_manager, LicenseError
 
 log = get_logger(__name__)
 
@@ -64,7 +66,23 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     log.info("VyaparPro starting", env=settings.APP_ENV, version=settings.APP_VERSION)
 
     # DB health check
-    if not await check_db_connection():
+    if settings.DB_ENGINE == "sqlite":
+        # Desktop edition: no Alembic history to run against a fresh local
+        # file, so build the schema straight from the current models.
+        import app.db.models  # noqa: F401 — registers tables on Base.metadata
+        import app.db.models.billing  # noqa: F401
+        import app.db.models.accounting  # noqa: F401
+        import app.db.models.inventory  # noqa: F401
+        import app.db.models.crm  # noqa: F401
+        from app.db.database import Base
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        from app.db.database import AsyncSessionFactory
+        from app.db.seed_reference_data import seed_reference_data
+        async with AsyncSessionFactory() as seed_session:
+            await seed_reference_data(seed_session)
+        log.info("SQLite schema ready (desktop edition)")
+    elif not await check_db_connection():
         log.critical("Database unreachable — aborting startup")
         raise RuntimeError("Cannot connect to PostgreSQL")
 
@@ -98,15 +116,33 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    origins = ["http://localhost:5500", "http://127.0.1:5500", "http://localhost:5173"]  # Allow local static file access during development
-
     # ── Middleware (order matters: outermost first) ────────────────────
     app.add_middleware(RequestIDMiddleware)
     app.add_middleware(TimingMiddleware)
     app.add_middleware(AuditMiddleware)
+
+    # ── License gate — must be added BEFORE CORS/GZip/SlowAPI so those wrap
+    # it. If added after (as before), it's outermost and its early-return 402
+    # never reaches CORSMiddleware — the browser then drops the response as a
+    # CORS failure instead of showing the real "license invalid" message. ──
+    UNGATED_PATHS = ("/health", "/", f"{settings.API_V1_PREFIX}/license")
+
+    @app.middleware("http")
+    async def license_gate(request: Request, call_next):
+        if any(request.url.path.startswith(p) for p in UNGATED_PATHS):
+            return await call_next(request)
+        try:
+            await license_manager.check()
+        except LicenseError as e:
+            return ORJSONResponse(
+                status_code=402,
+                content={"success": False, "error_code": "LICENSE_INVALID", "message": str(e)},
+            )
+        return await call_next(request)
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=settings.ALLOWED_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -146,7 +182,9 @@ def create_app() -> FastAPI:
     app.include_router(audit_router, prefix=f"{prefix}/audit-log", tags=["Audit Log"])
     app.include_router(ai_assistant_router, prefix=f"{prefix}/ai", tags=["AI Assistant"])
     app.include_router(inventory_router, prefix=prefix, tags=["Inventory / Warehouses"])
-    
+    app.include_router(license_router, prefix=f"{prefix}/license", tags=["License"])
+
+    # ── License gate — blocks every route except /health and /license/* ──
 
     # ── Health / readiness probes ─────────────────────────────────────
     @app.get("/health", include_in_schema=False)
@@ -204,7 +242,7 @@ async def _unhandled_exception_handler(request: Request, exc: Exception) -> ORJS
     log.exception("Unhandled exception", path=request.url.path, exc=str(exc))
     if settings.SENTRY_DSN:
         sentry_sdk.capture_exception(exc)
-    return ORJSONResponse(
+    response = ORJSONResponse(
         status_code=500,
         content={
             "success": False,
@@ -212,6 +250,16 @@ async def _unhandled_exception_handler(request: Request, exc: Exception) -> ORJS
             "message": "An unexpected error occurred. Please try again.",
         },
     )
+    # Generic-Exception handlers run in ServerErrorMiddleware, which sits
+    # OUTSIDE CORSMiddleware — so this response never gets CORS headers
+    # from the middleware stack. Without this, any unhandled backend
+    # error looks like a "CORS blocked" failure in the browser instead
+    # of a 500, which sends debugging in the wrong direction.
+    origin = request.headers.get("origin")
+    if origin and origin in settings.ALLOWED_ORIGINS:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response
 
 
 app = create_app()

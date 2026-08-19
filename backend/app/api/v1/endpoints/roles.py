@@ -79,7 +79,7 @@ async def delete_role(role_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJS
     from app.db.repositories import RoleRepository
     from app.core.exceptions import PermissionDeniedError
     repo = RoleRepository(db)
-    role = await repo.get_or_raise(role_id)
+    role = await repo.get_or_raise_scoped(role_id, company_id=current.company_id)
     if role.is_system_role:
         raise PermissionDeniedError("System roles cannot be deleted.")
     await repo.delete(role)

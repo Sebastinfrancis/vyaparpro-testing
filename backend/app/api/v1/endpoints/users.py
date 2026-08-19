@@ -134,7 +134,7 @@ async def delete_user(
 ) -> ORJSONResponse:
     from app.db.repositories import UserRepository
     repo = UserRepository(db)
-    await repo.soft_delete(user_id)
+    await repo.soft_delete_scoped(user_id, company_id=current.company_id)
     return ok(message="User deactivated.")
 
 
@@ -146,7 +146,7 @@ async def activate_user(
 ) -> ORJSONResponse:
     from app.db.repositories import UserRepository
     repo = UserRepository(db)
-    user = await repo.get_or_raise(user_id)
+    user = await repo.get_or_raise_scoped(user_id, company_id=current.company_id)
     await repo.update(user, {"is_active": True})
     return ok(message="User activated.")
 
@@ -164,7 +164,7 @@ async def force_reset_password(
     from app.db.repositories import UserRepository, UserSessionRepository
     from app.core.security import create_reset_token
     repo = UserRepository(db)
-    user = await repo.get_or_raise(user_id)
+    user = await repo.get_or_raise_scoped(user_id, company_id=current.company_id)
     token = create_reset_token(user.id, user.email)
     await UserSessionRepository(db).revoke_all_for_user(user_id)
     return ok(

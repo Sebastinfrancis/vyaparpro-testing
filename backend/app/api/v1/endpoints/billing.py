@@ -104,7 +104,7 @@ async def update_job_order(jo_id: UUID, payload: JobOrderUpdate, current: Curren
     from app.db.repositories.billing import JobOrderRepository
     from app.schemas.billing import JobOrderOut
     repo = JobOrderRepository(db)
-    jo = await repo.get_or_raise(jo_id)
+    jo = await repo.get_or_raise_scoped(jo_id, company_id=current.company_id)
     updated = await repo.update(jo, payload.model_dump(exclude_unset=True, exclude={"items"}))
     return ok(JobOrderOut.model_validate(updated).model_dump(mode='json'), "Job order updated.")
 
@@ -157,7 +157,7 @@ async def approve_po(po_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONR
     from app.db.repositories.billing import PurchaseOrderRepository
     from datetime import datetime, timezone
     repo = PurchaseOrderRepository(db)
-    po = await repo.get_or_raise(po_id)
+    po = await repo.get_or_raise_scoped(po_id, company_id=current.company_id)
     await repo.update(po, {"approval_status": "approved", "approved_by": current.user_id,
                            "approved_at": datetime.now(timezone.utc), "status": "sent"})
     return ok(message="Purchase order approved.")
@@ -195,7 +195,7 @@ async def patch_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep, 
     from fastapi import HTTPException
     repo = PurchaseOrderRepository(db)
     po = await repo.get_detail(po_id)
-    if not po:
+    if not po or po.company_id != current.company_id:
         raise HTTPException(status_code=404, detail="Purchase order not found")
     allowed = {"status", "expected_delivery", "actual_delivery", "notes", "paid_amount"}
     await repo.update(po, {k: v for k, v in payload.items() if k in allowed})
@@ -206,7 +206,7 @@ async def patch_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep, 
 async def delete_purchase_order(po_id: UUID, current: CurrentUserDep, db: DBDep) -> Response:
     from app.db.repositories.billing import PurchaseOrderRepository
     repo = PurchaseOrderRepository(db)
-    po = await repo.get_or_raise(po_id)
+    po = await repo.get_or_raise_scoped(po_id, company_id=current.company_id)
     await repo.delete(po)
     return Response(status_code=204)
 
@@ -357,7 +357,7 @@ async def patch_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep, pa
     from app.db.repositories.billing import InvoiceRepository
     from app.schemas.billing import InvoiceOut
     repo = InvoiceRepository(db)
-    inv = await repo.get_or_raise(invoice_id)
+    inv = await repo.get_or_raise_scoped(invoice_id, company_id=current.company_id)
     if inv.status == "draft" and payload.get("status") and payload["status"] != "draft":
         raise BusinessError("Use the finalize endpoint to convert a draft invoice — it also updates stock and accounting.")
     allowed = {"status", "due_date", "notes"}
@@ -368,7 +368,7 @@ async def patch_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep, pa
 async def delete_invoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> Response:
     from app.db.repositories.billing import InvoiceRepository
     repo = InvoiceRepository(db)
-    inv = await repo.get_or_raise(invoice_id)
+    inv = await repo.get_or_raise_scoped(invoice_id, company_id=current.company_id)
     if inv.status != "draft":
         raise BusinessError(
             "Only draft invoices can be deleted outright — this invoice has already been finalized "
@@ -408,7 +408,7 @@ async def send_invoice_email(invoice_id: UUID, current: CurrentUserDep, db: DBDe
 async def share_invoice_whatsapp(invoice_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories.billing import InvoiceRepository
     repo = InvoiceRepository(db)
-    inv = await repo.get_or_raise(invoice_id)
+    inv = await repo.get_or_raise_scoped(invoice_id, company_id=current.company_id)
     wa_link = f"https://wa.me/?text=Invoice%20{inv.invoice_no}%20-%20Amount%20Rs.{inv.total_amount}"
     return ok({"whatsapp_link": wa_link})
 
@@ -500,7 +500,7 @@ async def record_einvoice(invoice_id: UUID, payload: EInvoiceRecordIn, current: 
     from app.db.models.billing import EInvoiceLog
 
     repo = InvoiceRepository(db)
-    inv = await repo.get_or_raise(invoice_id)
+    inv = await repo.get_or_raise_scoped(invoice_id, company_id=current.company_id)
 
     update_data = payload.model_dump(exclude_unset=True)
     updated = await repo.update(inv, update_data)
@@ -526,7 +526,7 @@ async def cancel_einvoice(invoice_id: UUID, current: CurrentUserDep, db: DBDep) 
     from app.db.models.billing import EInvoiceLog
 
     repo = InvoiceRepository(db)
-    inv = await repo.get_or_raise(invoice_id)
+    inv = await repo.get_or_raise_scoped(invoice_id, company_id=current.company_id)
 
     updated = await repo.update(inv, {
         "irn": None, "ack_no": None, "ack_date": None,

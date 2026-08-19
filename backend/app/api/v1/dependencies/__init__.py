@@ -196,7 +196,43 @@ class CacheService:
         return ":".join(str(p) for p in parts)
 
 
-async def get_cache(redis: RedisDep) -> CacheService:
+class InMemoryCache:
+    """In-process cache with the same interface as CacheService, used for
+    the desktop edition where there's no separate Redis process to bundle."""
+
+    _store: dict[str, tuple[float, Any]] = {}
+
+    async def get(self, key: str) -> Any | None:
+        import time
+        entry = self._store.get(key)
+        if entry is None:
+            return None
+        expires_at, value = entry
+        if time.monotonic() > expires_at:
+            self._store.pop(key, None)
+            return None
+        return value
+
+    async def set(self, key: str, value: Any, ttl: int = settings.REDIS_CACHE_TTL) -> None:
+        import time
+        self._store[key] = (time.monotonic() + ttl, value)
+
+    async def delete(self, key: str) -> None:
+        self._store.pop(key, None)
+
+    async def delete_pattern(self, pattern: str) -> None:
+        import fnmatch
+        for k in [k for k in self._store if fnmatch.fnmatch(k, pattern)]:
+            self._store.pop(k, None)
+
+    def cache_key(self, *parts: str | UUID) -> str:
+        return ":".join(str(p) for p in parts)
+
+
+async def get_cache() -> "CacheService | InMemoryCache":
+    if settings.DB_ENGINE == "sqlite":
+        return InMemoryCache()
+    redis = await get_redis()
     return CacheService(redis)
 
 

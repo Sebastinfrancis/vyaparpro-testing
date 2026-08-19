@@ -18,6 +18,7 @@ from app.api.v1.dependencies import CurrentUserDep, DBDep, require_perm
 from app.schemas import BranchCreate, BranchOut, BranchUpdate
 from app.services import BranchService
 from app.utils.responses import created, ok
+from app.db.sql_compat import month_start_sql, days_since_sql
 
 router = APIRouter()
 
@@ -64,13 +65,14 @@ async def compare_branches(
     comparison view. Pulls each branch's monthly_target against its real MTD
     sales figure, live from billing."""
     from sqlalchemy import text
+    from app.db.sql_compat import month_start_sql
     svc = BranchService(db)
     branches = await svc.list_by_company(company_id)
 
-    stmt = text("""
+    stmt = text(f"""
         SELECT branch_id,
                COALESCE(SUM(total_amount) FILTER (
-                   WHERE invoice_date >= date_trunc('month', CURRENT_DATE)
+                   WHERE invoice_date >= {month_start_sql()}
                ), 0) AS sales_mtd
         FROM invoices
         WHERE company_id = :cid AND status != 'cancelled' AND branch_id IS NOT NULL
@@ -158,7 +160,7 @@ async def branch_dashboard(
     from app.db.repositories import BranchRepository
 
     branch_repo = BranchRepository(db)
-    branch = await branch_repo.get_or_raise(branch_id)
+    branch = await branch_repo.get_or_raise_scoped(branch_id, company_id=company_id)
 
     # Stock value + product count across every warehouse tied to this branch
     stock_stmt = text("""
@@ -186,14 +188,14 @@ async def branch_dashboard(
     low_stock_row = (await db.execute(low_stock_stmt, {"bid": str(branch_id)})).mappings().one()
 
     # Sales performance for this branch (today / month-to-date)
-    sales_stmt = text("""
+    sales_stmt = text(f"""
         SELECT
             COALESCE(SUM(total_amount) FILTER (WHERE invoice_date = CURRENT_DATE), 0) AS sales_today,
             COALESCE(SUM(total_amount) FILTER (
-                WHERE invoice_date >= date_trunc('month', CURRENT_DATE)
+                WHERE invoice_date >= {month_start_sql()}
             ), 0) AS sales_mtd,
             COUNT(*) FILTER (
-                WHERE invoice_date >= date_trunc('month', CURRENT_DATE)
+                WHERE invoice_date >= {month_start_sql()}
             ) AS invoice_count_mtd,
             COALESCE(SUM(total_amount - paid_amount) FILTER (
                 WHERE status IN ('finalized','sent','partial','overdue')
@@ -279,11 +281,11 @@ async def branch_stock_aging(
     Buckets every stock line by days since its last movement
     (inventory_stock.last_updated, touched on every purchase/sale/transfer)."""
     from sqlalchemy import text
-    stmt = text("""
+    stmt = text(f"""
         SELECT s.product_id, p.product_name, p.product_code,
                w.id AS warehouse_id, w.warehouse_name,
                s.quantity, s.cost_price, s.last_updated,
-               (CURRENT_DATE - s.last_updated::date) AS days_since_movement
+               {days_since_sql('s.last_updated')} AS days_since_movement
         FROM inventory_stock s
         JOIN warehouses w ON w.id = s.warehouse_id
         JOIN products p ON p.id = s.product_id

@@ -9,6 +9,7 @@ from app.utils.pdf_generator import generate_report_pdf
 
 from app.api.v1.dependencies import CurrentUserDep, DBDep, require_perm
 from app.utils.responses import ok
+from app.db.sql_compat import days_since_sql
 import uuid
 from decimal import Decimal
 from app.utils.pdf_generator import generate_report_pdf, format_inr
@@ -50,8 +51,8 @@ async def sales_report(
     """), {"cid": cid, "df": date_from, "dt": date_to})).mappings().one()
 
     by_customer = (await db.execute(text("""
-        SELECT COALESCE(i.party_id::text, lower(trim(i.billing_name))) AS customer_key,
-               MAX(i.party_id::text) AS party_id,
+        SELECT COALESCE(CAST(i.party_id AS TEXT), lower(trim(i.billing_name))) AS customer_key,
+               MAX(CAST(i.party_id AS TEXT)) AS party_id,
                COALESCE(MAX(p.display_name), MIN(i.billing_name)) AS customer_name,
                COUNT(*) FILTER (WHERE i.invoice_type NOT IN ('credit_note','debit_note')) AS invoice_count,
                COALESCE(SUM(i.total_amount) FILTER (WHERE i.invoice_type != 'credit_note'), 0)
@@ -59,14 +60,14 @@ async def sales_report(
         FROM invoices i LEFT JOIN parties p ON p.id = i.party_id
         WHERE i.company_id = :cid AND i.invoice_date BETWEEN :df AND :dt
           AND i.status NOT IN ('draft','cancelled','void')
-        GROUP BY COALESCE(i.party_id::text, lower(trim(i.billing_name)))
+        GROUP BY COALESCE(CAST(i.party_id AS TEXT), lower(trim(i.billing_name)))
         HAVING COUNT(*) FILTER (WHERE i.invoice_type NOT IN ('credit_note','debit_note')) > 0
         ORDER BY total DESC LIMIT 500
     """), {"cid": cid, "df": date_from, "dt": date_to})).mappings().all()
 
     by_product = (await db.execute(text("""
-        SELECT COALESCE(ii.product_id::text, lower(trim(ii.description))) AS product_key,
-               MAX(ii.product_id::text) AS product_id,
+        SELECT COALESCE(CAST(ii.product_id AS TEXT), lower(trim(ii.description))) AS product_key,
+               MAX(CAST(ii.product_id AS TEXT)) AS product_id,
                COALESCE(MAX(p.product_name), MIN(ii.description)) AS product_name,
                SUM(ii.quantity) AS qty_sold, SUM(ii.taxable_amount) AS revenue
         FROM invoice_items ii JOIN invoices i ON i.id = ii.invoice_id
@@ -74,7 +75,7 @@ async def sales_report(
         WHERE i.company_id = :cid AND i.invoice_date BETWEEN :df AND :dt
           AND i.status NOT IN ('draft','cancelled','void')
           AND i.invoice_type NOT IN ('credit_note','debit_note')
-        GROUP BY COALESCE(ii.product_id::text, lower(trim(ii.description)))
+        GROUP BY COALESCE(CAST(ii.product_id AS TEXT), lower(trim(ii.description)))
         ORDER BY revenue DESC
     """), {"cid": cid, "df": date_from, "dt": date_to})).mappings().all()
 
@@ -321,24 +322,25 @@ async def customer_report(current: CurrentUserDep, db: DBDep, as_pdf: bool = Que
         "total_outstanding": sum(float(r["outstanding"] or 0) for r in rows),
         "total_revenue": sum(float(r["total_business"] or 0) for r in rows),
     }
-    cust_summary = (await db.execute(text("""
+    cust_summary = (await db.execute(text(f"""
         SELECT COUNT(*) FILTER (WHERE p.is_active) AS active_customers,
                COUNT(*) FILTER (WHERE NOT p.is_active) AS inactive_customers,
-               COUNT(*) FILTER (WHERE p.created_at >= CURRENT_DATE - INTERVAL '30 days') AS new_customers,
-               COUNT(DISTINCT i.party_id) FILTER (WHERE i.invoice_date >= CURRENT_DATE - INTERVAL '90 days') AS repeat_customers
+               COUNT(*) FILTER (WHERE {days_since_sql("p.created_at")} <= 30) AS new_customers,
+               COUNT(DISTINCT i.party_id) FILTER (WHERE {days_since_sql("i.invoice_date")} <= 90) AS repeat_customers
         FROM parties p LEFT JOIN invoices i ON i.party_id = p.id
         WHERE p.company_id = :cid AND p.party_type = 'customer'
     """), {"cid": cid})).mappings().one()
 
-    aging = (await db.execute(text("""
-        SELECT COUNT(*) FILTER (WHERE CURRENT_DATE - due_date BETWEEN 0 AND 30) AS b0_30,
-               SUM(total_amount - paid_amount) FILTER (WHERE CURRENT_DATE - due_date BETWEEN 0 AND 30) AS a0_30,
-               COUNT(*) FILTER (WHERE CURRENT_DATE - due_date BETWEEN 31 AND 60) AS b31_60,
-               SUM(total_amount - paid_amount) FILTER (WHERE CURRENT_DATE - due_date BETWEEN 31 AND 60) AS a31_60,
-               COUNT(*) FILTER (WHERE CURRENT_DATE - due_date BETWEEN 61 AND 90) AS b61_90,
-               SUM(total_amount - paid_amount) FILTER (WHERE CURRENT_DATE - due_date BETWEEN 61 AND 90) AS a61_90,
-               COUNT(*) FILTER (WHERE CURRENT_DATE - due_date > 90) AS b90plus,
-               SUM(total_amount - paid_amount) FILTER (WHERE CURRENT_DATE - due_date > 90) AS a90plus
+    _dsd = days_since_sql("due_date")
+    aging = (await db.execute(text(f"""
+        SELECT COUNT(*) FILTER (WHERE {_dsd} BETWEEN 0 AND 30) AS b0_30,
+               SUM(total_amount - paid_amount) FILTER (WHERE {_dsd} BETWEEN 0 AND 30) AS a0_30,
+               COUNT(*) FILTER (WHERE {_dsd} BETWEEN 31 AND 60) AS b31_60,
+               SUM(total_amount - paid_amount) FILTER (WHERE {_dsd} BETWEEN 31 AND 60) AS a31_60,
+               COUNT(*) FILTER (WHERE {_dsd} BETWEEN 61 AND 90) AS b61_90,
+               SUM(total_amount - paid_amount) FILTER (WHERE {_dsd} BETWEEN 61 AND 90) AS a61_90,
+               COUNT(*) FILTER (WHERE {_dsd} > 90) AS b90plus,
+               SUM(total_amount - paid_amount) FILTER (WHERE {_dsd} > 90) AS a90plus
         FROM invoices
         WHERE company_id = :cid AND status NOT IN ('paid','cancelled','void','draft') AND invoice_type != 'credit_note'
     """), {"cid": cid})).mappings().one()

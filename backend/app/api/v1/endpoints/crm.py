@@ -37,7 +37,7 @@ async def create_lead(payload: LeadCreate, current: CurrentUserDep, db: DBDep) -
 @router.get("/{lead_id}", summary="Get lead")
 async def get_lead(lead_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = CRMService(db)
-    lead = await svc.leads.get_or_raise(lead_id)
+    lead = await svc.leads.get_or_raise_scoped(lead_id, company_id=current.company_id)
     return ok(data=LeadOut.model_validate(lead).model_dump(mode="json"))
 
 
@@ -51,5 +51,5 @@ async def update_lead(lead_id: UUID, payload: LeadUpdate, current: CurrentUserDe
 @router.delete("/{lead_id}", summary="Deactivate lead")
 async def delete_lead(lead_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     svc = CRMService(db)
-    await svc.leads.soft_delete(lead_id)
+    await svc.leads.soft_delete_scoped(lead_id, company_id=current.company_id)
     return ok(message="Lead deactivated.")

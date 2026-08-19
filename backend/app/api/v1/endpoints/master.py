@@ -72,7 +72,7 @@ async def create_category(
 async def get_category(cat_id: UUID, current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
     from app.db.repositories import ProductCategoryRepository
     repo = ProductCategoryRepository(db)
-    cat = await repo.get_or_raise(cat_id)
+    cat = await repo.get_or_raise_scoped(cat_id, company_id=current.company_id)
     return ok(data=CategoryOut.model_validate(cat).model_dump(mode='json'))
 
 @router.patch(
@@ -106,7 +106,7 @@ async def delete_category(
 ) -> ORJSONResponse:
     from app.db.repositories import ProductCategoryRepository
     repo = ProductCategoryRepository(db)
-    await repo.soft_delete(cat_id)
+    await repo.soft_delete_scoped(cat_id, company_id=current.company_id)
     await cache.delete(cache.cache_key("categories", str(current.company_id)))
     return ok(message="Category deactivated.")
 

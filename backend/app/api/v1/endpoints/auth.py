@@ -142,26 +142,12 @@ async def forgot_password(
     repo = UserRepository(db)
     
     user = await repo.get_by_email(payload.company_id, str(payload.email))
-    
+
     if user:
         from app.core.security import create_reset_token
+        from app.utils.email import send_reset_email
         token = create_reset_token(user.id, user.email)
-        
-        # ✅ SAFE PRINTS: These only execute if a user was found in the DB
-        print("\n" + "="*50)
-        print(f"🚀 USER FOUND: {user.email}")
-        print(f"🔑 GENERATED TOKEN: {token}")
-        print("="*50 + "\n")
-        
-        # background_tasks.add_task(send_reset_email, user.email, token)
-        
-    else:
-        # ✅ SAFE DIAGNOSTIC: Executes if the company_id or email did not match anything
-        print("\n" + "❌ "*15)
-        print("DATABASE LOOKUP FAILED!")
-        print(f"Provided Email: '{payload.email}'")
-        print(f"Provided Company ID: '{payload.company_id}'")
-        print("❌ "*15 + "\n")
+        background_tasks.add_task(send_reset_email, user.email, token)
 
     return ok(message="If that email exists, a reset link has been sent.")
 

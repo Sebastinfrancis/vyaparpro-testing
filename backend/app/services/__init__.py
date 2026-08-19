@@ -431,7 +431,7 @@ class BranchService:
         return branch
 
     async def update(self, branch_id: UUID, payload: BranchUpdate, company_id: UUID, user_id: UUID) -> Branch:
-        branch = await self.branches.get_or_raise(branch_id)
+        branch = await self.branches.get_or_raise_scoped(branch_id, company_id=company_id)
         changes = payload.model_dump(exclude_unset=True)
         # Gap #3 — same single-Head-Office rule on update.
         if changes.get("is_head_office") is True:
@@ -454,7 +454,7 @@ class BranchService:
         return branches
 
     async def get_with_user_count(self, branch_id: UUID, company_id: UUID) -> Branch:
-        branch = await self.branches.get_or_raise(branch_id)
+        branch = await self.branches.get_or_raise_scoped(branch_id, company_id=company_id)
         counts = await self.branches.user_counts_by_branch(company_id)
         branch.user_count = counts.get(branch.id, 0)
         return branch
@@ -462,7 +462,7 @@ class BranchService:
     async def deactivate(self, branch_id: UUID, company_id: UUID, user_id: UUID, force: bool = False) -> None:
         """Gap #8 — refuse to deactivate a branch that still has open stock,
         pending invoices, or active staff, unless explicitly forced."""
-        branch = await self.branches.get_or_raise(branch_id)
+        branch = await self.branches.get_or_raise_scoped(branch_id, company_id=company_id)
         if branch.is_head_office:
             raise BusinessError("The Head Office branch cannot be deactivated.")
         if not force:
@@ -480,7 +480,7 @@ class BranchService:
                     ". Resolve these first, or pass force=true to override.",
                     blockers=blockers,
                 )
-        await self.branches.soft_delete(branch_id)
+        await self.branches.soft_delete_scoped(branch_id, company_id=company_id)
         await self.audit.log(
             company_id=company_id, action="DELETE", module="branch",
             user_id=user_id, entity_type="branches", entity_id=branch_id,
@@ -579,7 +579,7 @@ class RoleService:
         return await self.roles.get_with_permissions(role.id)
 
     async def update(self, role_id: UUID, payload: RoleUpdate, company_id: UUID, user_id: UUID) -> Role:
-        role = await self.roles.get_or_raise(role_id)
+        role = await self.roles.get_or_raise_scoped(role_id, company_id=company_id)
         if role.is_system_role:
             raise PermissionDeniedError("System roles cannot be modified.")
 
@@ -752,7 +752,7 @@ class CategoryService:
         return await self.cats.create(data)
 
     async def update(self, cat_id: UUID, payload: CategoryUpdate, company_id: UUID) -> ProductCategory:
-        cat = await self.cats.get_or_raise(cat_id)
+        cat = await self.cats.get_or_raise_scoped(cat_id, company_id=company_id)
         return await self.cats.update(cat, payload.model_dump(exclude_unset=True))
 
     async def tree(self, company_id: UUID) -> list[ProductCategory]:
