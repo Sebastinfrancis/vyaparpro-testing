@@ -34,6 +34,13 @@ def _send(to_email: str, subject: str, body: str) -> None:
                 server.starttls()
             server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
             server.send_message(msg)
+        logger.info("Email sent to %s: %s", to_email, subject)
+    except smtplib.SMTPAuthenticationError:
+        logger.error(
+            "SMTP auth failed sending to %s — check SMTP_USER/SMTP_PASSWORD "
+            "in .env (Gmail requires an App Password, not your login password).",
+            to_email,
+        )
     except Exception:
         logger.exception("Failed to send email to %s", to_email)
 

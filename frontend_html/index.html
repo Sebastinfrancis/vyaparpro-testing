@@ -301,7 +301,7 @@ select.fi option{background:var(--bg2)}
       <div class="whead">Billing and GST that <em>keep pace</em> with your business.</div>
       <p class="wsub">Invoicing, inventory, purchases and GST returns in one place — with an AI assistant that answers questions about your own data.</p>
       <div class="wctas">
-        <button class="btn btn-p" style="padding:13px 24px" onclick="showAuthScreen('signup')">Create Free Account</button>
+        <button class="btn btn-p" style="padding:13px 24px" onclick="showAuthScreen('signup')" id="welcomeCreateAccountBtn">Create Free Account</button>
         <button class="btn btn-o" style="padding:13px 24px" onclick="showAuthScreen('login')">Sign In</button>
       </div>
       <div class="wchecks">
@@ -380,7 +380,7 @@ select.fi option{background:var(--bg2)}
       <div style="margin-top:12px;font-size:11px;text-align:center">
         <a href="javascript:void(0)" onclick="showForgotPassword()" style="color:var(--text3)">Forgot password?</a>
       </div>
-      <div style="margin-top:16px;font-size:11px;color:var(--text3);text-align:center">
+      <div style="margin-top:16px;font-size:11px;color:var(--text3);text-align:center" id="newHereRow">
         New here? <a href="javascript:void(0)" onclick="switchAuthTab('signup')" style="color:var(--accent)">Create an account</a>
       </div>
     </div>
@@ -1293,6 +1293,14 @@ select.fi option{background:var(--bg2)}
   <!-- To add a new settings option later: add one more .settings-menu-item block here,
        and a matching #settingsSection-<key> block below in #settingsDetail. -->
   <div id="settingsMenu" class="settings-menu-grid">
+    <div class="settings-menu-item" onclick="openSettingsSection('plan')">
+      <div class="smi-icon">💳</div>
+      <div class="smi-text">
+        <div class="smi-title">Plan & Account</div>
+        <div class="smi-sub">Current plan, usage limits, activation</div>
+      </div>
+      <div class="smi-arrow">›</div>
+    </div>
     <div class="settings-menu-item" onclick="openSettingsSection('company')">
       <div class="smi-icon">🏢</div>
       <div class="smi-text">
@@ -1394,6 +1402,62 @@ select.fi option{background:var(--bg2)}
   <!-- ---- SETTINGS DETAIL (only the clicked section shows) ---- -->
   <div id="settingsDetail" class="hidden">
     <div class="settings-back" onclick="closeSettingsSection()">‹ Back to Settings</div>
+
+    <div id="settingsSection-plan" class="settings-section hidden">
+      <div class="settings-section-header">
+        <div class="ssh-icon">💳</div>
+        <div>
+          <div class="ssh-title">Plan & Account</div>
+          <div class="ssh-sub">Your current subscription, limits and activation details</div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+          <div>
+            <div style="font-size:15px;font-weight:700" id="plan_name">—</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px" id="plan_storage_mode">—</div>
+          </div>
+          <span class="chip cgr" id="plan_status_chip">—</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+          <div style="padding:11px;background:var(--bg3);border-radius:var(--r2)">
+            <div style="font-size:10px;color:var(--text3)">Valid Until</div>
+            <div style="font-size:12px;font-weight:600;margin-top:3px" id="plan_expires_at">—</div>
+          </div>
+          <div style="padding:11px;background:var(--bg3);border-radius:var(--r2)">
+            <div style="font-size:10px;color:var(--text3)">Account Email</div>
+            <div style="font-size:12px;font-weight:600;margin-top:3px" id="plan_account_email">—</div>
+          </div>
+          <div style="padding:11px;background:var(--bg3);border-radius:var(--r2)">
+            <div style="font-size:10px;color:var(--text3)">Users</div>
+            <div style="font-size:12px;font-weight:600;margin-top:3px" id="plan_users_usage">—</div>
+          </div>
+          <div style="padding:11px;background:var(--bg3);border-radius:var(--r2)">
+            <div style="font-size:10px;color:var(--text3)">Custom Roles</div>
+            <div style="font-size:12px;font-weight:600;margin-top:3px" id="plan_roles_usage">—</div>
+          </div>
+        </div>
+        <div style="padding:11px;background:var(--bg3);border-radius:var(--r2);margin-bottom:16px">
+          <div style="font-size:10px;color:var(--text3)">Device ID <span style="opacity:.7">(share this if you need a new activation code)</span></div>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <input class="fi mono" id="plan_device_id" readonly style="flex:1;font-size:11px" value="Loading…"/>
+            <button class="btn btn-o btn-sm" onclick="copyPlanDeviceId()">Copy</button>
+          </div>
+        </div>
+
+        <div class="div"></div>
+
+        <div style="font-size:12px;font-weight:700;margin-bottom:6px">Change / Renew Plan</div>
+        <div style="font-size:10.5px;color:var(--text3);margin-bottom:10px">
+          Got a new activation code (upgrading, renewing, or moving to Online)? Paste it below.
+        </div>
+        <div style="display:flex;gap:8px">
+          <input class="fi mono" id="plan_new_code_input" placeholder="Paste new activation code" style="flex:1"/>
+          <button class="btn btn-p btn-sm" onclick="applyNewActivationCode()">Apply</button>
+        </div>
+        <div id="plan_activate_msg" style="font-size:10.5px;margin-top:8px"></div>
+      </div>
+    </div>
 
     <div id="settingsSection-company" class="settings-section hidden">
       <div class="settings-section-header">
@@ -1703,7 +1767,7 @@ select.fi option{background:var(--bg2)}
       </div>
       <div class="card">
         <div class="card-title">
-          <span>All Users</span>
+          <span>All Users <span id="users_usage_label" style="font-weight:400;color:var(--text3);font-size:10.5px"></span></span>
           <button class="btn btn-p btn-sm" onclick="openAddUserModal()">➕ Add User</button>
         </div>
         <div class="tw"><table>
@@ -1820,7 +1884,7 @@ select.fi option{background:var(--bg2)}
       </div>
       <div class="card">
         <div class="card-title">
-          <span>All Roles</span>
+          <span>All Roles <span id="roles_usage_label" style="font-weight:400;color:var(--text3);font-size:10.5px"></span></span>
           <button class="btn btn-p btn-sm" onclick="openRoleModal()">➕ Create Role</button>
         </div>
         <div class="tw"><table>
@@ -2630,6 +2694,8 @@ const CFG = {
 //  We also keep a parsed copy of the user profile in memory.
 // ============================================================
 let AUTH = { token: null, user: null, apiOnline: false };
+let PLAN_INFO = null; // populated by loadPlanInfo() — plan code/name, limits, live usage
+let SETUP_COMPLETE = false; // true once a company already exists on this device — sign-up is one-time
 
 function getHeaders(isFormData = false) {
   const h = {};
@@ -2982,6 +3048,10 @@ function showAuthScreen(tab) {
 }
 
 function switchAuthTab(tab) {
+  // Sign-up is a one-time setup step on this device — once a company
+  // already exists, redirect any attempt to reach the sign-up tab back to
+  // Sign In (covers direct calls too, not just the hidden UI elements).
+  if (tab === 'signup' && SETUP_COMPLETE) tab = 'login';
   const isLogin = tab === 'login';
   document.getElementById('loginForm').style.display  = isLogin ? 'block' : 'none';
   document.getElementById('signupForm').style.display = isLogin ? 'none'  : 'block';
@@ -2990,6 +3060,25 @@ function switchAuthTab(tab) {
   document.getElementById('authTabSignup').classList.toggle('active', !isLogin);
   document.getElementById('loginErr').textContent  = '';
   document.getElementById('signupErr').textContent = '';
+}
+
+// Hides every route to the sign-up form once a company already exists on
+// this device: the welcome screen's "Create Free Account" button and the
+// login card's "Sign Up" tab + "New here?" link.
+async function loadSetupStatus() {
+  try {
+    const r = await (await fetch(CFG.API_BASE + '/auth/setup-status')).json();
+    SETUP_COMPLETE = !!r?.data?.setup_complete;
+  } catch (e) {
+    SETUP_COMPLETE = false; // can't confirm — backend still blocks a second sign-up regardless
+  }
+  const createBtn = document.getElementById('welcomeCreateAccountBtn');
+  if (createBtn) createBtn.style.display = SETUP_COMPLETE ? 'none' : '';
+  const signupTab = document.getElementById('authTabSignup');
+  if (signupTab) signupTab.style.display = SETUP_COMPLETE ? 'none' : '';
+  const newHereRow = document.getElementById('newHereRow');
+  if (newHereRow) newHereRow.style.display = SETUP_COMPLETE ? 'none' : '';
+  if (SETUP_COMPLETE) switchAuthTab('login');
 }
 
 function showForgotPassword() {
@@ -3315,6 +3404,7 @@ function doLogout() {
   showScreen('welcome');
   document.getElementById('loginUser').value               = '';
   clearAuthForms();
+  loadSetupStatus();
 }
 
 function settingsLogoutClick() {
@@ -8627,6 +8717,7 @@ function openSettingsSection(key) {
   document.querySelectorAll('#settingsDetail .settings-section').forEach(el => el.classList.add('hidden'));
   document.getElementById(`settingsSection-${key}`)?.classList.remove('hidden');
   if (key === 'numbering') initDocumentSequences();
+  if (key === 'plan') renderPlanSection();
 }
 
 // Return to the settings menu (list of headings).
@@ -8767,6 +8858,118 @@ async function renderSettings() {
       </tr>`).join('') || `<tr><td colspan="4" style="text-align:center">No users found</td></tr>`;
   } catch (e) {
     body.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text3)">Could not load users</td></tr>`;
+  }
+
+  applyPlanGatingToButtons();
+}
+
+// ============================================================
+//  PLAN & ACCOUNT
+// ============================================================
+async function loadPlanInfo() {
+  if (!AUTH.apiOnline) return null;
+  try {
+    const r = await apiFetch('/license/plan-info');
+    PLAN_INFO = r?.data || r || null;
+  } catch (e) {
+    console.warn('[Settings] plan info load failed:', e.message);
+    PLAN_INFO = null;
+  }
+  return PLAN_INFO;
+}
+
+// Disable "Add User" / "Create Role" once the plan's limit is reached, so
+// people hit a clear disabled state instead of a server error after filling
+// the whole form in.
+function applyPlanGatingToButtons() {
+  if (!PLAN_INFO) return;
+
+  const userBtn = document.querySelector('#settingsSection-users .card-title button');
+  const userLbl = document.getElementById('users_usage_label');
+  if (userLbl) userLbl.textContent = `(${PLAN_INFO.current_users}/${PLAN_INFO.max_users === null ? '∞' : PLAN_INFO.max_users})`;
+  if (userBtn) {
+    const atLimit = PLAN_INFO.can_add_user === false;
+    userBtn.disabled = atLimit;
+    userBtn.title = atLimit
+      ? `Your ${PLAN_INFO.plan_name} plan allows up to ${PLAN_INFO.max_users} user(s). Upgrade to add more.`
+      : '';
+    userBtn.style.opacity = atLimit ? '0.5' : '';
+    userBtn.style.cursor = atLimit ? 'not-allowed' : '';
+  }
+
+  const roleBtn = document.querySelector('#settingsSection-roles .card-title button');
+  const roleLbl = document.getElementById('roles_usage_label');
+  if (roleLbl) roleLbl.textContent = `(${PLAN_INFO.current_custom_roles}/${PLAN_INFO.max_custom_roles === null ? '∞' : PLAN_INFO.max_custom_roles})`;
+  if (roleBtn) {
+    const atLimit = PLAN_INFO.can_add_role === false;
+    roleBtn.disabled = atLimit;
+    roleBtn.title = atLimit
+      ? (PLAN_INFO.max_custom_roles === 0
+          ? `Custom roles aren't available on your ${PLAN_INFO.plan_name} plan.`
+          : `Your ${PLAN_INFO.plan_name} plan allows up to ${PLAN_INFO.max_custom_roles} custom role(s). Upgrade to add more.`)
+      : '';
+    roleBtn.style.opacity = atLimit ? '0.5' : '';
+    roleBtn.style.cursor = atLimit ? 'not-allowed' : '';
+  }
+}
+
+async function renderPlanSection() {
+  setVal('plan_device_id', 'Loading…');
+  try {
+    const dr = await (await fetch(CFG.API_BASE + '/license/device-id')).json();
+    setVal('plan_device_id', dr?.data?.device_id || 'Could not load');
+  } catch (e) { setVal('plan_device_id', 'Could not load'); }
+
+  const info = await loadPlanInfo();
+  if (!info) {
+    setTxt('plan_name', 'Could not load plan details');
+    return;
+  }
+  setTxt('plan_name', info.plan_name || '—');
+  setTxt('plan_storage_mode', info.storage_mode === 'online'
+    ? '☁️ Online — data syncs to the cloud'
+    : '💻 Offline — data stays on this device');
+  const chip = document.getElementById('plan_status_chip');
+  if (chip) { chip.textContent = 'Active'; chip.className = 'chip cgr'; }
+  setTxt('plan_expires_at', info.expires_at
+    ? new Date(info.expires_at * 1000).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+    : '—');
+  setTxt('plan_account_email', info.customer_email || '—');
+  setTxt('plan_users_usage', `${info.current_users} / ${info.max_users === null ? '∞' : info.max_users} used`);
+  setTxt('plan_roles_usage', `${info.current_custom_roles} / ${info.max_custom_roles === null ? '∞' : info.max_custom_roles} used`);
+
+  applyPlanGatingToButtons();
+}
+
+function copyPlanDeviceId() {
+  const input = document.getElementById('plan_device_id');
+  input.select();
+  navigator.clipboard?.writeText(input.value);
+  showToast('📋 Device ID copied');
+}
+
+async function applyNewActivationCode() {
+  const key = getVal('plan_new_code_input').replace(/\s+/g, '');
+  const msg = document.getElementById('plan_activate_msg');
+  if (!key) { msg.textContent = 'Paste an activation code first.'; msg.style.color = 'var(--red)'; return; }
+  try {
+    const result = await (await fetch(CFG.API_BASE + '/license/activate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ license_key: key }),
+    })).json();
+    if (result?.data?.valid) {
+      msg.textContent = '✅ Plan updated. Reloading…';
+      msg.style.color = 'var(--green)';
+      setVal('plan_new_code_input', '');
+      setTimeout(() => location.reload(), 1200);
+    } else {
+      msg.textContent = result?.data?.message || 'Could not apply this activation code.';
+      msg.style.color = 'var(--red)';
+    }
+  } catch (e) {
+    msg.textContent = `Cannot reach the server (${e.message}).`;
+    msg.style.color = 'var(--red)';
   }
 }
 
@@ -9168,6 +9371,10 @@ async function saveNotificationSettings() {
 }
 
 function openAddUserModal() {
+  if (PLAN_INFO && PLAN_INFO.can_add_user === false) {
+    showToast(`⚠️ Your ${PLAN_INFO.plan_name} plan allows up to ${PLAN_INFO.max_users} user(s). Upgrade to add more.`, 'warn');
+    return;
+  }
   setVal('au_name', ''); setVal('au_email', ''); setVal('au_phone', ''); setVal('au_password', '');
   const branchSel = document.getElementById('au_branch');
   if (branchSel) {
@@ -9275,6 +9482,12 @@ function toggleModuleAll(mod, checked) {
 }
 
 async function openRoleModal(roleId, cloneFrom) {
+  if (!roleId && PLAN_INFO && PLAN_INFO.can_add_role === false) {
+    showToast(PLAN_INFO.max_custom_roles === 0
+      ? `⚠️ Custom roles aren't available on your ${PLAN_INFO.plan_name} plan.`
+      : `⚠️ Your ${PLAN_INFO.plan_name} plan allows up to ${PLAN_INFO.max_custom_roles} custom role(s). Upgrade to add more.`, 'warn');
+    return;
+  }
   await ensurePermissionsCache();
   setVal('rm_id', roleId || '');
   setVal('rm_name', ''); setVal('rm_level', '5'); setVal('rm_desc', '');
@@ -10675,6 +10888,7 @@ window.onload = async () => {
         const u = me?.data || me;
         AUTH.user = { name: u.full_name || 'User', role: u.role?.role_name || 'Staff', branchId: u.branch_id || null };
         CFG.COMPANY_ID = u.company_id || CFG.COMPANY_ID;
+        await loadSetupStatus();
         bootApp();
         bootedFromSession = true;
       } catch (_) {
@@ -10688,7 +10902,10 @@ window.onload = async () => {
     }
   }
 
-  if (!bootedFromSession) showScreen('welcome');
+  if (!bootedFromSession) {
+    await loadSetupStatus();
+    showScreen('welcome');
+  }
 
   // Global keyboard shortcuts
   document.addEventListener('keydown',e=>{

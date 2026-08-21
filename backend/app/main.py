@@ -14,7 +14,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import ORJSONResponse
 from pydantic import ValidationError as PydanticValidationError
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import _rate_limit_exceeded_handler
+from app.core.limiter import limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
@@ -55,8 +56,7 @@ from app.core.license import license_manager, LicenseError
 
 log = get_logger(__name__)
 
-# ── Rate limiter (shared) ────────────────────────────────────────────────────
-limiter = Limiter(key_func=get_remote_address, default_limits=["200/minute"])
+
 
 
 # ── Lifespan ─────────────────────────────────────────────────────────────────
@@ -78,9 +78,19 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         from app.db.database import AsyncSessionFactory
-        from app.db.seed_reference_data import seed_reference_data
+        from app.db.seed_reference_data import seed_reference_data, seed_standard_roles
         async with AsyncSessionFactory() as seed_session:
             await seed_reference_data(seed_session)
+
+            # Backfill any standard roles that didn't exist yet when this
+            # company was created (e.g. installs from before the 8-role
+            # rollout). Idempotent — existing roles are left untouched.
+            from sqlalchemy import select as _select
+            from app.db.models import Company
+            company_ids = (await seed_session.execute(_select(Company.id))).scalars().all()
+            for company_id in company_ids:
+                await seed_standard_roles(seed_session, company_id)
+            await seed_session.commit()
         log.info("SQLite schema ready (desktop edition)")
     elif not await check_db_connection():
         log.critical("Database unreachable — aborting startup")

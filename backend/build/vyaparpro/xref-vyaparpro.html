@@ -4722,6 +4722,7 @@ imported by:
  &#8226;   <a href="#app.core.exceptions">app.core.exceptions</a>
  &#8226;   <a href="#app.core.license">app.core.license</a>
  &#8226;   <a href="#app.core.logging">app.core.logging</a>
+ &#8226;   <a href="#app.core.plans">app.core.plans</a>
  &#8226;   <a href="#app.core.security">app.core.security</a>
  &#8226;   <a href="#app.db.database">app.db.database</a>
  &#8226;   <a href="#app.db.models">app.db.models</a>
@@ -4753,6 +4754,7 @@ imported by:
  &#8226;   <a href="#app.services.crm">app.services.crm</a>
  &#8226;   <a href="#app.services.inventory">app.services.inventory</a>
  &#8226;   <a href="#app.utils.accounting_report_export">app.utils.accounting_report_export</a>
+ &#8226;   <a href="#app.utils.email">app.utils.email</a>
  &#8226;   <a href="#app.utils.excel_generator">app.utils.excel_generator</a>
  &#8226;   <a href="#app.utils.gst_calculator">app.utils.gst_calculator</a>
  &#8226;   <a href="#app.utils.pdf_generator">app.utils.pdf_generator</a>
@@ -9073,6 +9075,7 @@ imported by:
  &#8226;   <a href="#app.api.v1.endpoints.customers">app.api.v1.endpoints.customers</a>
  &#8226;   <a href="#app.api.v1.endpoints.gst">app.api.v1.endpoints.gst</a>
  &#8226;   <a href="#app.api.v1.endpoints.inventory">app.api.v1.endpoints.inventory</a>
+ &#8226;   <a href="#app.api.v1.endpoints.license">app.api.v1.endpoints.license</a>
  &#8226;   <a href="#app.api.v1.endpoints.master">app.api.v1.endpoints.master</a>
  &#8226;   <a href="#app.api.v1.endpoints.permissions">app.api.v1.endpoints.permissions</a>
  &#8226;   <a href="#app.api.v1.endpoints.products">app.api.v1.endpoints.products</a>
@@ -9208,13 +9211,17 @@ imports:
  &#8226;   <a href="#app.api.v1.endpoints">app.api.v1.endpoints</a>
  &#8226;   <a href="#app.core.config">app.core.config</a>
  &#8226;   <a href="#app.core.exceptions">app.core.exceptions</a>
+ &#8226;   <a href="#app.core.limiter">app.core.limiter</a>
  &#8226;   <a href="#app.core.security">app.core.security</a>
  &#8226;   <a href="#app.db.repositories">app.db.repositories</a>
  &#8226;   <a href="#app.schemas">app.schemas</a>
  &#8226;   <a href="#app.services">app.services</a>
+ &#8226;   <a href="#app.utils.email">app.utils.email</a>
  &#8226;   <a href="#app.utils.responses">app.utils.responses</a>
  &#8226;   <a href="#fastapi">fastapi</a>
  &#8226;   <a href="#fastapi.responses">fastapi.responses</a>
+ &#8226;   <a href="#limits">limits</a>
+ &#8226;   <a href="#slowapi.util">slowapi.util</a>
  &#8226;   <a href="#uuid">uuid</a>
 
   </div>
@@ -9435,8 +9442,11 @@ imported by:
   <a target="code" href="///C:/Users/admin/Downloads/vyaparpro/backend/app/api/v1/endpoints/license.py" type="text/plain"><tt>app.api.v1.endpoints.license</tt></a>
 <span class="moduletype">SourceModule</span>  <div class="import">
 imports:
-    <a href="#app.api.v1.endpoints">app.api.v1.endpoints</a>
+    <a href="#app.api.v1.dependencies">app.api.v1.dependencies</a>
+ &#8226;   <a href="#app.api.v1.endpoints">app.api.v1.endpoints</a>
  &#8226;   <a href="#app.core.license">app.core.license</a>
+ &#8226;   <a href="#app.core.plans">app.core.plans</a>
+ &#8226;   <a href="#app.db.repositories">app.db.repositories</a>
  &#8226;   <a href="#app.utils.responses">app.utils.responses</a>
  &#8226;   <a href="#fastapi">fastapi</a>
  &#8226;   <a href="#pydantic">pydantic</a>
@@ -9543,6 +9553,7 @@ imports:
     <a href="#__future__">__future__</a>
  &#8226;   <a href="#app.api.v1.dependencies">app.api.v1.dependencies</a>
  &#8226;   <a href="#app.api.v1.endpoints">app.api.v1.endpoints</a>
+ &#8226;   <a href="#app.db.sql_compat">app.db.sql_compat</a>
  &#8226;   <a href="#app.utils.pdf_generator">app.utils.pdf_generator</a>
  &#8226;   <a href="#app.utils.responses">app.utils.responses</a>
  &#8226;   <a href="#datetime">datetime</a>
@@ -9571,6 +9582,7 @@ imports:
  &#8226;   <a href="#app.api.v1.endpoints">app.api.v1.endpoints</a>
  &#8226;   <a href="#app.core.exceptions">app.core.exceptions</a>
  &#8226;   <a href="#app.db.repositories">app.db.repositories</a>
+ &#8226;   <a href="#app.db.seed_reference_data">app.db.seed_reference_data</a>
  &#8226;   <a href="#app.schemas">app.schemas</a>
  &#8226;   <a href="#app.services">app.services</a>
  &#8226;   <a href="#app.utils.responses">app.utils.responses</a>
@@ -9685,7 +9697,9 @@ imported by:
     <a href="#app.core.config">app.core.config</a>
  &#8226;   <a href="#app.core.exceptions">app.core.exceptions</a>
  &#8226;   <a href="#app.core.license">app.core.license</a>
+ &#8226;   <a href="#app.core.limiter">app.core.limiter</a>
  &#8226;   <a href="#app.core.logging">app.core.logging</a>
+ &#8226;   <a href="#app.core.plans">app.core.plans</a>
  &#8226;   <a href="#app.core.security">app.core.security</a>
 
   </div>
@@ -9717,6 +9731,7 @@ imported by:
  &#8226;   <a href="#app.db.sql_compat">app.db.sql_compat</a>
  &#8226;   <a href="#app.main">app.main</a>
  &#8226;   <a href="#app.services">app.services</a>
+ &#8226;   <a href="#app.utils.email">app.utils.email</a>
 
   </div>
 
@@ -9784,6 +9799,26 @@ imports:
 imported by:
     <a href="#app.api.v1.endpoints.license">app.api.v1.endpoints.license</a>
  &#8226;   <a href="#app.main">app.main</a>
+ &#8226;   <a href="#app.services">app.services</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="app.core.limiter"></a>
+  <a target="code" href="///C:/Users/admin/Downloads/vyaparpro/backend/app/core/limiter.py" type="text/plain"><tt>app.core.limiter</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#app.core">app.core</a>
+ &#8226;   <a href="#slowapi">slowapi</a>
+ &#8226;   <a href="#slowapi.util">slowapi.util</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#app.api.v1.endpoints.auth">app.api.v1.endpoints.auth</a>
+ &#8226;   <a href="#app.main">app.main</a>
 
   </div>
 
@@ -9813,6 +9848,25 @@ imported by:
     <a href="#app.db.database">app.db.database</a>
  &#8226;   <a href="#app.main">app.main</a>
  &#8226;   <a href="#app.middleware.audit">app.middleware.audit</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="app.core.plans"></a>
+  <a target="code" href="///C:/Users/admin/Downloads/vyaparpro/backend/app/core/plans.py" type="text/plain"><tt>app.core.plans</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#__future__">__future__</a>
+ &#8226;   <a href="#app.core">app.core</a>
+ &#8226;   <a href="#dataclasses">dataclasses</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#app.api.v1.endpoints.license">app.api.v1.endpoints.license</a>
+ &#8226;   <a href="#app.services">app.services</a>
 
   </div>
 
@@ -10093,6 +10147,7 @@ imported by:
  &#8226;   <a href="#app.api.v1.endpoints.branches">app.api.v1.endpoints.branches</a>
  &#8226;   <a href="#app.api.v1.endpoints.companies">app.api.v1.endpoints.companies</a>
  &#8226;   <a href="#app.api.v1.endpoints.customers">app.api.v1.endpoints.customers</a>
+ &#8226;   <a href="#app.api.v1.endpoints.license">app.api.v1.endpoints.license</a>
  &#8226;   <a href="#app.api.v1.endpoints.master">app.api.v1.endpoints.master</a>
  &#8226;   <a href="#app.api.v1.endpoints.products">app.api.v1.endpoints.products</a>
  &#8226;   <a href="#app.api.v1.endpoints.roles">app.api.v1.endpoints.roles</a>
@@ -10257,7 +10312,9 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#app.main">app.main</a>
+    <a href="#app.api.v1.endpoints.roles">app.api.v1.endpoints.roles</a>
+ &#8226;   <a href="#app.main">app.main</a>
+ &#8226;   <a href="#app.services">app.services</a>
 
   </div>
 
@@ -10276,6 +10333,7 @@ imports:
 imported by:
     <a href="#app.ai_assistant.data_queries">app.ai_assistant.data_queries</a>
  &#8226;   <a href="#app.api.v1.endpoints.branches">app.api.v1.endpoints.branches</a>
+ &#8226;   <a href="#app.api.v1.endpoints.reports">app.api.v1.endpoints.reports</a>
  &#8226;   <a href="#app.db.repositories.billing">app.db.repositories.billing</a>
 
   </div>
@@ -10337,6 +10395,7 @@ imports:
  &#8226;   <a href="#app.core.config">app.core.config</a>
  &#8226;   <a href="#app.core.exceptions">app.core.exceptions</a>
  &#8226;   <a href="#app.core.license">app.core.license</a>
+ &#8226;   <a href="#app.core.limiter">app.core.limiter</a>
  &#8226;   <a href="#app.core.logging">app.core.logging</a>
  &#8226;   <a href="#app.db.database">app.db.database</a>
  &#8226;   <a href="#app.db.models">app.db.models</a>
@@ -10362,6 +10421,7 @@ imports:
  &#8226;   <a href="#slowapi.errors">slowapi.errors</a>
  &#8226;   <a href="#slowapi.middleware">slowapi.middleware</a>
  &#8226;   <a href="#slowapi.util">slowapi.util</a>
+ &#8226;   <a href="#sqlalchemy">sqlalchemy</a>
  &#8226;   <a href="#typing">typing</a>
 
   </div>
@@ -10614,10 +10674,13 @@ imports:
  &#8226;   <a href="#app">app</a>
  &#8226;   <a href="#app.core.config">app.core.config</a>
  &#8226;   <a href="#app.core.exceptions">app.core.exceptions</a>
+ &#8226;   <a href="#app.core.license">app.core.license</a>
+ &#8226;   <a href="#app.core.plans">app.core.plans</a>
  &#8226;   <a href="#app.core.security">app.core.security</a>
  &#8226;   <a href="#app.db.models">app.db.models</a>
  &#8226;   <a href="#app.db.repositories">app.db.repositories</a>
  &#8226;   <a href="#app.db.repositories.inventory">app.db.repositories.inventory</a>
+ &#8226;   <a href="#app.db.seed_reference_data">app.db.seed_reference_data</a>
  &#8226;   <a href="#app.schemas">app.schemas</a>
  &#8226;   <a href="#app.services.accounting">app.services.accounting</a>
  &#8226;   <a href="#datetime">datetime</a>
@@ -10785,6 +10848,7 @@ imports:
   <div class="import">
 imported by:
     <a href="#app.utils.accounting_report_export">app.utils.accounting_report_export</a>
+ &#8226;   <a href="#app.utils.email">app.utils.email</a>
  &#8226;   <a href="#app.utils.excel_generator">app.utils.excel_generator</a>
  &#8226;   <a href="#app.utils.gst_calculator">app.utils.gst_calculator</a>
  &#8226;   <a href="#app.utils.pdf_generator">app.utils.pdf_generator</a>
@@ -10810,6 +10874,27 @@ imports:
   <div class="import">
 imported by:
     <a href="#app.api.v1.endpoints.accounting">app.api.v1.endpoints.accounting</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="app.utils.email"></a>
+  <a target="code" href="///C:/Users/admin/Downloads/vyaparpro/backend/app/utils/email.py" type="text/plain"><tt>app.utils.email</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#__future__">__future__</a>
+ &#8226;   <a href="#app.core.config">app.core.config</a>
+ &#8226;   <a href="#app.utils">app.utils</a>
+ &#8226;   <a href="#email.message">email.message</a>
+ &#8226;   <a href="#logging">logging</a>
+ &#8226;   <a href="#smtplib">smtplib</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#app.api.v1.endpoints.auth">app.api.v1.endpoints.auth</a>
 
   </div>
 
@@ -24921,6 +25006,7 @@ imported by:
  &#8226;   <a href="#anyio.streams.tls">anyio.streams.tls</a>
  &#8226;   <a href="#app.ai_assistant.base">app.ai_assistant.base</a>
  &#8226;   <a href="#app.ai_assistant.responder">app.ai_assistant.responder</a>
+ &#8226;   <a href="#app.core.plans">app.core.plans</a>
  &#8226;   <a href="#app.utils.gst_calculator">app.utils.gst_calculator</a>
  &#8226;   <a href="#app.utils.pdf_generator">app.utils.pdf_generator</a>
  &#8226;   <a href="#botocore.context">botocore.context</a>
@@ -30574,7 +30660,8 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#botocore.utils">botocore.utils</a>
+    <a href="#app.utils.email">app.utils.email</a>
+ &#8226;   <a href="#botocore.utils">botocore.utils</a>
  &#8226;   <a href="#email.contentmanager">email.contentmanager</a>
  &#8226;   <a href="#email.feedparser">email.feedparser</a>
  &#8226;   <a href="#email.policy">email.policy</a>
@@ -38276,6 +38363,7 @@ imports:
  &#8226;   <a href="#importlib">importlib</a>
  &#8226;   <a href="#importlib._bootstrap">importlib._bootstrap</a>
  &#8226;   <a href="#importlib._bootstrap_external">importlib._bootstrap_external</a>
+ &#8226;   <a href="#importlib.machinery">importlib.machinery</a>
  &#8226;   <a href="#sys">sys</a>
  &#8226;   <a href="#warnings">warnings</a>
 
@@ -38461,6 +38549,7 @@ imported by:
     <a href="#cffi._imp_emulation">cffi._imp_emulation</a>
  &#8226;   <a href="#cffi.verifier">cffi.verifier</a>
  &#8226;   <a href="#ctypes.util">ctypes.util</a>
+ &#8226;   <a href="#importlib">importlib</a>
  &#8226;   <a href="#importlib.abc">importlib.abc</a>
  &#8226;   <a href="#inspect">inspect</a>
  &#8226;   <a href="#packaging.tags">packaging.tags</a>
@@ -42819,7 +42908,8 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#limits">limits</a>
+    <a href="#app.api.v1.endpoints.auth">app.api.v1.endpoints.auth</a>
+ &#8226;   <a href="#limits">limits</a>
  &#8226;   <a href="#limits._storage_scheme">limits._storage_scheme</a>
  &#8226;   <a href="#limits._version">limits._version</a>
  &#8226;   <a href="#limits.aio">limits.aio</a>
@@ -43751,6 +43841,7 @@ imported by:
  &#8226;   <a href="#amqp.utils">amqp.utils</a>
  &#8226;   <a href="#anyio.streams.tls">anyio.streams.tls</a>
  &#8226;   <a href="#app.core.logging">app.core.logging</a>
+ &#8226;   <a href="#app.utils.email">app.utils.email</a>
  &#8226;   <a href="#asyncio.futures">asyncio.futures</a>
  &#8226;   <a href="#asyncio.log">asyncio.log</a>
  &#8226;   <a href="#asyncpg.pool">asyncpg.pool</a>
@@ -93912,7 +94003,8 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#app.main">app.main</a>
+    <a href="#app.core.limiter">app.core.limiter</a>
+ &#8226;   <a href="#app.main">app.main</a>
  &#8226;   <a href="#desktop_main.py">desktop_main.py</a>
  &#8226;   <a href="#slowapi.errors">slowapi.errors</a>
  &#8226;   <a href="#slowapi.extension">slowapi.extension</a>
@@ -94016,7 +94108,9 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#app.main">app.main</a>
+    <a href="#app.api.v1.endpoints.auth">app.api.v1.endpoints.auth</a>
+ &#8226;   <a href="#app.core.limiter">app.core.limiter</a>
+ &#8226;   <a href="#app.main">app.main</a>
 
   </div>
 
@@ -94065,7 +94159,8 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#logging.handlers">logging.handlers</a>
+    <a href="#app.utils.email">app.utils.email</a>
+ &#8226;   <a href="#logging.handlers">logging.handlers</a>
 
   </div>
 
@@ -94380,6 +94475,7 @@ imported by:
  &#8226;   <a href="#app.db.repositories.inventory">app.db.repositories.inventory</a>
  &#8226;   <a href="#app.db.seed_reference_data">app.db.seed_reference_data</a>
  &#8226;   <a href="#app.db.types">app.db.types</a>
+ &#8226;   <a href="#app.main">app.main</a>
  &#8226;   <a href="#app.services">app.services</a>
  &#8226;   <a href="#app.services.accounting">app.services.accounting</a>
  &#8226;   <a href="#app.services.billing">app.services.billing</a>

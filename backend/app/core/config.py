@@ -96,12 +96,12 @@ class Settings(BaseSettings):
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
 
     # ── Email ────────────────────────────────────────────────────────
-    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_HOST: str = "smtp-relay.brevo.com"
     SMTP_PORT: int = 587
     SMTP_TLS: bool = True
-    SMTP_USER: str = ""
-    SMTP_PASSWORD: str = ""
-    EMAILS_FROM_EMAIL: EmailStr = "noreply@vyaparpro.in"
+    SMTP_USER: str = "b61d47001@smtp-brevo.com"
+    SMTP_PASSWORD: str = "xsmtpsib-ed7960f2f0357749bbee48d8ff6b5294115783ca51855992ddbacd1ed712525d-6vBUlCvBVngmAL0V"
+    EMAILS_FROM_EMAIL: EmailStr = "bhuvanesh1326@gmail.com"
     EMAILS_FROM_NAME: str = "VyaparPro ERP"
 
     # ── Storage (AWS S3) ─────────────────────────────────────────────

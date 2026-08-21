@@ -89,6 +89,12 @@ class AlreadyExistsError(VyaparProError):
     message = "Resource already exists."
 
 
+class SignupClosedError(VyaparProError):
+    status_code = 403
+    error_code = "SIGNUP_CLOSED"
+    message = "This device already has a business set up. Sign up is a one-time setup — please sign in instead."
+
+
 class CompanyNotFoundError(NotFoundError):
     error_code = "COMPANY_NOT_FOUND"
     message = "Company not found."
@@ -151,6 +157,11 @@ class InsufficientStockError(BusinessError):
 class InvoiceAlreadyFinalizedError(BusinessError):
     error_code = "INVOICE_FINALIZED"
     message = "This invoice has already been finalized and cannot be edited."
+
+
+class PlanLimitError(BusinessError):
+    error_code = "PLAN_LIMIT_REACHED"
+    message = "This action isn't available on your current plan."
 
 
 # ── Rate Limit Errors ────────────────────────────────────────────────────────

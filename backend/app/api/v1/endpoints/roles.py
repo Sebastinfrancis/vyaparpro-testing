@@ -25,6 +25,22 @@ async def list_roles(current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
 
 
 @router.post(
+    "/seed-defaults",
+    summary="Create any of the 8 standard system roles missing for this company",
+    dependencies=[require_perm("role.create")],  # type: ignore[list-item]
+)
+async def seed_default_roles(current: CurrentUserDep, db: DBDep) -> ORJSONResponse:
+    """
+    Backfill for companies created before standard roles were auto-seeded at
+    sign-up. Safe to call any time — roles that already exist are left alone,
+    only the missing ones are added.
+    """
+    from app.db.seed_reference_data import seed_standard_roles
+    roles = await seed_standard_roles(db, current.company_id, created_by=current.user_id)
+    return ok(data={"roles": sorted(roles.keys())}, message=f"{len(roles)} standard role(s) available.")
+
+
+@router.post(
     "",
     summary="Create a role",
     status_code=201,

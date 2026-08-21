@@ -14,9 +14,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
     AccountLockedError, AlreadyExistsError, BusinessError, InvalidCredentialsError,
-    NotFoundError, PasswordValidationError, PermissionDeniedError,
+    NotFoundError, PasswordValidationError, PermissionDeniedError, PlanLimitError,
     TwoFactorInvalidError, TwoFactorRequiredError,
 )
+from app.core.license import license_manager
+from app.core.plans import get_plan_config
 from app.core.security import (
     create_access_token, create_refresh_token, decode_token,
     generate_totp_secret, get_totp_uri, hash_password,
@@ -60,6 +62,15 @@ class AuthService:
 
     async def register(self, payload: RegisterRequest, ip: str | None = None) -> dict[str, Any]:
         """Public sign-up flow: Organization + Company + Owner Role + first User, then auto-login."""
+        # This is a single-company-per-device offline install — sign-up is a
+        # one-time setup step. Without this, someone could keep calling
+        # /auth/register to spin up unlimited separate companies (each with
+        # its own invoices/customers) on a single paid activation.
+        from app.core.exceptions import SignupClosedError
+        existing_company_count = await self.companies.count()
+        if existing_company_count > 0:
+            raise SignupClosedError()
+
         if payload.gstin:
             existing_company = await self.companies.get_by_gstin(payload.gstin)
             if existing_company:
@@ -86,18 +97,13 @@ class AuthService:
             "phone": payload.phone,
         })
 
-        # 3. Owner role with every permission currently in the system
-        owner_role = await self.roles.create({
-            "company_id": company.id,
-            "role_name": "Owner",
-            "role_level": 1,
-            "description": "Full access — created automatically at sign-up.",
-            "is_system_role": True,
-        })
-        all_perms = await self.session.execute(select(Permission))
-        for perm in all_perms.scalars().all():
-            self.session.add(RolePermission(role_id=owner_role.id, perm_id=perm.id))
-        await self.session.flush()
+        # 3. The 8 standard system roles (Owner, Admin, Manager, Accountant,
+        # Sales Executive, Cashier, Storekeeper, Viewer) — Owner gets every
+        # permission, the rest get a sensible starter set the company can
+        # still edit afterwards.
+        from app.db.seed_reference_data import seed_standard_roles
+        standard_roles = await seed_standard_roles(self.session, company.id)
+        owner_role = standard_roles["Owner"]
 
         # 4. First user (the owner)
         if await self.users.get_by_email(company.id, payload.email):
@@ -360,6 +366,11 @@ class CompanyService:
         coa_svc = ChartOfAccountsService(self.companies.session)
         await coa_svc.seed_default_accounts(company.id, created_by)
 
+        # Same for the 8 standard roles — a company created here (not through
+        # public sign-up) would otherwise have zero roles to assign users to.
+        from app.db.seed_reference_data import seed_standard_roles
+        await seed_standard_roles(self.companies.session, company.id, created_by=created_by)
+
         return company
 
     async def update(self, company_id: UUID, payload: CompanyUpdate, user_id: UUID) -> Company:
@@ -498,6 +509,18 @@ class UserService:
         self.audit = AuditLogRepository(session)
 
     async def create(self, company_id: UUID, payload: UserCreate, created_by: UUID) -> User:
+        # Plan-based seat limit — checked first so a full form submit fails fast
+        # with a clear message instead of after validating everything else.
+        cert = license_manager.load_local() or {}
+        plan_cfg = get_plan_config(cert.get("plan"))
+        if plan_cfg.max_users is not None:
+            active_count = await self.users.count(company_id=company_id, is_active=True)
+            if active_count >= plan_cfg.max_users:
+                raise PlanLimitError(
+                    f"Your {plan_cfg.display_name} plan allows up to {plan_cfg.max_users} "
+                    f"user(s). Upgrade your plan from Settings → Plan & Account to add more."
+                )
+
         # Check email uniqueness
         existing = await self.users.get_by_email(company_id, payload.email)
         if existing:
@@ -559,6 +582,23 @@ class RoleService:
         self.session = session
 
     async def create(self, company_id: UUID, payload: RoleCreate, user_id: UUID) -> Role:
+        # Plan-based custom-role limit (system roles seeded at company creation
+        # don't count against this — only roles created here do).
+        cert = license_manager.load_local() or {}
+        plan_cfg = get_plan_config(cert.get("plan"))
+        if plan_cfg.max_custom_roles is not None:
+            custom_count = await self.roles.count(company_id=company_id, is_system_role=False)
+            if custom_count >= plan_cfg.max_custom_roles:
+                if plan_cfg.max_custom_roles == 0:
+                    raise PlanLimitError(
+                        f"Custom roles aren't available on your {plan_cfg.display_name} plan. "
+                        f"You can still assign the built-in roles."
+                    )
+                raise PlanLimitError(
+                    f"Your {plan_cfg.display_name} plan allows up to {plan_cfg.max_custom_roles} "
+                    f"custom role(s). Upgrade your plan from Settings → Plan & Account to add more."
+                )
+
         existing = await self.roles.get_by(company_id=company_id, role_name=payload.role_name)
         if existing:
             raise AlreadyExistsError(f"Role '{payload.role_name}' already exists.")

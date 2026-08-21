@@ -4,13 +4,18 @@ ResetPassword · Change Password · 2FA Setup/Verify/Disable
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, BackgroundTasks, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from fastapi.responses import ORJSONResponse
+from slowapi.util import get_remote_address
+from limits import parse as parse_rate_limit
 
 from app.api.v1.dependencies import (
     CacheDep, CurrentUserDep, DBDep, PaginationDep,
 )
 from app.core.config import settings
+from app.core.limiter import limiter
+from app.core.exceptions import RateLimitExceededError
+from app.core.limiter import limiter
 from app.schemas import (
     ChangePasswordRequest, ForgotPasswordRequest, LoginRequest,
     RefreshRequest, RegisterRequest, ResetPasswordRequest,
@@ -20,6 +25,16 @@ from app.services import AuthService
 from app.utils.responses import created, ok
 
 router = APIRouter()
+
+
+@router.get(
+    "/setup-status",
+    summary="Whether this device already has a business set up (sign-up is one-time)",
+)
+async def setup_status(db: DBDep) -> ORJSONResponse:
+    from app.db.repositories import CompanyRepository
+    count = await CompanyRepository(db).count()
+    return ok(data={"setup_complete": count > 0})
 
 
 @router.post(
@@ -131,7 +146,29 @@ async def change_password(
     return ok(message="Password changed. Please log in again.")
 
 
-@router.post("/forgot-password", summary="Request a password-reset email")
+_forgot_password_limit = parse_rate_limit(f"{settings.RATE_LIMIT_AUTH_PER_MINUTE}/minute")
+
+
+def _check_forgot_password_rate_limit(request: Request) -> None:
+    """
+    Manual rate-limit check (dependency form, not decorator form).
+    The decorator form (@limiter.limit) breaks FastAPI's parameter
+    resolution in files using `from __future__ import annotations`
+    (every endpoint file in this project) — it makes FastAPI stop
+    recognizing payload/background_tasks/db as injectable params and
+    treat them as required raw body fields instead, causing a 422.
+    This dependency-based approach avoids that entirely.
+    """
+    key = get_remote_address(request)
+    if not limiter.limiter.hit(_forgot_password_limit, key):
+        raise RateLimitExceededError("Too many reset requests. Please try again in a minute.")
+
+
+@router.post(
+    "/forgot-password",
+    summary="Request a password-reset email",
+    dependencies=[Depends(_check_forgot_password_rate_limit)],
+)
 async def forgot_password(
     payload: ForgotPasswordRequest,
     background_tasks: BackgroundTasks,
